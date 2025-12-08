@@ -211,13 +211,19 @@ class MainActivity : FragmentActivity() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         AppLog.i("onKeyDown: %d", keyCode)
-
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            // Let the system handle the back button, which will trigger onBackPressedDispatcher
+            return super.onKeyDown(keyCode, event)
+        }
         return keyListener?.onKeyEvent(event) ?: super.onKeyDown(keyCode, event)
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         AppLog.i("onKeyUp: %d", keyCode)
-
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            // Let the system handle the back button, which will trigger onBackPressedDispatcher
+            return super.onKeyUp(keyCode, event)
+        }
         return keyListener?.onKeyEvent(event) ?: super.onKeyUp(keyCode, event)
     }
 
