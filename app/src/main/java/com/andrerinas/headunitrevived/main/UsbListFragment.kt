@@ -23,9 +23,11 @@ import com.andrerinas.headunitrevived.aap.AapService
 import com.andrerinas.headunitrevived.app.UsbAttachedActivity
 import com.andrerinas.headunitrevived.connection.UsbAccessoryMode
 
+import com.andrerinas.headunitrevived.App
 import com.andrerinas.headunitrevived.connection.UsbDeviceCompat
 import com.andrerinas.headunitrevived.utils.Settings
-import androidx.core.content.ContextCompat // Added import
+import androidx.core.content.ContextCompat
+import com.andrerinas.headunitrevived.aap.AapProjectionActivity
 
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -136,7 +138,12 @@ class UsbListFragment : Fragment() {
                 mSettings.allowedDevices = allowedDevices
                 notifyDataSetChanged()
             } else {
-                if (device.isInAccessoryMode) {
+                if (App.provide(mContext).transport.isAlive) {
+                    // If transport is already running, just go to projection
+                    val aapIntent = Intent(mContext, AapProjectionActivity::class.java)
+                    aapIntent.putExtra(AapProjectionActivity.EXTRA_FOCUS, true)
+                    mContext.startActivity(aapIntent)
+                } else if (device.isInAccessoryMode) {
                     mContext.startService(AapService.createIntent(device.wrappedDevice, mContext))
                 } else {
                     val usbManager = mContext.getSystemService(Context.USB_SERVICE) as UsbManager
