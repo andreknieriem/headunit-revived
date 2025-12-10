@@ -1,23 +1,16 @@
 package com.andrerinas.headunitrevived
 
 import android.app.Application
-import android.content.Context
-import androidx.multidex.MultiDex
-import android.content.pm.PackageManager
-import com.andrerinas.headunitrevived.aap.AapProjectionActivity
-import com.andrerinas.headunitrevived.aap.AapTransport
-import com.andrerinas.headunitrevived.utils.AppLog
-import com.andrerinas.headunitrevived.utils.IntentFilters
-import android.R.attr.path
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
 import android.os.Build
+import androidx.multidex.MultiDex
 import com.andrerinas.headunitrevived.main.BackgroundNotification
+import com.andrerinas.headunitrevived.utils.AppLog
+import com.andrerinas.headunitrevived.utils.FileLog
+import com.andrerinas.headunitrevived.utils.Settings
 import java.io.File
-
-import android.content.Context.RECEIVER_NOT_EXPORTED // Added import
-import com.andrerinas.headunitrevived.utils.FileLog // Added import
-import com.andrerinas.headunitrevived.utils.Settings // Added import
 
 /**
  * @author algavris

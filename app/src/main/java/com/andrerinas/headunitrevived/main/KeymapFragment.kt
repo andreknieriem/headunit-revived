@@ -1,8 +1,10 @@
 package com.andrerinas.headunitrevived.main
 
+
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Context.RECEIVER_NOT_EXPORTED
 import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
@@ -10,16 +12,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.Toast
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.andrerinas.headunitrevived.R
+import com.andrerinas.headunitrevived.contract.KeyIntent
 import com.andrerinas.headunitrevived.utils.IntentFilters
 import com.andrerinas.headunitrevived.utils.Settings
-import com.andrerinas.headunitrevived.contract.KeyIntent
-
-
-import android.content.Context.RECEIVER_NOT_EXPORTED // Added import
 
 
 /**

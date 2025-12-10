@@ -1,7 +1,6 @@
 package com.andrerinas.headunitrevived.aap.protocol.messages
 
 import android.content.Context
-import com.google.protobuf.Message
 import com.andrerinas.headunitrevived.App
 import com.andrerinas.headunitrevived.aap.AapMessage
 import com.andrerinas.headunitrevived.aap.KeyCode
@@ -13,6 +12,7 @@ import com.andrerinas.headunitrevived.aap.protocol.proto.Media
 import com.andrerinas.headunitrevived.aap.protocol.proto.Sensors
 import com.andrerinas.headunitrevived.utils.AppLog
 import com.andrerinas.headunitrevived.utils.Settings
+import com.google.protobuf.Message
 
 /**
  * @author alex gavrishev

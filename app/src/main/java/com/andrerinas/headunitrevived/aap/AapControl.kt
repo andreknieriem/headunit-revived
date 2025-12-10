@@ -6,7 +6,11 @@ import com.andrerinas.headunitrevived.aap.protocol.AudioConfigs
 import com.andrerinas.headunitrevived.aap.protocol.Channel
 import com.andrerinas.headunitrevived.aap.protocol.messages.DrivingStatusEvent
 import com.andrerinas.headunitrevived.aap.protocol.messages.ServiceDiscoveryResponse
-import com.andrerinas.headunitrevived.aap.protocol.proto.*
+import com.andrerinas.headunitrevived.aap.protocol.proto.Common
+import com.andrerinas.headunitrevived.aap.protocol.proto.Control
+import com.andrerinas.headunitrevived.aap.protocol.proto.Input
+import com.andrerinas.headunitrevived.aap.protocol.proto.Media
+import com.andrerinas.headunitrevived.aap.protocol.proto.Sensors
 import com.andrerinas.headunitrevived.decoder.MicRecorder
 import com.andrerinas.headunitrevived.utils.AppLog
 import com.andrerinas.headunitrevived.utils.Settings

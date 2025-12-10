@@ -1,6 +1,7 @@
 package com.andrerinas.headunitrevived.main
 
 import android.app.Application
+import android.content.Context.RECEIVER_NOT_EXPORTED
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import androidx.lifecycle.AndroidViewModel
@@ -9,8 +10,6 @@ import com.andrerinas.headunitrevived.App
 import com.andrerinas.headunitrevived.connection.UsbDeviceCompat
 import com.andrerinas.headunitrevived.connection.UsbReceiver
 import com.andrerinas.headunitrevived.utils.Settings
-
-import android.content.Context.RECEIVER_NOT_EXPORTED // Added import
 
 class MainViewModel(application: Application): AndroidViewModel(application), UsbReceiver.Listener {
 

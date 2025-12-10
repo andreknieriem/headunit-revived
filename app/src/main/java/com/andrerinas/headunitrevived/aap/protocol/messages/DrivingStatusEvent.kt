@@ -1,9 +1,9 @@
 package com.andrerinas.headunitrevived.aap.protocol.messages
 
-import com.google.protobuf.Message
 import com.andrerinas.headunitrevived.aap.AapMessage
 import com.andrerinas.headunitrevived.aap.protocol.Channel
 import com.andrerinas.headunitrevived.aap.protocol.proto.Sensors
+import com.google.protobuf.Message
 
 /**
  * @author algavris

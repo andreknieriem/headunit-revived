@@ -7,12 +7,10 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
 import android.os.Bundle
-import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,7 +23,6 @@ import com.andrerinas.headunitrevived.utils.changeLastBit
 import com.andrerinas.headunitrevived.utils.toInetAddress
 import java.net.Inet4Address
 import java.net.InetAddress
-import java.util.*
 
 class NetworkListFragment : Fragment() {
     private lateinit var adapter: AddressAdapter
@@ -95,8 +92,11 @@ class NetworkListFragment : Fragment() {
             }
         }
 
-        adapter.currentAddress = ipAddress?.changeLastBit(1)?.hostAddress ?: ""
-        adapter.loadAddresses()
+        // Ensure UI updates are on the main thread
+        requireActivity().runOnUiThread {
+            adapter.currentAddress = ipAddress?.changeLastBit(1)?.hostAddress ?: ""
+            adapter.loadAddresses()
+        }
     }
 
     fun addAddress(ip: InetAddress) {

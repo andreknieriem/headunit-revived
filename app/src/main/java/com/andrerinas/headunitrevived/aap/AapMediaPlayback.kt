@@ -2,9 +2,9 @@ package com.andrerinas.headunitrevived.aap
 
 import com.andrerinas.headunitrevived.aap.protocol.messages.Messages
 import com.andrerinas.headunitrevived.aap.protocol.proto.MediaPlayback
+import com.andrerinas.headunitrevived.main.BackgroundNotification
 import com.andrerinas.headunitrevived.utils.AppLog
 import java.nio.ByteBuffer
-import com.andrerinas.headunitrevived.main.BackgroundNotification
 
 /**
  * @author algavris

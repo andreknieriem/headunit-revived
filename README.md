@@ -14,6 +14,26 @@ https://github.com/mikereidis/headunit
 <img width="1280" height="800" alt="image" src="https://github.com/user-attachments/assets/f81149b3-a844-4657-87d2-a2867a5eb030" />
 <img width="1280" height="800" alt="image" src="https://github.com/user-attachments/assets/140bbfdb-5b4f-4d49-a419-85aa91b48371" />
 
+## How to use
+### Wired USB Connection
+- Connect your Android device (phone) to the tablet running Headunit Revived via USB cable.
+- Make sure that Android Auto is installed on your phone.
+- Set your phone to Host-Mode if nescessary and select Android Auto
+- Click the USB Button in Headunit Revived, find your phone and click the right button to allow connection
+- Click on your phone in the list and wait for Android Auto to start
+
+### Wireless Connection (Experimental)
+- Open Android Auto Settings on your phone
+- Click on Version and then on version and permission and click several to enable developer settings
+- Go back to Android Auto, click the three dots on the top right and start the infotainment server
+- Now you need to bring your phone and headunit(tablet) into the same network (WiFi). You can use mobile hotspot from phone, or from the headunit or use wifi direct. That doesn't matter
+- Go to your phones wifi settings and search for your IP-Address eg: 192.168.1.25
+- Open Headunit Revived and click on the wireless button
+- Add the IP-Address of your phone and click on it to start Android Auto
+
+### Known Issues
+- Often the wireless connection won't start. I need more debugging why
+- Handshake failed sometimes and the devices won't connect. You need to try again, restart phone or clear caches
 
 ## Changelog
 ### v1.1.0 - New Design

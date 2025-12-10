@@ -4,29 +4,31 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.hardware.usb.UsbManager
+import android.os.Build
 import android.os.Bundle
 import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.Toast
 import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.andrerinas.headunitrevived.App
 import com.andrerinas.headunitrevived.R
+import com.andrerinas.headunitrevived.aap.AapProjectionActivity
 import com.andrerinas.headunitrevived.aap.AapService
 import com.andrerinas.headunitrevived.app.UsbAttachedActivity
 import com.andrerinas.headunitrevived.connection.UsbAccessoryMode
-
 import com.andrerinas.headunitrevived.connection.UsbDeviceCompat
 import com.andrerinas.headunitrevived.utils.Settings
-
-import android.view.View.GONE
-import android.view.View.VISIBLE
 
 /**
  * @author algavris
@@ -77,12 +79,12 @@ class UsbListFragment : Fragment() {
         settings.commit()
     }
 
-    private class DeviceViewHolder internal constructor(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        internal val allowButton = itemView.findViewById<Button>(android.R.id.button1)
-        internal val startButton = itemView.findViewById<Button>(android.R.id.button2)
+    private class DeviceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val allowButton = itemView.findViewById<Button>(android.R.id.button1)
+        val startButton = itemView.findViewById<Button>(android.R.id.button2)
     }
 
-    private class DeviceAdapter internal constructor(private val mContext: Context, private val mSettings: Settings) : RecyclerView.Adapter<DeviceViewHolder>(), View.OnClickListener {
+    private class DeviceAdapter(private val mContext: Context, private val mSettings: Settings) : RecyclerView.Adapter<DeviceViewHolder>(), View.OnClickListener {
         private var allowedDevices: MutableSet<String> = mutableSetOf()
         private var deviceList: List<UsbDeviceCompat> = listOf()
 
@@ -103,15 +105,15 @@ class UsbListFragment : Fragment() {
 
             if (device.isInAccessoryMode) {
                 holder.allowButton.setText(R.string.allowed)
-                holder.allowButton.setTextColor(mContext.resources.getColor(R.color.material_green_700))
+                holder.allowButton.setTextColor(ContextCompat.getColor(mContext, R.color.material_green_700))
                 holder.allowButton.isEnabled = false
             } else {
                 if (allowedDevices.contains(device.uniqueName)) {
                     holder.allowButton.setText(R.string.allowed)
-                    holder.allowButton.setTextColor(mContext.resources.getColor(R.color.material_green_700))
+                    holder.allowButton.setTextColor(ContextCompat.getColor(mContext, R.color.material_green_700))
                 } else {
                     holder.allowButton.setText(R.string.ignored)
-                    holder.allowButton.setTextColor(mContext.resources.getColor(R.color.material_orange_700))
+                    holder.allowButton.setTextColor(ContextCompat.getColor(mContext, R.color.material_orange_700))
                 }
                 holder.allowButton.tag = position
                 holder.allowButton.isEnabled = true
@@ -134,7 +136,12 @@ class UsbListFragment : Fragment() {
                 mSettings.allowedDevices = allowedDevices
                 notifyDataSetChanged()
             } else {
-                if (device.isInAccessoryMode) {
+                if (App.provide(mContext).transport.isAlive) {
+                    // If transport is already running, just go to projection
+                    val aapIntent = Intent(mContext, AapProjectionActivity::class.java)
+                    aapIntent.putExtra(AapProjectionActivity.EXTRA_FOCUS, true)
+                    mContext.startActivity(aapIntent)
+                } else if (device.isInAccessoryMode) {
                     mContext.startService(AapService.createIntent(device.wrappedDevice, mContext))
                 } else {
                     val usbManager = mContext.getSystemService(Context.USB_SERVICE) as UsbManager
@@ -149,13 +156,14 @@ class UsbListFragment : Fragment() {
                     } else {
                         Toast.makeText(mContext, "USB Permission is missing", Toast.LENGTH_SHORT).show()
                         usbManager.requestPermission(device.wrappedDevice, PendingIntent.getActivity(
-                            mContext, 500, Intent(mContext, UsbAttachedActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT))
+                            mContext, 500, Intent(mContext, UsbAttachedActivity::class.java),
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT))
                     }
                 }
             }
         }
 
-        internal fun setData(deviceList: List<UsbDeviceCompat>, allowedDevices: Set<String>) {
+        fun setData(deviceList: List<UsbDeviceCompat>, allowedDevices: Set<String>) {
             this.allowedDevices = allowedDevices.toMutableSet()
             this.deviceList = deviceList
             notifyDataSetChanged()

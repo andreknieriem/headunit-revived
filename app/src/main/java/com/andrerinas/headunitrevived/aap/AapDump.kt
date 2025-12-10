@@ -3,7 +3,7 @@ package com.andrerinas.headunitrevived.aap
 import android.util.Log
 import com.andrerinas.headunitrevived.aap.protocol.Channel
 import com.andrerinas.headunitrevived.utils.AppLog
-import java.util.*
+import java.util.Locale
 
 internal object AapDump {
     private val MAX_HEX_DUMP = 64//32;

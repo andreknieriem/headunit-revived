@@ -1,6 +1,9 @@
 package com.andrerinas.headunitrevived.aap
 
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.os.Build
 import android.os.SystemClock
 
 import com.andrerinas.headunitrevived.aap.protocol.AudioConfigs
@@ -21,12 +24,33 @@ internal class AapAudio(
         private val audioDecoder: AudioDecoder,
         private val audioManager: AudioManager) {
 
+    private var audioFocusRequest: AudioFocusRequest? = null
+
     fun requestFocusChange(stream: Int, focusRequest: Int, callback: AudioManager.OnAudioFocusChangeListener) {
-        when (focusRequest) {
-            Control.AudioFocusRequestNotification.AudioFocusRequestType.RELEASE_VALUE -> audioManager.abandonAudioFocus(callback)
-            Control.AudioFocusRequestNotification.AudioFocusRequestType.GAIN_VALUE -> audioManager.requestAudioFocus(callback, stream, AudioManager.AUDIOFOCUS_GAIN)
-            Control.AudioFocusRequestNotification.AudioFocusRequestType.GAIN_TRANSIENT_VALUE -> audioManager.requestAudioFocus(callback, stream, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-            Control.AudioFocusRequestNotification.AudioFocusRequestType.GAIN_TRANSIENT_MAY_DUCK_VALUE -> audioManager.requestAudioFocus(callback, stream, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // API 26+
+            if (focusRequest == Control.AudioFocusRequestNotification.AudioFocusRequestType.RELEASE_VALUE) {
+                audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+                audioFocusRequest = null
+            } else {
+                val audioAttributes = AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA) // Use USAGE_MEDIA
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC) // Use CONTENT_TYPE_MUSIC
+                        .build()
+
+                audioFocusRequest = AudioFocusRequest.Builder(focusRequest)
+                        .setAudioAttributes(audioAttributes)
+                        .setOnAudioFocusChangeListener(callback)
+                        .build()
+                audioFocusRequest?.let { audioManager.requestAudioFocus(it) }
+            }
+        } else { // API < 26
+            @Suppress("DEPRECATION")
+            when (focusRequest) {
+                Control.AudioFocusRequestNotification.AudioFocusRequestType.RELEASE_VALUE -> audioManager.abandonAudioFocus(callback)
+                Control.AudioFocusRequestNotification.AudioFocusRequestType.GAIN_VALUE -> audioManager.requestAudioFocus(callback, stream, AudioManager.AUDIOFOCUS_GAIN)
+                Control.AudioFocusRequestNotification.AudioFocusRequestType.GAIN_TRANSIENT_VALUE -> audioManager.requestAudioFocus(callback, stream, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                Control.AudioFocusRequestNotification.AudioFocusRequestType.GAIN_TRANSIENT_MAY_DUCK_VALUE -> audioManager.requestAudioFocus(callback, stream, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+            }
         }
     }
 

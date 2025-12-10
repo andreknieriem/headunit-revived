@@ -1,20 +1,18 @@
 package com.andrerinas.headunitrevived.main
 
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView // Added import
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.andrerinas.headunitrevived.R
-import com.andrerinas.headunitrevived.aap.protocol.proto.Control
 import com.andrerinas.headunitrevived.decoder.MicRecorder
 import com.andrerinas.headunitrevived.utils.Settings
+
 // Removed import kotlinx.android.synthetic.main.fragment_settings.*
 
 /**

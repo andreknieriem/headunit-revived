@@ -9,10 +9,8 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import androidx.core.app.ActivityCompat
-import com.andrerinas.headunitrevived.App
-
-import com.andrerinas.headunitrevived.utils.AppLog
 import com.andrerinas.headunitrevived.contract.LocationUpdateIntent
+import com.andrerinas.headunitrevived.utils.AppLog
 
 /**
  * @author algavris

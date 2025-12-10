@@ -1,8 +1,8 @@
 package com.andrerinas.headunitrevived.aap.protocol.messages
 
 import android.location.Location
-import com.google.protobuf.Message
 import com.andrerinas.headunitrevived.aap.protocol.proto.Sensors
+import com.google.protobuf.Message
 
 /**
  * @author algavris

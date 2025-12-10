@@ -3,24 +3,22 @@ package com.andrerinas.headunitrevived.aap
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.SurfaceHolder
-import android.view.SurfaceView // Added import
-import com.andrerinas.headunitrevived.R // Added import for R.id
-
+import android.view.SurfaceView
 import com.andrerinas.headunitrevived.App
-import com.andrerinas.headunitrevived.aap.protocol.Screen
+import com.andrerinas.headunitrevived.R
 import com.andrerinas.headunitrevived.aap.protocol.messages.TouchEvent
 import com.andrerinas.headunitrevived.aap.protocol.messages.VideoFocusEvent
 import com.andrerinas.headunitrevived.app.SurfaceActivity
+import com.andrerinas.headunitrevived.contract.KeyIntent
 import com.andrerinas.headunitrevived.decoder.VideoDecoder
 import com.andrerinas.headunitrevived.utils.AppLog
 import com.andrerinas.headunitrevived.utils.IntentFilters
-import com.andrerinas.headunitrevived.contract.KeyIntent
-// Removed import kotlinx.android.synthetic.main.activity_headunit.*
 
 class AapProjectionActivity : SurfaceActivity(), SurfaceHolder.Callback {
 
@@ -35,7 +33,7 @@ class AapProjectionActivity : SurfaceActivity(), SurfaceHolder.Callback {
 
     private val keyCodeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val event: KeyEvent? = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val event: KeyEvent? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 intent.getParcelableExtra(KeyIntent.extraEvent, KeyEvent::class.java)
             } else {
                 @Suppress("DEPRECATION")
@@ -69,8 +67,13 @@ class AapProjectionActivity : SurfaceActivity(), SurfaceHolder.Callback {
 
     override fun onResume() {
         super.onResume()
-        registerReceiver(disconnectReceiver, IntentFilters.disconnect)
-        registerReceiver(keyCodeReceiver, IntentFilters.keyEvent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 33+
+            registerReceiver(disconnectReceiver, IntentFilters.disconnect, RECEIVER_NOT_EXPORTED)
+            registerReceiver(keyCodeReceiver, IntentFilters.keyEvent, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(disconnectReceiver, IntentFilters.disconnect)
+            registerReceiver(keyCodeReceiver, IntentFilters.keyEvent)
+        }
     }
 
     val transport: AapTransport
@@ -125,7 +128,7 @@ class AapProjectionActivity : SurfaceActivity(), SurfaceHolder.Callback {
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        AppLog.i("KeyCode: %d", keyCode)
+        AppLog.i("onKeyUp: %d", keyCode)
         onKeyEvent(keyCode, false)
         return super.onKeyUp(keyCode, event)
     }

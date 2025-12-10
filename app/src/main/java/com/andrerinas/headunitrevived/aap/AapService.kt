@@ -1,15 +1,17 @@
 package com.andrerinas.headunitrevived.aap
 
-import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.app.UiModeManager
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
 import com.andrerinas.headunitrevived.App
 import com.andrerinas.headunitrevived.R
 import com.andrerinas.headunitrevived.aap.protocol.messages.NightModeEvent
@@ -18,13 +20,19 @@ import com.andrerinas.headunitrevived.connection.SocketAccessoryConnection
 import com.andrerinas.headunitrevived.connection.UsbAccessoryConnection
 import com.andrerinas.headunitrevived.connection.UsbReceiver
 import com.andrerinas.headunitrevived.contract.ConnectedIntent
-import com.andrerinas.headunitrevived.location.GpsLocationService
-import com.andrerinas.headunitrevived.utils.*
 import com.andrerinas.headunitrevived.contract.DisconnectIntent
 import com.andrerinas.headunitrevived.contract.LocationUpdateIntent
-import kotlinx.coroutines.*
-
-import android.content.Context.RECEIVER_NOT_EXPORTED // Added import
+import com.andrerinas.headunitrevived.location.GpsLocationService
+import com.andrerinas.headunitrevived.utils.AppLog
+import com.andrerinas.headunitrevived.utils.DeviceIntent
+import com.andrerinas.headunitrevived.utils.NightMode
+import com.andrerinas.headunitrevived.utils.Settings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * @author algavris

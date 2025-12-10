@@ -1,10 +1,10 @@
 package com.andrerinas.headunitrevived.aap
 
 
-import com.google.protobuf.CodedOutputStream
-import com.google.protobuf.Message
 import com.andrerinas.headunitrevived.aap.protocol.Channel
 import com.andrerinas.headunitrevived.aap.protocol.MsgType
+import com.google.protobuf.CodedOutputStream
+import com.google.protobuf.Message
 
 /**
  * @author algavris

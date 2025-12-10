@@ -1,10 +1,10 @@
 package com.andrerinas.headunitrevived.aap;
 
+import com.andrerinas.headunitrevived.utils.AppLog;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import com.andrerinas.headunitrevived.utils.AppLog;
 
 /**
  * @author algavris

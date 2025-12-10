@@ -213,4 +213,15 @@
         android:padding="8dp"
         android:visibility="gone" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/exit_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_margin="16dp"
+        android:text="@string/exit"
+        android:backgroundTint="@color/material_grey_700"
+        android:textColor="@color/text_primary"
+        app:cornerRadius="8dp" />
+
 </FrameLayout>

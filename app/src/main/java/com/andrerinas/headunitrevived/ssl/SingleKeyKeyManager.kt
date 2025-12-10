@@ -3,19 +3,18 @@ package com.andrerinas.headunitrevived.ssl
 import android.content.Context
 import android.util.Base64
 import com.andrerinas.headunitrevived.R
-import java.io.ByteArrayInputStream
 import java.net.Socket
 import java.security.KeyFactory
 import java.security.KeyStore
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509KeyManager
-import java.security.cert.X509Certificate
 
 class SingleKeyKeyManager(certificate: X509Certificate, privateKey: PrivateKey): X509ExtendedKeyManager() {
 

@@ -1,10 +1,8 @@
 package com.andrerinas.headunitrevived.connection
 
 import android.hardware.usb.UsbDevice
-
-import java.util.Locale
-
 import com.andrerinas.headunitrevived.aap.Utils
+import java.util.Locale
 
 /**
  * @author algavris

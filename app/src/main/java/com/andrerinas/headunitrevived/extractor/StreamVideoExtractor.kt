@@ -4,12 +4,10 @@ import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaFormat
 import android.net.Uri
-
+import com.andrerinas.headunitrevived.utils.AppLog
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.security.InvalidParameterException
-
-import com.andrerinas.headunitrevived.utils.AppLog
 
 
 /**

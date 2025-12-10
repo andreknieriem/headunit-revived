@@ -4,23 +4,31 @@ import android.app.UiModeManager
 import android.content.Context
 import android.content.Context.UI_MODE_SERVICE
 import android.media.AudioManager
-import android.os.*
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Process
+import android.os.SystemClock
 import android.util.SparseIntArray
 import android.view.KeyEvent
 import com.andrerinas.headunitrevived.aap.protocol.Channel
-import com.andrerinas.headunitrevived.aap.protocol.messages.*
+import com.andrerinas.headunitrevived.aap.protocol.messages.KeyCodeEvent
+import com.andrerinas.headunitrevived.aap.protocol.messages.MediaAck
+import com.andrerinas.headunitrevived.aap.protocol.messages.Messages
+import com.andrerinas.headunitrevived.aap.protocol.messages.NightModeEvent
+import com.andrerinas.headunitrevived.aap.protocol.messages.ScrollWheelEvent
+import com.andrerinas.headunitrevived.aap.protocol.messages.SensorEvent
+import com.andrerinas.headunitrevived.aap.protocol.messages.TouchEvent
 import com.andrerinas.headunitrevived.aap.protocol.proto.Input
 import com.andrerinas.headunitrevived.aap.protocol.proto.Sensors
 import com.andrerinas.headunitrevived.connection.AccessoryConnection
-import com.andrerinas.headunitrevived.contract.ProjectionActivityRequest
 import com.andrerinas.headunitrevived.contract.DisconnectIntent
+import com.andrerinas.headunitrevived.contract.ProjectionActivityRequest
 import com.andrerinas.headunitrevived.decoder.AudioDecoder
 import com.andrerinas.headunitrevived.decoder.MicRecorder
 import com.andrerinas.headunitrevived.decoder.VideoDecoder
 import com.andrerinas.headunitrevived.main.BackgroundNotification
-import com.andrerinas.headunitrevived.ssl.SingleKeyKeyManager
-import com.andrerinas.headunitrevived.utils.*
-import java.util.*
+import com.andrerinas.headunitrevived.utils.AppLog
+import com.andrerinas.headunitrevived.utils.Settings
 
 class AapTransport(
         audioDecoder: AudioDecoder,
@@ -130,6 +138,9 @@ class AapTransport(
         pollThread!!.start()
         pollHandler = Handler(pollThread!!.looper, pollHandlerCallback)
 
+        // Add a small delay before starting the handshake to give the phone time to initialize
+        SystemClock.sleep(200) // 200ms delay
+
         if (!handshake(connection)) {
             quit()
             AppLog.e("Handshake failed")
@@ -146,61 +157,70 @@ class AapTransport(
     private fun handshake(connection: AccessoryConnection): Boolean {
         val buffer = ByteArray(Messages.DEF_BUFFER_LENGTH)
 
+        AppLog.d("Handshake: Starting version request. TS: ${SystemClock.elapsedRealtime()}")
         // Version request
-
         val version = Messages.versionRequest
         var ret = connection.sendBlocking(version, version.size, 5000)
+        AppLog.d("Handshake: Version request sent. ret: $ret. TS: ${SystemClock.elapsedRealtime()}")
         if (ret < 0) {
-            AppLog.e("Version request sendEncrypted ret: $ret")
+            AppLog.e("Handshake: Version request sendEncrypted ret: $ret")
             return false
         }
 
+        AppLog.d("Handshake: Waiting for version response. TS: ${SystemClock.elapsedRealtime()}")
         ret = connection.recvBlocking(buffer, buffer.size, 5000, false)
+        AppLog.d("Handshake: Version response received. ret: $ret. TS: ${SystemClock.elapsedRealtime()}")
         if (ret <= 0) {
-            AppLog.e("Version request recv ret: $ret")
+            AppLog.e("Handshake: Version request recv ret: $ret")
             return false
         }
-        AppLog.i("Version response recv ret: %d", ret)
+        AppLog.i("Handshake: Version response recv ret: %d", ret)
 
+        AppLog.d("Handshake: Starting SSL prepare. TS: ${SystemClock.elapsedRealtime()}")
         // SSL
         ret = ssl.prepare()
+        AppLog.d("Handshake: SSL prepare finished. ret: $ret. TS: ${SystemClock.elapsedRealtime()}")
         if (ret < 0) {
-            AppLog.e("SSL prepare failed: $ret")
+            AppLog.e("Handshake: SSL prepare failed: $ret")
             return false
         }
 
         var hs_ctr = 0
-        // SSL_is_init_finished (hu_ssl_ssl)
-
         while (hs_ctr++ < 2) {
-            val handshakeData = ssl.handshakeRead() ?: return false
-            AppLog.i("SSL BIO read: %d", handshakeData.size)
+            AppLog.d("Handshake: SSL loop %d. TS: ${SystemClock.elapsedRealtime()}", hs_ctr)
+            val handshakeData = ssl.handshakeRead() ?: run {
+                AppLog.e("Handshake: SSL handshakeRead failed. TS: ${SystemClock.elapsedRealtime()}")
+                return false
+            }
+            AppLog.d("Handshake: SSL BIO read: %d. TS: ${SystemClock.elapsedRealtime()}", handshakeData.size)
 
             val bio = Messages.createRawMessage(Channel.ID_CTR, 3, 3, handshakeData)
             var size = connection.sendBlocking(bio, bio.size, 5000)
-            AppLog.i("SSL BIO sent: %d", size)
+            AppLog.d("Handshake: SSL BIO sent: %d. TS: ${SystemClock.elapsedRealtime()}", size)
 
             size = connection.recvBlocking(buffer, buffer.size, 5000, false)
-            AppLog.i("SSL received: %d", size)
+            AppLog.d("Handshake: SSL received: %d. TS: ${SystemClock.elapsedRealtime()}", size)
             if (size <= 0) {
-                AppLog.i("SSL receive error")
+                AppLog.e("Handshake: SSL receive error. TS: ${SystemClock.elapsedRealtime()}")
                 return false
             }
 
             ret = ssl.handshakeWrite(6, size - 6, buffer)
-            AppLog.i("SSL BIO write: %d", ret)
+            AppLog.d("Handshake: SSL BIO write: %d. TS: ${SystemClock.elapsedRealtime()}", ret)
         }
 
+        AppLog.d("Handshake: SSL handshake complete. TS: ${SystemClock.elapsedRealtime()}")
         // Status = OK
         val status = Messages.statusOk
         ret = connection.sendBlocking(status, status.size, 5000)
+        AppLog.d("Handshake: Status OK sent. ret: $ret. TS: ${SystemClock.elapsedRealtime()}")
         if (ret < 0) {
-            AppLog.e("Status request sendEncrypted ret: $ret")
+            AppLog.e("Handshake: Status request sendEncrypted ret: $ret")
             return false
         }
 
-        AppLog.i("Status OK sent: %d", ret)
-
+        AppLog.i("Handshake: Status OK sent: %d", ret)
+        AppLog.d("Handshake: Handshake successful. TS: ${SystemClock.elapsedRealtime()}")
         return true
     }
 

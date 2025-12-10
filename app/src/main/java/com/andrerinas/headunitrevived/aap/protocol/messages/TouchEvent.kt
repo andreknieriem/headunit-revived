@@ -1,10 +1,10 @@
 package com.andrerinas.headunitrevived.aap.protocol.messages
 
 import android.view.MotionEvent
-import com.google.protobuf.Message
 import com.andrerinas.headunitrevived.aap.AapMessage
 import com.andrerinas.headunitrevived.aap.protocol.Channel
 import com.andrerinas.headunitrevived.aap.protocol.proto.Input
+import com.google.protobuf.Message
 
 /**
  * @author algavris

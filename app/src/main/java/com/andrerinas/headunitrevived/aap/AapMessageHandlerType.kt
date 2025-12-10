@@ -6,7 +6,6 @@ import com.andrerinas.headunitrevived.decoder.MicRecorder
 import com.andrerinas.headunitrevived.main.BackgroundNotification
 import com.andrerinas.headunitrevived.utils.AppLog
 import com.andrerinas.headunitrevived.utils.Settings
-import java.lang.Exception
 
 /**
  * @author algavris

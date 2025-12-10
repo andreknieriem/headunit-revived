@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
 import com.andrerinas.headunitrevived.utils.AppLog
 

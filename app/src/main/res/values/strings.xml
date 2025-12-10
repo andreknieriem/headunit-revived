@@ -12,7 +12,7 @@
     <string name="video">Android Auto</string>
     <string name="title">Headunit Revived</string>
     <string name="remove">Remove</string>
-    <string name="usb">Usb</string>
+    <string name="usb">USB</string>
     <string name="wifi">WiFi</string>
     <string name="mic_sample_rate">"Mic sample rate: %dkHz"</string>
     <string name="keymap">Keymap</string>

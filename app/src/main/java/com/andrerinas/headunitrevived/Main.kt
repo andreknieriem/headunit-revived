@@ -1,9 +1,5 @@
 package com.andrerinas.headunitrevived
 
-import com.andrerinas.headunitrevived.aap.protocol.proto.Control
-import com.andrerinas.headunitrevived.aap.protocol.proto.Media
-import com.andrerinas.headunitrevived.aap.protocol.proto.Sensors
-
 import java.util.Locale
 
 /**

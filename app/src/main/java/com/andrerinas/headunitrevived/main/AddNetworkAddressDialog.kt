@@ -1,19 +1,14 @@
 package com.andrerinas.headunitrevived.main
 
 import android.app.AlertDialog
-import android.content.Context
-import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.EditText
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
-import com.andrerinas.headunitrevived.App
 import com.andrerinas.headunitrevived.R
 import com.andrerinas.headunitrevived.utils.AppLog
-import com.andrerinas.headunitrevived.utils.toInetAddress
-import java.net.Inet4Address
 import java.net.InetAddress
 
 class AddNetworkAddressDialog : DialogFragment() {

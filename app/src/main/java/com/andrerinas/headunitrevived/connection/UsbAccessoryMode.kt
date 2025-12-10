@@ -1,13 +1,11 @@
 package com.andrerinas.headunitrevived.connection
 
-import android.app.PendingIntent
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbManager
-
-import com.andrerinas.headunitrevived.utils.AppLog
 import com.andrerinas.headunitrevived.aap.Utils
+import com.andrerinas.headunitrevived.utils.AppLog
 
 /**
  * @author algavris

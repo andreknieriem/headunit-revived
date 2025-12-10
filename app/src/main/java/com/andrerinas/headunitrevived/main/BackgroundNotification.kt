@@ -1,16 +1,16 @@
 package com.andrerinas.headunitrevived.main
 
+import android.app.PendingIntent
 import android.content.Context
 import android.graphics.BitmapFactory
-import androidx.core.app.NotificationCompat
-import com.andrerinas.headunitrevived.R
-import android.app.PendingIntent
+import android.os.Build
 import android.view.KeyEvent
+import androidx.core.app.NotificationCompat
 import com.andrerinas.headunitrevived.App
+import com.andrerinas.headunitrevived.R
 import com.andrerinas.headunitrevived.aap.AapProjectionActivity
 import com.andrerinas.headunitrevived.aap.protocol.proto.MediaPlayback
 import com.andrerinas.headunitrevived.contract.MediaKeyIntent
-
 
 /**
  * @author algavris
@@ -41,7 +41,8 @@ class BackgroundNotification(private val context: Context) {
                 .setSubText(String.format("Remaining: %02d:%02d", metadata.duration / 60, metadata.duration % 60))
                 .setSmallIcon(R.drawable.ic_stat_aa)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setContentIntent(PendingIntent.getActivity(context, 0, AapProjectionActivity.intent(context), PendingIntent.FLAG_UPDATE_CURRENT))
+                .setContentIntent(PendingIntent.getActivity(context, 0, AapProjectionActivity.intent(context),
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_UPDATE_CURRENT))
                 .addAction(R.drawable.ic_skip_previous_black_24dp, "Previous", prev)
                 .addAction(R.drawable.ic_play_arrow_black_24dp, "Play/Pause", playPause)
                 .addAction(R.drawable.ic_skip_next_black_24dp, "Next", next)

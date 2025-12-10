@@ -5,9 +5,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.location.Location
 import com.andrerinas.headunitrevived.aap.protocol.proto.Control
-
-import java.util.HashSet
-
 import com.andrerinas.headunitrevived.connection.UsbDeviceCompat
 
 /**
