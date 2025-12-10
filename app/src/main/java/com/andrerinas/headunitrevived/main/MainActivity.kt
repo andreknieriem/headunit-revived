@@ -196,12 +196,14 @@ class MainActivity : FragmentActivity() {
 
     private fun updateIpAddressView() {
         var ipAddress: String? = null
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // API 23+ (for getActiveNetwork)
             val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val activeNetwork = connectivityManager.activeNetwork
-            val linkProperties = connectivityManager.getLinkProperties(activeNetwork)
-            ipAddress = linkProperties?.linkAddresses?.find { it.address is Inet4Address }?.address?.hostAddress
-        } else {
+            val activeNetwork = connectivityManager.activeNetwork // API 23
+            if (activeNetwork != null) {
+                val linkProperties = connectivityManager.getLinkProperties(activeNetwork) // API 21
+                ipAddress = linkProperties?.linkAddresses?.find { it.address is Inet4Address }?.address?.hostAddress
+            }
+        } else { // API 19, 20, 21, 22
             val wifiManager = App.provide(this).wifiManager
             @Suppress("DEPRECATION")
             val currentIp = wifiManager.connectionInfo.ipAddress

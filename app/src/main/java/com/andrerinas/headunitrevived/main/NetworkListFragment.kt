@@ -78,11 +78,11 @@ class NetworkListFragment : Fragment() {
 
     private fun updateCurrentAddress() {
         var ipAddress: InetAddress? = null
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // API 23+ (for getActiveNetwork)
             val activeNetwork = connectivityManager.activeNetwork
             val linkProperties = connectivityManager.getLinkProperties(activeNetwork)
             ipAddress = linkProperties?.linkAddresses?.find { it.address is Inet4Address }?.address
-        } else {
+        } else { // API 19, 20, 21, 22
             @Suppress("DEPRECATION")
             val wifiManager = App.provide(requireContext()).wifiManager
             @Suppress("DEPRECATION")
