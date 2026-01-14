@@ -14,7 +14,10 @@ class RemoteControlReceiver : BroadcastReceiver() {
         if (Intent.ACTION_MEDIA_BUTTON == intent.action) {
             intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)?.let { event ->
                 AppLog.i("ACTION_MEDIA_BUTTON: " + event.keyCode)
-                App.provide(context).transport.send(event.keyCode, event.action == KeyEvent.ACTION_DOWN)
+                val transport = App.provide(context).transport
+                if (transport.isAlive) {
+                    transport.send(event.keyCode, event.action == KeyEvent.ACTION_DOWN)
+                }
             }
         }
     }

@@ -29,7 +29,7 @@ class AapBroadcastReceiver : BroadcastReceiver() {
         val component = App.provide(context)
         if (intent.action == LocationUpdateIntent.action) {
             val location = LocationUpdateIntent.extractLocation(intent)
-            if (component.settings.useGpsForNavigation) {
+            if (component.settings.useGpsForNavigation && component.transport.isAlive) {
                 App.provide(context).transport.send(LocationUpdateEvent(location))
             }
 
@@ -43,8 +43,10 @@ class AapBroadcastReceiver : BroadcastReceiver() {
                 @Suppress("DEPRECATION")
                 intent.getParcelableExtra(KeyIntent.extraEvent)
             }
-            event?.let {
-                component.transport.send(it.keyCode, it.action == KeyEvent.ACTION_DOWN)
+            if (component.transport.isAlive) {
+                event?.let {
+                    component.transport.send(it.keyCode, it.action == KeyEvent.ACTION_DOWN)
+                }
             }
         } else if (intent.action == ProjectionActivityRequest.action){
             if (component.transport.isAlive) {

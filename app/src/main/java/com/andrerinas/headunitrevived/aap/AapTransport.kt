@@ -277,6 +277,12 @@ class AapTransport(
         }
     }
     fun send(keyCode: Int, isPress: Boolean) {
+        // Check if transport is alive before processing steering wheel buttons
+        if (!isAlive) {
+            AppLog.w("AapTransport not alive, ignoring key event: $keyCode")
+            return
+        }
+
         val mapped = keyCodes[keyCode] ?: keyCode
         val aapKeyCode = KeyCode.convert(mapped)
 

@@ -21,7 +21,13 @@ object SslContextFactory {
         val keyManager = SingleKeyKeyManager(context)
 
         // Create an SSLContext that uses our KeyManager and the trust-all TrustManager
-        val sslContext = SSLContext.getInstance("TLSv1.2")
+        // Try TLSv1.2 first (for Android 5+), fall back to TLS for Android 4.3
+        val sslContext = try {
+            SSLContext.getInstance("TLSv1.2")
+        } catch (e: Exception) {
+            // Android 4.3 and below don't support TLSv1.2, use generic TLS instead
+            SSLContext.getInstance("TLS")
+        }
         sslContext.init(arrayOf(keyManager), trustAllCerts, SecureRandom())
 
         return sslContext
