@@ -99,7 +99,7 @@ class Settings(context: Context) {
     var viewMode: ViewMode
         get() {
             val value = prefs.getInt("view-mode", 0)
-            return ViewMode.fromInt(value)!!
+            return ViewMode.fromInt(value) ?: ViewMode.SURFACE
         }
         set(viewMode) {
             prefs.edit().putInt("view-mode", viewMode.value).apply()
