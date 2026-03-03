@@ -27,6 +27,7 @@ import com.andrerinas.headunitrevived.R
 import com.andrerinas.headunitrevived.aap.protocol.messages.NightModeEvent
 import com.andrerinas.headunitrevived.connection.AccessoryConnection
 import com.andrerinas.headunitrevived.connection.NetworkDiscovery
+import com.andrerinas.headunitrevived.connection.WifiDirectManager
 import android.support.v4.media.session.MediaSessionCompat
 import com.andrerinas.headunitrevived.connection.SocketAccessoryConnection
 import com.andrerinas.headunitrevived.connection.UsbAccessoryConnection
@@ -54,6 +55,7 @@ class AapService : Service(), UsbReceiver.Listener {
     private var accessoryConnection: AccessoryConnection? = null
     private lateinit var usbReceiver: UsbReceiver
     private var nightModeManager: NightModeManager? = null
+    private var wifiDirectManager: WifiDirectManager? = null
     private var wirelessServer: WirelessServer? = null
     private var mediaSession: MediaSessionCompat? = null
 
@@ -124,6 +126,7 @@ class AapService : Service(), UsbReceiver.Listener {
         uiModeManager.enableCarMode(0);
 
         usbReceiver = UsbReceiver(this);
+        wifiDirectManager = WifiDirectManager(this);
         
         nightModeManager = NightModeManager(this, App.provide(this).settings) { isNight ->
             AppLog.i("NightMode update: $isNight")
@@ -144,6 +147,7 @@ class AapService : Service(), UsbReceiver.Listener {
         val mode = App.provide(this).settings.wifiConnectionMode
         if (mode == 2) {
             startWirelessServer();
+            wifiDirectManager?.makeVisible();
         }
 
         checkAlreadyConnectedUsb();
@@ -338,6 +342,7 @@ class AapService : Service(), UsbReceiver.Listener {
         isConnecting.set(false)
         stopForeground(true)
         stopWirelessServer();
+        wifiDirectManager?.stop();
         cancelUsbStabilityCheck()
         serviceJob.cancel();
         onDisconnect();
