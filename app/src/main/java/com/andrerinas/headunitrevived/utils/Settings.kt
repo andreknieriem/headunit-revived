@@ -166,9 +166,24 @@ class Settings(context: Context) {
         get() = prefs.getInt("margin-bottom", 0)
         set(value) { prefs.edit().putInt("margin-bottom", value).apply() }
 
+    var fullscreenMode: FullscreenMode
+        get() {
+            // Migration logic
+            if (!prefs.contains("fullscreen-mode") && prefs.contains("start-in-fullscreen-mode")) {
+                val old = prefs.getBoolean("start-in-fullscreen-mode", true)
+                val migrated = if (old) FullscreenMode.IMMERSIVE else FullscreenMode.NONE
+                prefs.edit().putInt("fullscreen-mode", migrated.value).apply()
+                return migrated
+            }
+            val value = prefs.getInt("fullscreen-mode", FullscreenMode.IMMERSIVE.value)
+            return FullscreenMode.fromInt(value) ?: FullscreenMode.IMMERSIVE
+        }
+        set(value) { prefs.edit().putInt("fullscreen-mode", value.value).apply() }
+
+    @Deprecated("Use fullscreenMode instead")
     var startInFullscreenMode: Boolean
-        get() = prefs.getBoolean("start-in-fullscreen-mode", true)
-        set(value) { prefs.edit().putBoolean("start-in-fullscreen-mode", value).apply() }
+        get() = fullscreenMode != FullscreenMode.NONE
+        set(value) { fullscreenMode = if (value) FullscreenMode.IMMERSIVE else FullscreenMode.NONE }
 
     var forceSoftwareDecoding: Boolean
         get() = prefs.getBoolean("force-software-decoding", false)
@@ -427,6 +442,17 @@ class Settings(context: Context) {
 
         companion object {
             private val map = values().associateBy(ScreenOrientation::value)
+            fun fromInt(value: Int) = map[value]
+        }
+    }
+
+    enum class FullscreenMode(val value: Int) {
+        NONE(0),
+        IMMERSIVE(1),
+        STATUS_ONLY(2);
+
+        companion object {
+            private val map = values().associateBy(FullscreenMode::value)
             fun fromInt(value: Int) = map[value]
         }
     }

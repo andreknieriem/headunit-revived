@@ -63,8 +63,11 @@
     <string name="margin_right">Rechts</string>
     <string name="margin_bottom">Unten</string>
 
-    <string name="start_in_fullscreen_mode">Im Vollbildmodus starten</string>
-    <string name="start_in_fullscreen_mode_description">Vollbildmodus umschalten. Neustart erforderlich.</string>
+    <string name="start_in_fullscreen_mode">Bildschirm-Modus</string>
+    <string name="start_in_fullscreen_mode_description">Legt fest, wie Systemleisten (Status- und Navigationsleiste) behandelt werden.</string>
+    <string name="fullscreen_none">Normal (Alle Leisten sichtbar)</string>
+    <string name="fullscreen_immersive">Vollbild (Alle Leisten ausgeblendet)</string>
+    <string name="fullscreen_status_only">Nur Statusleiste ausblenden</string>
 
     <string name="usb_status">USB Status: %s</string>
     <string name="projection_status">Projektions-Status: %s</string>

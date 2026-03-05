@@ -123,7 +123,7 @@ class MainActivity : BaseActivity() {
     private fun setFullscreen() {
         val root = findViewById<View>(R.id.root)
         val appSettings = Settings(this)
-        SystemUI.apply(window, root, appSettings.startInFullscreenMode)
+        SystemUI.apply(window, root, appSettings.fullscreenMode)
     }
 
     override fun onResume() {

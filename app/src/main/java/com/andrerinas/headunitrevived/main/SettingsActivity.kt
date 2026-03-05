@@ -28,7 +28,7 @@ class SettingsActivity : BaseActivity() {
         navController.graph = navGraph
         
         val root = findViewById<View>(R.id.settings_nav_host)
-        SystemUI.apply(window, root, appSettings.startInFullscreenMode)
+        SystemUI.apply(window, root, appSettings.fullscreenMode)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -36,7 +36,7 @@ class SettingsActivity : BaseActivity() {
         if (hasFocus) {
             val appSettings = Settings(this)
             val root = findViewById<View>(R.id.settings_nav_host)
-            SystemUI.apply(window, root, appSettings.startInFullscreenMode)
+            SystemUI.apply(window, root, appSettings.fullscreenMode)
         }
     }
 }
