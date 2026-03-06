@@ -43,6 +43,7 @@ import com.andrerinas.headunitrevived.utils.LocaleHelper
 import com.andrerinas.headunitrevived.utils.NightModeManager
 import com.andrerinas.headunitrevived.utils.Settings
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.net.ServerSocket
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicBoolean
@@ -1005,6 +1006,7 @@ class AapService : Service(), UsbReceiver.Listener {
         var isScanning = false;
         private val isConnecting = AtomicBoolean(false)
         var pendingSocket: java.net.Socket? = null;
+        val wifiDirectName = MutableStateFlow<String?>(null)
         const val ACTION_START_SELF_MODE = "com.andrerinas.headunitrevived.ACTION_START_SELF_MODE";
         const val ACTION_START_WIRELESS = "com.andrerinas.headunitrevived.ACTION_START_WIRELESS";
         const val ACTION_START_WIRELESS_SCAN = "com.andrerinas.headunitrevived.ACTION_START_WIRELESS_SCAN";

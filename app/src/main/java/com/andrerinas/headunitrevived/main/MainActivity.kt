@@ -20,6 +20,9 @@ import com.andrerinas.headunitrevived.utils.AppLog
 import com.andrerinas.headunitrevived.utils.Settings
 import com.andrerinas.headunitrevived.utils.SetupWizard
 import com.andrerinas.headunitrevived.utils.SystemUI
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : BaseActivity() {
 
@@ -79,6 +82,24 @@ class MainActivity : BaseActivity() {
         requestPermissions()
         viewModel.register()
         handleIntent(intent)
+        setupWifiDirectInfo()
+    }
+
+    private fun setupWifiDirectInfo() {
+        val tvInfo = findViewById<android.widget.TextView>(R.id.wifi_direct_info)
+        val settings = Settings(this)
+
+        lifecycleScope.launch {
+            AapService.wifiDirectName.collectLatest { name ->
+                val isHelperMode = settings.wifiConnectionMode == 2
+                if (isHelperMode && name != null) {
+                    tvInfo.text = "WiFi Direct: $name"
+                    tvInfo.visibility = View.VISIBLE
+                } else {
+                    tvInfo.visibility = View.GONE
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
