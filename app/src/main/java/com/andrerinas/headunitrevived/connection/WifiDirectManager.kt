@@ -85,7 +85,9 @@ class WifiDirectManager(private val context: Context) {
                 isGroupOwner = true
                 manager?.discoverPeers(channel, null)
             }
-            override fun onFailure(reason: Int) {}
+            override fun onFailure(reason: Int) {
+                AppLog.w("WifiDirectManager: createGroup failed with reason: $reason")
+            }
         })
     }
 
