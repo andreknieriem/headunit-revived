@@ -63,8 +63,11 @@
     <string name="margin_right">Right</string>
     <string name="margin_bottom">Bottom</string>
 
-    <string name="start_in_fullscreen_mode">Start in full screen mode</string>
-    <string name="start_in_fullscreen_mode_description">Toggle full screen mode. You need to restart the app to apply the changes.</string>
+    <string name="start_in_fullscreen_mode">Screen mode</string>
+    <string name="start_in_fullscreen_mode_description">Choose how system bars (status and navigation) should be handled.</string>
+    <string name="fullscreen_none">Normal (All bars visible)</string>
+    <string name="fullscreen_immersive">Immersive (All bars hidden)</string>
+    <string name="fullscreen_status_only">Hide status bar only</string>
 
     <string name="usb_status">USB Status: %s</string>
     <string name="projection_status">Projection Status: %s</string>
