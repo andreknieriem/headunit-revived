@@ -2,7 +2,9 @@ package com.andrerinas.headunitrevived.connection
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
+import android.os.Build
 import com.andrerinas.headunitrevived.utils.AppLog
 
 class WifiDirectManager(private val context: Context) {
@@ -12,28 +14,54 @@ class WifiDirectManager(private val context: Context) {
     private var isGroupOwner = false
 
     init {
-        manager?.let {
-            channel = it.initialize(context, context.mainLooper, null)
+        manager?.let { mgr ->
+            val c = mgr.initialize(context, context.mainLooper, null)
+            channel = c
+            
+            // Only use requestDeviceInfo on Android 10+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                mgr.requestDeviceInfo(c, object : WifiP2pManager.DeviceInfoListener {
+                    override fun onDeviceInfoAvailable(device: WifiP2pDevice?) {
+                        device?.let {
+                            AppLog.i("WifiDirectManager: Local Device Name: ${it.deviceName}")
+                        }
+                    }
+                })
+            } else {
+                AppLog.i("WifiDirectManager: Pre-Android 10 device. Name logging via requestDeviceInfo not available.")
+            }
         }
     }
 
     @SuppressLint("MissingPermission")
     fun makeVisible() {
-        if (manager == null || channel == null) {
+        val mgr = manager
+        val ch = channel
+        if (mgr == null || ch == null) {
             AppLog.e("WifiDirectManager: P2P Manager not available.")
             return
         }
 
-        // First, clear any existing groups to start fresh
-        manager.removeGroup(channel, object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-                createNewGroup()
-            }
+        // Try to set a custom device name via reflection (Works on many pre-Android 10 devices)
+        try {
+            val method = mgr.javaClass.getMethod(
+                "setDeviceName",
+                WifiP2pManager.Channel::class.java,
+                String::class.java,
+                WifiP2pManager.ActionListener::class.java
+            )
+            method.invoke(mgr, ch, "HURev-Tablet", object : WifiP2pManager.ActionListener {
+                override fun onSuccess() { AppLog.i("WifiDirectManager: Device name changed to HURev-Tablet") }
+                override fun onFailure(reason: Int) { AppLog.w("WifiDirectManager: Failed to change device name: $reason") }
+            })
+        } catch (e: Exception) {
+            AppLog.w("WifiDirectManager: Reflection setDeviceName failed: ${e.message}")
+        }
 
-            override fun onFailure(reason: Int) {
-                // Even if it fails (no group exists), try to create one
-                createNewGroup()
-            }
+        // Reset state
+        mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() { createNewGroup() }
+            override fun onFailure(reason: Int) { createNewGroup() }
         })
     }
 
@@ -43,6 +71,12 @@ class WifiDirectManager(private val context: Context) {
             override fun onSuccess() {
                 AppLog.i("WifiDirectManager: P2P Group created successfully. Tablet is now visible.")
                 isGroupOwner = true
+                
+                // Active discovery to be "loud" in the air
+                manager?.discoverPeers(channel, object : WifiP2pManager.ActionListener {
+                    override fun onSuccess() { AppLog.d("WifiDirectManager: Discovery started.") }
+                    override fun onFailure(reason: Int) { AppLog.w("WifiDirectManager: Discovery failed: $reason") }
+                })
             }
 
             override fun onFailure(reason: Int) {
@@ -53,14 +87,7 @@ class WifiDirectManager(private val context: Context) {
 
     fun stop() {
         if (isGroupOwner && manager != null && channel != null) {
-            manager.removeGroup(channel, object : WifiP2pManager.ActionListener {
-                override fun onSuccess() {
-                    AppLog.i("WifiDirectManager: P2P Group removed.")
-                }
-                override fun onFailure(reason: Int) {
-                    AppLog.e("WifiDirectManager: Failed to remove P2P group.")
-                }
-            })
+            manager.removeGroup(channel, null)
         }
     }
 }
