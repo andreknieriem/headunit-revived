@@ -42,7 +42,7 @@ class WifiDirectManager(private val context: Context) {
                 val ch = mgr.initialize(context, context.mainLooper, null)
                 channel = ch
                 
-                context.registerReceiver(receiver, IntentFilter(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION))
+                ContextCompat.registerReceiver(context, receiver, IntentFilter(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION), ContextCompat.RECEIVER_NOT_EXPORTED)
 
                 // Initial request for older devices
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
