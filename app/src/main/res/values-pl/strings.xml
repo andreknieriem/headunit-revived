@@ -270,4 +270,20 @@
     <string name="shortcut_night_mode_day_desc">Wymuś tryb dzienny</string>
     <string name="shortcut_night_mode_night_title">Tryb: Noc</string>
     <string name="shortcut_night_mode_night_desc">Wymuś tryb nocny</string>
+    <string name="setup_welcome_title">Szybka konfiguracja</string>
+    <string name="setup_welcome_msg">Ten asystent pomoże Ci wybrać najlepsze ustawienia dla płynnego działania Android Auto.\n\nZawsze możesz zmienić te ustawienia później w ustawieniach aplikacji.</string>
+    <string name="setup_start">Uruchom</string>
+    <string name="setup_size_title">Rozmiar wyświetlacza</string>
+    <string name="setup_size_phone">Telefon / Mały (4-6\")</string>
+    <string name="setup_size_small">Mały tablet (7-8\")</string>
+    <string name="setup_size_standard">Standardowy (9-10\")</string>
+    <string name="setup_size_large">Duży (11\"+)</string>
+    <string name="setup_orientation_title">Orientacja urządzenia</string>
+    <string name="setup_orientation_landscape">Pozioma</string>
+    <string name="setup_orientation_portrait">Pionowa</string>
+    <string name="setup_result_title">Optymalizacja zakończona</string>
+    <string name="setup_apply">Zastosuj</string>
+    <string name="setup_widescreen_detected">Wykryto panoramiczny wyświetlacz.</string>
+    <string name="auto_optimize">Automatycznie optymalizuj ustawienia</string>
+    <string name="auto_optimize_desc">Uruchom sprawdzanie systemu, aby znaleźć najlepsze ustawienia dla swojego urządzenia.</string>
 </resources>

@@ -270,4 +270,20 @@
     <string name="shortcut_night_mode_day_desc">Примусовий денний режим</string>
     <string name="shortcut_night_mode_night_title">Режим: Ніч</string>
     <string name="shortcut_night_mode_night_desc">Примусовий нічний режим</string>
+    <string name="setup_welcome_title">Швидке налаштування</string>
+    <string name="setup_welcome_msg">Цей майстер допоможе вам вибрати найкращі налаштування для стабільної роботи Android Auto.\n\nВи завжди можете змінити ці параметри пізніше в налаштуваннях програми.</string>
+    <string name="setup_start">Почати</string>
+    <string name="setup_size_title">Розмір дисплея</string>
+    <string name="setup_size_phone">Смартфон / Маленький (4-6\")</string>
+    <string name="setup_size_small">Маленький планшет (7-8\")</string>
+    <string name="setup_size_standard">Стандартний (9-10\")</string>
+    <string name="setup_size_large">Великий (11\"+)</string>
+    <string name="setup_orientation_title">Орієнтація пристрою</string>
+    <string name="setup_orientation_landscape">Альбомна (горизонтально)</string>
+    <string name="setup_orientation_portrait">Портретна (вертикально)</string>
+    <string name="setup_result_title">Оптимізацію завершено</string>
+    <string name="setup_apply">Застосувати</string>
+    <string name="setup_widescreen_detected">Виявлено широкоформатний дисплей.</string>
+    <string name="auto_optimize">Автоматично оптимізувати налаштування</string>
+    <string name="auto_optimize_desc">Запустити перевірку системи, щоб знайти найкращі налаштування для вашого пристрою.</string>
 </resources>

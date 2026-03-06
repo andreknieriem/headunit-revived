@@ -269,4 +269,20 @@
     <string name="shortcut_night_mode_day_desc">強制日間模式</string>
     <string name="shortcut_night_mode_night_title">模式：夜間</string>
     <string name="shortcut_night_mode_night_desc">強制夜間模式</string>
+    <string name="setup_welcome_title">快速設定</string>
+    <string name="setup_welcome_msg">此嚮導將協助您選擇最佳設定，以獲得流暢的 Android Auto 體驗。\n\n您稍後隨時可以在應用程式設定中更改這些設定。</string>
+    <string name="setup_start">開始</string>
+    <string name="setup_size_title">螢幕尺寸</string>
+    <string name="setup_size_phone">手機 / 小型 (4-6\")</string>
+    <string name="setup_size_small">小型平板 (7-8\")</string>
+    <string name="setup_size_standard">標準 (9-10\")</string>
+    <string name="setup_size_large">大型 (11\"+)</string>
+    <string name="setup_orientation_title">裝置方向</string>
+    <string name="setup_orientation_landscape">橫向</string>
+    <string name="setup_orientation_portrait">縱向</string>
+    <string name="setup_result_title">最佳化完成</string>
+    <string name="setup_apply">套用</string>
+    <string name="setup_widescreen_detected">偵測到寬螢幕顯示。</string>
+    <string name="auto_optimize">自動最佳化設定</string>
+    <string name="auto_optimize_desc">執行系統檢查，為您的裝置尋找最佳設定。</string>
 </resources>

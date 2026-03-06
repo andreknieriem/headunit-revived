@@ -205,6 +205,10 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("has-accepted-disclaimer", false)
         set(value) { prefs.edit().putBoolean("has-accepted-disclaimer", value).apply() }
 
+    var hasCompletedSetupWizard: Boolean
+        get() = prefs.getBoolean("has-completed-setup-wizard", false)
+        set(value) { prefs.edit().putBoolean("has-completed-setup-wizard", value).apply() }
+
     var autoConnectLastSession: Boolean
         get() = prefs.getBoolean("auto-connect-last-session", false)
         set(value) { prefs.edit().putBoolean("auto-connect-last-session", value).apply() }

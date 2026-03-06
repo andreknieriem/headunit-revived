@@ -15,8 +15,6 @@
         android:id="@+id/settingName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
         android:textColor="?android:attr/textColorPrimary"
         android:textSize="16sp"
         tools:text="Stability timeout" />
@@ -26,8 +24,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:maxLines="1"
         android:textColor="?android:attr/textColorSecondary"
         android:textSize="14sp"
         tools:text="10 s" />

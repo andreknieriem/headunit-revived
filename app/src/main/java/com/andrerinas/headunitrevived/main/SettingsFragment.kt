@@ -380,6 +380,18 @@ class SettingsFragment : Fragment() {
         // --- General Settings ---
         items.add(SettingItem.CategoryHeader("general", R.string.category_general))
 
+        // Auto-Optimize Wizard
+        items.add(SettingItem.SettingEntry(
+            stableId = "autoOptimize",
+            nameResId = R.string.auto_optimize,
+            value = getString(R.string.auto_optimize_desc),
+            onClick = { _ ->
+                com.andrerinas.headunitrevived.utils.SetupWizard(requireContext()) {
+                    requireActivity().recreate()
+                }.start()
+            }
+        ))
+
         // Language Selector
         val availableLocales = LocaleHelper.getAvailableLocales(requireContext())
         val currentLocale = LocaleHelper.stringToLocale(pendingAppLanguage ?: "")
@@ -454,29 +466,20 @@ class SettingsFragment : Fragment() {
                 nameResId = R.string.night_mode_threshold,
                 value = "$currentValue $unit",
                 onClick = { _ ->
-                    val editView = EditText(requireContext())
-                    editView.inputType = InputType.TYPE_CLASS_NUMBER
-                    editView.setText(currentValue.toString())
-                    
-                    MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
-                        .setTitle(R.string.enter_threshold_value)
-                        .setMessage(desc)
-                        .setView(editView)
-                        .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                            val newVal = editView.text.toString().toIntOrNull()
-                            if (newVal != null && newVal >= 0) {
-                                if (isSensor) {
-                                    pendingThresholdLux = newVal
-                                } else {
-                                    pendingThresholdBrightness = newVal
-                                }
-                                checkChanges()
-                                updateSettingsList()
+                    showNumericInputDialog(
+                        title = getString(R.string.enter_threshold_value),
+                        message = desc,
+                        initialValue = currentValue ?: 0,
+                        onConfirm = { newVal ->
+                            if (isSensor) {
+                                pendingThresholdLux = newVal
+                            } else {
+                                pendingThresholdBrightness = newVal
                             }
-                            dialog.dismiss()
+                            checkChanges()
+                            updateSettingsList()
                         }
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show()
+                    )
                 }
             ))
         }
@@ -684,30 +687,16 @@ class SettingsFragment : Fragment() {
             nameResId = R.string.dpi,
             value = if (pendingDpi == 0) getString(R.string.auto) else pendingDpi.toString(),
             onClick = { _ ->
-                val editView = EditText(requireContext())
-                editView.inputType = InputType.TYPE_CLASS_NUMBER
-                if (pendingDpi != 0) {
-                    editView.setText(pendingDpi.toString())
-                }
-
-                AlertDialog.Builder(requireContext())
-                    .setTitle(R.string.enter_dpi_value)
-                    .setView(editView)
-                    .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                        val inputText = editView.text.toString().trim()
-                        val newDpi = inputText.toIntOrNull()
-                        if (newDpi != null && newDpi >= 0) {
-                            pendingDpi = newDpi
-                        } else {
-                            pendingDpi = 0
-                        }
+                showNumericInputDialog(
+                    title = getString(R.string.enter_dpi_value),
+                    message = null,
+                    initialValue = pendingDpi ?: 0,
+                    onConfirm = { newVal ->
+                        pendingDpi = newVal
                         checkChanges()
-                        dialog.dismiss()
                         updateSettingsList()
                     }
-                                    .setNegativeButton(R.string.cancel) { dialog, _ ->
-                                        dialog.cancel()
-                                    }                    .show()
+                )
             }
         ))
 
@@ -1242,6 +1231,43 @@ class SettingsFragment : Fragment() {
             .setPositiveButton(R.string.enable) { _, _ -> onConfirm() }
             .setNegativeButton(R.string.cancel) { _, _ -> onCancel() }
             .setOnCancelListener { onCancel() }
+            .show()
+    }
+
+    private fun showNumericInputDialog(
+        title: String,
+        message: String?,
+        initialValue: Int,
+        onConfirm: (Int) -> Unit
+    ) {
+        val context = requireContext()
+        val editView = EditText(context).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText(if (initialValue == 0 && title.contains("DPI", true)) "" else initialValue.toString())
+        }
+
+        // Use a container to add padding around the EditText
+        val container = android.widget.FrameLayout(context)
+        val params = android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+        )
+        val margin = (24 * context.resources.displayMetrics.density).toInt()
+        params.setMargins(margin, 8, margin, 8)
+        container.addView(editView, params)
+
+        MaterialAlertDialogBuilder(context, R.style.DarkAlertDialog)
+            .setTitle(title)
+            .apply { if (message != null) setMessage(message) }
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                val newVal = (editView.text.toString().toIntOrNull() ?: 0).coerceAtLeast(0)
+                onConfirm(newVal)
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                dialog.cancel()
+            }
             .show()
     }
 

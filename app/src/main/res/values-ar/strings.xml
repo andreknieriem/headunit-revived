@@ -270,4 +270,20 @@
     <string name="retry_connection_option">إعادة محاولة Android Auto</string>
     <string name="reset_usb_option">إعادة تعيين اتصال USB</string>
     <string name="reset_usb_timeout">لم يتم العثور على جهاز USB. يرجى التحقق من الاتصال.</string>
+    <string name="setup_welcome_title">إعداد سريع</string>
+    <string name="setup_welcome_msg">يساعدك هذا المعالج في اختيار أفضل الإعدادات لتجربة Android Auto سلسة.\n\nيمكنك دائمًا تغيير هذه الإعدادات لاحقًا من إعدادات التطبيق.</string>
+    <string name="setup_start">بدء</string>
+    <string name="setup_size_title">حجم الشاشة</string>
+    <string name="setup_size_phone">هاتف / صغير (4-6 بوصة)</string>
+    <string name="setup_size_small">جهاز لوحي صغير (7-8 بوصة)</string>
+    <string name="setup_size_standard">قياسي (9-10 بوصة)</string>
+    <string name="setup_size_large">كبير (11+ بوصة)</string>
+    <string name="setup_orientation_title">اتجاه الجهاز</string>
+    <string name="setup_orientation_landscape">عرضي (أفقي)</string>
+    <string name="setup_orientation_portrait">طولي (رأسي)</string>
+    <string name="setup_result_title">اكتملت الأمثلة</string>
+    <string name="setup_apply">تطبيق</string>
+    <string name="setup_widescreen_detected">تم اكتشاف شاشة عريضة.</string>
+    <string name="auto_optimize">تحسين الإعدادات تلقائياً</string>
+    <string name="auto_optimize_desc">قم بتشغيل فحص النظام للعثور على أفضل الإعدادات لجهازك.</string>
 </resources>

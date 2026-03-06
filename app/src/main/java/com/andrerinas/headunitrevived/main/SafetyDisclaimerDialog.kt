@@ -41,6 +41,7 @@ class SafetyDisclaimerDialog : DialogFragment() {
             // Save setting
             App.provide(requireContext()).settings.hasAcceptedDisclaimer = true
             dismiss()
+            (activity as? MainActivity)?.checkSetupFlow()
         }
 
         return view

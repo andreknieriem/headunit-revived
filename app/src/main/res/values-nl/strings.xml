@@ -269,4 +269,20 @@
     <string name="shortcut_night_mode_day_desc">Forceer dagmodus</string>
     <string name="shortcut_night_mode_night_title">Modus: Nacht</string>
     <string name="shortcut_night_mode_night_desc">Forceer nachtmodus</string>
+    <string name="setup_welcome_title">Snelle installatie</string>
+    <string name="setup_welcome_msg">Deze wizard helpt je bij het kiezen van de beste instellingen voor een soepele Android Auto-ervaring.\n\nJe kunt deze instellingen later altijd wijzigen in de app-instellingen.</string>
+    <string name="setup_start">Starten</string>
+    <string name="setup_size_title">Schermgrootte</string>
+    <string name="setup_size_phone">Telefoon / Klein (4-6\")</string>
+    <string name="setup_size_small">Kleine tablet (7-8\")</string>
+    <string name="setup_size_standard">Standaard (9-10\")</string>
+    <string name="setup_size_large">Groot (11\"+)</string>
+    <string name="setup_orientation_title">Schermoriëntatie</string>
+    <string name="setup_orientation_landscape">Liggend (horizontaal)</string>
+    <string name="setup_orientation_portrait">Staand (verticaal)</string>
+    <string name="setup_result_title">Optimalisatie voltooid</string>
+    <string name="setup_apply">Toepassen</string>
+    <string name="setup_widescreen_detected">Breedbeeldscherm gedetecteerd.</string>
+    <string name="auto_optimize">Instellingen automatisch optimaliseren</string>
+    <string name="auto_optimize_desc">Voer de systeemcontrole uit om de beste instellingen voor je apparaat te vinden.</string>
 </resources>

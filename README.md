@@ -27,31 +27,21 @@ https://github.com/mikereidis/headunit
 - Click the USB Button in Headunit Revived, find your phone and click the right button to allow connection
 - Click on your phone in the list and wait for Android Auto to start
 
-### Wireless Launcher (Recommended)
-This is the most reliable way to connect wirelessly. It uses a launcher utility on your phone to trigger the connection.
+### Wireless Helper (Recommended)
+This is the most reliable way to connect wirelessly. It uses our companion app on your phone to trigger the connection.
 
-- **Option A (New):** Use the [Wireless Helper](https://github.com/andreknieriem/wireless-helper) app. 
-  - Join the **Beta Test** here: [Google Play Store Beta](https://play.google.com/apps/testing/com.andrerinas.wirelesshelper)
-  - Minimal configuration, supports NSD and Bluetooth Auto-Start.
-- **Option B:** Use the original [Wireless Launcher](https://play.google.com/store/apps/details?id=com.borconi.emil.wifilauncherforhur) on your phone.
+- **Download:** [Wireless Helper on Google Play Store](https://play.google.com/store/apps/details?id=com.andrerinas.wirelesshelper)
+- **Features:** Minimal configuration, supports NSD, Wi-Fi Direct Auto-Connect, and Bluetooth Auto-Start.
 
 **Setup:**
 - In Headunit Revived Settings: Set **Wireless Mode** to **Helper Mode**.
 - Ensure both devices are in the same network (Hotspot or WiFi).
-- Open the Launcher App on your phone and start the service.
-- The Launcher will find your headunit and initiate the connection automatically.
+- Open the Wireless Helper app on your phone and start the service.
+- The helper will find your headunit and initiate the connection automatically.
 
-### Wireless Connection (Manual / Native)
-This method uses the native "Headunit Server" built into Android Auto developer settings.
-**Note:** This method may fail on some devices/networks (especially mobile hotspots creating 10.x.x.x networks) due to firewall/routing restrictions on the phone side. If this fails, please use the Wireless Launcher method.
-
-- Open Android Auto Settings on your phone
-- Click on Version and then on version and permission and click several to enable developer settings
-- Go back to Android Auto, click the three dots on the top right and start the infotainment server
-- Now you need to bring your phone and headunit(tablet) into the same network (WiFi).
-- Go to the WiFi Menu in the Headunit Revive App
-- Click scan. If your phone is found, click on the IP to connect.
-- Or: manually add your phones ip address via "Add new" button.
+### Legacy Wireless Options
+- **Wireless Launcher:** You can still use the original [Wireless Launcher](https://play.google.com/store/apps/details?id=com.borconi.emil.wifilauncherforhur) by Emil Borconi.
+- **Manual / Native:** Uses the native "Headunit Server" built into Android Auto developer settings (may fail on 10.x.x.x networks).
 
 ### Connect Wirelessly via Intent (Power Users)
 You can trigger a wireless connection attempt using an Android Intent. This is useful for automation tools like **Tasker**, **MacroDroid**, or via **ADB**.
@@ -64,9 +54,16 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 ```
 
 ## Known Issues
-- **Google Maps in Portrait Mode:** Touch interactions (searching, scrolling) within Google Maps may not work as expected when using Portrait Mode. While visual feedback (like ripple effects) might appear, the map itself may remain unresponsive. This appears to be an internal Android Auto / Google Maps limitation or bug in vertical orientations.
+- **Google Maps in Portrait Mode:** Touch interactions (searching, scrolling) within Google Maps may not work as expected when using Portrait Mode on some devices. **Fix:** Try reducing the **Pixel density (DPI)** setting to **below 200** (e.g., 190) in the app settings. This often restores full functionality.
 
 ## Changelog
+### v.1.15.1
+- New Feature: Added **Auto-Optimization Wizard** to automatically find the best Resolution, DPI, and Codec settings for your hardware.
+- Bugfix: Fixed **Self Mode** failing to start in offline/hotspot scenarios (Network ID 0 fix).
+- Bugfix: Improved **Audio Routing**. The phone is now more likely to route audio to the headunit immediately upon connection by using an early-initialized MediaSession with remote playback metadata.
+- Bugfix: Fixed **GPS Speed** calculation. Speeds were previously doubled due to an incorrect unit conversion (knots instead of mm/s).
+- UI: Improved Settings readability on small screens by allowing multi-line descriptions.
+
 ### v.1.15.0
 - Added arabic language thanks to A5H0
 - Added new intent for setting day/night mode for maps
@@ -301,7 +298,7 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 ## Contributing
 
 Creating release apk needs a keystore file. You can create your own keystore file using the following command in root folder:
-`keytool -genkey -v -keystore headunit-release-key.jks -alias headunit-revived -keyalg RSA -keysize 2048 -validity 10000`  
+`keytool -genkey -v -keystore headunit-release-key.jks -alias headunit-revived -keyalg RSA -keysize 2048 -validity 10000`
 
 After that you need to set the env variables depending on your OS:
 MAC:
@@ -309,7 +306,7 @@ open ~/.zshrc or ~/.bashrc
 
 `sudo nano ~/.zshrc or sudo nano ~/.bashrc`   
 `export HEADUNIT_KEYSTORE_PASSWORD="YOUR_KEYSTORE_PASSWORD"  
-export HEADUNIT_KEY_PASSWORD="YOUR_KEY_PASSWORD"`  
+export HEADUNIT_KEY_PASSWORD="YOUR_KEY_PASSWORD"`
 
 ## Original Headunit
 Headunit for Android Auto (tm)

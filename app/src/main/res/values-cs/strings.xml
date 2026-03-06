@@ -270,4 +270,20 @@
     <string name="retry_connection_option">Opakovat Android Auto</string>
     <string name="reset_usb_option">Resetovat USB připojení</string>
     <string name="reset_usb_timeout">USB zařízení nenalezeno. Zkontrolujte připojení.</string>
+    <string name="setup_welcome_title">Rychlé nastavení</string>
+    <string name="setup_welcome_msg">Tento průvodce vám pomůže vybrat nejlepší nastavení pro plynulý zážitek z Android Auto.\n\nTato nastavení můžete kdykoli změnit později v nastavení aplikace.</string>
+    <string name="setup_start">Spustit</string>
+    <string name="setup_size_title">Velikost displeje</string>
+    <string name="setup_size_phone">Telefon / Malý (4-6\")</string>
+    <string name="setup_size_small">Malý tablet (7-8\")</string>
+    <string name="setup_size_standard">Standardní (9-10\")</string>
+    <string name="setup_size_large">Velký (11\"+)</string>
+    <string name="setup_orientation_title">Orientace zařízení</string>
+    <string name="setup_orientation_landscape">Na šířku (horizontálně)</string>
+    <string name="setup_orientation_portrait">Na výšku (vertikálně)</string>
+    <string name="setup_result_title">Optimalizace dokončena</string>
+    <string name="setup_apply">Použít</string>
+    <string name="setup_widescreen_detected">Detekován širokoúhlý displej.</string>
+    <string name="auto_optimize">Automaticky optimalizovat nastavení</string>
+    <string name="auto_optimize_desc">Spustit kontrolu systému pro nalezení nejlepšího nastavení pro vaše zařízení.</string>
 </resources>

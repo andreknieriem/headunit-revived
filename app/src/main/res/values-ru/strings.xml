@@ -270,4 +270,20 @@
     <string name="retry_connection_option">Повторить Android Auto</string>
     <string name="reset_usb_option">Сбросить USB-подключение</string>
     <string name="reset_usb_timeout">USB-устройство не найдено. Проверьте подключение.</string>
+    <string name="setup_welcome_title">Быстрая настройка</string>
+    <string name="setup_welcome_msg">Этот мастер поможет вам выбрать оптимальные настройки для стабильной работы Android Auto.\n\nВы всегда можете изменить эти параметры позже в настройках приложения.</string>
+    <string name="setup_start">Начать</string>
+    <string name="setup_size_title">Размер дисплея</string>
+    <string name="setup_size_phone">Смартфон / Маленький (4-6\")</string>
+    <string name="setup_size_small">Маленький планшет (7-8\")</string>
+    <string name="setup_size_standard">Стандартный (9-10\")</string>
+    <string name="setup_size_large">Большой (11\"+)</string>
+    <string name="setup_orientation_title">Ориентация устройства</string>
+    <string name="setup_orientation_landscape">Альбомная (Горизонтально)</string>
+    <string name="setup_orientation_portrait">Портретная (Вертикально)</string>
+    <string name="setup_result_title">Оптимизация завершена</string>
+    <string name="setup_apply">Применить</string>
+    <string name="setup_widescreen_detected">Обнаружен широкоформатный дисплей.</string>
+    <string name="auto_optimize">Автоматическая оптимизация</string>
+    <string name="auto_optimize_desc">Запустить проверку системы для подбора лучших настроек для вашего устройства.</string>
 </resources>

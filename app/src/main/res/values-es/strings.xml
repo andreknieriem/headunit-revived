@@ -270,4 +270,20 @@
     <string name="retry_connection_option">Reintentar Android Auto</string>
     <string name="reset_usb_option">Restablecer conexión USB</string>
     <string name="reset_usb_timeout">Dispositivo USB no encontrado. Revise la conexión.</string>
+    <string name="setup_welcome_title">Configuración rápida</string>
+    <string name="setup_welcome_msg">Este asistente te ayuda a elegir la mejor configuración para una experiencia fluida con Android Auto.\n\nSiempre puedes cambiar estos ajustes más tarde o reiniciar este asistente desde la configuración de la aplicación.</string>
+    <string name="setup_start">Comenzar</string>
+    <string name="setup_size_title">Tamaño de pantalla</string>
+    <string name="setup_size_phone">Teléfono / Pequeño (4-6\")</string>
+    <string name="setup_size_small">Tablet pequeña (7-8\")</string>
+    <string name="setup_size_standard">Estándar (9-10\")</string>
+    <string name="setup_size_large">Grande (11\"+)</string>
+    <string name="setup_orientation_title">Orientación del dispositivo</string>
+    <string name="setup_orientation_landscape">Horizontal</string>
+    <string name="setup_orientation_portrait">Vertical</string>
+    <string name="setup_result_title">Optimización finalizada</string>
+    <string name="setup_apply">Aplicar</string>
+    <string name="setup_widescreen_detected">Pantalla panorámica detectada.</string>
+    <string name="auto_optimize">Optimizar ajustes automáticamente</string>
+    <string name="auto_optimize_desc">Ejecuta el chequeo del sistema para encontrar los mejores ajustes para tu dispositivo.</string>
 </resources>

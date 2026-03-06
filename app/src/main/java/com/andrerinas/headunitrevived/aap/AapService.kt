@@ -128,6 +128,23 @@ class AapService : Service(), UsbReceiver.Listener {
         usbReceiver = UsbReceiver(this);
         wifiDirectManager = WifiDirectManager(this);
         
+        // Initialize MediaSession early to be ready for early focus requests
+        mediaSession = MediaSessionCompat(this, "HeadunitRevived").apply {
+            setCallback(object : MediaSessionCompat.Callback() {})
+            setPlaybackToRemote(object : androidx.media.VolumeProviderCompat(
+                androidx.media.VolumeProviderCompat.VOLUME_CONTROL_RELATIVE, 100, 50
+            ) {
+                override fun onAdjustVolume(direction: Int) {
+                    // Handle volume buttons from phone if needed
+                }
+            })
+            setMetadata(android.support.v4.media.MediaMetadataCompat.Builder()
+                .putString(android.support.v4.media.MediaMetadataCompat.METADATA_KEY_TITLE, "Android Auto")
+                .putString(android.support.v4.media.MediaMetadataCompat.METADATA_KEY_ARTIST, "Connected")
+                .build())
+            isActive = true
+        }
+
         nightModeManager = NightModeManager(this, App.provide(this).settings) { isNight ->
             AppLog.i("NightMode update: $isNight")
             App.provide(this).transport.send(NightModeEvent(isNight))
@@ -646,7 +663,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
         val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager;
         val activeNetwork = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) connectivityManager.activeNetwork else null;
-        val networkToUse = activeNetwork ?: createFakeNetwork(99999);
+        val networkToUse = activeNetwork ?: createFakeNetwork(0);
         val fakeWifiInfo = createFakeWifiInfo();
 
         val magicalIntent = Intent().apply {
@@ -710,11 +727,6 @@ class AapService : Service(), UsbReceiver.Listener {
                     updateNotification();
                     sendBroadcast(ConnectedIntent());
                     
-                    // Create MediaSession to get higher audio priority
-                    mediaSession = MediaSessionCompat(this@AapService, "HeadunitRevived").apply {
-                        isActive = true
-                    }
-
                     transport.onAudioFocusStateChanged = { isPlaying ->
                         updateMediaSessionState(isPlaying)
                     }
@@ -766,13 +778,13 @@ class AapService : Service(), UsbReceiver.Listener {
         // Invalidate any in-flight attempts
         connectionAttemptId.incrementAndGet();
 
-        if (wirelessServer != null) {
+        if (wirelessServer != null && !isClean && !isDestroying) {
             AppLog.i("AapService: Disconnected. Restarting discovery loop in 2s...");
             serviceScope.launch {
                 delay(2000);
                 if (!isConnected) startDiscovery();
             }
-        } else if (!isClean) {
+        } else if (!isClean && !isDestroying) {
              val mode = App.provide(this).settings.wifiConnectionMode
              val lastType = App.provide(this).settings.lastConnectionType
              if (mode == 1 && lastType == Settings.CONNECTION_TYPE_WIFI) { // Auto Mode, WiFi only

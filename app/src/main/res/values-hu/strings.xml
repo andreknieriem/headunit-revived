@@ -269,4 +269,20 @@
     <string name="retry_connection_option">Android Auto újrapróbálása</string>
     <string name="reset_usb_option">USB kapcsolat visszaállítása</string>
     <string name="reset_usb_timeout">USB eszköz nem található. Ellenőrizze a csatlakozást.</string>
+    <string name="setup_welcome_title">Gyorsbeállítás</string>
+    <string name="setup_welcome_msg">Ez a varázsló segít kiválasztani a legjobb beállításokat a zökkenőmentes Android Auto élményhez.\n\nEzeket a beállításokat bármikor módosíthatja később az alkalmazás beállításaiban.</string>
+    <string name="setup_start">Indítás</string>
+    <string name="setup_size_title">Kijelző mérete</string>
+    <string name="setup_size_phone">Telefon / Kicsi (4-6\")</string>
+    <string name="setup_size_small">Kis táblagép (7-8\")</string>
+    <string name="setup_size_standard">Normál (9-10\")</string>
+    <string name="setup_size_large">Nagy (11\"+)</string>
+    <string name="setup_orientation_title">Eszköz tájolása</string>
+    <string name="setup_orientation_landscape">Fekvő (vízszintes)</string>
+    <string name="setup_orientation_portrait">Álló (függőleges)</string>
+    <string name="setup_result_title">Optimalizálás kész</string>
+    <string name="setup_apply">Alkalmaz</string>
+    <string name="setup_widescreen_detected">Szélesvásznú kijelző észlelve.</string>
+    <string name="auto_optimize">Beállítások automatikus optimalizálása</string>
+    <string name="auto_optimize_desc">Rendszerellenőrzés futtatása az eszközhöz legjobban illő beállítások megtalálásához.</string>
 </resources>

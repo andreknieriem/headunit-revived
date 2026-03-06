@@ -17,8 +17,8 @@ class LocationUpdateEvent(location: Location)
                             longitude = (location.longitude * 1E7).toInt()
                             altitude = (location.altitude * 1E2).toInt()
                             bearing = (location.bearing * 1E6).toInt()
-                            // AA expects speed in knots, so convert back
-                            speed = (location.speed * 1.94384 * 1E3).toInt()
+                            // AA expects speed in mm/s (m/s * 1000)
+                            speed = (location.speed * 1E3).toInt()
                             accuracy = (location.accuracy * 1E3).toInt()
                         }
                 )

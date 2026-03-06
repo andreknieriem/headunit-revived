@@ -270,4 +270,20 @@
     <string name="shortcut_night_mode_day_desc">Forçar modo dia</string>
     <string name="shortcut_night_mode_night_title">Modo: Noite</string>
     <string name="shortcut_night_mode_night_desc">Forçar modo noite</string>
+    <string name="setup_welcome_title">Configuração rápida</string>
+    <string name="setup_welcome_msg">Este assistente ajuda você a escolher as melhores configurações para uma experiência fluida com o Android Auto.\n\nVocê sempre pode alterar essas configurações mais tarde nas configurações do aplicativo.</string>
+    <string name="setup_start">Iniciar</string>
+    <string name="setup_size_title">Tamanho da tela</string>
+    <string name="setup_size_phone">Smartphone / Pequeno (4-6\")</string>
+    <string name="setup_size_small">Tablet pequeno (7-8\")</string>
+    <string name="setup_size_standard">Padrão (9-10\")</string>
+    <string name="setup_size_large">Grande (11\"+)</string>
+    <string name="setup_orientation_title">Orientação do dispositivo</string>
+    <string name="setup_orientation_landscape">Paisagem (horizontal)</string>
+    <string name="setup_orientation_portrait">Retrato (vertical)</string>
+    <string name="setup_result_title">Otimização concluída</string>
+    <string name="setup_apply">Aplicar</string>
+    <string name="setup_widescreen_detected">Tela widescreen detectada.</string>
+    <string name="auto_optimize">Otimizar configurações automaticamente</string>
+    <string name="auto_optimize_desc">Execute a verificação do sistema para encontrar as melhores configurações para o seu dispositivo.</string>
 </resources>

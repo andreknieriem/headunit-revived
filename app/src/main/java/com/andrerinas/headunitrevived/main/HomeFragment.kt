@@ -84,11 +84,6 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Check Safety Disclaimer
-        if (!App.provide(requireContext()).settings.hasAcceptedDisclaimer) {
-            SafetyDisclaimerDialog.show(childFragmentManager)
-        }
-
         self_mode_button = view.findViewById(R.id.self_mode_button)
         usb = view.findViewById(R.id.usb_button)
         settings = view.findViewById(R.id.settings_button)

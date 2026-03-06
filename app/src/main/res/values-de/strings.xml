@@ -70,7 +70,7 @@
     <string name="projection_status">Projektions-Status: %s</string>
     <string name="connected">Verbunden</string>
     <string name="disconnected">Getrennt</string>
-    <string name="running">Läuft</string>
+    <string name="running">Los</string>
     <string name="not_running">Läuft nicht</string>
     <string name="no_android_auto_device_connected">Kein Android Auto Gerät verbunden. Bitte USB prüfen.</string>
     <string name="no_usb_device_connected">Kein USB Gerät gefunden.</string>
@@ -270,4 +270,20 @@
     <string name="shortcut_night_mode_day_desc">Tagmodus erzwingen</string>
     <string name="shortcut_night_mode_night_title">Modus: Nacht</string>
     <string name="shortcut_night_mode_night_desc">Nachtmodus erzwingen</string>
+    <string name="setup_welcome_title">Schnell-Einrichtung</string>
+    <string name="setup_welcome_msg">Dieser Wizard hilft dir, die besten Einstellungen für ein reibungsloses Android Auto Erlebnis zu finden.\n\nDu kannst diese Einstellungen jederzeit später ändern oder diesen Wizard in den App-Einstellungen neu starten.</string>
+    <string name="setup_start">Starten</string>
+    <string name="setup_size_title">Display-Größe</string>
+    <string name="setup_size_phone">Handy / Klein (4-6\")</string>
+    <string name="setup_size_small">Kleines Tablet (7-8\")</string>
+    <string name="setup_size_standard">Standard (9-10\")</string>
+    <string name="setup_size_large">Groß (11\"+)</string>
+    <string name="setup_orientation_title">Geräte-Ausrichtung</string>
+    <string name="setup_orientation_landscape">Querformat (Horizontal)</string>
+    <string name="setup_orientation_portrait">Hochformat (Vertikal)</string>
+    <string name="setup_result_title">Optimierung abgeschlossen</string>
+    <string name="setup_apply">Übernehmen</string>
+    <string name="setup_widescreen_detected">Widescreen-Display erkannt.</string>
+    <string name="auto_optimize">Einstellungen automatisch optimieren</string>
+    <string name="auto_optimize_desc">System-Check ausführen, um die besten Werte für dieses Gerät zu finden.</string>
 </resources>
