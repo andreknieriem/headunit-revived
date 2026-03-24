@@ -207,6 +207,7 @@ class AapService : Service(), UsbReceiver.Listener {
         startService(GpsLocationService.intent(this))
         wifiDirectManager = WifiDirectManager(this)
         initWifiMode()
+        acquireWifiLock()
         checkAlreadyConnectedUsb()
         registerNetworkMonitor()
     }
@@ -280,7 +281,6 @@ class AapService : Service(), UsbReceiver.Listener {
     private fun onConnected() {
         isSwitchingToAccessory.set(false)
         updateNotification()
-        acquireWifiLock()
 
         // Reactivate the existing MediaSession (created in onCreate, kept alive across disconnects)
         mediaSession?.isActive = true
@@ -355,7 +355,6 @@ class AapService : Service(), UsbReceiver.Listener {
      */
     private fun onDisconnected(state: CommManager.ConnectionState.Disconnected) {
         isSwitchingToAccessory.set(false)
-        releaseWifiLock()
         if (!isDestroying) updateNotification()
         // Keep MediaSession alive across disconnect/reconnect cycles.
         // Only deactivate it — do NOT release it. A released session can no longer

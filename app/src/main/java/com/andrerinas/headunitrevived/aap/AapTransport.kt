@@ -33,6 +33,7 @@ import com.andrerinas.headunitrevived.utils.Settings
 import com.andrerinas.headunitrevived.aap.AapService
 import com.andrerinas.headunitrevived.aap.protocol.proto.Control
 import javax.net.ssl.SSLEngineResult
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Core AAP message pump.
@@ -104,6 +105,8 @@ class AapTransport(
     @Volatile var onQuit: ((Boolean) -> Unit)? = null
     var onAudioFocusStateChanged: ((Boolean) -> Unit)? = null
     private var pollHandler: Handler? = null
+    private val outstandingPings = AtomicInteger(0)
+    private var heartbeatRunnable: Runnable? = null
     private val pollHandlerCallback = Handler.Callback {
         val readInstance = aapRead
         if (readInstance == null) {
@@ -127,11 +130,22 @@ class AapTransport(
         return@Callback true
     }
     private var sendHandler: Handler? = null
+    /** Tracks consecutive send/encrypt failures. Reset on any successful send. */
+    private var consecutiveSendErrors = 0
     private val sendHandlerCallback = Handler.Callback {
-        this.sendEncryptedMessage(
+        val ret = this.sendEncryptedMessage(
             data = it.obj as ByteArray,
             length = it.arg2
         )
+        if (ret < 0) {
+            consecutiveSendErrors++
+            if (consecutiveSendErrors >= MAX_CONSECUTIVE_SEND_ERRORS) {
+                AppLog.e("AapTransport: $consecutiveSendErrors consecutive send failures — quitting")
+                quit(clean = false)
+            }
+        } else {
+            consecutiveSendErrors = 0
+        }
         return@Callback true
     }
 
@@ -150,17 +164,25 @@ class AapTransport(
 
     private fun sendEncryptedMessage(data: ByteArray, length: Int): Int {
         val ba =
-            ssl.encrypt(AapMessage.HEADER_SIZE, length - AapMessage.HEADER_SIZE, data) ?: return -1
+            ssl.encrypt(AapMessage.HEADER_SIZE, length - AapMessage.HEADER_SIZE, data)
+        if (ba == null) {
+            AppLog.w("SSL encrypt failed (channel=${data[0].toInt() and 0xFF})")
+            return -1
+        }
 
         ba.data[0] = data[0]
         ba.data[1] = data[1]
         Utils.intToBytes(ba.limit - AapMessage.HEADER_SIZE, 2, ba.data)
 
-        val size = connection?.sendBlocking(ba.data, ba.limit, 250) ?: -1
+        val size = connection?.sendBlocking(ba.data, ba.limit, 2000) ?: -1
+
+        if (size < 0) {
+            AppLog.w("sendBlocking failed (channel=${data[0].toInt() and 0xFF}, len=${ba.limit})")
+            return -1
+        }
 
         if (AppLog.LOG_VERBOSE) {
             AppLog.v("Sent size: %d", size)
-            // AapDump.logvHex("US", 0, ba.data, ba.limit) // AapDump might be removed or changed
         }
         return 0
     }
@@ -198,6 +220,7 @@ class AapTransport(
         
         aapRead = null
         ssl.release()
+        stopHeartbeat()
         pollHandler = null
         sendHandler = null
         pollThread = null
@@ -259,6 +282,7 @@ class AapTransport(
             context
         )
         pollHandler?.sendEmptyMessage(MSG_POLL)
+        startHeartbeat()
     }
 
     private fun handshake(connection: AccessoryConnection): Boolean {
@@ -463,5 +487,60 @@ class AapTransport(
         // Maximum wall-clock time allowed for the version-exchange phase of the AAP handshake.
         // Prevents the retry loop from blocking for minutes on an unresponsive USB device.
         private const val HANDSHAKE_TIMEOUT_MS = 10_000L
+        /** Interval between heartbeat pings (ms). */
+        private const val HEARTBEAT_INTERVAL_MS = 5000L
+        /** Number of consecutive missed pong responses before triggering a disconnect. */
+        private const val MAX_MISSED_PONGS = 3
+        /** Number of consecutive send/encrypt failures before quitting the transport. */
+        private const val MAX_CONSECUTIVE_SEND_ERRORS = 10
+    }
+
+    // -------------------------------------------------------------------------
+    // Heartbeat
+    // -------------------------------------------------------------------------
+
+    /**
+     * Starts a periodic heartbeat that sends a [Control.PingRequest] every
+     * [HEARTBEAT_INTERVAL_MS]. Each ping increments [outstandingPings]; when a
+     * [Control.PingResponse] arrives, [onPongReceived] resets the counter.
+     * If [MAX_MISSED_PONGS] consecutive pings go unanswered, the transport
+     * is quit with `clean = false`.
+     */
+    private fun startHeartbeat() {
+        outstandingPings.set(0)
+        heartbeatRunnable = object : Runnable {
+            override fun run() {
+                val missed = outstandingPings.incrementAndGet()
+                if (missed > MAX_MISSED_PONGS) {
+                    AppLog.e("Heartbeat: $missed pings unanswered — assuming connection dead")
+                    quit(clean = false)
+                    return
+                }
+                if (missed > 1) {
+                    AppLog.w("Heartbeat: $missed consecutive pings without pong")
+                }
+                val ping = Control.PingRequest.newBuilder()
+                    .setTimestamp(System.nanoTime())
+                    .build()
+                val msg = AapMessage(
+                    Channel.ID_CTR,
+                    Control.ControlMsgType.MESSAGE_PING_REQUEST_VALUE,
+                    ping
+                )
+                send(msg)
+                sendHandler?.postDelayed(this, HEARTBEAT_INTERVAL_MS)
+            }
+        }
+        sendHandler?.postDelayed(heartbeatRunnable!!, HEARTBEAT_INTERVAL_MS)
+    }
+
+    private fun stopHeartbeat() {
+        heartbeatRunnable?.let { sendHandler?.removeCallbacks(it) }
+        heartbeatRunnable = null
+    }
+
+    /** Called by [AapControlService] when a PingResponse arrives. */
+    fun onPongReceived() {
+        outstandingPings.set(0)
     }
 }

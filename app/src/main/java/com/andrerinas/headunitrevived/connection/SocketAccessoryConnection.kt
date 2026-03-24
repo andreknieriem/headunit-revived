@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.DataInputStream
 import java.io.IOException
+import java.net.SocketTimeoutException
 import java.io.OutputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -51,7 +52,13 @@ class SocketAccessoryConnection(private val ip: String, private val port: Int, p
             } else {
                 inp.read(buf, 0, length)
             }
+        } catch (e: SocketTimeoutException) {
+            // Timeout is NOT a fatal error — the connection is still alive.
+            // Return 0 so the read loop retries instead of killing the transport.
+            AppLog.d("Socket read timeout (${timeout}ms) — connection still alive, retrying")
+            0
         } catch (e: IOException) {
+            AppLog.e("Socket read error (fatal): ${e.message}")
             -1
         }
     }
@@ -111,8 +118,9 @@ class SocketAccessoryConnection(private val ip: String, private val port: Int, p
                 // Chinese Headunit Mediatek Correction
             }
             // Applied unconditionally so both outbound and WirelessServer-accepted sockets
-            // detect a dead phone within 3 s instead of blocking forever.
-            transport.soTimeout = 3000
+            // detect a dead phone within 15s. SocketTimeoutException is handled gracefully
+            // in recvBlocking (returns 0 = retry) so this doesn't cause spurious disconnects.
+            transport.soTimeout = 15000
             transport.tcpNoDelay = true
             transport.keepAlive = true
             transport.reuseAddress = true

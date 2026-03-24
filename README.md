@@ -58,6 +58,16 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 - **Wireless Connection Drops:** If the connection drops frequently, disable **"WiFi Assistant"** or **"Switch between networks"** in your phone's WiFi settings to prevent it from killing the connection due to "no internet."
 
 ## Changelog
+### v.2.1.0-beta2
+- Fixed: Exit Intent not working. Thanks to benyjr
+- Added: Rotary Support
+- Fixed: Crash in Android < 5
+- Fixed: Double Button fire and enter/knob click as dpad center mapping
+- Enhanced: Android Auto start for selfmode now tries all methods always and catches errors
+- Fixed: Auto start, connection lost overlay, toasts and API17 Bluetooth crash. thanks to @andrecuellar
+- Added: Exit App on disconnect feature/setting thanks to @Tilak-03
+- Enhancement: Added heartbeat and other things to keep the connection alive
+
 ### v.2.1.0-beta1
 - Fixed: Exit Intent not working. Thanks to benyjr
 - Added: Rotary Support

@@ -203,6 +203,11 @@ internal class AapControlService(
                 val pingRequest = message.parse(Control.PingRequest.newBuilder()).build()
                 return pingRequest(pingRequest, message.channel)
             }
+            Control.ControlMsgType.MESSAGE_PING_RESPONSE_VALUE -> {
+                // Response to our heartbeat PingRequest — reset the missed-pong counter.
+                aapTransport.onPongReceived()
+                return 0
+            }
             Control.ControlMsgType.MESSAGE_NAV_FOCUS_REQUEST_VALUE -> {
                 val navigationFocusRequest = message.parse(Control.NavFocusRequestNotification.newBuilder()).build()
                 return navigationFocusRequest(navigationFocusRequest, message.channel)
@@ -319,9 +324,12 @@ internal class AapControlService(
                 }
             }
         } else {
-            AppLog.w("Audio focus request NOT granted immediately ($result). Sending LOSS.")
+            // Send LOSS_TRANSIENT instead of LOSS — full LOSS can cause the phone to
+            // permanently stop its audio pipeline and in some AA versions tear down the
+            // entire projection. Transient loss tells AA to expect focus back shortly.
+            AppLog.w("Audio focus request NOT granted immediately ($result). Sending LOSS_TRANSIENT.")
             val msg = AapMessage(channel, Control.ControlMsgType.MESSAGE_AUDIO_FOCUS_NOTIFICATION_VALUE,
-                Control.AudioFocusNotification.newBuilder().setFocusState(Control.AudioFocusNotification.AudioFocusStateType.STATE_LOSS).build())
+                Control.AudioFocusNotification.newBuilder().setFocusState(Control.AudioFocusNotification.AudioFocusStateType.STATE_LOSS_TRANSIENT).build())
             aapTransport.send(msg)
             aapTransport.onAudioFocusStateChanged?.invoke(false)
         }

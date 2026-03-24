@@ -198,7 +198,10 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
     // Read error tracking — only accessed by the poll thread; no lock needed.
     private var consecutiveReadErrors = 0
     private var firstErrorTimeMs = 0L
+    private var lastSuccessTimeMs = SystemClock.elapsedRealtime()
     private val maxErrorDurationBeforeDisconnect = 60_000L  // 60s patience for dongle WiFi recovery
+    /** Minimum gap (ms) between a successful read and a new error before treating it as a new burst. */
+    private val errorBurstResetGapMs = 5_000L
 
     // Volatile reads capture the latest connection/endpoint references; bulkTransfer runs
     // entirely outside any lock. If disconnect() calls close() concurrently, bulkTransfer
@@ -245,7 +248,12 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
                 if (read < 0) {
                     consecutiveReadErrors++
                     if (consecutiveReadErrors == 1) {
-                        firstErrorTimeMs = SystemClock.elapsedRealtime()
+                        // New error burst: if the last successful read was long enough ago,
+                        // this is a fresh burst — reset the timer.
+                        val gapSinceSuccess = SystemClock.elapsedRealtime() - lastSuccessTimeMs
+                        if (gapSinceSuccess > errorBurstResetGapMs || firstErrorTimeMs == 0L) {
+                            firstErrorTimeMs = SystemClock.elapsedRealtime()
+                        }
                     }
                     val errorDurationMs = SystemClock.elapsedRealtime() - firstErrorTimeMs
                     if (errorDurationMs > maxErrorDurationBeforeDisconnect) {
@@ -268,6 +276,7 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
                     consecutiveReadErrors = 0
                     firstErrorTimeMs = 0
                 }
+                lastSuccessTimeMs = SystemClock.elapsedRealtime()
 
                 if (read == 0) {
                     return totalReturned
