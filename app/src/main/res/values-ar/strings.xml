@@ -180,6 +180,7 @@
         <item>يدوي (قائمة)</item>
         <item>بحث تلقائي (خادم Headunit)</item>
         <item>مساعد لاسلكي (في انتظار الهاتف)</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">الاتصال التلقائي بالجلسة الأخيرة</string>
     <string name="auto_connect_last_session_description">إعادة الاتصال تلقائيا بآخر جهاز مستخدم عند بدء التطبيق</string>

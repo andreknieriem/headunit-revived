@@ -179,6 +179,7 @@
         <item>手動 (列表)</item>
         <item>自動搜尋 (Headunit Server)</item>
         <item>無線助手 (等待手機)</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">自動連接上次會話</string>
     <string name="auto_connect_last_session_description">應用程式啟動時自動重新連線到上次使用的裝置</string>

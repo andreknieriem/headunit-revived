@@ -180,6 +180,7 @@
         <item>Manual (Lista)</item>
         <item>Auto (Headunit Server)</item>
         <item>Wireless Helper</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">Auto-conectar última sesión</string>
     <string name="auto_connect_last_session_description">Conectar automáticamente al último dispositivo al iniciar</string>

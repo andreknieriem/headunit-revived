@@ -179,6 +179,7 @@
         <item>Handmatig (lijst)</item>
         <item>Automatisch zoeken (Headunit Server)</item>
         <item>Draadloze helper (wachten op telefoon)</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">Auto-Connect laatste Sessie</string>
     <string name="auto_connect_last_session_description">Automatisch opnieuw verbinding maken met het laatst gebruikte apparaat bij het opstarten van de app.</string>

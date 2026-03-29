@@ -408,7 +408,12 @@ class AapService : Service(), UsbReceiver.Listener {
         AppLog.i("Auto-started continuous log capture")
 
         startService(GpsLocationService.intent(this))
-        wifiDirectManager = WifiDirectManager(this)
+        // In Hotspot Helper mode (mode 3), skip WiFi Direct entirely: On devices like
+        // Samsung Galaxy Tab S6 Lite, initializing WifiP2pManager when WiFi is off
+        // (because Hotspot is active) causes the system to open the WiFi settings page.
+        if (!App.provide(this).settings.isHotspotHelperMode) {
+            wifiDirectManager = WifiDirectManager(this)
+        }
         initWifiMode()
         checkAlreadyConnectedUsb()
         registerNetworkMonitor()
@@ -787,17 +792,23 @@ class AapService : Service(), UsbReceiver.Listener {
         }
     }
 
-    /** Starts [WirelessServer] if the user has configured server WiFi mode (mode == 2). */
+    /** Starts [WirelessServer] if the user has configured a Helper WiFi mode (mode 2 or 3). */
     private fun initWifiMode() {
-        if (App.provide(this).settings.wifiConnectionMode == 2) {
+        val settings = App.provide(this).settings
+        if (settings.isHelperMode) {
             startWirelessServer()
-            if (App.provide(this).settings.autoEnableHotspot) {
-                // Run on background thread since hotspot enable may sleep briefly
+            if (settings.isHotspotHelperMode) {
+                // Hotspot Helper (mode 3): WiFi is off, hotspot is managed externally (e.g. Tasker).
+                // Skip WiFi Direct entirely — it's not available without WiFi.
+                AppLog.i("AapService: Hotspot Helper mode — skipping WiFi Direct.")
+            } else if (settings.autoEnableHotspot) {
+                // Standard Helper (mode 2) with auto-hotspot: let HotspotManager handle it
                 Thread {
                     AppLog.i("AapService: Auto-enabling hotspot...")
                     HotspotManager.setHotspotEnabled(this, true)
                 }.start()
             } else {
+                // Standard Helper (mode 2) without auto-hotspot: try WiFi Direct
                 val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
                 if (wifiManager.isWifiEnabled) {
                     wifiDirectManager?.makeVisible()
@@ -809,6 +820,11 @@ class AapService : Service(), UsbReceiver.Listener {
     }
 
     private fun acquireWifiLock() {
+        // In Hotspot Helper mode or with auto-hotspot, WiFi is off; the hotspot keeps
+        // the radio active, so a WifiLock is unnecessary (and may throw on some devices).
+        val settings = App.provide(this).settings
+        if (settings.isHotspotHelperMode || settings.autoEnableHotspot) return
+
         if (wifiLock == null) {
             val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
             wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "HeadunitRevived:Connection")
@@ -895,8 +911,8 @@ class AapService : Service(), UsbReceiver.Listener {
             ACTION_START_SELF_MODE       -> startSelfMode()
             ACTION_START_WIRELESS        -> startWirelessServer()
             ACTION_START_WIRELESS_SCAN   -> {
-                val mode = App.provide(this).settings.wifiConnectionMode
-                startDiscovery(oneShot = (mode != 2))
+                val settings = App.provide(this).settings
+                startDiscovery(oneShot = !settings.isHelperMode)
             }
             ACTION_STOP_WIRELESS         -> stopWirelessServer()
             ACTION_DISCONNECT            -> {

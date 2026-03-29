@@ -314,9 +314,10 @@ class HomeFragment : Fragment() {
         }
 
         wifi.setOnClickListener {
-            val mode = App.provide(requireContext()).settings.wifiConnectionMode
-            when (mode) {
-                1 -> { // Auto (Headunit Server) - One-Shot Scan
+            val appSettings = App.provide(requireContext()).settings
+            val mode = appSettings.wifiConnectionMode
+            when {
+                mode == 1 -> { // Auto (Headunit Server) - One-Shot Scan
                     if (commManager.isConnected) {
                         // Already connected, no toast needed
                     } else if (AapService.scanningState.value) {
@@ -329,7 +330,7 @@ class HomeFragment : Fragment() {
                         ContextCompat.startForegroundService(requireContext(), intent)
                     }
                 }
-                2 -> { // Helper (Wireless Launcher)
+                appSettings.isHelperMode -> { // Helper (Wireless Launcher) or Helper via Hotspot
                     if (commManager.isConnected) {
                         // Already connected, no toast needed
                     } else if (AapService.scanningState.value) {

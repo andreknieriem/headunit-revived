@@ -189,6 +189,7 @@
         <item>Manual (Listă)</item>
         <item>Căutare automată (Server Headunit)</item>
         <item>Asistent Wireless (Așteaptă telefonul)</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">Conectare automată la ultima sesiune</string>
     <string name="auto_connect_last_session_description">Reconectează automat ultimul dispozitiv la pornirea aplicației</string>

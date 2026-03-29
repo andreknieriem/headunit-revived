@@ -205,7 +205,7 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("right-hand-drive", false)
         set(value) { prefs.edit().putBoolean("right-hand-drive", value).apply() }
 
-    // 0 = Manual, 1 = Auto (Headunit Server), 2 = Helper (Wifi Launcher)
+    // 0 = Manual, 1 = Auto (Headunit Server), 2 = Helper (Wifi Launcher), 3 = Helper via Hotspot
     var wifiConnectionMode: Int
         get() {
             // Migration: Check if old boolean exists
@@ -219,6 +219,12 @@ class Settings(context: Context) {
             return prefs.getInt("wifi-connection-mode", 1) // Default 1 (Auto)
         }
         set(value) { prefs.edit().putInt("wifi-connection-mode", value).apply() }
+
+    /** True for any Helper mode (WiFi Direct or Hotspot). */
+    val isHelperMode: Boolean get() = wifiConnectionMode == 2 || wifiConnectionMode == 3
+
+    /** True only for Helper via Hotspot mode (skip WiFi Direct, no WiFi required). */
+    val isHotspotHelperMode: Boolean get() = wifiConnectionMode == 3
 
     var videoCodec: String
         get() = prefs.getString("video-codec", "Auto")!!

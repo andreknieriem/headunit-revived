@@ -193,6 +193,7 @@
         <item>Manual (List)</item>
         <item>Auto-search (Headunit Server)</item>
         <item>Wireless Helper (Waiting for Phone)</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">Auto-Connect Last Session</string>
     <string name="auto_connect_last_session_description">Automatically reconnect to the last used device on app startup</string>

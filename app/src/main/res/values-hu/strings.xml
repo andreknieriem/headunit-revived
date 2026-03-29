@@ -179,6 +179,7 @@
         <item>Kézi (Lista)</item>
         <item>Auto-keresés (fejegység szerver)</item>
         <item>Wireless Helper (Várakozás a telefonra)</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">Automatikus folytatás</string>
     <string name="auto_connect_last_session_description">Indításkor automatikus újracsatlakozás a legutóbb használt eszközhöz.</string>

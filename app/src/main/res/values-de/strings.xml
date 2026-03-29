@@ -183,6 +183,7 @@
         <item>Manuell (Liste)</item>
         <item>Auto-Suche (Headunit Server)</item>
         <item>Wireless Helper (Warten auf Handy)</item>
+        <item>Wireless Helper über Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">Auto-Connect letzte Sitzung</string>
     <string name="auto_connect_last_session_description">Verbindet beim App-Start automatisch mit dem zuletzt genutzten Gerät</string>

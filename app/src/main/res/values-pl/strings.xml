@@ -180,6 +180,7 @@
         <item>Ręcznie (lista)</item>
         <item>Auto-wyszukiwanie (Headunit Server)</item>
         <item>Pomocnik bezprzewodowy (oczekiwanie na telefon)</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">Auto-łączenie ostatniej sesji</string>
     <string name="auto_connect_last_session_description">Automatycznie połącz z ostatnio używanym urządzeniem przy starcie aplikacji</string>

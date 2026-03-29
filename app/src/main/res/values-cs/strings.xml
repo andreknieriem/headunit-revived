@@ -180,6 +180,7 @@
         <item>Ručně (seznam)</item>
         <item>Automatické vyhledávání (Headunit Server)</item>
         <item>Bezdrátový pomocník (čekání na telefon)</item>
+        <item>Wireless Helper via Hotspot</item>
     </string-array>
     <string name="auto_connect_last_session">Automaticky připojit poslední relaci</string>
     <string name="auto_connect_last_session_description">Při spuštění aplikace se automaticky znovu připojit k naposledy použitému zařízení</string>

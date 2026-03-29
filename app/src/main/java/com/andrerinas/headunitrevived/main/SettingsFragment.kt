@@ -247,7 +247,7 @@ class SettingsFragment : Fragment() {
         pendingWifiConnectionMode?.let { mode ->
             settings.wifiConnectionMode = mode
             val intent = Intent(requireContext(), AapService::class.java).apply {
-                action = if (mode == 2) AapService.ACTION_START_WIRELESS else AapService.ACTION_STOP_WIRELESS
+                action = if (settings.isHelperMode) AapService.ACTION_START_WIRELESS else AapService.ACTION_STOP_WIRELESS
             }
             ContextCompat.startForegroundService(requireContext(), intent)
         }
@@ -403,8 +403,9 @@ class SettingsFragment : Fragment() {
             }
         ))
 
-        // Auto-Enable Hotspot Toggle (only visible if not in Manual Mode)
-        if (pendingWifiConnectionMode != 0) {
+        // Auto-Enable Hotspot Toggle (only visible if not in Manual Mode and not in Hotspot Helper mode)
+        // In Hotspot Helper mode (3), the hotspot is managed externally (e.g. by Tasker).
+        if (pendingWifiConnectionMode != 0 && pendingWifiConnectionMode != 3) {
             items.add(SettingItem.ToggleSettingEntry(
                 stableId = "autoEnableHotspot",
                 nameResId = R.string.auto_enable_hotspot,

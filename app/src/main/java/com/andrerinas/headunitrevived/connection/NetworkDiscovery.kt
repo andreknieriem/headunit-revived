@@ -97,47 +97,46 @@ class NetworkDiscovery(private val context: Context, private val listener: Liste
     }
 
     private suspend fun scanSubnet() {
-        val subnet = getSubnet()
-        if (subnet == null) {
-            AppLog.e("NetworkDiscovery: Could not determine subnet for deep scan")
+        val subnets = getAllSubnets()
+        if (subnets.isEmpty()) {
+            AppLog.e("NetworkDiscovery: Could not determine any subnet for deep scan")
             return
         }
 
-        val myIp = getLocalIpAddress()
-        AppLog.i("NetworkDiscovery: Scanning subnet: $subnet.*")
+        val localIps = getAllLocalIpAddresses()
 
         val tasks = mutableListOf<Deferred<Boolean>>()
 
-        // Scan range 1..254
-        for (i in 1..254) {
-            val ip = "$subnet.$i"
-            if (ip == myIp) continue // Skip self
-
-            tasks.add(CoroutineScope(Dispatchers.IO).async {
-                checkAndReport(ip)
-            })
+        for (subnet in subnets) {
+            AppLog.i("NetworkDiscovery: Scanning subnet: $subnet.*")
+            for (i in 1..254) {
+                val ip = "$subnet.$i"
+                if (ip in localIps) continue // Skip own addresses
+                tasks.add(CoroutineScope(Dispatchers.IO).async {
+                    checkAndReport(ip)
+                })
+            }
         }
 
         tasks.awaitAll()
     }
 
-    private fun getLocalIpAddress(): String? {
+    private fun getAllLocalIpAddresses(): Set<String> {
+        val ips = mutableSetOf<String>()
         try {
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
             for (intf in interfaces) {
                 if (intf.isLoopback || !intf.isUp) continue
-
-                val addrs = Collections.list(intf.inetAddresses)
-                for (addr in addrs) {
-                    if (addr is java.net.Inet4Address) {
-                        return addr.hostAddress
+                for (addr in Collections.list(intf.inetAddresses)) {
+                    if (addr is Inet4Address) {
+                        addr.hostAddress?.let { ips.add(it) }
                     }
                 }
             }
         } catch (e: Exception) {
-            AppLog.e("NetworkDiscovery: Error getting local IP", e)
+            AppLog.e("NetworkDiscovery: Error getting local IPs", e)
         }
-        return null
+        return ips
     }
 
     private suspend fun checkAndReport(ip: String): Boolean {
@@ -205,27 +204,26 @@ class NetworkDiscovery(private val context: Context, private val listener: Liste
         }
     }
 
-    private fun getSubnet(): String? {
-        // Reuse similar logic to collectInterfaceSuspects but return subnet string
+    private fun getAllSubnets(): Set<String> {
+        val subnets = mutableSetOf<String>()
         try {
-             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
-             for (networkInterface in interfaces) {
-                 if (!networkInterface.isUp || networkInterface.isLoopback) continue
-                 
-                 for (addr in Collections.list(networkInterface.inetAddresses)) {
-                     if (addr is Inet4Address) {
-                         val host = addr.hostAddress
-                         val lastDot = host.lastIndexOf('.')
-                         if (lastDot > 0) {
-                             return host.substring(0, lastDot)
-                         }
-                     }
-                 }
-             }
+            val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+            for (networkInterface in interfaces) {
+                if (!networkInterface.isUp || networkInterface.isLoopback) continue
+                for (addr in Collections.list(networkInterface.inetAddresses)) {
+                    if (addr is Inet4Address) {
+                        val host = addr.hostAddress ?: continue
+                        val lastDot = host.lastIndexOf('.')
+                        if (lastDot > 0) {
+                            subnets.add(host.substring(0, lastDot))
+                        }
+                    }
+                }
+            }
         } catch (e: Exception) {
-            AppLog.e("NetworkDiscovery: Failed to get subnet", e)
+            AppLog.e("NetworkDiscovery: Failed to get subnets", e)
         }
-        return null
+        return subnets
     }
 
     fun stop() {
