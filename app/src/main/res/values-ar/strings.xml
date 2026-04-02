@@ -318,8 +318,10 @@
     <string name="auto_optimize">تحسين الإعدادات تلقائياً</string>
     <string name="auto_optimize_desc">قم بتشغيل فحص النظام للعثور على أفضل الإعدادات لجهازك.</string>
     <string name="fullscreen_none">عادي (جميع الأشرطة مرئية)</string>
-    <string name="fullscreen_immersive">غامر (جميع الأشرطة مخفية)</string>
+    <string name="fullscreen_immersive">غامر (تغطية النتوء)</string>
     <string name="fullscreen_status_only">إخفاء شريط الحالة فقط</string>
+    <string name="fullscreen_immersive_avoid_notch">غامر (تجنب النتوء)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">يخفي جميع الأشرطة ويضيف حشوة لمنع تغطية العرض بواسطة النتوء/القطع.</string>
     <string name="log_level">مستوى السجل</string>
     <string name="log_level_description">اختر مستوى تفصيل مخرجات السجل للتصحيح.</string>
     <string name="start_log_capture">بدء التقاط السجل</string>

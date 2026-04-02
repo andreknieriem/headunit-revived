@@ -318,8 +318,10 @@
     <string name="auto_optimize">Optimizar ajustes automáticamente</string>
     <string name="auto_optimize_desc">Ejecuta el chequeo del sistema para encontrar los mejores ajustes para tu dispositivo.</string>
     <string name="fullscreen_none">Normal (Barras visibles)</string>
-    <string name="fullscreen_immersive">Inmersivo (Barras ocultas)</string>
+    <string name="fullscreen_immersive">Inmersivo (superponer muesca)</string>
     <string name="fullscreen_status_only">Ocultar solo barra de estado</string>
+    <string name="fullscreen_immersive_avoid_notch">Inmersivo (evitar muesca)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">Oculta todas las barras y añade relleno para evitar que la muesca/recorte cubra la proyección.</string>
     <string name="log_level">Nivel de log</string>
     <string name="log_level_description">Elija el nivel de detalle de los mensajes de log para depuración.</string>
     <string name="start_log_capture">Iniciar captura de log</string>

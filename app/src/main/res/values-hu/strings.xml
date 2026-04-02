@@ -317,8 +317,10 @@
     <string name="auto_optimize">Beállítások automatikus optimalizálása</string>
     <string name="auto_optimize_desc">Rendszerellenőrzés futtatása az eszközhöz legjobban illő beállítások megtalálásához.</string>
     <string name="fullscreen_none">Normál (Minden sáv látható)</string>
-    <string name="fullscreen_immersive">Teljes képernyő (Minden sáv rejtett)</string>
+    <string name="fullscreen_immersive">Immerzív (Kivágás átfedése)</string>
     <string name="fullscreen_status_only">Csak az állapotsor elrejtése</string>
+    <string name="fullscreen_immersive_avoid_notch">Immerzív (Kivágás elkerülése)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">Elrejti az összes sávot és kitöltést ad hozzá, hogy a kivágás ne takarja el a kivetítést.</string>
     <string name="log_level">Naplózási szint</string>
     <string name="log_level_description">A hibaelhárításhoz szükséges részletesség beállítása.</string>
     <string name="start_log_capture">Naplózás indítása</string>

@@ -94,9 +94,10 @@
     <string name="start_in_fullscreen_mode">Mod ecran</string>
     <string name="start_in_fullscreen_mode_description">Alege cum vrei să fie afișate barele de sistem (status și navigație).</string>
     <string name="fullscreen_none">Normal (Toate barele vizibile)</string>
-    <string name="fullscreen_immersive">Imersiv (Toate barele ascunse)</string>
+    <string name="fullscreen_immersive">Imersiv (Suprapunere Notch)</string>
     <string name="fullscreen_status_only">Ascunde doar bara de status</string>
-
+    <string name="fullscreen_immersive_avoid_notch">Imersiv (Evitare Notch)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">Ascunde toate barele și adaugă spațiere pentru a preveni acoperirea proiecției de către Notch/Decupaj.</string>
     <string name="usb_status">Stare USB: %s</string>
     <string name="projection_status">Stare proiecție: %s</string>
     <string name="connected">Conectat</string>

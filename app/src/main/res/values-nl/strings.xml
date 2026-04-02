@@ -317,8 +317,10 @@
     <string name="auto_optimize">Instellingen automatisch optimaliseren</string>
     <string name="auto_optimize_desc">Voer de systeemcontrole uit om de beste instellingen voor je apparaat te vinden.</string>
     <string name="fullscreen_none">Normaal (Alle balken zichtbaar)</string>
-    <string name="fullscreen_immersive">Meislepende modus (Alle balken verborgen)</string>
+    <string name="fullscreen_immersive">Immersief (Notch overlappen)</string>
     <string name="fullscreen_status_only">Alleen statusbalk verbergen</string>
+    <string name="fullscreen_immersive_avoid_notch">Immersief (Notch vermijden)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">Verbergt alle balken en voegt opvulling toe om te voorkomen dat de projectie wordt bedekt door de Notch/uitsparing.</string>
     <string name="log_level">Logboekniveau</string>
     <string name="log_level_description">Kies het detailniveau van de loguitvoer voor foutopsporing.</string>
     <string name="start_log_capture">Logboekregistratie starten</string>

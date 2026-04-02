@@ -148,6 +148,11 @@
     <string name="auto_start_usb_label">Автозапуск через USB</string>
     <string name="auto_start_usb_description">Автоматично відкривати додаток і намагатися підключитися при підключенні USB-пристрою</string>
     <string name="auto_start_settings">Налаштування автозапуску</string>
+    <string name="fullscreen_none">Вимкнено</string>
+    <string name="fullscreen_immersive">Іммерсивний (поверх вирізу)</string>
+    <string name="fullscreen_status_only">Приховати тільки рядок стану</string>
+    <string name="fullscreen_immersive_avoid_notch">Іммерсивний (уникати вирізу)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">Приховує всі панелі та додає відступи, щоб проекція не перекривалася вирізом (Notch).</string>
     <string name="auto_start_settings_description">Налаштуйте, коли додаток запускається автоматично</string>
     <string name="auto_start_oem_warning">Цей пристрій може вимагати увімкнення автозапуску та видалення оптимізації батареї або фонових обмежень для цього додатку.\n\nНа головних пристроях з Quick Boot (швидке завантаження) автозапуск може не працювати. Знайдіть \"DuraSpeed\" у системних налаштуваннях та увімкніть там цей додаток. На деяких пристроях DuraSpeed прихований, і вам може знадобитися додаток на кшталт \"Hidden Settings\" щоб його знайти. Якщо у вас немає DuraSpeed, спробуйте вимкнути Quick Boot.</string>
     <string name="auto_start_on_boot_label">Запуск при завантаженні</string>

@@ -318,8 +318,10 @@
     <string name="auto_optimize">Automatycznie optymalizuj ustawienia</string>
     <string name="auto_optimize_desc">Uruchom sprawdzanie systemu, aby znaleźć najlepsze ustawienia dla swojego urządzenia.</string>
     <string name="fullscreen_none">Normalny (Wszystkie paski widoczne)</string>
-    <string name="fullscreen_immersive">Pełny ekran (Wszystkie paski ukryte)</string>
+    <string name="fullscreen_immersive">Imersyjny (nałóż na wycięcie)</string>
     <string name="fullscreen_status_only">Ukryj tylko pasek stanu</string>
+    <string name="fullscreen_immersive_avoid_notch">Imersyjny (unikaj wycięcia)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">Ukrywa wszystkie paski i dodaje marginesy, aby zapobiec zasłonięciu projekcji przez wycięcie.</string>
     <string name="log_level">Poziom logowania</string>
     <string name="log_level_description">Wybierz poziom szczegółowości logów do debugowania.</string>
     <string name="start_log_capture">Rozpocznij przechwytywanie logów</string>

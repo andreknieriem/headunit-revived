@@ -94,8 +94,10 @@
     <string name="start_in_fullscreen_mode">Bildschirm-Modus</string>
     <string name="start_in_fullscreen_mode_description">Legt fest, wie Systemleisten (Status- und Navigationsleiste) behandelt werden.</string>
     <string name="fullscreen_none">Normal (Alle Leisten sichtbar)</string>
-    <string name="fullscreen_immersive">Vollbild (Alle Leisten ausgeblendet)</string>
+    <string name="fullscreen_immersive">Immersiv (Notch überlagern)</string>
     <string name="fullscreen_status_only">Nur Statusleiste ausblenden</string>
+    <string name="fullscreen_immersive_avoid_notch">Immersiv (Notch vermeiden)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">Blendet alle Leisten aus und fügt Ränder hinzu, um zu verhindern, dass die Projektion von der Notch/Aussparung verdeckt wird.</string>
 
     <string name="usb_status">USB Status: %s</string>
     <string name="projection_status">Projektions-Status: %s</string>

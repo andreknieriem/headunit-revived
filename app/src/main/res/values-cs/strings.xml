@@ -318,8 +318,10 @@
     <string name="auto_optimize">Automaticky optimalizovat nastavení</string>
     <string name="auto_optimize_desc">Spustit kontrolu systému pro nalezení nejlepšího nastavení pro vaše zařízení.</string>
     <string name="fullscreen_none">Normální (Všechny lišty viditelné)</string>
-    <string name="fullscreen_immersive">Imerzivní (Všechny lišty skryté)</string>
+    <string name="fullscreen_immersive">Imerzivní (překrýt výřez)</string>
     <string name="fullscreen_status_only">Skrýt pouze stavovou lištu</string>
+    <string name="fullscreen_immersive_avoid_notch">Imerzivní (vyhnout se výřezu)</string>
+    <string name="fullscreen_immersive_avoid_notch_desc">Skryje všechny panely a přidá výplň, aby se zabránilo překrytí projekce výřezem.</string>
     <string name="log_level">Úroveň protokolování</string>
     <string name="log_level_description">Vyberte úroveň podrobnosti výstupu protokolu pro ladění.</string>
     <string name="start_log_capture">Spustit záznam protokolu</string>
