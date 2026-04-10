@@ -349,7 +349,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             if (!isFinishing) {
                 watchdogHandler.postDelayed({
                     if (!hasWindowFocus() && !isFinishing) {
-                        android.util.Log.e("AapProjectionActivity", "Wysyłanie Intentu o powrót na front...")
+                        AppLog.i("AapProjectionActivity: Sending intent to bring activity to front...")
                         val intent = Intent(this, AapProjectionActivity::class.java)
                         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
