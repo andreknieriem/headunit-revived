@@ -385,7 +385,7 @@ class AapTransport(
                 send(ScrollWheelEvent(ts, 1))
                 return
             }
-            if (aapKeyCode == KeyEvent.KEYCODE_DPAD_CENTER || aapKeyCode == KeyEvent.KEYCODE_ENTER) {
+            if (aapKeyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
                 send(KeyCodeEvent(ts, KeyEvent.KEYCODE_DPAD_CENTER, isPress))
                 return
             }
