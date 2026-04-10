@@ -374,6 +374,22 @@ class AapTransport(
     fun send(keyCode: Int, isPress: Boolean) {
         val mapped = keyCodes[keyCode] ?: keyCode
         val aapKeyCode = KeyCode.convert(mapped)
+        val ts = SystemClock.elapsedRealtime()
+
+        if (settings.enableRotary) {
+            if (aapKeyCode == KeyEvent.KEYCODE_DPAD_UP && isPress) {
+                send(ScrollWheelEvent(ts, -1))
+                return
+            }
+            if (aapKeyCode == KeyEvent.KEYCODE_DPAD_DOWN && isPress) {
+                send(ScrollWheelEvent(ts, 1))
+                return
+            }
+            if (aapKeyCode == KeyEvent.KEYCODE_DPAD_CENTER || aapKeyCode == KeyEvent.KEYCODE_ENTER) {
+                send(KeyCodeEvent(ts, KeyEvent.KEYCODE_DPAD_CENTER, isPress))
+                return
+            }
+        }
 
         if (mapped == KeyEvent.KEYCODE_GUIDE) {
             // Hack for navigation button to simulate touch
@@ -394,7 +410,6 @@ class AapTransport(
             AppLog.i("Unknown: $keyCode")
         }
 
-        val ts = SystemClock.elapsedRealtime()
         if (aapKeyCode == KeyEvent.KEYCODE_SOFT_LEFT || aapKeyCode == KeyEvent.KEYCODE_SOFT_RIGHT) {
             if (isPress) {
                 val delta = if (aapKeyCode == KeyEvent.KEYCODE_SOFT_LEFT) -1 else 1

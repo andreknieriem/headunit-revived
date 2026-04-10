@@ -167,9 +167,14 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         }
 
         setContentView(R.layout.activity_headunit)
+        takeKeyEvents(true)
+
+        val mainContainer = findViewById<FrameLayout>(R.id.container)
+        mainContainer.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        mainContainer.isFocusable = true
+        mainContainer.requestFocus()
 
         if (settings.showFpsCounter) {
-            val container = findViewById<FrameLayout>(R.id.container)
             val fpsText = TextView(this).apply {
                 setTextColor(Color.YELLOW)
                 textSize = 12f
@@ -190,7 +195,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                 gravity = Gravity.TOP or Gravity.START
                 setMargins(20, 20, 0, 0)
             }
-            container.addView(fpsText, params)
+            mainContainer.addView(fpsText, params)
 
             videoDecoder.onFpsChanged = { fps ->
                 runOnUiThread { fpsText.text = "FPS: $fps" }
@@ -228,7 +233,6 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
         AppLog.i("HeadUnit for Android Auto (tm) - Copyright 2011-2015 Michael A. Reid., since 2025 André Rinas All Rights Reserved...")
 
-        val container = findViewById<android.widget.FrameLayout>(R.id.container)
         val displayMetrics = resources.displayMetrics
 
         if (settings.viewMode == Settings.ViewMode.TEXTURE) {
@@ -239,7 +243,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
             projectionView = textureView
-            container.setBackgroundColor(android.graphics.Color.BLACK)
+            mainContainer.setBackgroundColor(android.graphics.Color.BLACK)
         } else if (settings.viewMode == Settings.ViewMode.GLES) {
             AppLog.i("Using GlProjectionView")
             val glView = com.andrerinas.headunitrevived.view.GlProjectionView(this)
@@ -248,7 +252,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
             projectionView = glView
-            container.setBackgroundColor(android.graphics.Color.BLACK)
+            mainContainer.setBackgroundColor(android.graphics.Color.BLACK)
         } else {
             AppLog.i("Using SurfaceView")
             projectionView = ProjectionView(this)
@@ -261,7 +265,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         HeadUnitScreenConfig.init(this, displayMetrics, settings)
 
         val view = projectionView as android.view.View
-        container.addView(view)
+        mainContainer.addView(view)
 
         projectionView.addCallback(this)
 
@@ -281,7 +285,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                 true
             }
 
-        container.addView(overlayView)
+        mainContainer.addView(overlayView)
         overlayView.requestFocus()
         setFullscreen() // Call setFullscreen here as well
 
@@ -304,9 +308,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     override fun onPause() {
         AppLog.i("AapProjectionActivity: onPause")
         super.onPause()
-        watchdogHandler.removeCallbacks(watchdogRunnable)
-        watchdogHandler.removeCallbacks(videoWatchdogRunnable)
-        watchdogHandler.removeCallbacks(reconnectingWatchdog)
+        watchdogHandler.removeCallbacksAndMessages(null)
         unregisterReceiver(keyCodeReceiver)
         unregisterReceiver(nightModeReceiver)
     }
@@ -341,7 +343,20 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         super.onWindowFocusChanged(hasFocus)
 
         if (hasFocus) {
-            setFullscreen() // Reapply fullscreen mode if window gains focus
+            setFullscreen()
+            findViewById<View>(R.id.container)?.requestFocus()
+        } else {
+            if (!isFinishing) {
+                watchdogHandler.postDelayed({
+                    if (!hasWindowFocus() && !isFinishing) {
+                        android.util.Log.e("AapProjectionActivity", "Wysyłanie Intentu o powrót na front...")
+                        val intent = Intent(this, AapProjectionActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        startActivity(intent)
+                    }
+                }, 1000)
+            }
         }
     }
 
@@ -500,19 +515,15 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         commManager.send(TouchEvent(ts, action, event.actionIndex, pointerData))
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_MUTE) {
-            return super.onKeyDown(keyCode, event)
-        }
-        onKeyEvent(keyCode, true)
-        return true
-    }
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val keyCode = event.keyCode
+        val isPress = event.action == KeyEvent.ACTION_DOWN
 
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_MUTE) {
-            return super.onKeyUp(keyCode, event)
+            return super.dispatchKeyEvent(event)
         }
-        onKeyEvent(keyCode, false)
+        if (isPress && event.repeatCount > 0) return true
+        onKeyEvent(keyCode, isPress)
         return true
     }
 
