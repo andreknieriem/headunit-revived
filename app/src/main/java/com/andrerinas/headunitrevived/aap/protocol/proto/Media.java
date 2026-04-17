@@ -370,9 +370,9 @@ public final class Media {
      */
     NONE(0),
     /**
-     * <code>SPEECH = 1;</code>
+     * <code>GUIDANCE = 1;</code>
      */
-    SPEECH(1),
+    GUIDANCE(1),
     /**
      * <code>SYSTEM = 2;</code>
      */
@@ -382,21 +382,9 @@ public final class Media {
      */
     MEDIA(3),
     /**
-     * <code>ALARM = 4;</code>
+     * <code>TELEPHONY = 4;</code>
      */
-    ALARM(4),
-    /**
-     * <code>GUIDANCE = 5;</code>
-     */
-    GUIDANCE(5),
-    /**
-     * <code>ANNOUNCEMENT = 6;</code>
-     */
-    ANNOUNCEMENT(6),
-    /**
-     * <code>RING = 7;</code>
-     */
-    RING(7),
+    TELEPHONY(4),
     ;
 
     /**
@@ -404,9 +392,9 @@ public final class Media {
      */
     public static final int NONE_VALUE = 0;
     /**
-     * <code>SPEECH = 1;</code>
+     * <code>GUIDANCE = 1;</code>
      */
-    public static final int SPEECH_VALUE = 1;
+    public static final int GUIDANCE_VALUE = 1;
     /**
      * <code>SYSTEM = 2;</code>
      */
@@ -416,21 +404,9 @@ public final class Media {
      */
     public static final int MEDIA_VALUE = 3;
     /**
-     * <code>ALARM = 4;</code>
+     * <code>TELEPHONY = 4;</code>
      */
-    public static final int ALARM_VALUE = 4;
-    /**
-     * <code>GUIDANCE = 5;</code>
-     */
-    public static final int GUIDANCE_VALUE = 5;
-    /**
-     * <code>ANNOUNCEMENT = 6;</code>
-     */
-    public static final int ANNOUNCEMENT_VALUE = 6;
-    /**
-     * <code>RING = 7;</code>
-     */
-    public static final int RING_VALUE = 7;
+    public static final int TELEPHONY_VALUE = 4;
 
 
     public final int getNumber() {
@@ -454,13 +430,10 @@ public final class Media {
     public static AudioStreamType forNumber(int value) {
       switch (value) {
         case 0: return NONE;
-        case 1: return SPEECH;
+        case 1: return GUIDANCE;
         case 2: return SYSTEM;
         case 3: return MEDIA;
-        case 4: return ALARM;
-        case 5: return GUIDANCE;
-        case 6: return ANNOUNCEMENT;
-        case 7: return RING;
+        case 4: return TELEPHONY;
         default: return null;
       }
     }
@@ -6995,14 +6968,13 @@ public final class Media {
       "\020\002\022\035\n\031MEDIA_CODEC_VIDEO_H264_BP\020\003\022!\n\035MED" +
       "IA_CODEC_AUDIO_AAC_LC_ADTS\020\004\022\031\n\025MEDIA_CO" +
       "DEC_VIDEO_VP9\020\005\022\031\n\025MEDIA_CODEC_VIDEO_AV1" +
-      "\020\006\022\032\n\026MEDIA_CODEC_VIDEO_H265\020\007*s\n\017AudioS" +
-      "treamType\022\010\n\004NONE\020\000\022\n\n\006SPEECH\020\001\022\n\n\006SYSTE" +
-      "M\020\002\022\t\n\005MEDIA\020\003\022\t\n\005ALARM\020\004\022\014\n\010GUIDANCE\020\005\022" +
-      "\020\n\014ANNOUNCEMENT\020\006\022\010\n\004RING\020\007*\217\001\n\016VideoFoc" +
-      "usMode\022\031\n\025VIDEO_FOCUS_PROJECTED\020\001\022\026\n\022VID" +
-      "EO_FOCUS_NATIVE\020\002\022 \n\034VIDEO_FOCUS_NATIVE_" +
-      "TRANSIENT\020\003\022(\n$VIDEO_FOCUS_PROJECTED_NO_" +
-      "INPUT_FOCUS\020\004B\007B\005Media"
+      "\020\006\022\032\n\026MEDIA_CODEC_VIDEO_H265\020\007*O\n\017AudioS" +
+      "treamType\022\010\n\004NONE\020\000\022\014\n\010GUIDANCE\020\001\022\n\n\006SYS" +
+      "TEM\020\002\022\t\n\005MEDIA\020\003\022\r\n\tTELEPHONY\020\004*\217\001\n\016Vide" +
+      "oFocusMode\022\031\n\025VIDEO_FOCUS_PROJECTED\020\001\022\026\n" +
+      "\022VIDEO_FOCUS_NATIVE\020\002\022 \n\034VIDEO_FOCUS_NAT" +
+      "IVE_TRANSIENT\020\003\022(\n$VIDEO_FOCUS_PROJECTED" +
+      "_NO_INPUT_FOCUS\020\004B\007B\005Media"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

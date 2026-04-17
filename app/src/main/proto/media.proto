@@ -35,13 +35,10 @@ enum MediaCodecType
 enum AudioStreamType
 {
     NONE = 0;
-    SPEECH = 1;
+    GUIDANCE = 1;
     SYSTEM = 2;
     MEDIA = 3;
-    ALARM = 4;
-    GUIDANCE = 5;
-    ANNOUNCEMENT = 6;
-    RING = 7;
+    TELEPHONY = 4;
 }
 
 message AudioConfiguration

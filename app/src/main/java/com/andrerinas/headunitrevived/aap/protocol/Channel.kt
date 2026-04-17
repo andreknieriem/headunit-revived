@@ -3,13 +3,13 @@ package com.andrerinas.headunitrevived.aap.protocol
 object Channel {
 
     const val ID_CTR = 0
-    const val ID_SEN = 1
-    const val ID_VID = 2
-    const val ID_INP = 3
-    const val ID_AUD = 6
-    const val ID_AU1 = 4
-    const val ID_AU2 = 5
-    const val ID_MIC = 7
+    const val ID_INP = 1
+    const val ID_SEN = 2
+    const val ID_VID = 3
+    const val ID_MIC = 4
+    const val ID_AUD = 5
+    const val ID_AU2 = 6
+    const val ID_AU1 = 7
     const val ID_BTH = 8
     const val ID_MPB = 9
     const val ID_NAV = 10

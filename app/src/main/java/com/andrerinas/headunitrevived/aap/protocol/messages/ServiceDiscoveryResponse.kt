@@ -134,7 +134,7 @@ class ServiceDiscoveryResponse(private val context: Context)
                         service.id = Channel.ID_AU1
                         service.mediaSinkService = Control.Service.MediaSinkService.newBuilder().also {
                             it.availableType = audioType
-                            it.audioType = Media.AudioStreamType.SPEECH
+                            it.audioType = Media.AudioStreamType.GUIDANCE
                             it.addAudioConfigs(AudioConfigs.get(Channel.ID_AU1))
                         }.build()
                     }.build()

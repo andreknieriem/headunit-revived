@@ -105,8 +105,49 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
             return len
         }
 
-        currentListener.onMicDataAvailable(aud_buf, len)
+        val resampledData = if (micSampleRate == 16000) {
+            aud_buf.sliceArray(0 until len)
+        } else {
+            resample(aud_buf, len, micSampleRate, 16000)
+        }
+
+        currentListener.onMicDataAvailable(resampledData, resampledData.size)
         return len
+    }
+
+    private fun resample(data: ByteArray, len: Int, fromRate: Int, toRate: Int): ByteArray {
+        if (fromRate == toRate) return data.sliceArray(0 until len)
+
+        val inputShorts = ShortArray(len / 2)
+        for (i in inputShorts.indices) {
+            inputShorts[i] = ((data[i * 2 + 1].toInt() shl 8) or (data[i * 2].toInt() and 0xFF)).toShort()
+        }
+
+        val outputSize = (inputShorts.size.toLong() * toRate / fromRate).toInt()
+        val outputShorts = ShortArray(outputSize)
+        val factor = inputShorts.size.toFloat() / outputSize
+
+        for (i in 0 until outputSize) {
+            val inputIndex = i * factor
+            val i1 = inputIndex.toInt()
+            var i2 = i1 + 1
+            if (i2 >= inputShorts.size) i2 = inputShorts.size - 1
+
+            val fraction = inputIndex - i1
+            val s1 = inputShorts[i1].toInt()
+            val s2 = inputShorts[i2].toInt()
+
+            outputShorts[i] = (s1 + (fraction * (s2 - s1))).toInt().toShort()
+        }
+
+        val outputBytes = ByteArray(outputSize * 2)
+        for (i in outputShorts.indices) {
+            val s = outputShorts[i]
+            outputBytes[i * 2] = (s.toInt() and 0xFF).toByte()
+            outputBytes[i * 2 + 1] = ((s.toInt() shr 8) and 0xFF).toByte()
+        }
+
+        return outputBytes
     }
 
     fun start(): Int {

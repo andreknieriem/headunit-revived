@@ -31,11 +31,9 @@ internal class AapAudio(
                 audioFocusRequest = null
                 result = AudioManager.AUDIOFOCUS_REQUEST_GRANTED
             } else {
-                val usage = when (stream) {
-                    AudioManager.STREAM_NOTIFICATION -> AudioAttributes.USAGE_NOTIFICATION
-                    AudioManager.STREAM_VOICE_CALL -> AudioAttributes.USAGE_VOICE_COMMUNICATION
-                    else -> AudioAttributes.USAGE_MEDIA
-                }
+                // Always use USAGE_MEDIA to avoid system-level voice processing on the headunit,
+                // which often distorts AA the audio streams.
+                val usage = AudioAttributes.USAGE_MEDIA
 
                 val audioAttributes = AudioAttributes.Builder()
                         .setUsage(usage)

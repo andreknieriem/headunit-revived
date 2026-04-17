@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
+import android.media.MediaRecorder
 import android.os.Build
 import com.andrerinas.headunitrevived.aap.protocol.proto.Control
 import com.andrerinas.headunitrevived.app.UsbAttachedActivity
@@ -333,7 +334,7 @@ class Settings(context: Context) {
         set(value) { prefs.edit().putBoolean("enable-audio-sink", value).apply() }
 
     var micInputSource: Int
-        get() = prefs.getInt("mic-input-source", 0) // Default: DEFAULT
+        get() = prefs.getInt("mic-input-source", MediaRecorder.AudioSource.VOICE_RECOGNITION)
         set(value) { prefs.edit().putInt("mic-input-source", value).apply() }
 
     var audioLatencyMultiplier: Int
