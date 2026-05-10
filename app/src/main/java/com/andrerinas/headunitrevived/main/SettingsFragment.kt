@@ -68,6 +68,7 @@ class SettingsFragment : Fragment() {
     private var pendingWifiConnectionMode: Int? = null
     private var pendingHelperConnectionStrategy: Int? = null
     private var pendingAutoEnableHotspot: Boolean? = null
+    private var pendingAutoConnectNative: Boolean? = null
     private var pendingWaitForWifi: Boolean? = null
     private var pendingWaitForWifiTimeout: Int? = null
 
@@ -137,6 +138,7 @@ class SettingsFragment : Fragment() {
 
         pendingKillOnDisconnect = settings.killOnDisconnect
         pendingAutoEnableHotspot = settings.autoEnableHotspot
+        pendingAutoConnectNative = settings.autoConnectNative
         pendingFakeSpeed = settings.fakeSpeed
 
         pendingWifiConnectionMode = settings.wifiConnectionMode
@@ -278,7 +280,8 @@ class SettingsFragment : Fragment() {
         pendingHelperConnectionStrategy?.let { settings.helperConnectionStrategy = it }
         pendingWaitForWifi?.let { settings.waitForWifiBeforeWifiDirect = it }
         pendingWaitForWifiTimeout?.let { settings.waitForWifiTimeout = it }
-        
+        pendingAutoConnectNative?.let { settings.autoConnectNative = it }
+
         pendingInsetLeft?.let { settings.insetLeft = it }
         pendingInsetTop?.let { settings.insetTop = it }
         pendingInsetRight?.let { settings.insetRight = it }
@@ -356,7 +359,8 @@ class SettingsFragment : Fragment() {
                         pendingWifiConnectionMode != settings.wifiConnectionMode ||
                         pendingHelperConnectionStrategy != settings.helperConnectionStrategy ||
                         pendingWaitForWifi != settings.waitForWifiBeforeWifiDirect ||
-                        pendingWaitForWifiTimeout != settings.waitForWifiTimeout
+                        pendingWaitForWifiTimeout != settings.waitForWifiTimeout ||
+                        pendingAutoConnectNative != settings.autoConnectNative
 
         hasChanges = anyChange
 
@@ -497,6 +501,22 @@ class SettingsFragment : Fragment() {
                 }
             }
         ))
+
+        // Sub-setting for Native Wireless mode
+        if (pendingWifiConnectionMode == 3) {
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "nativeAutoConnect",
+                nameResId = R.string.auto_connect_native,
+                descriptionResId = R.string.auto_connect_native_description,
+                isChecked = pendingAutoConnectNative ?: true,
+                onCheckedChanged = { isChecked ->
+                    pendingAutoConnectNative = isChecked
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+        }
+
 
         // Sub-setting for Headunit Server (Manual vs Auto)
         if (pendingWifiConnectionMode == 0 || pendingWifiConnectionMode == 1) {

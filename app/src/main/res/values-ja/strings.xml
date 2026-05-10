@@ -225,6 +225,8 @@
     <string name="auto_connect_help">これらのメソッドはアプリ起動時に自動的に実行されます。必要なメソッドを有効にし、ドラッグして実行順序を設定してください。最初に有効になり、かつ正常に実行されたメソッドが使用されます。</string>
     <string name="auto_connect_priority">優先度 %d</string>
     <string name="auto_connect_all_disabled">すべて無効</string>
+    <string name="auto_connect_native">自動接続（ネイティブ）</string>
+    <string name="auto_connect_native_description">ネイティブのワイヤレスモードを使用しているときに、電話に自動的に接続します。</string>
     <string name="drag_to_reorder">ドラッグして並べ替える</string>
     <string name="move_up">上に移動</string>
     <string name="move_down">下に移動</string>

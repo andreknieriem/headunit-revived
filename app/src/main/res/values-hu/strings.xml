@@ -210,6 +210,8 @@
     <string name="auto_connect_help">Ezek a módszerek automatikusan futnak az alkalmazás megnyitásakor. Engedélyezze a kívántakat, majd húzza őket a sorrend beállításához. Az első sikeres engedélyezett módszer kerül felhasználásra.</string>
     <string name="auto_connect_priority">Prioritás %d</string>
     <string name="auto_connect_all_disabled">Mind letiltva</string>
+    <string name="auto_connect_native">Automatikus csatlakozás (Native)</string>
+    <string name="auto_connect_native_description">Automatikusan csatlakozik a telefonhoz, amikor a natív vezeték nélküli mód aktív.</string>
     <string name="drag_to_reorder">Húzza az átrendezéshez</string>
     <string name="move_up">Felfelé</string>
     <string name="move_down">Lefelé</string>

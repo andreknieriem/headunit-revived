@@ -210,6 +210,8 @@
     <string name="auto_connect_help">Эти методы запускаются автоматически при открытии приложения. Включите нужные и перетащите для установки порядка. Будет использован первый включённый метод, который сработает.</string>
     <string name="auto_connect_priority">Приоритет %d</string>
     <string name="auto_connect_all_disabled">Все отключены</string>
+    <string name="auto_connect_native">Автоподключение (Нативное)</string>
+    <string name="auto_connect_native_description">Автоматически подключаться к телефону при использовании нативного беспроводного режима.</string>
     <string name="drag_to_reorder">Перетащите для изменения порядка</string>
     <string name="move_up">Вверх</string>
     <string name="move_down">Вниз</string>

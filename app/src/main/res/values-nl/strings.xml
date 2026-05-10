@@ -209,6 +209,8 @@
     <string name="auto_connect_help">Deze methoden worden automatisch uitgevoerd bij het openen van de app. Schakel de gewenste in en sleep om de volgorde te bepalen. De eerste ingeschakelde methode die slaagt, wordt gebruikt.</string>
     <string name="auto_connect_priority">Prioriteit %d</string>
     <string name="auto_connect_all_disabled">Alles uitgeschakeld</string>
+    <string name="auto_connect_native">Automatisch verbinden (Native)</string>
+    <string name="auto_connect_native_description">Automatisch verbinden met de telefoon wanneer de Native Wireless-modus wordt gebruikt.</string>
     <string name="drag_to_reorder">Sleep om te herschikken</string>
     <string name="move_up">Omhoog</string>
     <string name="move_down">Omlaag</string>

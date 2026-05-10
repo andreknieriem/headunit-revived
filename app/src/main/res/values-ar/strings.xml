@@ -210,6 +210,8 @@
     <string name="auto_connect_help">تعمل هذه الطرق تلقائيا عند فتح التطبيق. قم بتمكين الطرق التي تريدها، ثم اسحب لضبط الترتيب. سيتم استخدام أول طريقة ممكّنة تنجح.</string>
     <string name="auto_connect_priority">الأولوية %d</string>
     <string name="auto_connect_all_disabled">الكل معطل</string>
+    <string name="auto_connect_native">الاتصال التلقائي (Native)</string>
+    <string name="auto_connect_native_description">يتصل تلقائيًا بالهاتف عند استخدام وضع الوايرلس الأصلي.</string>
     <string name="drag_to_reorder">اسحب لإعادة الترتيب</string>
     <string name="move_up">تحريك للأعلى</string>
     <string name="move_down">تحريك للأسفل</string>

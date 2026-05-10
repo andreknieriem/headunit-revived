@@ -222,6 +222,8 @@
     <string name="auto_connect_help">Aceste metode rulează automat la deschiderea aplicației. Activează-le pe cele dorite, apoi trage de ele pentru a le ordona. Se va folosi prima metodă reușită.</string>
     <string name="auto_connect_priority">Prioritate %d</string>
     <string name="auto_connect_all_disabled">Toate dezactivate</string>
+    <string name="auto_connect_native">Conectare automată (Nativă)</string>
+    <string name="auto_connect_native_description">Conectează automat la telefon când este folosit modul Wireless nativ.</string>
     <string name="drag_to_reorder">Trage pentru a reordona</string>
     <string name="move_up">Mută mai sus</string>
     <string name="move_down">Mută mai jos</string>

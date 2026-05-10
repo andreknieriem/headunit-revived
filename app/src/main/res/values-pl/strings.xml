@@ -210,6 +210,8 @@
     <string name="auto_connect_help">Te metody uruchamiają się automatycznie przy otwieraniu aplikacji. Włącz te, które chcesz, i przeciągnij, aby ustawić kolejność. Zostanie użyta pierwsza włączona metoda, która się powiedzie.</string>
     <string name="auto_connect_priority">Priorytet %d</string>
     <string name="auto_connect_all_disabled">Wszystkie wyłączone</string>
+    <string name="auto_connect_native">Automatyczne łączenie (Natywne)</string>
+    <string name="auto_connect_native_description">Automatycznie łączy z telefonem podczas korzystania z natywnego trybu bezprzewodowego.</string>
     <string name="drag_to_reorder">Przeciągnij, aby zmienić kolejność</string>
     <string name="move_up">Przesuń w górę</string>
     <string name="move_down">Przesuń w dół</string>

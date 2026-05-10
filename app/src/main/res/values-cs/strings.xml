@@ -210,6 +210,8 @@
     <string name="auto_connect_help">Tyto metody se spouští automaticky při otevření aplikace. Povolte ty, které chcete, a přetažením nastavte pořadí. Použije se první povolená metoda, která uspěje.</string>
     <string name="auto_connect_priority">Priorita %d</string>
     <string name="auto_connect_all_disabled">Vše vypnuto</string>
+    <string name="auto_connect_native">Automatické připojení (Native)</string>
+    <string name="auto_connect_native_description">Automaticky se připojí k telefonu při použití nativního bezdrátového režimu.</string>
     <string name="drag_to_reorder">Přetáhněte pro změnu pořadí</string>
     <string name="move_up">Posunout nahoru</string>
     <string name="move_down">Posunout dolů</string>

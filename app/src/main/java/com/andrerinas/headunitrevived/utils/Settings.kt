@@ -330,6 +330,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("auto-connect-single-usb", false)
         set(value) { prefs.edit().putBoolean("auto-connect-single-usb", value).apply() }
 
+    /** Whether automatic connect should be attempted when using Native Wireless mode (Native AA). */
+    var autoConnectNative: Boolean
+        get() = prefs.getBoolean("auto-connect-native", true)
+        set(value) { prefs.edit().putBoolean("auto-connect-native", value).apply() }
+
     var lastConnectionType: String
         get() = prefs.getString("last-connection-type", "")!!
         set(value) { prefs.edit().putString("last-connection-type", value).apply() }

@@ -209,6 +209,8 @@
     <string name="auto_connect_help">這些方式會在開啟應用程式時自動執行。啟用您想要的方式，然後拖曳以設定順序。系統會使用第一個成功的已啟用方式。</string>
     <string name="auto_connect_priority">優先順序 %d</string>
     <string name="auto_connect_all_disabled">全部停用</string>
+    <string name="auto_connect_native">自動連線（原生）</string>
+    <string name="auto_connect_native_description">在使用原生無線模式時自動連線至手機。</string>
     <string name="drag_to_reorder">拖曳以重新排序</string>
     <string name="move_up">上移</string>
     <string name="move_down">下移</string>

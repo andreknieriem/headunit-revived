@@ -224,6 +224,8 @@
     <string name="auto_connect_help">Bu yöntemler uygulama açıldığında otomatik olarak çalışır. İstediklerinizi etkinleştirin, ardından sırayı ayarlamak için sürükleyin. Başarılı olan ilk etkin yöntem kullanılacaktır.</string>
     <string name="auto_connect_priority">Öncelik %d</string>
     <string name="auto_connect_all_disabled">Hepsi devre dışı</string>
+    <string name="auto_connect_native">Otomatik bağlan (Native)</string>
+    <string name="auto_connect_native_description">Native Kablosuz modu kullanılırken telefona otomatik bağlanır.</string>
     <string name="drag_to_reorder">Yeniden sıralamak için sürükleyin</string>
     <string name="move_up">Yukarı taşı</string>
     <string name="move_down">Aşağı taşı</string>

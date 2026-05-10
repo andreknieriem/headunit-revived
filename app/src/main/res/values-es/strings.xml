@@ -210,6 +210,8 @@
     <string name="auto_connect_help">Estos métodos se ejecutan automáticamente al abrir la app. Active los que desee y arrastre para establecer el orden. Se usará el primer método activo que tenga éxito.</string>
     <string name="auto_connect_priority">Prioridad %d</string>
     <string name="auto_connect_all_disabled">Todos desactivados</string>
+    <string name="auto_connect_native">Conexión automática (Nativa)</string>
+    <string name="auto_connect_native_description">Conectarse automáticamente al teléfono al usar el modo Wireless nativo.</string>
     <string name="drag_to_reorder">Arrastra para reordenar</string>
     <string name="move_up">Subir</string>
     <string name="move_down">Bajar</string>

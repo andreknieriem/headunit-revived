@@ -225,6 +225,8 @@
     <string name="auto_connect_help">애플리케이션이 열릴 때 자동으로 실행되는 방법입니다. 원하는 방법을 활성화하고 순서를 설정하세요. 첫 번째 활성화된 방법이 성공하면 사용됩니다.</string>
     <string name="auto_connect_priority">우선순위 %d</string>
     <string name="auto_connect_all_disabled">모두 비활성화</string>
+    <string name="auto_connect_native">자동 연결 (네이티브)</string>
+    <string name="auto_connect_native_description">네이티브 무선 모드를 사용할 때 전화에 자동으로 연결합니다.</string>
     <string name="drag_to_reorder">드래그하여 순서를 변경합니다</string>
     <string name="move_up">위로 이동</string>
     <string name="move_down">아래로 이동</string>

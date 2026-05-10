@@ -224,6 +224,8 @@
     <string name="auto_connect_help">These methods run automatically when the app opens. Enable the ones you want, then drag to set the order. The first enabled method that succeeds will be used.</string>
     <string name="auto_connect_priority">Priority %d</string>
     <string name="auto_connect_all_disabled">All disabled</string>
+    <string name="auto_connect_native">Auto-connect (Native)</string>
+    <string name="auto_connect_native_description">Automatically connect to the phone when using Native Wireless mode.</string>
     <string name="drag_to_reorder">Drag to reorder</string>
     <string name="move_up">Move up</string>
     <string name="move_down">Move down</string>

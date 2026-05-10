@@ -680,7 +680,7 @@ class AapService : Service(), UsbReceiver.Listener {
             }
         }
         
-        initWifiModeWithOptionalWait()
+        initWifiModeWithOptionalWait(settings.autoConnectNative)
         wifiDirectManager?.setCredentialsListener { ssid, psk, ip, bssid ->
             val settings = App.provide(this).settings
             if (settings.wifiConnectionMode == 3) {
@@ -1233,11 +1233,11 @@ class AapService : Service(), UsbReceiver.Listener {
      *
      * When the setting is disabled, or the mode is not 2, [initWifiMode] runs immediately.
      */
-    private fun initWifiModeWithOptionalWait() {
+    private fun initWifiModeWithOptionalWait(allowAutoNative: Boolean = true) {
         val settings = App.provide(this).settings
 
         if (settings.wifiConnectionMode != 2 || !settings.waitForWifiBeforeWifiDirect) {
-            initWifiMode()
+            initWifiMode(allowAutoNative = allowAutoNative)
             return
         }
 
@@ -1259,7 +1259,7 @@ class AapService : Service(), UsbReceiver.Listener {
             else AppLog.i("WifiWait: Legacy device (API < 21), skipping wait.")
 
             wifiModeInitialized = true
-            initWifiMode()
+            initWifiMode(allowAutoNative = allowAutoNative)
             return
         }
 
@@ -1313,7 +1313,7 @@ class AapService : Service(), UsbReceiver.Listener {
     }
 
     /** Starts [WirelessServer] if the user has configured server WiFi mode. */
-    private fun initWifiMode(force: Boolean = false) {
+    private fun initWifiMode(force: Boolean = false, allowAutoNative: Boolean = true) {
         val settings = App.provide(this).settings
         val mode = settings.wifiConnectionMode
         val strategy = settings.helperConnectionStrategy
@@ -1371,10 +1371,18 @@ class AapService : Service(), UsbReceiver.Listener {
                 val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as android.net.wifi.WifiManager
                 if (wifiManager.isWifiEnabled) {
                     // Start WiFi Direct as a "quiet host" (P2P Group for phone to join)
-                    wifiDirectManager?.startNativeAaQuietHost()
+                    if (allowAutoNative) {
+                        wifiDirectManager?.startNativeAaQuietHost()
+                    } else {
+                        AppLog.i("AapService: autoConnectNative disabled — skipping startNativeAaQuietHost on startup")
+                    }
                 }
                 // Start the official Bluetooth handshake servers
-                nativeAaHandshakeManager?.start()
+                if (allowAutoNative) {
+                    nativeAaHandshakeManager?.start()
+                } else {
+                    AppLog.i("AapService: autoConnectNative disabled — skipping Native AA handshake start on startup")
+                }
             }
         }
         
