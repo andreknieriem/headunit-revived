@@ -120,6 +120,7 @@
     <string name="log_level_description">내보낼 때 로그 레벨을 필터링합니다.</string>
     <string name="start_log_capture">로그 캡처 시작</string>
     <string name="start_log_capture_description">디버깅을 위해 전체 로그를 기록합니다.</string>
+    <string name="start_log_capture_in_silent">녹화를 시작할 수 없습니다: 로그 레벨이 \'무음\'으로 설정되어 있습니다</string>
     <string name="stop_log_capture">로그 캡처 중지</string>
     <string name="stop_log_capture_description">녹화 중… 멈추려면 탭하세요.</string>
     <string name="export_logs">로그 내보내기</string>
