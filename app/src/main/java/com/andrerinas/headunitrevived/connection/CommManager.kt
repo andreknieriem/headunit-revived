@@ -398,12 +398,13 @@ class CommManager(
      * This is the single entry point for all key events in the application.
      */
     fun sendKey(keyCode: Int, isPress: Boolean) {
-        if (_connectionState.value !is ConnectionState.TransportStarted) return
+        if (_connectionState.value !is ConnectionState.TransportStarted) {
+            return
+        }
 
         // 1. Remapping (Physical -> Logical)
-        // We find the AA logical code (key) that corresponds to this hardware keyCode (value).
         var logicalCode = settings.keyCodes.entries.find { it.value == keyCode }?.key ?: keyCode
-
+        
         // [FIX] BMW/Rotary Enter remapping: Most AA apps expect DPAD_CENTER (23) for selection,
         // but physical rotary knobs often send ENTER (66). Remap 66 -> 23 to ensure selection works.
         if (logicalCode == KeyEvent.KEYCODE_ENTER) {
@@ -413,27 +414,18 @@ class CommManager(
         // 2. State Tracking & De-duplication
         val isCurrentlyDown = keyStates[logicalCode] ?: false
         if (isPress == isCurrentlyDown) {
-            // Already in this state (e.g., duplicate DOWN or duplicate UP) - drop it.
-            // This catches redundant triggers from multiple receivers (CarKey, MediaSession, etc.)
             return
         }
 
-        // 3. Time-based Debouncing (Improved for "Double Key" issues)
-        // We debounce based on the LOGICAL code to catch cases where multiple physical sources
-        // (e.g. proprietary intent + standard MEDIA_BUTTON) trigger the same action.
+        // 3. Time-based Debouncing
         val now = SystemClock.elapsedRealtime()
-        
         if (isPress) {
             val lastPressTime = lastKeyEvents[logicalCode] ?: 0L
-            // Use a 300ms window to ignore duplicate "DOWN" events for the same logical action.
             if (now - lastPressTime < 300) {
-                AppLog.i("CommManager: Debouncing logical key $logicalCode (DOWN) - dropped duplicate trigger within ${now - lastPressTime}ms (likely multi-intent source)")
+                AppLog.i("CommManager: Debouncing logical key $logicalCode (DOWN) - dropped duplicate trigger within ${now - lastPressTime}ms")
                 return
             }
             lastKeyEvents[logicalCode] = now
-        } else {
-            // For UP events, if we don't have a record of a recent DOWN event that wasn't filtered,
-            // the state tracking above (isPress == isCurrentlyDown) already handles dropping the UP.
         }
 
         // Update state
