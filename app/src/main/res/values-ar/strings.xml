@@ -415,6 +415,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">معلومات المركبة</string>
     <string name="vehicle_info_settings_description">خصص كيف تظهر مركبتك على هاتفك</string>
+    <string name="ui_scale">مقياس واجهة المستخدم</string>
+    <string name="ui_scale_home">الشاشة الرئيسية</string>
+    <string name="ui_scale_settings">شاشة الإعدادات</string>
     <string name="category_vehicle">المركبة</string>
     <string name="category_head_unit">وحدة الوسائط</string>
     <string name="vehicle_display_name_label">اسم العرض</string>

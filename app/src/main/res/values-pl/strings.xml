@@ -413,6 +413,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">Informacje o pojeździe</string>
     <string name="vehicle_info_settings_description">Dostosuj, jak pojazd jest wyświetlany na telefonie</string>
+    <string name="ui_scale">Skalowanie interfejsu</string>
+    <string name="ui_scale_home">Ekran główny</string>
+    <string name="ui_scale_settings">Ekran ustawień</string>
     <string name="category_vehicle">Pojazd</string>
     <string name="category_head_unit">Radio</string>
     <string name="vehicle_display_name_label">Nazwa wyświetlana</string>

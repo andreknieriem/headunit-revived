@@ -414,6 +414,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">Járműinformáció</string>
     <string name="vehicle_info_settings_description">Testreszabhatja, hogyan jelenik meg járműve a telefonján</string>
+    <string name="ui_scale">UI méretezés</string>
+    <string name="ui_scale_home">Kezdőképernyő</string>
+    <string name="ui_scale_settings">Beállítások képernyő</string>
     <string name="category_vehicle">Jármű</string>
     <string name="category_head_unit">Fejegység</string>
     <string name="vehicle_display_name_label">Megjelenítési név</string>

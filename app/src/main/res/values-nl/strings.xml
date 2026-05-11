@@ -412,6 +412,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">Voertuiginformatie</string>
     <string name="vehicle_info_settings_description">Pas aan hoe uw voertuig op uw telefoon wordt weergegeven</string>
+    <string name="ui_scale">UI-schaal</string>
+    <string name="ui_scale_home">Startscherm</string>
+    <string name="ui_scale_settings">Instellingen scherm</string>
     <string name="category_vehicle">Voertuig</string>
     <string name="category_head_unit">Headunit</string>
     <string name="vehicle_display_name_label">Weergavenaam</string>

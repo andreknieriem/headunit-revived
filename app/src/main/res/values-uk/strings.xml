@@ -413,6 +413,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">Інформація про транспортний засіб</string>
     <string name="vehicle_info_settings_description">Налаштуйте, як ваш автомобіль відображається на телефоні</string>
+    <string name="ui_scale">Масштаб інтерфейсу</string>
+    <string name="ui_scale_home">Головний екран</string>
+    <string name="ui_scale_settings">Екран налаштувань</string>
     <string name="category_vehicle">Транспортний засіб</string>
     <string name="category_head_unit">Головний пристрій</string>
     <string name="vehicle_display_name_label">Відображуване ім\'я</string>

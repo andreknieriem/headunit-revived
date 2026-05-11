@@ -415,6 +415,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">Información del vehículo</string>
     <string name="vehicle_info_settings_description">Personaliza cómo aparece tu vehículo en tu móvil</string>
+    <string name="ui_scale">Escala de la interfaz</string>
+    <string name="ui_scale_home">Pantalla de inicio</string>
+    <string name="ui_scale_settings">Pantalla de ajustes</string>
     <string name="category_vehicle">Vehículo</string>
     <string name="category_head_unit">Radio</string>
     <string name="vehicle_display_name_label">Nombre para mostrar</string>

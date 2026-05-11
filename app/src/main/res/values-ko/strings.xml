@@ -422,6 +422,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">차량 정보</string>
     <string name="vehicle_info_settings_description">차량이 휴대폰에 표시되는 방식을 사용자 정의합니다</string>
+    <string name="ui_scale">UI 배율</string>
+    <string name="ui_scale_home">홈 화면</string>
+    <string name="ui_scale_settings">설정 화면</string>
     <string name="category_vehicle">차량</string>
     <string name="category_head_unit">헤드유닛</string>
     <string name="vehicle_display_name_label">표시 이름</string>

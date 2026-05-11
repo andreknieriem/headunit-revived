@@ -415,6 +415,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">Informace o vozidle</string>
     <string name="vehicle_info_settings_description">Přizpůsobte, jak se vaše vozidlo zobrazuje na telefonu</string>
+    <string name="ui_scale">Měřítko rozhraní</string>
+    <string name="ui_scale_home">Hlavní obrazovka</string>
+    <string name="ui_scale_settings">Obrazovka nastavení</string>
     <string name="category_vehicle">Vozidlo</string>
     <string name="category_head_unit">Autorádio</string>
     <string name="vehicle_display_name_label">Zobrazovaný název</string>

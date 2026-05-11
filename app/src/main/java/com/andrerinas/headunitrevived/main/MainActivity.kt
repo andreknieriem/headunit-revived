@@ -39,6 +39,7 @@ class MainActivity : BaseActivity() {
     
     private var isOrientationReceiverRegistered = false
     private var isFinishReceiverRegistered = false
+    private var isRecreateReceiverRegistered = false
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -47,6 +48,17 @@ class MainActivity : BaseActivity() {
             if (intent.action == "com.andrerinas.headunitrevived.ACTION_FINISH_ACTIVITIES") {
                 AppLog.i("MainActivity: Received finish request. Closing.")
                 finishAffinity()
+            }
+        }
+    }
+
+    private val recreateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == ACTION_RECREATE_MAIN) {
+                AppLog.i("MainActivity: Received recreate request. Recreating.")
+                try {
+                    runOnUiThread { recreate() }
+                } catch (_: Exception) { }
             }
         }
     }
@@ -61,6 +73,20 @@ class MainActivity : BaseActivity() {
                 AppLog.i("MainActivity: Orientation change broadcast received. Updating.")
                 requestedOrientation = Settings(this@MainActivity).screenOrientation.androidOrientation
             }
+        }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        val settings  = Settings(newBase)
+        val scale = settings.uiScaleHomePercent / 100.0f
+        if (scale != 1.0f && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            val cfg = Configuration(newBase.resources.configuration)
+            val metrics = newBase.resources.displayMetrics
+            cfg.densityDpi = (metrics.densityDpi * scale).toInt()
+            val ctx = newBase.createConfigurationContext(cfg)
+            super.attachBaseContext(ctx)
+        } else {
+            super.attachBaseContext(newBase)
         }
     }
 
@@ -149,6 +175,14 @@ class MainActivity : BaseActivity() {
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         isFinishReceiverRegistered = true
+
+        // Register recreate receiver so SettingsFragment can request MainActivity recreate
+        ContextCompat.registerReceiver(
+            this, recreateReceiver,
+            android.content.IntentFilter(ACTION_RECREATE_MAIN),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        isRecreateReceiverRegistered = true
     }
 
     private fun showSplashWithDelay(delayMs: Long) {
@@ -389,6 +423,10 @@ class MainActivity : BaseActivity() {
             unregisterReceiver(finishReceiver)
             isFinishReceiverRegistered = false
         }
+        if (isRecreateReceiverRegistered) {
+            unregisterReceiver(recreateReceiver)
+            isRecreateReceiverRegistered = false
+        }
         if (isFinishing) {
             AppLog.i("MainActivity finishing, resetting auto-start flag.")
             HomeFragment.resetAutoStart()
@@ -398,5 +436,6 @@ class MainActivity : BaseActivity() {
     companion object {
         private const val permissionRequestCode = 97
         const val EXTRA_LAUNCH_SOURCE = "launch_source"
+        const val ACTION_RECREATE_MAIN = "com.andrerinas.headunitrevived.ACTION_RECREATE_MAIN"
     }
 }

@@ -430,6 +430,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">Vehicle information</string>
     <string name="vehicle_info_settings_description">Customize how your vehicle appears on your phone</string>
+    <string name="ui_scale">UI Scale</string>
+    <string name="ui_scale_home">Home screen</string>
+    <string name="ui_scale_settings">Settings screen</string>
     <string name="category_vehicle">Vehicle</string>
     <string name="category_head_unit">Head Unit</string>
     <string name="vehicle_display_name_label">Display name</string>

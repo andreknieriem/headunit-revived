@@ -412,6 +412,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">車輛資訊</string>
     <string name="vehicle_info_settings_description">自訂您的車輛在手機上的顯示方式</string>
+    <string name="ui_scale">UI 縮放</string>
+    <string name="ui_scale_home">主畫面</string>
+    <string name="ui_scale_settings">設定畫面</string>
     <string name="category_vehicle">車輛</string>
     <string name="category_head_unit">車機</string>
     <string name="vehicle_display_name_label">顯示名稱</string>

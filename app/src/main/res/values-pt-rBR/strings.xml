@@ -413,6 +413,9 @@
     <!-- Vehicle Info Settings -->
     <string name="vehicle_info_settings">Informações do veículo</string>
     <string name="vehicle_info_settings_description">Personalize como seu veículo aparece no celular</string>
+    <string name="ui_scale">Escala da interface</string>
+    <string name="ui_scale_home">Tela inicial</string>
+    <string name="ui_scale_settings">Tela de configurações</string>
     <string name="category_vehicle">Veículo</string>
     <string name="category_head_unit">Central multimídia</string>
     <string name="vehicle_display_name_label">Nome de exibição</string>

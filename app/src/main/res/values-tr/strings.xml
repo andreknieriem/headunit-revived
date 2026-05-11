@@ -413,6 +413,9 @@
 
     <string name="vehicle_info_settings">Araç bilgileri</string>
     <string name="vehicle_info_settings_description">Aracınızın telefonunuzda nasıl görüneceğini özelleştirin</string>
+    <string name="ui_scale">UI Ölçeği</string>
+    <string name="ui_scale_home">Ana ekran</string>
+    <string name="ui_scale_settings">Ayarlar ekranı</string>
     <string name="category_vehicle">Araç</string>
     <string name="category_head_unit">Multimedya Sistemi</string>
     <string name="vehicle_display_name_label">Görünen ad</string>

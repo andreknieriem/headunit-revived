@@ -1,16 +1,33 @@
 package com.andrerinas.headunitrevived.main
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.fragment.NavHostFragment
 import android.content.res.Configuration
+import android.os.Build
 import com.andrerinas.headunitrevived.R
 import com.andrerinas.headunitrevived.app.BaseActivity
 import com.andrerinas.headunitrevived.utils.Settings
 import com.andrerinas.headunitrevived.utils.SystemUI
 
 class SettingsActivity : BaseActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val settings  = Settings(newBase)
+        val scale = settings.uiScaleSettingsPercent / 100.0f
+        if (scale != 1.0f && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            val cfg = Configuration(newBase.resources.configuration)
+            val metrics = newBase.resources.displayMetrics
+            cfg.densityDpi = (metrics.densityDpi * scale).toInt()
+            val ctx = newBase.createConfigurationContext(cfg)
+            super.attachBaseContext(ctx)
+        } else {
+            super.attachBaseContext(newBase)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
