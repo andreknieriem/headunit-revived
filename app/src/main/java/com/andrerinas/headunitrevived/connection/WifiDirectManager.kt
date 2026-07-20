@@ -41,10 +41,6 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private var channel: WifiP2pManager.Channel? = null
     private var isGroupOwner = false
     private var isConnected = false
-    // [FIX] Tracks whether a phone has actually joined the P2P group (not just that a group exists).
-    // The discoveryRunnable uses this instead of isConnected so advertisements keep retrying
-    // even after the group forms on boot when the chip may have been BUSY initially.
-    private var isClientConnected = false
     @Volatile private var isGroupCreatingOrCreated = false
     private val handler = Handler(Looper.getMainLooper())
     private var localDeviceAddress: String? = null
@@ -88,7 +84,6 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                     } else {
                         isGroupCreatingOrCreated = false
                         isConnected = false
-                        isClientConnected = false
                     }
                 }
 
@@ -123,7 +118,6 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                         AapService.scanningState.value = false
                     } else {
                         isConnected = false
-                        isClientConnected = false
                         lastNativeGroupStatusMessage = null
                         isGroupCreatingOrCreated = false
                     }
@@ -839,7 +833,6 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         AppLog.i("WifiDirectManager: Stopping and cleaning up...")
         isGroupCreatingOrCreated = false
         handler.removeCallbacksAndMessages(null)
-        isClientConnected = false
         nativeGroupCreationMode = NATIVE_GROUP_MODE_UNKNOWN
         native5GhzBandMismatchRetries = 0
         lastNativeGroupStatusMessage = null
