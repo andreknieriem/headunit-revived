@@ -314,11 +314,11 @@ class CommManager(
                         onAaPlaybackStatus = { status -> onAaPlaybackStatus?.invoke(status) }
                     )
                     _transport!!.onQuit = { isClean ->
-                        val oldTransport = _transport
-                        _transport = null
-
-                        if (oldTransport != null) {
+                        try {
                             transportedQuited(isClean)
+                        } finally {
+                            AppLog.i("WS_DEBUG CLEAR TRANSPORT")
+                            _transport = null
                         }
                     }
                     _transport!!.onAudioFocusStateChanged = { isPlaying -> onAudioFocusStateChanged?.invoke(isPlaying) }
