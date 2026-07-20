@@ -480,15 +480,6 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
         isGroupCreatingOrCreated = true
 
-        // Reflection Hack to set name
-//        try {
-//            val method = mgr.javaClass.getMethod("setDeviceName", WifiP2pManager.Channel::class.java, String::class.java, WifiP2pManager.ActionListener::class.java)
-//            method.invoke(mgr, ch, "HURev", object : WifiP2pManager.ActionListener {
-//                override fun onSuccess() { AppLog.i("WifiDirectManager: Name set to HURev") }
-//                override fun onFailure(reason: Int) {}
-//            })
-//        } catch (e: Exception) {}
-
         // 1. Stop any ongoing discovery and remove group to start fresh
         mgr.stopPeerDiscovery(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() { removeGroupAndCreate() }
