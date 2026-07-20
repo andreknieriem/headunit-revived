@@ -313,10 +313,9 @@ class CommManager(
                         onAaMediaMetadata = { meta -> onAaMediaMetadata?.invoke(meta) },
                         onAaPlaybackStatus = { status -> onAaPlaybackStatus?.invoke(status) }
                     )
-                    _transport?.onQuit = { isClean ->
-                        val transport = _transport
-
-                        if (transport != null) {
+                    val transport = _transport
+                    if (transport != null) {
+                        transport.onQuit = { isClean ->
                             try {
                                 transportedQuited(isClean)
                             } finally {
