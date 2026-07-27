@@ -31,6 +31,7 @@ class NativeAaHandshakeManager(
         private val AA_UUID = UUID.fromString("4de17a00-52cb-11e6-bdf4-0800200c9a66")
         private val HFP_UUID = UUID.fromString("0000111e-0000-1000-8000-00805f9b34fb")
         private val A2DP_SOURCE_UUID = UUID.fromString("00001112-0000-1000-8000-00805f9b34fb")
+        private const val HANDSHAKE_RESPONSE_TIMEOUT_MS = 15_000L
 
         fun checkCompatibility(context: Context): Boolean {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -369,7 +370,17 @@ class NativeAaHandshakeManager(
             sendWifiStartRequest(output, ip, 5288)
 
             AppLog.i("NativeAA: Waiting for response from phone...")
-            val response = readProtobuf(input)
+            // No BluetoothSocket.setSoTimeout(); force-close via watchdog to unblock readFully() on timeout.
+            val watchdog = scope.launch(Dispatchers.IO) {
+                delay(HANDSHAKE_RESPONSE_TIMEOUT_MS)
+                AppLog.e("NativeAA: Handshake failed - No response from phone within ${HANDSHAKE_RESPONSE_TIMEOUT_MS / 1000}s of sending WifiStartRequest. Closing socket.")
+                try { socket.close() } catch (e: Exception) {}
+            }
+            val response = try {
+                readProtobuf(input)
+            } finally {
+                watchdog.cancel()
+            }
             AppLog.i("NativeAA: [RX] Received Type ${response.type} (Payload size: ${response.payload.size})")
 
             if (response.type == 2) {
