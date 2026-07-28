@@ -293,16 +293,30 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                             bssid = shellMac
                         } else {
                             // Fallback 5: Try Settings.Secure (Samsung/Pixel trick)
+                            var resolved = false
                             try {
                                 val secureMac = android.provider.Settings.Secure.getString(context.contentResolver, "wifi_p2p_device_address")
                                 if (!secureMac.isNullOrEmpty() && secureMac != "00:00:00:00:00:00" && secureMac != "02:00:00:00:00:00") {
                                     AppLog.i("WifiDirectManager: Fallback 5 - Selected MAC from Settings.Secure: $secureMac")
                                     bssid = secureMac
-                                } else {
-                                    AppLog.w("WifiDirectManager: All fallbacks failed! BSSID is still zeroed.")
+                                    resolved = true
                                 }
                             } catch (e: Exception) {
                                 AppLog.w("WifiDirectManager: Fallback 5 failed: ${e.message}")
+                            }
+
+                            // Fallback 6: Reflect over WifiP2pGroup/WifiP2pDevice hidden fields for
+                            // any unmasked MAC the public getters didn't expose (some OEM privacy
+                            // hardening masks NetworkInterface/deviceAddress but leaves other
+                            // internal fields populated).
+                            if (!resolved) {
+                                val reflectedMac = getMacFromReflection(group)
+                                if (reflectedMac != null) {
+                                    AppLog.i("WifiDirectManager: Fallback 6 - Selected MAC via reflection: $reflectedMac")
+                                    bssid = reflectedMac
+                                } else {
+                                    AppLog.w("WifiDirectManager: All fallbacks failed! BSSID is still zeroed.")
+                                }
                             }
                         }
                     }
@@ -497,7 +511,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             })
         } catch (e: Exception) {}
 
-        // 1. Stop any ongoing discovery and remove group to start fresh
+        // Stop any ongoing discovery
         mgr.stopPeerDiscovery(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() { checkGroupAndCreate() }
             override fun onFailure(reason: Int) { checkGroupAndCreate() }
@@ -635,6 +649,10 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         AppLog.i("WifiDirectManager: startNativeAaQuietHost() requested. Removing old group if any...")
         nativeGroupCreationMode = NATIVE_GROUP_MODE_UNKNOWN
         lastNativeGroupStatusMessage = null
+        // The next createGroup() call generates a brand-new GO interface with a new random
+        // MAC — a cached BSSID from the group we're tearing down is now stale and must never
+        // be delivered for the new one.
+        lastKnownBssid = null
         mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 AppLog.d("WifiDirectManager: removeGroup SUCCESS. Creating quiet group...")
@@ -660,8 +678,13 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
+                // Builder.build() requires networkName+passphrase (or a peer address) or it
+                // throws IllegalStateException — onGroupInfoAvailable() reads the real values
+                // back afterwards, same as the standard-fallback path.
                 val config = WifiP2pConfig.Builder()
                     .setGroupOperatingBand(WifiP2pConfig.GROUP_OWNER_BAND_5GHZ)
+                    .setNetworkName(generateP2pNetworkName())
+                    .setPassphrase(generateP2pPassphrase())
                     .build()
 
                 AppLog.i("WifiDirectManager: Requesting Native AA P2P group on 5GHz band.")
@@ -704,6 +727,20 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
         AppLog.i("WifiDirectManager: 5GHz P2P group request requires Android 10+. Using standard createGroup.")
         standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_LEGACY)
+    }
+
+    private fun generateP2pNetworkName(): String {
+        val suffix = AapService.wifiDirectName.value
+            ?.filter { it.isLetterOrDigit() }
+            ?.take(20)
+            ?.ifEmpty { null } ?: "HeadUnit"
+        val code = (('A'..'Z') + ('0'..'9')).let { pool -> "${pool.random()}${pool.random()}" }
+        return "DIRECT-$code-$suffix"
+    }
+
+    private fun generateP2pPassphrase(): String {
+        val pool = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..12).map { pool.random() }.joinToString("")
     }
 
     private fun getP2pErrorString(reason: Int): String {
@@ -757,6 +794,10 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private fun removeGroupAndRetryNative5Ghz() {
         val mgr = manager ?: return
         val ch = channel ?: return
+        // The next createGroup() call generates a brand-new GO interface with a new random
+        // MAC — a cached BSSID from the group we're tearing down is now stale and must never
+        // be delivered for the new one.
+        lastKnownBssid = null
         mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() { delayedCreateQuietGroup(0) }
             override fun onFailure(reason: Int) {
@@ -780,6 +821,39 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         handler.post {
             ToastUtils.showToast(context, message, Toast.LENGTH_LONG)
         }
+    }
+
+    private val macRegex = Regex("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
+    private val maskedMacs = setOf("00:00:00:00:00:00", "02:00:00:00:00:00")
+
+    /**
+     * Last-resort BSSID lookup: reflect over every declared field (including inherited ones) of
+     * the WifiP2pGroup and its owner WifiP2pDevice, looking for any String that looks like a MAC
+     * and isn't one of the known privacy-masked placeholders. Some OEM builds mask the public
+     * NetworkInterface/deviceAddress getters but leave other internal fields populated with the
+     * real value.
+     */
+    private fun getMacFromReflection(group: android.net.wifi.p2p.WifiP2pGroup): String? {
+        val candidates = listOfNotNull(group, group.owner)
+        for (obj in candidates) {
+            var klass: Class<*>? = obj.javaClass
+            while (klass != null) {
+                for (field in klass.declaredFields) {
+                    try {
+                        field.isAccessible = true
+                        val value = field.get(obj) as? String ?: continue
+                        if (macRegex.matches(value) && value !in maskedMacs) {
+                            AppLog.d("WifiDirectManager: getMacFromReflection found candidate in ${klass.simpleName}.${field.name}: $value")
+                            return value
+                        }
+                    } catch (e: Exception) {
+                        // Ignore inaccessible/incompatible fields and keep scanning.
+                    }
+                }
+                klass = klass.superclass
+            }
+        }
+        return null
     }
 
     private fun getMacFromShell(iface: String?): String? {
