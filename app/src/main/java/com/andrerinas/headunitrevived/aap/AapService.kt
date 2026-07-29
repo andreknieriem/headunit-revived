@@ -1708,6 +1708,24 @@ class AapService : Service(), UsbReceiver.Listener {
                     nativeAaHandshakeManager?.manualPoke(mac)
                 }
             }
+            ACTION_BT_AUTO_START          -> {
+                // AutoStartReceiver fires this on ACL_CONNECTED from a trusted device. If the
+                // service process was already alive (e.g. survived a prior disconnect/exit in
+                // this same session), onCreate()'s initWifiMode() never re-runs, so a Native AA
+                // mode that was stopped after a user exit (nativeAaHandshakeManager.stop() at
+                // disconnect) would otherwise stay dead forever despite the phone reconnecting.
+                // Only force a re-init when it's actually stopped — on a genuine cold start,
+                // onCreate() already armed everything moments ago and re-running would tear
+                // down and recreate the P2P group (new random SSID/passphrase) right as it's
+                // being delivered to the phone.
+                val settings = App.provide(this).settings
+                if (settings.wifiConnectionMode == 3 && nativeAaHandshakeManager?.isActive() != true) {
+                    AppLog.i("AapService: Bluetooth auto-start — Native AA handshake manager was stopped, re-arming.")
+                    userExitedAA = false
+                    userExitCooldownUntil = 0L
+                    initWifiMode(force = true)
+                }
+            }
             ACTION_NEARBY_CONNECT         -> {
                 val endpointId = intent?.getStringExtra(EXTRA_ENDPOINT_ID)
                 if (endpointId != null) {
@@ -2628,6 +2646,7 @@ class AapService : Service(), UsbReceiver.Listener {
         // Service action strings used with startService() and sendBroadcast()
         const val ACTION_START_SELF_MODE           = "com.andrerinas.headunitrevived.ACTION_START_SELF_MODE"
         const val ACTION_START_WIRELESS            = "com.andrerinas.headunitrevived.ACTION_START_WIRELESS"
+        const val ACTION_BT_AUTO_START              = "com.andrerinas.headunitrevived.ACTION_BT_AUTO_START"
         const val ACTION_START_WIRELESS_SCAN       = "com.andrerinas.headunitrevived.ACTION_START_WIRELESS_SCAN"
         const val ACTION_STOP_WIRELESS             = "com.andrerinas.headunitrevived.ACTION_STOP_WIRELESS"
         const val ACTION_NATIVE_AA_POKE            = "com.andrerinas.headunitrevived.ACTION_NATIVE_AA_POKE"

@@ -43,8 +43,10 @@ class AutoStartReceiver : BroadcastReceiver() {
             if (device != null && targetMacs.contains(device.address)) {
                 AppLog.i("MATCH! Starting AapService via Bluetooth Auto-start...")
 
-                // Start the service to make the app alive
-                val serviceIntent = Intent(context, AapService::class.java)
+                // Start the service to make the app alive. Explicit action so onStartCommand
+                // re-arms wireless mode even if the service process was already running from
+                // an earlier session (onCreate's init only runs once) — see ACTION_BT_AUTO_START.
+                val serviceIntent = Intent(context, AapService::class.java).setAction(AapService.ACTION_BT_AUTO_START)
                 try {
                     androidx.core.content.ContextCompat.startForegroundService(context, serviceIntent)
                 } catch (e: Exception) {

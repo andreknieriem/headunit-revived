@@ -78,6 +78,8 @@ class NativeAaHandshakeManager(
         currentBssid = bssid
     }
 
+    fun isActive(): Boolean = isRunning
+
     @SuppressLint("MissingPermission")
     fun start() {
         if (isRunning) return
@@ -90,13 +92,16 @@ class NativeAaHandshakeManager(
             }
         }
 
-        isRunning = true
         val adapter = BluetoothHelper.getBluetoothAdapter(context)
         if (adapter == null || !adapter.isEnabled) {
+            // Leave isRunning false — isActive() callers (e.g. AapService's BT auto-start
+            // re-arm check) need to see this as genuinely stopped so they retry later,
+            // instead of believing the listener sockets are up when nothing was ever opened.
             AppLog.e("NativeAA: Bluetooth adapter not available or disabled")
             return
         }
 
+        isRunning = true
         AppLog.i("NativeAA: Starting Bluetooth Handshake Servers...")
 
         // Start AA RFCOMM Server
