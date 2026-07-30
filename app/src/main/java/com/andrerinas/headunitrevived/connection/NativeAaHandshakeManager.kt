@@ -98,7 +98,13 @@ class NativeAaHandshakeManager(
         currentBssid = null
     }
 
-    fun isActive(): Boolean = isRunning
+    // isRunning alone isn't enough once closeAaListeners() can close the AA_UUID listener while
+    // leaving the manager otherwise running (HFP stays up) — callers like AutoStartReceiver's
+    // BT-reconnect re-arm need to know whether a connection can actually be accepted right now,
+    // not just whether the manager was start()ed. See the "Re-arm on Bluetooth reconnect" fix
+    // this restores the invariant for: isActive() must mean "genuinely able to accept," not
+    // "believed to be running."
+    fun isActive(): Boolean = isRunning && !aaListenersClosedForSession
 
     fun isHandshakeInFlight(): Boolean = handshakeInFlight
 
