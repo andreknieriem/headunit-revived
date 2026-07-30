@@ -477,17 +477,18 @@ class NativeAaHandshakeManager(
                 sendWifiSecurityResponse(output, ssid, psk, bssid)
                 AppLog.i("NativeAA: Handshake completed successfully on Bluetooth side.")
                 // The credential exchange is done; the join watchdog no longer needs to defer
-                // for this handshake. Without this, it stayed true for the entire lifetime of
-                // the "maintain session" loop below (observed on-device stuck for 15+ minutes),
-                // permanently blocking recovery if the phone never actually joins the P2P group.
+                // for this handshake.
                 handshakeInFlight = false
 
-                // Keep the socket open to maintain the handshake session
-                AppLog.i("NativeAA: Maintaining Bluetooth session...")
-                while (isRunning && isActive && socket.isConnected) {
-                    delay(5000)
-                }
-                AppLog.i("NativeAA: Handshake session ending (isRunning=$isRunning, isConnected=${socket.isConnected})")
+                // Release the Bluetooth connection shortly after handoff instead of holding it
+                // indefinitely. The real Android Auto protocol closes Bluetooth right after the
+                // WiFi credential exchange — confirmed via a reference wireless-dongle
+                // implementation (nisargjhaveri/WirelessAndroidAutoDongle#17/#18), where holding
+                // it open caused the same "confusion, especially with phone calls" symptom this
+                // repo has seen reported. Short grace window for the phone to finish reading the
+                // response before we close.
+                delay(3000)
+                AppLog.i("NativeAA: Handshake session ending, releasing Bluetooth connection.")
             } else {
                 AppLog.w("NativeAA: Handshake failed - Unexpected response type ${response.type}. Expected Type 2.")
             }
