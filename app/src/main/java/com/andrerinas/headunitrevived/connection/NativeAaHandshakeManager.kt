@@ -60,8 +60,14 @@ class NativeAaHandshakeManager(
     private var aaServerSocket: BluetoothServerSocket? = null
     private var hfpServerSocket: BluetoothServerSocket? = null
     // Extra RFCOMM listeners opened on secondary Bluetooth radios (dual-Bluetooth head units).
-    private val extraServerSockets = java.util.Collections.synchronizedList(mutableListOf<BluetoothServerSocket>())
+    // Split by UUID so a successful handoff can close just the AA listeners (see
+    // closeAaListeners()) without taking down the HFP ones too.
+    private val extraAaServerSockets = java.util.Collections.synchronizedList(mutableListOf<BluetoothServerSocket>())
+    private val extraHfpServerSockets = java.util.Collections.synchronizedList(mutableListOf<BluetoothServerSocket>())
     private var isRunning = false
+    // Set by closeAaListeners() so the AA accept loops can tell "we closed this on purpose
+    // after a successful handoff" apart from a real socket error, for logging only.
+    @Volatile private var aaListenersClosedForSession = false
 
     private var currentSsid: String? = null
     private var currentPsk: String? = null
@@ -118,6 +124,7 @@ class NativeAaHandshakeManager(
         }
 
         isRunning = true
+        aaListenersClosedForSession = false
         AppLog.i("NativeAA: Starting Bluetooth Handshake Servers...")
 
         // Start AA RFCOMM Server
@@ -136,7 +143,9 @@ class NativeAaHandshakeManager(
                     }
                 }
             } catch (e: Exception) {
-                if (isRunning) {
+                if (aaListenersClosedForSession) {
+                    AppLog.d("NativeAA: AA Server socket closed after successful handoff.")
+                } else if (isRunning) {
                     AppLog.e("NativeAA: AA Server socket error: ${e.message}", e)
                 } else {
                     AppLog.d("NativeAA: AA Server socket closed cleanly.")
@@ -196,7 +205,7 @@ class NativeAaHandshakeManager(
         scope.launch(Dispatchers.IO + CoroutineName("NativeAa-RfcommServer-2")) {
             try {
                 val server = extra.listenUsingRfcommWithServiceRecord("AA BT Listener", AA_UUID)
-                extraServerSockets.add(server)
+                extraAaServerSockets.add(server)
                 AppLog.i("NativeAA: ACTIVELY LISTENING on Android Auto UUID on secondary radio [$addr]")
                 while (isRunning && isActive) {
                     val socket = server.accept()
@@ -208,14 +217,15 @@ class NativeAaHandshakeManager(
                     }
                 }
             } catch (e: Exception) {
-                if (isRunning) AppLog.e("NativeAA: Secondary AA server error [$addr]: ${e.message}", e)
+                if (aaListenersClosedForSession) AppLog.d("NativeAA: Secondary AA server closed after successful handoff [$addr].")
+                else if (isRunning) AppLog.e("NativeAA: Secondary AA server error [$addr]: ${e.message}", e)
                 else AppLog.d("NativeAA: Secondary AA server closed cleanly [$addr].")
             }
         }
         scope.launch(Dispatchers.IO + CoroutineName("NativeAa-HfpServer-2")) {
             try {
                 val server = extra.listenUsingRfcommWithServiceRecord("Hands-Free Unit", HFP_UUID)
-                extraServerSockets.add(server)
+                extraHfpServerSockets.add(server)
                 while (isRunning && isActive) {
                     val socket = server.accept()
                     if (socket != null) {
@@ -229,6 +239,24 @@ class NativeAaHandshakeManager(
                 if (isRunning) AppLog.e("NativeAA: Secondary HFP server error [$addr]: ${e.message}", e)
                 else AppLog.d("NativeAA: Secondary HFP server closed cleanly [$addr].")
             }
+        }
+    }
+
+    /**
+     * Stop accepting new AA_UUID connections (primary + any secondary radios) after a
+     * successful handoff to WiFi. Closing just the client socket isn't enough: the phone reads
+     * that as an unexpected drop and immediately retries, and with the listener still up we'd
+     * accept, bail out (already connected), and close again — a tight reconnect storm (confirmed
+     * on-device: hundreds of accept/close cycles a second, indistinguishable from a Bluetooth
+     * pairing loop). HFP listeners are left running. Re-opened the next time start() runs, which
+     * AapService already does on disconnect.
+     */
+    private fun closeAaListeners() {
+        aaListenersClosedForSession = true
+        try { aaServerSocket?.close() } catch (e: Exception) {}
+        synchronized(extraAaServerSockets) {
+            extraAaServerSockets.forEach { try { it.close() } catch (e: Exception) {} }
+            extraAaServerSockets.clear()
         }
     }
 
@@ -489,6 +517,10 @@ class NativeAaHandshakeManager(
                 // response before we close.
                 delay(3000)
                 AppLog.i("NativeAA: Handshake session ending, releasing Bluetooth connection.")
+                // Stop accepting new AA_UUID connections too, not just this socket — otherwise
+                // the phone's immediate reconnect-retry gets accepted, bounced (already
+                // connected), and retried again in a tight loop. See closeAaListeners() kdoc.
+                closeAaListeners()
             } else {
                 AppLog.w("NativeAA: Handshake failed - Unexpected response type ${response.type}. Expected Type 2.")
             }
@@ -552,9 +584,13 @@ class NativeAaHandshakeManager(
         isRunning = false
         try { aaServerSocket?.close() } catch (e: Exception) {}
         try { hfpServerSocket?.close() } catch (e: Exception) {}
-        synchronized(extraServerSockets) {
-            extraServerSockets.forEach { try { it.close() } catch (e: Exception) {} }
-            extraServerSockets.clear()
+        synchronized(extraAaServerSockets) {
+            extraAaServerSockets.forEach { try { it.close() } catch (e: Exception) {} }
+            extraAaServerSockets.clear()
+        }
+        synchronized(extraHfpServerSockets) {
+            extraHfpServerSockets.forEach { try { it.close() } catch (e: Exception) {} }
+            extraHfpServerSockets.clear()
         }
         aaServerSocket = null
         hfpServerSocket = null
