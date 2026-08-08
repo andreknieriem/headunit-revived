@@ -587,13 +587,32 @@ class NativeAaHandshakeManager(
 
                 val lastMacs = settings.autoStartBluetoothDeviceMacs
                 val devicesToPoke = if (lastMacs.isNotEmpty()) {
-                    lastMacs.mapNotNull { mac ->
-                        try {
+                    val bonded = mutableListOf<BluetoothDevice>()
+                    val staleMacs = mutableSetOf<String>()
+                    lastMacs.forEach { mac ->
+                        val device = try {
                             adapter.getRemoteDevice(mac)
                         } catch (e: Exception) {
                             null
                         }
+                        // A poke is a raw RFCOMM connect() to a device we assume already trusts us
+                        // via classic BT pairing. Against an unbonded device, connect() makes the
+                        // OS silently kick off a *new* pairing negotiation as a side effect - the
+                        // phone unpairing us doesn't clear this list, so without this check we'd
+                        // re-solicit pairing forever every time the phone's radio comes back up.
+                        if (device != null && device.bondState == BluetoothDevice.BOND_BONDED) {
+                            bonded.add(device)
+                        } else {
+                            staleMacs.add(mac)
+                        }
                     }
+                    if (staleMacs.isNotEmpty()) {
+                        AppLog.w("NativeAA: Dropping Auto Start BT MAC(s) no longer paired: $staleMacs")
+                        val remaining = lastMacs - staleMacs
+                        settings.autoStartBluetoothDeviceMacs = remaining
+                        com.andrerinas.openheadunit.utils.Settings.syncAutoStartBtMacsToDeviceStorage(context, remaining)
+                    }
+                    bonded
                 } else {
                     AppLog.w("NativeAA: No 'Auto Start BT Device' selected in settings. Poking all paired devices as fallback...")
                     adapter.bondedDevices.toList()
