@@ -32,6 +32,7 @@ import com.andrerinas.openheadunit.app.SurfaceActivity
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.contract.KeyIntent
 import kotlinx.coroutines.launch
+import com.andrerinas.openheadunit.decoder.DecoderStopPolicy
 import com.andrerinas.openheadunit.decoder.SoftwareYuvFrameSink
 import com.andrerinas.openheadunit.decoder.VideoDecoder
 import com.andrerinas.openheadunit.decoder.VideoDimensionsListener
@@ -243,7 +244,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             val container = findViewById<FrameLayout>(R.id.container)
             if (::projectionView.isInitialized) {
                 videoDecoder.softwareYuvFrameSink = null
-                videoDecoder.stop("projectionViewRecreate")
+                videoDecoder.stop(DecoderStopPolicy.REASON_PROJECTION_VIEW_RECREATE)
                 container.removeView(projectionView as View)
             }
             isSurfaceSet = false
@@ -1317,7 +1318,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         AppLog.i("SurfaceCallback: onSurfaceDestroyed. Surface: $surface")
         isSurfaceSet = false
         commManager.send(VideoFocusEvent(gain = false, unsolicited = false))
-        videoDecoder.stop("surfaceDestroyed")
+        videoDecoder.stop(DecoderStopPolicy.REASON_SURFACE_DESTROYED)
     }
 
 

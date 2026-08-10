@@ -2,10 +2,12 @@ package com.andrerinas.openheadunit.utils
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.os.Build
 import android.os.IBinder
 import com.andrerinas.openheadunit.App
+import com.andrerinas.openheadunit.aap.ExternalBtPolicy
 import java.lang.reflect.Constructor
 
 object BluetoothHelper {
@@ -89,13 +91,66 @@ object BluetoothHelper {
     fun getAllBluetoothAdapters(context: Context): List<BluetoothAdapter> =
         getAllBluetoothAdapterHandles(context).map { it.adapter }
 
+    /**
+     * `BluetoothProfile.A2DP_SINK`. Hidden from the SDK, but [BluetoothAdapter.getProfileConnectionState]
+     * takes a plain profile int and answers for it, and the sink role is the one a head unit plays:
+     * the phone is the source, we render its audio.
+     */
+    private const val PROFILE_A2DP_SINK = 11
+
+    /**
+     * Whether a Bluetooth media link to this head unit is up, in either role.
+     *
+     * Used to decide against taking system audio focus for Android Auto playback: when the phone is
+     * also our A2DP source, the sink service answers our focus grab with an AVRCP pause aimed at
+     * that same phone, which stops the stream we are trying to play. Callers treat an unknown
+     * answer as "a link may be up", so this returns true when the state cannot be read — a car
+     * radio playing over AA is an annoyance, silence is a broken app.
+     */
+    fun isA2dpMediaLinkActive(context: Context): Boolean {
+        // The configured adapter only, never getAllBluetoothAdapterHandles(): this is called on the
+        // AAP transport thread every time a track starts, and enumerating the system service list
+        // by reflection there would stall video alongside audio.
+        val adapter = try {
+            getBluetoothAdapter(context)
+        } catch (e: Exception) {
+            AppLog.w("BluetoothHelper: could not resolve an adapter for the A2DP check: ${e.message}")
+            return true
+        }
+        if (adapter == null) return false
+        // An adapter that will not say whether it is on is treated as on, same as an unreadable
+        // profile state below.
+        val enabled = try { adapter.isEnabled } catch (e: Exception) { true }
+        if (!enabled) return false
+
+        var readAnyState = false
+        for (profile in intArrayOf(BluetoothProfile.A2DP, PROFILE_A2DP_SINK)) {
+            val state = try {
+                adapter.getProfileConnectionState(profile)
+            } catch (e: Exception) {
+                // SecurityException without BLUETOOTH_CONNECT, or an adapter that rejects the
+                // hidden sink profile. Try the other one before giving up.
+                continue
+            }
+            readAnyState = true
+            if (state == BluetoothProfile.STATE_CONNECTED || state == BluetoothProfile.STATE_CONNECTING) {
+                return true
+            }
+        }
+        if (!readAnyState) {
+            AppLog.w("BluetoothHelper: the adapter would not report its A2DP state; assuming a media link is up")
+            return true
+        }
+        return false
+    }
+
     /** Resolve a single, arbitrary system service name to a BluetoothAdapterHandle, if it backs a
      *  real, enabled adapter. Used for the manual secondary-radio override in Settings, where the
      *  user supplies a service name automatic discovery (listBluetoothServices()) didn't find.
      *  Forgiving of the AIDL interface descriptor `adb shell service list` prints in brackets
      *  (e.g. "com.qf.btsdk.IBTBinderPool") in place of the actual service name before the colon
-     *  (e.g. "btBinderPool") - confirmed via andreknieriem/headunit-revived#706 that users copy
-     *  the bracketed part since it's the more distinctive-looking of the two. */
+     *  (e.g. "btBinderPool"): users copy the bracketed part, it being the more distinctive-looking
+     *  of the two. */
     fun getAdapterHandleForService(context: Context, serviceName: String): BluetoothAdapterHandle? {
         val input = serviceName.trim().removePrefix("[").removeSuffix("]").trim()
         if (input.isEmpty()) return null
@@ -136,15 +191,94 @@ object BluetoothHelper {
         }
     }
 
+    /**
+     * Resolves the real Bluetooth MAC address of the headunit's Bluetooth chip.
+     * On Android 6+ (API 23+), adapter.address returns dummy "02:00:00:00:00:00".
+     * We fall back to reflection and Chinese OEM SystemProperties to find the true hardware BDADDR.
+     */
+    fun getBluetoothMacAddress(context: Context, adapter: BluetoothAdapter? = null): String? {
+        val targetAdapter = adapter ?: getBluetoothAdapter(context)
+        
+        // 1. Try standard adapter property if valid
+        try {
+            val addr = targetAdapter?.address
+            if (!addr.isNullOrEmpty() && addr != "02:00:00:00:00:00" && addr != "00:00:00:00:00:00") {
+                return addr.uppercase()
+            }
+        } catch (e: SecurityException) {
+            AppLog.w("BluetoothHelper: SecurityException reading adapter address")
+        } catch (e: Exception) {}
+
+        // 2. Try reflection via hidden getAddress() on BluetoothAdapter / IBluetooth
+        try {
+            if (targetAdapter != null) {
+                val getAddressMethod = targetAdapter.javaClass.getMethod("getAddress")
+                getAddressMethod.isAccessible = true
+                val addr = getAddressMethod.invoke(targetAdapter) as? String
+                if (!addr.isNullOrEmpty() && addr != "02:00:00:00:00:00" && addr != "00:00:00:00:00:00") {
+                    return addr.uppercase()
+                }
+            }
+        } catch (e: Exception) {}
+
+        // 3. Fallback to Chinese Headunit Vendor System Properties
+        val propKeys = arrayOf(
+            "persist.sys.bt.mac",
+            "persist.sys.btmac",
+            "persist.vendor.bt.mac",
+            "sys.bt.mac",
+            "persist.sys.bluetooth.mac",
+            "ro.boot.btmacaddr",
+            "vendor.bt.bdaddr",
+            "persist.zj.BTmac",
+            "persist.zlink.carplay.mac",
+            "sys.bt.bdaddr"
+        )
+
+        for (key in propKeys) {
+            val valStr = SystemProperties.get(key, "").trim()
+            if (valStr.isNotEmpty() && isValidMacAddress(valStr)) {
+                AppLog.i("BluetoothHelper: Resolved hardware BT MAC $valStr from property $key")
+                return valStr.uppercase()
+            }
+        }
+
+        return null
+    }
+
+    /**
+     * Evidence that this head unit's Bluetooth is an external module on a serial link rather than
+     * the radio behind `android.bluetooth`, or null when it is a normal built-in radio. See
+     * [ExternalBtPolicy] for what the evidence means and why it decides whether Bluetooth-based
+     * wireless can work here at all.
+     *
+     * Cached: the answer is a property of the hardware and cannot change within a process, and
+     * this is consulted on every handshake start.
+     */
+    val externalBtEvidence: String? by lazy {
+        ExternalBtPolicy.detect(
+            nodeExists = { path -> try { java.io.File(path).exists() } catch (e: Exception) { false } },
+            property = { key -> SystemProperties.get(key, "") }
+        )
+    }
+
+    private fun isValidMacAddress(mac: String): Boolean {
+        if (mac == "02:00:00:00:00:00" || mac == "00:00:00:00:00:00") return false
+        val regex = Regex("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")
+        return regex.matches(mac)
+    }
+
     fun listBluetoothServices(): List<String> {
         val bluetoothServices = mutableListOf<String>()
+        val keywords = listOf("bluetooth", "bt", "syu", "hct", "mtc", "goc", "winca", "qf")
         try {
             val serviceManagerClass = Class.forName("android.os.ServiceManager")
             val listServicesMethod = serviceManagerClass.getMethod("listServices")
             val services = listServicesMethod.invoke(null) as? Array<String>
             if (services != null) {
                 for (service in services) {
-                    if (service.contains("bluetooth", ignoreCase = true)) {
+                    val lower = service.lowercase()
+                    if (keywords.any { lower.contains(it) }) {
                         bluetoothServices.add(service)
                     }
                 }
@@ -156,16 +290,16 @@ object BluetoothHelper {
         if (!bluetoothServices.contains("bluetooth_manager")) {
             bluetoothServices.add(0, "bluetooth_manager")
         }
-        return bluetoothServices
+        return bluetoothServices.distinct()
     }
 
     fun getAdapterDescription(context: Context, serviceName: String): String {
         if (serviceName == "bluetooth_manager") {
             val adapter = getDefaultAdapter(context)
             val name = try { adapter?.name } catch (e: SecurityException) { null }
-            val address = try { adapter?.address } catch (e: SecurityException) { null }
+            val address = getBluetoothMacAddress(context, adapter)
             val suffix = if (!name.isNullOrEmpty()) " ($name)" else ""
-            val addrSuffix = if (!address.isNullOrEmpty() && address != "02:00:00:00:00:00") " [$address]" else ""
+            val addrSuffix = if (!address.isNullOrEmpty()) " [$address]" else ""
             return "Default ($serviceName)$suffix$addrSuffix"
         }
 
@@ -183,9 +317,9 @@ object BluetoothHelper {
             ctor.isAccessible = true
             val adapter = ctor.newInstance(managerService) as? BluetoothAdapter
             val name = try { adapter?.name } catch (e: SecurityException) { null }
-            val address = try { adapter?.address } catch (e: SecurityException) { null }
+            val address = getBluetoothMacAddress(context, adapter)
             val suffix = if (!name.isNullOrEmpty()) " ($name)" else ""
-            val addrSuffix = if (!address.isNullOrEmpty() && address != "02:00:00:00:00:00") " [$address]" else ""
+            val addrSuffix = if (!address.isNullOrEmpty()) " [$address]" else ""
             return "Secondary ($serviceName)$suffix$addrSuffix"
         } catch (e: Exception) {
             return "Secondary ($serviceName)"

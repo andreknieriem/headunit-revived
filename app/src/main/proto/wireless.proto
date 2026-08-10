@@ -2,6 +2,13 @@ syntax = "proto2";
 
 package com.andrerinas.openheadunit.aap.protocol.proto;
 
+// The Android Auto WiFi Projection Protocol, spoken over RFCOMM before the phone joins our
+// network. The "type N" in each comment is the message type from the wire header (see
+// WppFraming/WppMessageType), not a field number.
+//
+// Shapes cross-checked against aa-proxy-rs's src/bluetooth.rs and the OEM ZLink app. Fields we
+// never receive are left undefined on purpose: an absent field costs nothing, a wrong one
+// silently mis-parses.
 
 enum AccessPointType {
     STATIC = 0;
@@ -21,16 +28,85 @@ enum SecurityMode {
     WPA_WPA2_ENTERPRISE = 28;
 }
 
+// Type 1, head unit -> phone. Where to open the projection session once associated.
 message WifiStartRequest {
     required string ip_address = 1;
     required int32 port = 2;
     optional int32 status = 3;
 }
 
+// Type 2, phone -> head unit. Empty: the phone asking for the network credentials. Modelled so
+// the payload can be parsed rather than merely counted.
+message WifiInfoRequest {
+}
+
+// Type 3, head unit -> phone. The credentials themselves.
+//
+// bssid, security_mode and access_point_type are `required` in the schema every other
+// implementation uses — aa-proxy-rs and WirelessAndroidAutoDongle ship byte-identical copies of it.
+// Relaxed to optional here so a truncated or future message still parses rather than throwing, and
+// that is the only reason. Wire-compatible either way: proto2 encodes optional and required
+// identically for a field that is set.
+//
+// It does not license leaving one out. Send all five, always — an empty bssid where there is no
+// real one, as aa-proxy-rs does on the one path where it has none. A field the reference schema
+// calls required is one a strict parser on the phone may refuse the whole message over, and that
+// failure would look nothing like the credentials being wrong.
 message WifiInfoResponse {
     required string ssid = 1;
     required string key = 2;
-    required string bssid = 3;
-    required SecurityMode security_mode = 4;
-    required AccessPointType access_point_type = 5;
+    optional string bssid = 3;
+    optional SecurityMode security_mode = 4;
+    optional AccessPointType access_point_type = 5;
+}
+
+// Type 4, head unit -> phone. Opens the modern handshake by declaring our protocol version. Real
+// head units send this first, aa-proxy-rs's dongle does not, hence the setting — which is off by
+// default, the version below being a guess. Only major/minor are defined; the rest is revision
+// dependent and we never have to read one.
+message WifiVersionRequest {
+    optional int32 major = 1;
+    optional int32 minor = 2;
+}
+
+// Type 5, phone -> head unit. Parsed for the log only; nothing branches on it. status is int32:
+// a real phone answered -8 here, which a sint32 declaration rendered as 2147483644.
+message WifiVersionResponse {
+    optional int32 major = 1;
+    optional int32 minor = 2;
+    optional string device_serial = 3;
+    optional int32 status = 4;
+    optional int32 selected_wifi_channel_type = 5;
+}
+
+// Type 6, phone -> head unit: did it get onto our network. The only join feedback that works on
+// both transports — WiFi Direct also has the P2P client list, a hotspot has no public equivalent.
+// Observed 0 for success. Plain int32, not sint32: a capture of a real phone's type 5 carried -8,
+// which read back as 2147483644 while these were declared sint32 (zigzag). Only ==0 vs !=0 is
+// branched on either way, so that was a wrong log number rather than a wrong decision.
+message WifiConnectStatus {
+    optional int32 status = 1;
+}
+
+// Type 7, phone -> head unit. Acknowledges type 1 and reports the address it will connect from.
+// Field 2 is unclaimed on purpose — it is not observed and guessing at it would mis-parse.
+message WifiStartResponse {
+    optional string ip_address = 1;
+    optional int32 status = 3;
+}
+
+// Types 8 and 9: a keepalive the phone may interject anywhere. We answer type 8 by echoing its
+// raw payload as a type 9 without parsing, so these are for reading captures, not for the reply.
+message WifiPingRequest {
+    optional int64 timestamp = 1;
+}
+
+message WifiPingResponse {
+    optional int64 timestamp = 1;
+}
+
+// Type 11. Defined so a capture can be read; not sent.
+message WifiSetupInfo {
+    optional int32 major = 1;
+    optional int32 minor = 2;
 }

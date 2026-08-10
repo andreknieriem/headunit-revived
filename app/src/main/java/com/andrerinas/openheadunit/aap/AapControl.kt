@@ -118,6 +118,12 @@ internal class AapControlMedia(
                 // backlog turn into visible input lag when 2K HEVC is decoded in software.
                 return if (aapTransport.isWireless) 6 else 8
             }
+            // Left wide for hardware decode, deliberately. The window is counted in messages, not
+            // frames, and a keyframe fragments into a dozen or more of them, so narrowing it makes
+            // the phone stall mid-keyframe and caps throughput at window/RTT, worst on exactly the
+            // congested links where the backlog it would be trying to bound shows up. The backlog
+            // is bounded where it costs nothing instead: the decoder discards decoded frames it is
+            // behind on rather than having the phone send fewer.
             return if (aapTransport.isWireless) 12 else 16
         }
 
@@ -338,14 +344,21 @@ internal class AapControlService(
         }
 
         // Best-effort: request system audio focus to duck other apps on the headunit.
-        // The result is intentionally ignored for the protocol response above.
+        // The result is intentionally ignored for the protocol response above, which has already
+        // been sent — only the system-level grab is in question here, never the always-grant reply.
         if (settings.enableAudioSink) {
             if (settings.staticAudioFocus) {
                 AppLog.i("Static Audio Focus active - skipping dynamic system focus request to prevent routing loss")
             } else {
-                aapAudio.requestFocusChange(AudioConfigs.stream(channel, settings.separateAudioStreams), notification.request.number, AudioManager.OnAudioFocusChangeListener {
-                    AppLog.i("System audio focus changed: $it ${systemFocusName[it]}")
-                })
+                // Gated at the call site, not inside requestFocusChange: that function is also the
+                // static path's permanent grab from CommManager, where the answer is the opposite.
+                val isRelease = notification.request.number ==
+                        Control.AudioFocusRequestNotification.AudioFocusRequestType.RELEASE_VALUE
+                if (aapAudio.shouldHonourProtocolFocusRequest(isRelease)) {
+                    aapAudio.requestFocusChange(AudioConfigs.stream(channel, settings.separateAudioStreams), notification.request.number, AudioManager.OnAudioFocusChangeListener {
+                        AppLog.i("System audio focus changed: $it ${systemFocusName[it]}")
+                    })
+                }
             }
         } else {
             AppLog.i("Audio Sink disabled - skipping system audio focus request for channel ${Channel.name(channel)}")

@@ -208,7 +208,12 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
     }
 
     override fun decrypt(start: Int, length: Int, buffer: ByteArray): ByteArrayWithLimit? {
-        synchronized(this) {
+        // The status line is built under the lock but emitted outside it. encrypt() takes this same
+        // monitor, so logging in here put the whole logging pipeline — formatting, the caller-name
+        // stack walk, the file writer — between the poll thread and the send thread once per
+        // decrypted packet, which at verbose is several times per video frame.
+        var statusLine: String? = null
+        val decrypted = synchronized(this) {
             if (!::sslEngine.isInitialized || !::rxBuffer.isInitialized) {
                 AppLog.w("SSL Decrypt: Not initialized yet")
                 return null
@@ -218,15 +223,15 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
                 val encrypted = ByteBuffer.wrap(buffer, start, length)
                 val result = sslEngine.unwrap(encrypted, rxBuffer)
                 runDelegatedTasks(result, sslEngine)
-                
+
                 if (AppLog.LOG_VERBOSE || result.bytesProduced() == 0) {
-                    AppLog.d("SSL Decrypt Status: ${result.status}, Produced: ${result.bytesProduced()}, Consumed: ${result.bytesConsumed()}")
+                    statusLine = "SSL Decrypt Status: ${result.status}, Produced: ${result.bytesProduced()}, Consumed: ${result.bytesConsumed()}"
                 }
 
                 val resultBuffer = ByteArray(result.bytesProduced())
                 rxBuffer.flip()
                 rxBuffer.get(resultBuffer)
-                return ByteArrayWithLimit(resultBuffer, resultBuffer.size)
+                ByteArrayWithLimit(resultBuffer, resultBuffer.size)
             } catch (e: Exception) {
                 // Check for Magic Garbage disconnect signal from Wireless Helper
                 if (length >= 16) {
@@ -246,9 +251,11 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
                 if (!isUserDisconnect) {
                     AppLog.e("SSL Decrypt failed", e)
                 }
-                return null
+                null
             }
         }
+        statusLine?.let { AppLog.d(it) }
+        return decrypted
     }
 
     override fun encrypt(offset: Int, length: Int, buffer: ByteArray): ByteArrayWithLimit? {

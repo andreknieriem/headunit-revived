@@ -46,6 +46,15 @@
     <string name="use_gradient_background_description_on_auto">アプリはグラデーションの円を中央に配置した独自の背景を描画します。エクストリームダークモードには適用されません。</string>
     <string name="use_gradient_background_description_off_auto">アプリの従来の背景が使用されています。エクストリームダークモードには適用されません。</string>
     <string name="category_dark_mode">ダークモード</string>
+    <string name="category_theming">テーマ設定</string>
+    <string name="customization_title">カスタマイズ</string>
+    <string name="customization_description">ホーム画面の背景画像や視覚的デザインをカスタマイズします</string>
+    <string name="home_background_image">背景画像</string>
+    <string name="home_background_image_description">メイン画面に表示するカスタム画像を選択します</string>
+    <string name="home_background_default">デフォルト (bg.png)</string>
+    <string name="home_background_custom">カスタム画像</string>
+    <string name="btn_choose_image">画像を選択</string>
+    <string name="btn_reset_default">デフォルトに戻す</string>
     <string name="category_automation">オートメーション</string>
     <string name="dark_mode_settings">ダークモード設定</string>
     <string name="app_theme_short">アプリ</string>
@@ -121,6 +130,9 @@
     <string name="log_source">ログソース</string>
     <string name="log_source_logcat">Logcat</string>
     <string name="log_source_applog_file">ファイルへ直接</string>
+    <string name="log_location">ログ保存場所</string>
+    <string name="log_location_default">デフォルト (アプリ専用ストレージ)</string>
+    <string name="log_location_downloads">ダウンロードフォルダ</string>
     <string name="start_log_capture">ログ取得を開始する</string>
     <string name="start_log_capture_description">デバッグのためにログの記録を開始します</string>
     <string name="start_log_capture_in_applog_file">Log のメッセージはキャプチャ中のみファイルに書き込まれます</string>

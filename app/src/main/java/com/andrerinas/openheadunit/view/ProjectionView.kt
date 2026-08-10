@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.andrerinas.openheadunit.App
+import com.andrerinas.openheadunit.decoder.DecoderStopPolicy
 import com.andrerinas.openheadunit.decoder.VideoDecoder
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.HeadUnitScreenConfig
@@ -25,7 +26,7 @@ class ProjectionView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        videoDecoder?.stop("onDetachedFromWindow")
+        videoDecoder?.stop(DecoderStopPolicy.REASON_DETACHED_FROM_WINDOW)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -46,7 +47,7 @@ class ProjectionView @JvmOverloads constructor(
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         AppLog.i("holder $holder")
-        videoDecoder?.stop("surfaceDestroyed")
+        videoDecoder?.stop(DecoderStopPolicy.REASON_SURFACE_DESTROYED)
         callbacks.forEach { it.onSurfaceDestroyed(holder.surface) }
     }
 

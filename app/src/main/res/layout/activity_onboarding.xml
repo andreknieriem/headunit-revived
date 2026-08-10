@@ -653,6 +653,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:text="@string/onb_vehicle_help_sideload"
+                    android:textAppearance="?attr/textAppearanceCaption" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="@string/onb_vehicle_help_advanced"
                     android:textAppearance="?attr/textAppearanceCaption" />
             </LinearLayout>

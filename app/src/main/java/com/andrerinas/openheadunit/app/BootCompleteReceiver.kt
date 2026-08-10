@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.andrerinas.openheadunit.aap.AapService
+import com.andrerinas.openheadunit.aap.BootLoopPolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
 import android.os.UserManager
@@ -32,7 +33,14 @@ class BootCompleteReceiver : BroadcastReceiver() {
         val wifiEnabled = Settings.isAutoStartOnWifiEnabled(context)
 
         if (bootEnabled) {
-            AppLog.i("Boot auto-start: starting AapService with BOOT_START (trigger=$action)")
+            // Take a strike before starting. The service clears it once this run has lasted long
+            // enough to count as healthy; if the device dies first, the strike stands and the next
+            // boot is one closer to pausing wireless bring-up. Counted here rather than in the
+            // service because only this side knows the start came from a boot — EXTRA_BOOT_START
+            // does not reach AapService until onStartCommand, after onCreate has already run.
+            val strikes = BootLoopPolicy.nextStrikes(Settings.getBootLoopStrikes(context))
+            Settings.setBootLoopStrikes(context, strikes)
+            AppLog.i("Boot auto-start: starting AapService with BOOT_START (trigger=$action, boot-start #$strikes since the last healthy run)")
             val serviceIntent = Intent(context, AapService::class.java).apply {
                 putExtra(EXTRA_BOOT_START, true)
             }

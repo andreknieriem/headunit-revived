@@ -99,10 +99,16 @@ class SystemOptimizer(private val context: Context) {
 
         recDpi = recDpi.coerceAtLeast(110)
 
+        // Default to H.264. Many head units report HEVC support they cannot actually play back, so
+        // only recommend H.265 when the panel is above Full HD (1440p/4K), where H.264 bandwidth
+        // stops being practical and the saving is worth the risk. panelCeil.width > 1920 means the
+        // panel warrants more than 1080p.
+        val recommendedCodec = if (hasH265 && panelCeil.width > 1920) "H.265" else "H.264"
+
         return OptimizationResult(
             recommendedResolutionId = panelCeil.id,
             recommendedDpi = recDpi,
-            recommendedVideoCodec = if (hasH265) "H.265" else "H.264",
+            recommendedVideoCodec = recommendedCodec,
             recommendedViewMode = recViewMode,
             isWidescreen = aspectRatio > 1.7f,
             suggestedOrientation = if (isPortraitTarget) Settings.ScreenOrientation.PORTRAIT else Settings.ScreenOrientation.LANDSCAPE,

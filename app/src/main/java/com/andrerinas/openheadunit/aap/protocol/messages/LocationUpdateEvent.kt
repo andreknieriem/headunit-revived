@@ -9,18 +9,25 @@ class LocationUpdateEvent(location: Location)
 
     companion object {
         private fun makeProto(location: Location): Message {
-            return Sensors.SensorBatch.newBuilder().also {
-                it.addLocationData(
-                        Sensors.SensorBatch.LocationData.newBuilder().apply {
-                            timestamp = location.time
-                            latitude = (location.latitude * 1E7).toInt()
-                            longitude = (location.longitude * 1E7).toInt()
+            return Sensors.SensorBatch.newBuilder().also { batch ->
+                batch.addLocationData(
+                    Sensors.SensorBatch.LocationData.newBuilder().apply {
+                        timestamp = location.time
+                        latitude = (location.latitude * 1E7).toInt()
+                        longitude = (location.longitude * 1E7).toInt()
+                        if (location.hasAltitude()) {
                             altitude = (location.altitude * 1E2).toInt()
+                        }
+                        if (location.hasBearing()) {
                             bearing = (location.bearing * 1E6).toInt()
-                            // AA expects speed in mm/s (m/s * 1000)
+                        }
+                        if (location.hasSpeed()) {
                             speed = (location.speed * 1E3).toInt()
+                        }
+                        if (location.hasAccuracy()) {
                             accuracy = (location.accuracy * 1E3).toInt()
                         }
+                    }
                 )
             }.build()
         }

@@ -8,79 +8,50 @@ import java.nio.ByteBuffer
 
 internal class AapVideo(private val videoDecoder: VideoDecoder, private val settings: Settings, private val onFrameCorrupted: () -> Unit) {
 
-    private val messageBuffer = ByteBuffer.allocate(
-        if (settings.videoCodec == VideoDecoder.CodecType.H265.settingsValue) {
-            Messages.DEF_BUFFER_LENGTH * 64 // ~8MB for H.265 support
-        } else {
-            Messages.DEF_BUFFER_LENGTH * 16 // ~2MB for H.264 legacy support
-        }
-    )
+    companion object {
+        /** Enough for H.264 at the resolutions most head units negotiate. ~2MB. */
+        private const val INITIAL_BUFFER_BYTES = Messages.DEF_BUFFER_LENGTH * 16
+
+        /** Ceiling for [ensureCapacity]. ~8MB, which covers H.265 at 4K. */
+        private const val MAX_BUFFER_BYTES = Messages.DEF_BUFFER_LENGTH * 64
+    }
+
+    /**
+     * Reassembly buffer for fragmented frames. Grows on demand.
+     *
+     * It used to be sized up front from settings.videoCodec, which is the user's preference and
+     * not the codec the session runs: ServiceDiscoveryResponse negotiates H.265 at 1440p and 4K
+     * whatever that setting says, and falls back to H.264 when the user asked for H.265 on a
+     * device with no HEVC decoder. Either mismatch handed an H.265 stream the 2MB H.264 buffer and
+     * turned every large frame into a fragment overflow. The real answer is also not available
+     * here - AapVideo is constructed with the transport, before the phone has negotiated anything
+     * - so start small and let a frame that does not fit be the thing that asks for more.
+     */
+    private var messageBuffer = ByteBuffer.allocate(INITIAL_BUFFER_BYTES)
     private var legacyAssembledBuffer: ByteArray? = null
     private var isFrameCorrupt = false
     private var lastKeyframeRequestMs = 0L
     private var isAssemblingFrame = false
-    private var waitingForKeyframe = false
 
+    /**
+     * Marks the frame being assembled unusable and asks the phone for a fresh keyframe.
+     *
+     * Corruption is scoped to the current frame only: flags 8 and 10 skip the rest of it, and the
+     * next flag 9 or 11 clears the mark. There is deliberately no lockout that holds every
+     * subsequent P-frame back until a keyframe is positively identified - one existed, and because
+     * nothing could reliably tell a keyframe from a P-frame for every codec the app negotiates, it
+     * could latch for the rest of the session and freeze the picture with the connection still
+     * healthy. Dropping one frame and letting the stream heal on the phone's next keyframe is both
+     * cheaper and unable to get stuck.
+     */
     private fun markCorruptAndRequestRecovery() {
         isFrameCorrupt = true
-        waitingForKeyframe = true // Lock out P-Frames until an I-Frame arrives
         val now = android.os.SystemClock.elapsedRealtime()
-        if (now - lastKeyframeRequestMs > 1000) {
+        if (VideoRecoveryPolicy.canRequestKeyframe(now, lastKeyframeRequestMs)) {
             lastKeyframeRequestMs = now
             AppLog.w("AapVideo: Frame corrupted, requesting keyframe to recover stream")
             onFrameCorrupted()
         }
-    }
-
-    private fun checkKeyframe(message: AapMessage): Boolean {
-        if (!waitingForKeyframe)
-            return false
-
-        val flags = message.flags.toInt()
-
-        // We need to check if this new frame is a Keyframe (SPS/PPS or IDR)
-        // Flag 11 (Single) or Flag 9 (First Fragment) indicate the start of a frame
-        // Drop middle/end fragments if it's not
-        if (flags != 11 && flags != 9)
-            return true
-
-        val buf = message.data
-        val len = message.size
-
-        // Try offset 10 first, fallback to offset 2
-        var scOffset = 10
-        var scLen = findStartCode(buf, scOffset)
-        if (scLen <= 0) {
-            scOffset = 2
-            scLen = findStartCode(buf, scOffset)
-        }
-
-        // No start code = Not a keyframe. Drop it.
-        if (scLen <= 0 || scOffset + scLen >= len)
-            return true
-
-        val nalType = if (settings.videoCodec == VideoDecoder.CodecType.H265.settingsValue) {
-            (buf[scOffset + scLen].toInt() and 0x7E) shr 1 // H.265 NAL
-        } else {
-            buf[scOffset + scLen].toInt() and 0x1F // H.264 NAL
-        }
-
-        // Check if it's an I-Frame or VPS/SPS/PPS (types that can start a clean stream)
-        val isKeyframe = if (settings.videoCodec == VideoDecoder.CodecType.H265.settingsValue) {
-            nalType in 16..21 || nalType in 32..34
-        } else {
-            nalType == 5 || nalType == 7 || nalType == 8
-        }
-
-        if (isKeyframe) {
-            AppLog.i("AapVideo: Keyframe received, resuming stream.")
-            waitingForKeyframe = false
-            isFrameCorrupt = false
-        } else {
-            return true // Drop this P-Frame, we are still waiting for a Keyframe!
-        }
-
-        return false
     }
 
     private fun checkFragmentState(message: AapMessage) {
@@ -98,14 +69,34 @@ internal class AapVideo(private val videoDecoder: VideoDecoder, private val sett
                     AppLog.e("AapVideo: Orphaned fragment (Flag $flags) detected! Frame data lost.")
                     markCorruptAndRequestRecovery()
                     messageBuffer.clear()
-                    // Still need to pass it to checkKeyframe in case it's magically valid (rare),
-                    // but usually we just drop it.
+                    // The mark makes the flag 8/10 arms below skip this fragment. It is cleared
+                    // again by the next flag 9 or 11, so the stream resumes on the frame after.
                 }
                 if (flags == 10) {
                     isAssemblingFrame = false // Assembly finished
                 }
             }
         }
+    }
+
+    /**
+     * Makes room for [additionalBytes] more of the frame being assembled, growing [messageBuffer]
+     * if it has to. Returns false only at [MAX_BUFFER_BYTES], where the frame is genuinely too
+     * large to be one we can decode and the caller should invalidate it.
+     */
+    private fun ensureCapacity(additionalBytes: Int): Boolean {
+        if (messageBuffer.remaining() >= additionalBytes) return true
+
+        val needed = messageBuffer.position() + additionalBytes
+        if (needed > MAX_BUFFER_BYTES) return false
+
+        var capacity = messageBuffer.capacity()
+        while (capacity < needed) capacity *= 2
+        val grown = ByteBuffer.allocate(capacity.coerceAtMost(MAX_BUFFER_BYTES))
+        grown.put(messageBuffer.array(), 0, messageBuffer.position())
+        messageBuffer = grown
+        AppLog.i("AapVideo: Reassembly buffer grown to ${grown.capacity() / 1024}KB")
+        return true
     }
 
     private fun findStartCode(buf: ByteArray, offset: Int): Int {
@@ -120,8 +111,6 @@ internal class AapVideo(private val videoDecoder: VideoDecoder, private val sett
     fun process(message: AapMessage): Boolean {
         // Fix smearing happening after some while
         checkFragmentState(message)
-        if (checkKeyframe(message))
-            return true
 
         val flags = message.flags.toInt()
         val buf = message.data
@@ -136,18 +125,14 @@ internal class AapVideo(private val videoDecoder: VideoDecoder, private val sett
                 // Timestamp Indication (Offset 10)
                 val sc10 = findStartCode(buf, 10)
                 if (len > 10 + sc10 && sc10 > 0) {
-                    if (!videoDecoder.decode(buf, 10, len - 10, settings.forceSoftwareDecoding, settings.videoCodec)) {
-                        markCorruptAndRequestRecovery()
-                    }
+                    videoDecoder.decode(buf, 10, len - 10, settings.forceSoftwareDecoding, settings.videoCodec)
                     return true
                 }
 
                 // Media Indication or Config (Offset 2)
                 val sc2 = findStartCode(buf, 2)
                 if (len > 2 + sc2 && sc2 > 0) {
-                    if (!videoDecoder.decode(buf, 2, len - 2, settings.forceSoftwareDecoding, settings.videoCodec)) {
-                        markCorruptAndRequestRecovery()
-                    }
+                    videoDecoder.decode(buf, 2, len - 2, settings.forceSoftwareDecoding, settings.videoCodec)
                     return true
                 }
                 AppLog.w("AapVideo: Dropped Flag 11 packet. len=$len")
@@ -174,10 +159,10 @@ internal class AapVideo(private val videoDecoder: VideoDecoder, private val sett
                 if (isFrameCorrupt) return true // Skip fragments of an already corrupt frame
 
                 // Middle fragment - append to buffer with overflow detection
-                if (messageBuffer.remaining() >= message.size) {
+                if (ensureCapacity(message.size)) {
                     messageBuffer.put(message.data, 0, message.size)
                 } else {
-                    AppLog.e("AapVideo: Fragment overflow (Flag 8)! Size ${message.size} exceeds remaining ${messageBuffer.remaining()}. Invalidating frame.")
+                    AppLog.e("AapVideo: Fragment overflow (Flag 8)! Size ${message.size} on top of ${messageBuffer.position()} exceeds the ${MAX_BUFFER_BYTES / 1024}KB cap. Invalidating frame.")
                     markCorruptAndRequestRecovery()
                     messageBuffer.clear()
                 }
@@ -187,10 +172,10 @@ internal class AapVideo(private val videoDecoder: VideoDecoder, private val sett
                 if (isFrameCorrupt) return true // Skip fragments of an already corrupt frame
 
                 // Last fragment - append, assemble, and decode
-                if (messageBuffer.remaining() >= message.size) {
+                if (ensureCapacity(message.size)) {
                     messageBuffer.put(message.data, 0, message.size)
                 } else {
-                    AppLog.e("AapVideo: Final fragment overflow (Flag 10)! Invalidating frame.")
+                    AppLog.e("AapVideo: Final fragment overflow (Flag 10)! Frame exceeds the ${MAX_BUFFER_BYTES / 1024}KB cap. Invalidating frame.")
                     markCorruptAndRequestRecovery()
                     messageBuffer.clear()
                     return true
@@ -199,7 +184,7 @@ internal class AapVideo(private val videoDecoder: VideoDecoder, private val sett
                 messageBuffer.flip()
                 val assembledSize = messageBuffer.limit()
 
-                val decoded = if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
                     if (legacyAssembledBuffer == null || legacyAssembledBuffer!!.size < assembledSize) {
                         legacyAssembledBuffer = ByteArray(assembledSize + 1024)
                     }
@@ -207,9 +192,6 @@ internal class AapVideo(private val videoDecoder: VideoDecoder, private val sett
                     videoDecoder.decode(legacyAssembledBuffer!!, 0, assembledSize, settings.forceSoftwareDecoding, settings.videoCodec)
                 } else {
                     videoDecoder.decode(messageBuffer.array(), 0, assembledSize, settings.forceSoftwareDecoding, settings.videoCodec)
-                }
-                if (!decoded) {
-                    markCorruptAndRequestRecovery()
                 }
 
                 messageBuffer.clear()

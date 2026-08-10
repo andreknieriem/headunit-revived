@@ -74,6 +74,7 @@ import com.andrerinas.openheadunit.utils.VpnControl
 import com.andrerinas.openheadunit.connection.CarKeyReceiver
 import com.andrerinas.openheadunit.connection.NativeAaHandshakeManager
 import com.andrerinas.openheadunit.connection.NearbyManager
+import com.andrerinas.openheadunit.connection.SoftApCredentialsProvider
 import com.andrerinas.openheadunit.connection.carkey.CarKeysManager
 import com.andrerinas.openheadunit.main.BackgroundNotification
 import com.andrerinas.openheadunit.utils.SUExecutor
@@ -106,6 +107,9 @@ class AapService : Service(), UsbReceiver.Listener {
     private lateinit var usbReceiver: UsbReceiver
     private var nightModeManager: NightModeManager? = null
     private var wifiDirectManager: WifiDirectManager? = null
+    // The hotspot transport's credential source, the alternative to wifiDirectManager for mode 3.
+    // Constructed alongside it so both can be wired once; only one of the two is start()ed.
+    private var softApCredentialsProvider: SoftApCredentialsProvider? = null
     private var nativeAaHandshakeManager: NativeAaHandshakeManager? = null
     private var nearbyManager: NearbyManager? = null
     private var wifiAutoStartReceiver: WifiAutoStartReceiver? = null
@@ -702,6 +706,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
         nativeAaHandshakeManager = NativeAaHandshakeManager(this, serviceScope)
         wifiDirectManager = WifiDirectManager(this)
+        softApCredentialsProvider = SoftApCredentialsProvider(this, serviceScope, App.provide(this).settings)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             try {
@@ -717,23 +722,16 @@ class AapService : Service(), UsbReceiver.Listener {
             }
         }
 
-        initWifiModeWithOptionalWait()
+        // Decided here as well as inside initWifiMode() so a paused start skips the wait-for-WiFi
+        // machinery entirely rather than setting it up and being turned away at the end of it.
+        if (applyBootLoopGuard()) {
+            AppLog.w("AapService: Wireless bring-up paused by the boot-loop guard. USB and the rest of the app are unaffected.")
+        } else {
+            initWifiModeWithOptionalWait()
+        }
+        scheduleBootLoopStrikeClear()
         wifiDirectManager?.setCredentialsListener { ssid, psk, ip, bssid ->
-            val appSettings = App.provide(this).settings
-            if (appSettings.wifiConnectionMode == 3) {
-                AppLog.i("AapService: Received WiFi credentials from manager (SSID=$ssid, IP=$ip). Updating and Triggering Poke.")
-                nativeAaHandshakeManager?.updateWifiCredentials(ssid, psk, ip, bssid)
-                if (commManager.isConnected ||
-                    commManager.connectionState.value is CommManager.ConnectionState.Connecting) {
-                    AppLog.i("AapService: USB/other session already active. Skipping auto-poke to avoid pulling phone into wireless flow.")
-                } else if (!userExitedAA) {
-                    nativeAaHandshakeManager?.triggerPoke()
-                } else {
-                    AppLog.i("AapService: userExitedAA is true. Skipping auto-poke.")
-                }
-            } else {
-                AppLog.d("AapService: WiFi credentials received, but not in Native AA mode. Skipping HandshakeManager update.")
-            }
+            onNativeCredentials(ssid, psk, ip, bssid)
         }
         // Settling counts as in-flight here: isHandshakeInFlight() goes false the instant Type 3
         // is written, but the phone still has to associate, do WPS and get a DHCP lease, and
@@ -744,6 +742,10 @@ class AapService : Service(), UsbReceiver.Listener {
         }
         wifiDirectManager?.setNativeSessionConnectedProvider { commManager.isConnected }
         wifiDirectManager?.setNativeGroupInvalidatedListener { nativeAaHandshakeManager?.invalidateCredentials() }
+        softApCredentialsProvider?.setCredentialsListener { ssid, psk, ip, bssid ->
+            onNativeCredentials(ssid, psk, ip, bssid)
+        }
+        softApCredentialsProvider?.setInvalidatedListener { nativeAaHandshakeManager?.invalidateCredentials() }
 
 
         checkAlreadyConnectedUsb()
@@ -825,6 +827,10 @@ class AapService : Service(), UsbReceiver.Listener {
      * (AapControl.audioFocusRequest -> AapAudio.requestFocusChange), so grabbing a
      * permanent gain here would needlessly evict other media (e.g. the car radio) the
      * moment the phone connects, before AA plays anything.
+     *
+     * Whether to take it at all is PlaybackFocusPolicy's call, the same as for the dynamic path:
+     * on a head unit that is also the phone's Bluetooth A2DP sink, evicting the sink makes it
+     * AVRCP-pause that same phone, so the session starts with the projected audio stopped.
      */
     private fun requestPermanentAudioFocus() {
         if (!settings.enableAudioSink) {
@@ -835,6 +841,22 @@ class AapService : Service(), UsbReceiver.Listener {
             AppLog.d("Static Audio Focus disabled - skipping permanent audio focus request; focus will be acquired on demand.")
             return
         }
+
+        // One probe at connect is enough: the sink only pauses on a focus-loss *event*, so a
+        // Bluetooth link that comes up later in the session never sees one.
+        val mode = settings.playbackFocusMode
+        val btMediaLinkActive = BluetoothHelper.isA2dpMediaLinkActive(this)
+        if (!PlaybackFocusPolicy.shouldAcquirePermanent(
+                mode = mode,
+                staticAudioFocus = true,
+                audioSinkEnabled = true,
+                btMediaLinkActive = btMediaLinkActive)) {
+            AppLog.i("AapService: Static Audio Focus - leaving system audio focus alone " +
+                    "(mode=$mode, bluetoothMedia=$btMediaLinkActive)")
+            return
+        }
+        AppLog.i("AapService: Static Audio Focus - acquiring permanent system audio focus " +
+                "(mode=$mode, bluetoothMedia=$btMediaLinkActive)")
 
         try {
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -1000,6 +1022,10 @@ class AapService : Service(), UsbReceiver.Listener {
     private fun setupMediaSession() {
         val mbr = ComponentName(this, MediaButtonReceiver::class.java)
         mediaSession = MediaSessionCompat(this, "HeadunitRevived", mbr, null).apply {
+            setFlags(
+                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
+                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+            )
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
                     val keyEvent = mediaButtonEvent?.let { IntentCompat.getParcelableExtra(it, Intent.EXTRA_KEY_EVENT, android.view.KeyEvent::class.java) }
@@ -1127,10 +1153,65 @@ class AapService : Service(), UsbReceiver.Listener {
             // the existing group for fast reconnection there. Must await CommManager's async
             // teardown first so we never remove the P2P interface while the
             // ByeByeRequest/socket-close is still in flight.
-            if (state.isUserExit && WifiModePolicy.usesWifiDirect(mode, strategy)) {
+            if (state.isUserExit && WifiModePolicy.usesWifiDirect(mode, strategy, nativeTransport())) {
                 commManager.awaitDisconnectComplete()
                 AppLog.i("AapService: CommManager teardown complete. Stopping WiFi Direct group.")
                 wifiDirectManager?.stop()
+            } else if (state.isUserExit) {
+                // The same question for the routes that run on a soft AP instead of a P2P group.
+                // Closing the socket does not make the phone leave the network — it stays
+                // associated and Android Auto retries its wireless setup until it throttles itself
+                // — so the access point has to go, and for the same reason as above only once
+                // CommManager has finished. Unlike a P2P group the access point is usually the
+                // user's own, and switching one back on is best effort, so it only comes down when
+                // they have already handed the app that job.
+                //
+                // Restarted rather than left down. It has to disappear for the phone to be put off
+                // it, but leaving it off charges the whole bring-up — measured at ~20s on a unit
+                // that refuses setSoftApConfiguration() — to the next connection, with the phone
+                // waiting through it. Paying it here spends the same seconds while the user is
+                // already walking away.
+                val action = UserExitHotspotPolicy.onUserExit(
+                    mode, strategy, nativeTransport(), settings.autoEnableHotspot,
+                    settings.hotspotTeardownProvenUnsafe
+                )
+                if (action != HotspotExitAction.NONE) {
+                    commManager.awaitDisconnectComplete()
+                    // Stop watching an access point nobody is connecting over, either way: this
+                    // holds a system broadcast receiver and can still re-enable the hotspot on its
+                    // own long after the user has finished with it.
+                    softApCredentialsProvider?.stop()
+                }
+                when (action) {
+                    HotspotExitAction.DISABLE -> {
+                        AppLog.i("AapService: CommManager teardown complete. Restarting the hotspot so the phone leaves the network.")
+                        if (!HotspotManager.restart(this@AapService)) {
+                            // The one way to learn that this radio will not host an access point
+                            // again once it has been taken down. Remembered so it costs the user
+                            // one hotspot rather than one per session — from here on this device's
+                            // access point is left alone and the phone is told, in the branch
+                            // below, what that means.
+                            settings.hotspotTeardownProvenUnsafe = true
+                            AppLog.w(
+                                "AapService: This device did not bring its access point back after " +
+                                    "the app took it down, so it will not be taken down again. " +
+                                    "Ending a session will leave the phone on the network from now " +
+                                    "on — end it from the phone's own Android Auto notification if " +
+                                    "that becomes a problem."
+                            )
+                        }
+                    }
+                    HotspotExitAction.WARN_LEFT_UP -> AppLog.w(
+                        "AapService: Stopping the connection does not switch this device's hotspot " +
+                            "off — either the app was not given charge of it, or this device has " +
+                            "already shown it cannot switch one back on. So the phone stays " +
+                            "joined to it and Android Auto may keep retrying until it throttles " +
+                            "itself. Turn the hotspot off and on again to clear that, or end the " +
+                            "session from the phone's own Android Auto notification instead, which " +
+                            "makes it leave the network by itself."
+                    )
+                    HotspotExitAction.NONE -> {}
+                }
             }
 
             App.provide(this@AapService).audioDecoder.stop()
@@ -1438,6 +1519,15 @@ class AapService : Service(), UsbReceiver.Listener {
 
     /** Starts [WirelessServer] if the user has configured server WiFi mode. */
     private fun initWifiMode(force: Boolean = false) {
+        // Every automatic entry point lands here, including the Bluetooth auto-start that fires
+        // when the phone comes into range — which on a looping unit would walk straight back into
+        // the crash the guard was set to avoid. Explicit user actions release the pause first, so
+        // this only ever blocks a start nobody asked for.
+        if (Settings.isWirelessPausedByBootLoop(this)) {
+            AppLog.w("AapService: Wireless bring-up requested, but it is paused by the boot-loop guard. Open the app to re-enable it.")
+            return
+        }
+
         val settings = App.provide(this).settings
         val mode = settings.wifiConnectionMode
         val strategy = settings.helperConnectionStrategy
@@ -1453,8 +1543,9 @@ class AapService : Service(), UsbReceiver.Listener {
         networkDiscovery?.stop()
         nearbyManager?.stop()
         nativeAaHandshakeManager?.stop()
+        softApCredentialsProvider?.stop()
 
-        val usesWifiDirect = WifiModePolicy.usesWifiDirect(mode, strategy)
+        val usesWifiDirect = WifiModePolicy.usesWifiDirect(mode, strategy, nativeTransport())
         if (!usesWifiDirect) {
             AppLog.i("AapService: New mode does not use WiFi Direct. Stopping WifiDirectManager...")
             wifiDirectManager?.stop()
@@ -1503,12 +1594,29 @@ class AapService : Service(), UsbReceiver.Listener {
 
             // Mode 3: Native AA Wireless
             if (mode == 3) {
-                // Start WiFi Direct as a "quiet host" (P2P Group for phone to join)
-                // We let WifiDirectManager handle the WiFi state (enabling if needed)
-                wifiDirectManager?.startNativeAaQuietHost()
+                // Skip the whole route, not just the handshake, when the Bluetooth this unit's
+                // phone is bonded to isn't reachable from here: with no Bluetooth channel there is
+                // nobody to hand the credentials to, so hosting a P2P group or holding the hotspot
+                // open would only churn the WiFi stack for nothing.
+                val externalBt = NativeAaHandshakeManager.externalBtDiagnostic()
+                if (externalBt != null) AppLog.e(externalBt)
+                val blockedByExternalBt =
+                    externalBt != null && !NativeAaHandshakeManager.externalBtOverridden(this)
+                if (!blockedByExternalBt) {
+                    if (nativeTransport() == NativeTransport.HOTSPOT) {
+                        // Read this device's own access point instead of hosting a P2P group. The AP
+                        // itself is the user's to switch on; the provider only resolves and watches it.
+                        AppLog.i("AapService: Native AA on the head unit hotspot — resolving access point credentials.")
+                        softApCredentialsProvider?.start()
+                    } else {
+                        // Start WiFi Direct as a "quiet host" (P2P Group for phone to join)
+                        // We let WifiDirectManager handle the WiFi state (enabling if needed)
+                        wifiDirectManager?.startNativeAaQuietHost()
+                    }
 
-                // Start the official Bluetooth handshake servers
-                nativeAaHandshakeManager?.start()
+                    // Start the official Bluetooth handshake servers
+                    nativeAaHandshakeManager?.start()
+                }
             }
         }
 
@@ -1588,6 +1696,13 @@ class AapService : Service(), UsbReceiver.Listener {
         settingsPrefs = null
         nativeAaHandshakeManager?.stop()
         releaseBootWakeLock()
+
+        // Before the hotspot goes, not after: SoftApCredentialsProvider watches
+        // WIFI_AP_STATE_CHANGED and switches an access point it started back on when it sees one
+        // drop. Left registered here it would treat this very teardown as the hotspot failing and
+        // bring it back up as the service dies — leaving the access point running with nothing
+        // left to serve it.
+        softApCredentialsProvider?.stop()
 
         if (App.provide(this).settings.autoEnableHotspot) {
             AppLog.i("AapService: Auto-disabling hotspot...")
@@ -1698,7 +1813,12 @@ class AapService : Service(), UsbReceiver.Listener {
 
         when (intent?.action) {
             ACTION_START_SELF_MODE       -> startSelfMode()
-            ACTION_START_WIRELESS        -> initWifiMode()
+            ACTION_START_WIRELESS        -> {
+                // Asked for from the UI, so the user is present: release the boot-loop pause
+                // rather than silently ignoring them.
+                Settings.clearBootLoopState(this)
+                initWifiMode()
+            }
             ACTION_START_WIRELESS_SCAN   -> {
                 val settings = App.provide(this).settings
                 val mode = settings.wifiConnectionMode
@@ -1707,6 +1827,7 @@ class AapService : Service(), UsbReceiver.Listener {
                 // [FIX] Reset exit flags on manual scan start
                 userExitedAA = false
                 userExitCooldownUntil = 0L
+                Settings.clearBootLoopState(this)
                 initWifiMode(force = true)
 
                 if (mode == 2 && strategy == 2) {
@@ -2152,10 +2273,49 @@ class AapService : Service(), UsbReceiver.Listener {
      * Triggers a refresh of the WiFi Direct "quiet host" state.
      * Called by NativeAaHandshakeManager if it's waiting for credentials that haven't arrived yet.
      */
+    /**
+     * Credentials for the network the phone should join, from whichever transport produced them.
+     * Both mode-3 transports funnel through here so the poke rules stay in one place.
+     */
+    private fun onNativeCredentials(ssid: String, psk: String, ip: String, bssid: String) {
+        val appSettings = App.provide(this).settings
+        if (appSettings.wifiConnectionMode != 3) {
+            AppLog.d("AapService: WiFi credentials received, but not in Native AA mode. Skipping HandshakeManager update.")
+            return
+        }
+        AppLog.i("AapService: Received WiFi credentials from manager (SSID=$ssid, IP=$ip). Updating and Triggering Poke.")
+        nativeAaHandshakeManager?.updateWifiCredentials(ssid, psk, ip, bssid)
+        if (commManager.isConnected ||
+            commManager.connectionState.value is CommManager.ConnectionState.Connecting) {
+            AppLog.i("AapService: USB/other session already active. Skipping auto-poke to avoid pulling phone into wireless flow.")
+        } else if (!userExitedAA) {
+            nativeAaHandshakeManager?.triggerPoke()
+        } else {
+            AppLog.i("AapService: userExitedAA is true. Skipping auto-poke.")
+        }
+    }
+
+    /**
+     * Whether the AAP TCP port the phone will be sent to is bound and accepting.
+     *
+     * The Bluetooth handshake checks this before handing over credentials, mirroring the ordering
+     * the reference head unit software uses: access point up, address resolved, port bound, and
+     * only then talk to the phone.
+     */
+    fun isWirelessServerListening(): Boolean = wirelessServer?.isListening == true
+
+    /** The transport mode 3 is configured to use. Read fresh: the user can change it in settings. */
+    private fun nativeTransport(): NativeTransport =
+        NativeTransport.fromSetting(App.provide(this).settings.nativeApTransport)
+
     fun triggerWifiDirectRefresh() {
-        AppLog.i("AapService: WiFi Direct refresh requested.")
         val mode = App.provide(this).settings.wifiConnectionMode
-        if (mode == 3) {
+        if (mode != 3) return
+        if (nativeTransport() == NativeTransport.HOTSPOT) {
+            AppLog.i("AapService: Access point refresh requested.")
+            softApCredentialsProvider?.refresh()
+        } else {
+            AppLog.i("AapService: WiFi Direct refresh requested.")
             wifiDirectManager?.startNativeAaQuietHost()
         }
     }
@@ -2411,6 +2571,93 @@ class AapService : Service(), UsbReceiver.Listener {
     }
 
     // -------------------------------------------------------------------------
+    // Boot-loop guard
+    // -------------------------------------------------------------------------
+
+    /**
+     * Whether to skip wireless bring-up because starting it appears to be crashing the device, and
+     * posts the notice explaining that if so.
+     *
+     * See [BootLoopPolicy]. The decision is taken from the strike count the receiver has already
+     * written, so it needs nothing from the start intent and can run here in onCreate.
+     */
+    private fun applyBootLoopGuard(): Boolean {
+        if (Settings.isWirelessPausedByBootLoop(this)) {
+            AppLog.w("AapService: Wireless is still paused from an earlier boot loop. Open the app to re-enable it.")
+            notifyBootLoopPause()
+            return true
+        }
+        val strikes = Settings.getBootLoopStrikes(this)
+        if (!BootLoopPolicy.shouldPauseWireless(strikes)) return false
+
+        AppLog.w(
+            "AapService: $strikes boot-started runs in a row ended before " +
+                "${BootLoopPolicy.HEALTHY_RUN_MS / 1000}s. Pausing wireless bring-up — on some head units " +
+                "the WiFi stack takes the whole system down when a phone joins, and auto-start then " +
+                "repeats it forever."
+        )
+        Settings.setWirelessPausedByBootLoop(this, true)
+        notifyBootLoopPause()
+        return true
+    }
+
+    /**
+     * Clears the strikes once this run has lasted long enough to count as healthy.
+     *
+     * Deliberately time-based rather than hung off a successful connection: on the head unit this
+     * guard was written for, one cycle reached a complete projection session with audio playing and
+     * the system died anyway, so a connection-based signal would reset the count every pass.
+     */
+    private fun scheduleBootLoopStrikeClear() {
+        if (Settings.getBootLoopStrikes(this) == 0) return
+        serviceScope.launch {
+            delay(BootLoopPolicy.HEALTHY_RUN_MS)
+            AppLog.i("AapService: This run has lasted ${BootLoopPolicy.HEALTHY_RUN_MS / 1000}s. Clearing the boot-loop strikes.")
+            Settings.setBootLoopStrikes(this@AapService, 0)
+        }
+    }
+
+    /**
+     * Tells the user wireless was left off and what to do about it. Names the WiFi Direct join when
+     * that is the configuration, because on the units this happens to, switching the Native AA
+     * transport to the head unit's own hotspot avoids the P2P path altogether.
+     */
+    private fun notifyBootLoopPause() {
+        val settings = App.provide(this).settings
+        val onNativeWifiDirect = settings.wifiConnectionMode == 3 &&
+            NativeTransport.fromSetting(settings.nativeApTransport) == NativeTransport.WIFI_DIRECT
+        val text = getString(
+            if (onNativeWifiDirect) R.string.boot_loop_paused_native_wifi_direct
+            else R.string.boot_loop_paused_generic
+        )
+
+        val launchIntent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra(MainActivity.EXTRA_LAUNCH_SOURCE, "Boot-loop guard")
+        }
+        val piFlags = PendingIntent.FLAG_UPDATE_CURRENT or
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
+        val pi = PendingIntent.getActivity(this, 201, launchIntent, piFlags)
+
+        val notification = NotificationCompat.Builder(this, App.bootStartChannel)
+            .setSmallIcon(R.drawable.ic_stat_aa)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentTitle(getString(R.string.boot_loop_paused_title))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(pi)
+            .setAutoCancel(true)
+            .build()
+
+        try {
+            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .notify(BOOT_LOOP_NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            AppLog.w("AapService: Could not post the boot-loop notice: ${e.message}")
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Self Mode
     // -------------------------------------------------------------------------
 
@@ -2630,6 +2877,17 @@ class AapService : Service(), UsbReceiver.Listener {
         private var registrationListener: NsdManager.RegistrationListener? = null
         private var job: Job? = null
 
+        /**
+         * Whether the TCP port the phone is told to dial is actually bound right now.
+         *
+         * start() only launches a coroutine; the bind happens inside it and can fail (the port
+         * still held by a previous session is the usual way). Handing the phone credentials for a
+         * port nothing is listening on produces the worst possible log: a clean handshake, a
+         * successful WiFi join, and then silence.
+         */
+        @Volatile var isListening = false
+            private set
+
         fun start(registerNsd: Boolean = true) {
             nsdManager = getSystemService(Context.NSD_SERVICE) as? NsdManager
             if (nsdManager == null) {
@@ -2641,6 +2899,7 @@ class AapService : Service(), UsbReceiver.Listener {
             job = serviceScope.launch(Dispatchers.IO) {
                 try {
                     serverSocket = ServerSocket(5288).apply { reuseAddress = true }
+                    isListening = true
                     AppLog.i("Wireless Server listening on port 5288")
                     logLocalNetworkInterfaces()
 
@@ -2670,6 +2929,7 @@ class AapService : Service(), UsbReceiver.Listener {
                 } catch (e: Exception) {
                     if (isActive) AppLog.e("Wireless server error", e)
                 } finally {
+                    isListening = false
                     unregisterNsd()
                     try { serverSocket?.close() } catch (e: Exception) {}
                 }
@@ -2747,6 +3007,7 @@ class AapService : Service(), UsbReceiver.Listener {
         val scanningState = MutableStateFlow(false)
 
         private const val BOOT_START_NOTIFICATION_ID = 42
+        private const val BOOT_LOOP_NOTIFICATION_ID = 43
         private const val PROJECTION_LAUNCH_NOTIFICATION_ID = 43
 
         // Service action strings used with startService() and sendBroadcast()

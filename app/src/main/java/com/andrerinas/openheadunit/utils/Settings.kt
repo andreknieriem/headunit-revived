@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
+import com.andrerinas.openheadunit.aap.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.UsbDeviceCompat
@@ -166,9 +167,18 @@ class Settings(private val context: Context) {
         APPLOG_FILE
     }
 
+    enum class LogLocation {
+        DEFAULT,
+        DOWNLOADS
+    }
+
     var logSource: LogSource
         get() = LogSource.entries.getOrElse(prefs.getInt(KEY_LOG_SOURCE, LogSource.LOGCAT.ordinal)) { LogSource.LOGCAT }
         set(value) { prefs.edit().putInt(KEY_LOG_SOURCE, value.ordinal).apply() }
+
+    var logLocation: LogLocation
+        get() = LogLocation.entries.getOrElse(prefs.getInt(KEY_LOG_LOCATION, LogLocation.DEFAULT.ordinal)) { LogLocation.DEFAULT }
+        set(value) { prefs.edit().putInt(KEY_LOG_LOCATION, value.ordinal).apply() }
 
     /** Whether log capture should be active across restarts. Default: false (disabled). */
     var exporterCaptureEnabled: Boolean
@@ -317,6 +327,9 @@ class Settings(private val context: Context) {
 
     // Vehicle info settings (sent to phone during Android Auto handshake)
     var vehicleDisplayName: String
+        // Cosmetic: the phone shows this in its connection history and on the Android Auto
+        // welcome screen. It is not the reported manufacturer, which stays "Google" unless
+        // the user picks a real car brand — see the car step in OnboardingActivity.
         get() = prefs.getString("vehicle-display-name", "Open Headunit")!!
         set(value) { prefs.edit().putString("vehicle-display-name", value).apply() }
 
@@ -477,6 +490,16 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("static-audio-focus", false)
         set(value) { prefs.edit().putBoolean("static-audio-focus", value).apply() }
 
+    // Whether AA playback takes system audio focus, so another local player (typically the car
+    // radio) pauses while it runs. AUTO skips it when a Bluetooth media link is up, because the
+    // A2DP sink answers our focus grab by pausing the phone that is feeding us. See
+    // PlaybackFocusPolicy for the whole story; ALWAYS and NEVER are the manual overrides.
+    var playbackFocusMode: PlaybackFocusPolicy.Mode
+        get() = PlaybackFocusPolicy.Mode.fromInt(
+            prefs.getInt("playback-focus-mode", PlaybackFocusPolicy.Mode.AUTO.value)
+        )
+        set(value) { prefs.edit().putInt("playback-focus-mode", value.value).apply() }
+
     var separateAudioStreams: Boolean
         get() = prefs.getBoolean("separate-audio-streams", false)
         set(value) { prefs.edit().putBoolean("separate-audio-streams", value).apply() }
@@ -489,8 +512,19 @@ class Settings(private val context: Context) {
         get() = prefs.getInt("audio-latency-multiplier", 8)
         set(value) { prefs.edit().putInt("audio-latency-multiplier", value).apply() }
 
+    // Chunks the audio thread may hold before it starts dropping, or 0 for no limit. Bounded by
+    // default: with no limit a link that stalls for a few hundred milliseconds hands over the
+    // backlog in one burst and every chunk of it is played, so audio ends up running that far
+    // behind the picture and never catches up. Dropping instead costs a moment of sound and keeps
+    // the two together. 0 remains selectable for anyone who prefers the gap-free audio.
+    //
+    // The bound has to clear the window we hand the phone, or we drop sound the protocol told it
+    // to send: AapControl advertises max_unacked 30 for wireless audio, so a burst that size is
+    // legal and must fit. A chunk is one AAP message and its duration follows the channel's
+    // config: around 20ms on 48kHz stereo media, several times that on the 16kHz mono guidance
+    // channel, so this cannot be stated in milliseconds from here.
     var audioQueueCapacity: Int
-        get() = prefs.getInt("audio-queue-capacity", 0)
+        get() = prefs.getInt("audio-queue-capacity", 50)
         set(value) { prefs.edit().putInt("audio-queue-capacity", value).apply() }
 
     var useAacAudio: Boolean
@@ -673,6 +707,39 @@ class Settings(private val context: Context) {
     var loadingScreenScalePercent: Int
         get() = prefs.getInt("loading-screen-scale-percent", 100)
         set(value) { prefs.edit().putInt("loading-screen-scale-percent", value).apply() }
+
+    // Custom home screen background image
+    var homeBackgroundImagePath: String
+        get() = prefs.getString("home-background-image-path", "") ?: ""
+        set(value) { prefs.edit().putString("home-background-image-path", value).apply() }
+
+    // Custom button colors for Home screen (0 = default gradient)
+    var customSelfModeButtonColor: Int
+        get() = prefs.getInt("custom-self-mode-button-color", 0)
+        set(value) { prefs.edit().putInt("custom-self-mode-button-color", value).apply() }
+
+    var customUsbButtonColor: Int
+        get() = prefs.getInt("custom-usb-button-color", 0)
+        set(value) { prefs.edit().putInt("custom-usb-button-color", value).apply() }
+
+    var customWifiButtonColor: Int
+        get() = prefs.getInt("custom-wifi-button-color", 0)
+        set(value) { prefs.edit().putInt("custom-wifi-button-color", value).apply() }
+
+    var customSettingsButtonColor: Int
+        get() = prefs.getInt("custom-settings-button-color", 0)
+        set(value) { prefs.edit().putInt("custom-settings-button-color", value).apply() }
+
+    // Custom button scaling percentage for Home screen (default = 100%, valid range 60..120)
+    var homeButtonScalePercent: Int
+        get() {
+            val saved = prefs.getInt("home-button-scale-percent", 100)
+            return if (saved in 60..120) saved else 100
+        }
+        set(value) {
+            val valid = if (value in 60..120) value else 100
+            prefs.edit().putInt("home-button-scale-percent", valid).apply()
+        }
 
     @SuppressLint("ApplySharedPref")
     fun commit() {
@@ -863,6 +930,7 @@ class Settings(private val context: Context) {
         /** SharedPreferences key; also used by [AapService] for change listener. */
         const val KEY_LOG_LEVEL = "log-level"
         const val KEY_LOG_SOURCE = "log-source"
+        const val KEY_LOG_LOCATION = "log-location"
         /** Persist whether log capture should be active across restarts. */
         const val KEY_LOG_CAPTURE_ENABLED = "log-capture-enabled"
 
@@ -910,6 +978,69 @@ class Settings(private val context: Context) {
                     .putBoolean(KEY_AUTO_START_ON_BOOT, enabled)
                     .apply()
             }
+        }
+
+        private const val KEY_BOOT_LOOP_STRIKES = "boot-loop-strikes"
+        private const val KEY_WIRELESS_PAUSED_BY_BOOT_LOOP = "wireless-paused-by-boot-loop"
+
+        /**
+         * The device-protected store, which is readable at LOCKED_BOOT_COMPLETED — before the user
+         * has unlocked, and so before ordinary preferences exist. The boot-loop counters have to
+         * live here for the same reason the auto-start flags do: they are read and written by
+         * [com.andrerinas.openheadunit.app.BootCompleteReceiver] on a device that has just booted.
+         */
+        private fun bootPrefs(context: Context) =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                context.createDeviceProtectedStorageContext()
+                    .getSharedPreferences(DEVICE_PREFS_NAME, Context.MODE_PRIVATE)
+            } else {
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            }
+
+        /** Consecutive boot-started runs that did not last. See `aap/BootLoopPolicy`. */
+        fun getBootLoopStrikes(context: Context): Int = try {
+            bootPrefs(context).getInt(KEY_BOOT_LOOP_STRIKES, 0)
+        } catch (e: Exception) {
+            AppLog.d("Settings: Could not read the boot-loop strike count: ${e.message}")
+            0
+        }
+
+        fun setBootLoopStrikes(context: Context, strikes: Int) {
+            try {
+                bootPrefs(context).edit().putInt(KEY_BOOT_LOOP_STRIKES, strikes).apply()
+            } catch (e: Exception) {
+                AppLog.d("Settings: Could not store the boot-loop strike count: ${e.message}")
+            }
+        }
+
+        /**
+         * Whether wireless bring-up is currently paused because it looked like it was crashing the
+         * device. Sticky on purpose: cleared when the user opens the app, not by surviving a run,
+         * so the cycle ends outright instead of resuming every few boots.
+         */
+        fun isWirelessPausedByBootLoop(context: Context): Boolean = try {
+            bootPrefs(context).getBoolean(KEY_WIRELESS_PAUSED_BY_BOOT_LOOP, false)
+        } catch (e: Exception) {
+            AppLog.d("Settings: Could not read the boot-loop pause flag: ${e.message}")
+            false
+        }
+
+        fun setWirelessPausedByBootLoop(context: Context, paused: Boolean) {
+            try {
+                bootPrefs(context).edit()
+                    .putBoolean(KEY_WIRELESS_PAUSED_BY_BOOT_LOOP, paused)
+                    .apply()
+            } catch (e: Exception) {
+                AppLog.d("Settings: Could not store the boot-loop pause flag: ${e.message}")
+            }
+        }
+
+        /** Both counters back to their defaults, for when the user is present and can act. */
+        fun clearBootLoopState(context: Context) {
+            if (getBootLoopStrikes(context) == 0 && !isWirelessPausedByBootLoop(context)) return
+            AppLog.i("Settings: Clearing the boot-loop guard — the app was opened by hand.")
+            setBootLoopStrikes(context, 0)
+            setWirelessPausedByBootLoop(context, false)
         }
 
         private const val KEY_AUTO_START_ON_SCREEN_ON = "auto-start-on-screen-on"
@@ -1231,12 +1362,49 @@ class Settings(private val context: Context) {
         get() = prefs.getString("bluetooth-manager-service-name", "bluetooth_manager")!!
         set(value) = prefs.edit().putString("bluetooth-manager-service-name", value).apply()
 
+    // Which network the Native AA mode (wifiConnectionMode 3) puts the phone on.
+    // 0 = WiFi Direct P2P group, 1 = this head unit's own hotspot (experimental).
+    //
+    // Deliberately not folded into helperConnectionStrategy: that setting belongs to mode 2 and
+    // means something different in every one of its five values. A wireless mode that reuses
+    // another mode's selector is how the two call sites of the old usesWifiDirect() drifted apart.
+    var nativeApTransport: Int
+        get() = prefs.getInt("native-ap-transport", 0)
+        set(value) = prefs.edit().putInt("native-ap-transport", value).apply()
+
+    // Whether the Native AA handshake opens with a WifiVersionRequest (Type 4), as real head units
+    // and the OEM ZLink app do, instead of going straight to WifiStartRequest.
+    //
+    // Off by default, deliberately: this is the only change on this route that alters what a unit
+    // with a working setup puts on the wire, and the version it announces is a guess — no capture
+    // of a real head unit's Type 4 has been decoded. A phone under test answered that guess with
+    // status=-8 and completed the handshake anyway, so the exchange is survivable on at least one
+    // Gearhead, but "survivable on one" is not a default. Left as an opt-in until a reporter whose
+    // unit broke on Android Auto 17.4 confirms it helps, since fixing that is the only reason to
+    // send it at all.
+    var nativeWifiVersionExchange: Boolean
+        get() = prefs.getBoolean("native-wifi-version-exchange", false)
+        set(value) = prefs.edit().putBoolean("native-wifi-version-exchange", value).apply()
+
     // Manual fallback for dual-radio head units whose second radio isn't discoverable via
     // ServiceManager.listServices() at all. Empty = disabled (rely on automatic discovery only).
     var manualSecondaryBluetoothServiceName: String
         get() = prefs.getString("manual-secondary-bt-service-name", "")!!
         set(value) = prefs.edit().putString("manual-secondary-bt-service-name", value).apply()
 
+    // Which interface hosts the head unit's access point. Empty = work it out from the interface
+    // list. Worth having because every other implementation of this protocol either creates the AP
+    // itself or is told the name: aa-proxy-rs has an `iface` setting, the Pi dongles pin wlan0 in
+    // hostapd.conf, and ZLink carries an ap_NIC_name field. We are the only one reading an AP we
+    // did not create, so we are the only one that has to guess.
+    var hotspotInterface: String
+        get() = prefs.getString("hotspot-interface", "")!!
+        set(value) = prefs.edit().putString("hotspot-interface", value).apply()
+
+    // Manual override for the head unit's own access point, used first by
+    // SoftApCredentialsProvider when nativeApTransport == 1. Empty = read the system's hotspot
+    // configuration instead. Worth having because getSoftApConfiguration() is reflection over a
+    // non-public API and can simply refuse on a locked-down API 30+ device.
     var hotspotSsid: String
         get() = prefs.getString("hotspot-ssid", "")!!
         set(value) = prefs.edit().putString("hotspot-ssid", value).apply()
@@ -1244,6 +1412,15 @@ class Settings(private val context: Context) {
     var hotspotPassword: String
         get() = prefs.getString("hotspot-password", "")!!
         set(value) = prefs.edit().putString("hotspot-password", value).apply()
+
+    // Set once this device has failed to bring its own access point back up after the app took it
+    // down, which is the only way to find out that it cannot — no API answers the question in
+    // advance. From then on a user exit leaves the hotspot alone; see UserExitHotspotPolicy.
+    // Persisted rather than kept in memory because the answer is a property of the hardware and does
+    // not change between runs, and the price of re-learning it is somebody's hotspot each time.
+    var hotspotTeardownProvenUnsafe: Boolean
+        get() = prefs.getBoolean("hotspot-teardown-proven-unsafe", false)
+        set(value) = prefs.edit().putBoolean("hotspot-teardown-proven-unsafe", value).apply()
 
     var useLibusb: Boolean
         get() = prefs.getBoolean("use-libusb", false)

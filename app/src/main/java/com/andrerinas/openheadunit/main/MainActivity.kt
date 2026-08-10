@@ -121,6 +121,7 @@ class MainActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
 
         logLaunchSource()
+        clearBootLoopGuardIfOpenedByHand()
 
         // If an Android Auto session is active, bring the projection activity to front
         if (App.provide(this).commManager.isConnected && !App.isPiPActive) {
@@ -148,6 +149,7 @@ class MainActivity : BaseActivity() {
         }
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        applyCustomHomeBackground()
 
         val appSettings = Settings(this)
         requestedOrientation = appSettings.screenOrientation.androidOrientation
@@ -728,6 +730,21 @@ class MainActivity : BaseActivity() {
         handleLaunchIntent(intent)
     }
 
+    /**
+     * Releases the boot-loop guard, but only when a person opened the app.
+     *
+     * The distinction matters: the service launches this activity itself on every boot auto-start
+     * ([AapService] passes "Boot auto-start"), so clearing unconditionally would reset the guard on
+     * exactly the runs it exists to count. Tapping the guard's own notification does count as
+     * opening it by hand — that is a person reading the notice and acting on it.
+     */
+    private fun clearBootLoopGuardIfOpenedByHand() {
+        // No source at all is a launcher tap, which is as human as it gets.
+        val source = intent?.getStringExtra(EXTRA_LAUNCH_SOURCE) ?: ""
+        if (AUTOMATIC_LAUNCH_SOURCES.contains(source)) return
+        Settings.clearBootLoopState(this)
+    }
+
     private fun logLaunchSource() {
         val source = intent?.getStringExtra(EXTRA_LAUNCH_SOURCE)
         if (source != null) {
@@ -835,6 +852,7 @@ class MainActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
         setFullscreen()
+        applyCustomHomeBackground()
 
         checkSetupFlow()
 
@@ -902,19 +920,37 @@ class MainActivity : BaseActivity() {
             unregisterReceiver(finishReceiver)
             isFinishReceiverRegistered = false
         }
-        if (isRecreateReceiverRegistered) {
-            unregisterReceiver(recreateReceiver)
-            isRecreateReceiverRegistered = false
-        }
         if (isFinishing) {
             AppLog.i("MainActivity finishing, resetting auto-start flag.")
             HomeFragment.resetAutoStart()
         }
     }
 
+    fun applyCustomHomeBackground() {
+        val customBgImageView = findViewById<ImageView>(R.id.custom_home_background) ?: return
+        val path = Settings(this).homeBackgroundImagePath
+        val file = if (path.isNotEmpty()) File(path) else null
+
+        if (file != null && file.exists() && file.length() > 0) {
+            customBgImageView.visibility = View.VISIBLE
+            Glide.with(this)
+                .load(file)
+                .centerCrop()
+                .into(customBgImageView)
+        } else {
+            try { Glide.with(this).clear(customBgImageView) } catch (_: Exception) {}
+            customBgImageView.visibility = View.GONE
+        }
+    }
+
     companion object {
         private const val permissionRequestCode = 97
         const val EXTRA_LAUNCH_SOURCE = "launch_source"
+
+        /** Launch sources that mean the app opened itself, with nobody necessarily watching. */
+        private val AUTOMATIC_LAUNCH_SOURCES = setOf(
+            "Boot auto-start", "USB auto-start", "WiFi auto-start", "Bluetooth auto-start"
+        )
 
         /**
          * Hard upper bound for how long the auto-connect overlay may stay visible

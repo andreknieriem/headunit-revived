@@ -22,6 +22,12 @@ class CarKeyBroadcastReceiver : BroadcastReceiver(), CarKeyReceiver {
         val ACTIONS = arrayOf(
             "android.intent.action.MEDIA_BUTTON",
             "hy.intent.action.MEDIA_BUTTON", // Huayu / Hyundai Protocol
+            "geely.intent.action.MEDIA_BUTTON", // Geely / Flyme Auto
+            "ecarx.intent.action.MEDIA_BUTTON", // ECARX
+            "com.ecarx.intent.action.MEDIA_BUTTON",
+            "com.geely.intent.action.MEDIA_BUTTON",
+            "com.ecarx.media.action.KEY_EVENT",
+            "com.geely.car.media.action.KEY_EVENT",
             "com.nwd.action.ACTION_KEY_VALUE", // NWD (NewWell)
             "com.microntek.irkeyUp", // Microntek (MTCE/MTCB)
             "com.microntek.irkeyDown",
@@ -82,8 +88,8 @@ class CarKeyBroadcastReceiver : BroadcastReceiver(), CarKeyReceiver {
             abortBroadcast()
         }
 
-        // 1. Standard Media Button extraction (already has KeyEvent with proper DOWN/UP)
-        if (action == "android.intent.action.MEDIA_BUTTON" || action == "hy.intent.action.MEDIA_BUTTON"
+        // 1. Standard / OEM Media Button extraction (already has KeyEvent with proper DOWN/UP)
+        if (action.endsWith("MEDIA_BUTTON") || action.endsWith("KEY_EVENT")
             || action == "com.tencent.qqmusiccar.action.MEDIA_BUTTON_INNER_ONKEY"
             || action == "cn.kuwo.kwmusicauto.action.MEDIA_BUTTON") {
             val event = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
@@ -92,6 +98,22 @@ class CarKeyBroadcastReceiver : BroadcastReceiver(), CarKeyReceiver {
                     handleKey(context, event.keyCode, true)
                 } else if (event.action == KeyEvent.ACTION_UP) {
                     handleKey(context, event.keyCode, false)
+                }
+            } else {
+                val cmd = intent.getStringExtra("command") ?: intent.getStringExtra("cmd")
+                val key = intent.getIntExtra("keycode", -1).takeIf { it > 0 }
+                    ?: intent.getIntExtra("key_code", -1).takeIf { it > 0 }
+
+                if (cmd != null) {
+                    when (cmd.lowercase()) {
+                        "next", "skip_next", "skip" -> handleClick(context, KeyEvent.KEYCODE_MEDIA_NEXT)
+                        "previous", "skip_previous", "prev" -> handleClick(context, KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+                        "play", "start" -> handleClick(context, KeyEvent.KEYCODE_MEDIA_PLAY)
+                        "pause" -> handleClick(context, KeyEvent.KEYCODE_MEDIA_PAUSE)
+                        "togglepause", "playpause" -> handleClick(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+                    }
+                } else if (key != null) {
+                    handleClick(context, key)
                 }
             }
             return

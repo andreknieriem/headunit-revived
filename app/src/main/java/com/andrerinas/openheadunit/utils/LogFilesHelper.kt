@@ -1,6 +1,8 @@
 package com.andrerinas.openheadunit.utils
 
 import android.content.Context
+import android.os.Build
+import android.os.Environment
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -13,7 +15,36 @@ object LogFilesHelper {
     const val DEFAULT_MAX_LOG_FILES = 10
     const val DEFAULT_MAX_TOTAL_SIZE = 50L * 1024 * 1024 // 50 MB
 
-    fun resolveLogDirectory(context: Context, allowInternalFallback: Boolean = true): File? {
+    fun resolveLogDirectory(
+        context: Context,
+        settings: Settings? = null,
+        allowInternalFallback: Boolean = true
+    ): File? {
+        val location = settings?.logLocation ?: try {
+            Settings(context).logLocation
+        } catch (_: Exception) {
+            Settings.LogLocation.DEFAULT
+        }
+
+        if (location == Settings.LogLocation.DOWNLOADS) {
+            val downloadsDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                    ?: @Suppress("DEPRECATION") Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            } else {
+                @Suppress("DEPRECATION")
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            }
+
+            if (downloadsDir != null) {
+                val openHeadunitDir = File(downloadsDir, "OpenHeadunitLogs")
+                if (openHeadunitDir.exists() || openHeadunitDir.mkdirs()) {
+                    return openHeadunitDir
+                }
+                if (downloadsDir.exists() || downloadsDir.mkdirs()) {
+                    return downloadsDir
+                }
+            }
+        }
         return context.getExternalFilesDir(null) ?: if (allowInternalFallback) context.filesDir else null
     }
 

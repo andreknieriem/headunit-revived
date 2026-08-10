@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
+import com.andrerinas.openheadunit.aap.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.main.settings.SettingItem
 import com.andrerinas.openheadunit.main.settings.SettingsAdapter
 import com.andrerinas.openheadunit.utils.AppLog
@@ -71,8 +72,13 @@ class SettingsFragment : Fragment() {
     private val basicSettingIds = setOf(
         // General
         "autoOptimize", "connectionMode", "appLanguage", "uiScale",
-        // Wireless (shown in Basic only when WiFi is among the selected connection modes)
+        // Wireless (shown in Basic only when WiFi is among the selected connection modes).
+        // The hotspot entries come along with the transport choice: they only render once Hotspot
+        // is picked, and on a device that will not let an app read its hotspot configuration the
+        // manual name is the only way to finish setting the route up.
         "wifiConnectionMode",
+        "nativeApTransport", "nativeApTransportHint", "hotspotSsidOverride", "hotspotPasswordOverride",
+        "hotspotInterfaceOverride",
         // Dark mode
         "darkModeSettings",
         // Automation
@@ -80,7 +86,9 @@ class SettingsFragment : Fragment() {
         // Navigation
         "gpsNavigation",
         // Graphic
-        "resolution", "dpiPixelDensity", "viewMode", "screenOrientation", "startInFullscreenMode", "loadingScreen",
+        "resolution", "dpiPixelDensity", "viewMode", "screenOrientation", "startInFullscreenMode",
+        // Theming
+        "theming", "loadingScreen", "customization",
         // Video
         "videoCodec", "fpsLimit",
         // Input
@@ -108,6 +116,7 @@ class SettingsFragment : Fragment() {
     private var pendingBluetoothAddress: String? = null
     private var pendingEnableAudioSink: Boolean? = null
     private var pendingStaticAudioFocus: Boolean? = null
+    private var pendingPlaybackFocusMode: PlaybackFocusPolicy.Mode? = null
     private var pendingSeparateAudioStreams: Boolean? = null
     private var pendingUseAacAudio: Boolean? = null
     private var pendingAttachHwDspEqualizer: Boolean? = null
@@ -129,6 +138,11 @@ class SettingsFragment : Fragment() {
     private var pendingWaitForWifiTimeout: Int? = null
     private var pendingBluetoothManagerServiceName: String? = null
     private var pendingManualSecondaryBluetoothServiceName: String? = null
+    private var pendingNativeWifiVersionExchange: Boolean? = null
+    private var pendingNativeApTransport: Int? = null
+    private var pendingHotspotSsid: String? = null
+    private var pendingHotspotPassword: String? = null
+    private var pendingHotspotInterface: String? = null
 
     // Flag to determine if the projection should stretch to fill the screen
     private var pendingStretchToFill: Boolean? = null
@@ -225,6 +239,7 @@ class SettingsFragment : Fragment() {
         pendingBluetoothAddress = settings.bluetoothAddress
         pendingEnableAudioSink = settings.enableAudioSink
         pendingStaticAudioFocus = settings.staticAudioFocus
+        pendingPlaybackFocusMode = settings.playbackFocusMode
         pendingSeparateAudioStreams = settings.separateAudioStreams
         pendingUseAacAudio = settings.useAacAudio
         pendingAttachHwDspEqualizer = settings.attachHwDspEqualizer
@@ -254,6 +269,11 @@ class SettingsFragment : Fragment() {
         pendingWaitForWifiTimeout = settings.waitForWifiTimeout
         pendingBluetoothManagerServiceName = settings.bluetoothManagerServiceName
         pendingManualSecondaryBluetoothServiceName = settings.manualSecondaryBluetoothServiceName
+        pendingNativeWifiVersionExchange = settings.nativeWifiVersionExchange
+        pendingNativeApTransport = settings.nativeApTransport
+        pendingHotspotSsid = settings.hotspotSsid
+        pendingHotspotPassword = settings.hotspotPassword
+        pendingHotspotInterface = settings.hotspotInterface
 
         pendingInsetLeft = settings.insetLeft
         pendingInsetTop = settings.insetTop
@@ -330,6 +350,7 @@ class SettingsFragment : Fragment() {
         pendingBluetoothAddress = settings.bluetoothAddress
         pendingEnableAudioSink = settings.enableAudioSink
         pendingStaticAudioFocus = settings.staticAudioFocus
+        pendingPlaybackFocusMode = settings.playbackFocusMode
         pendingSeparateAudioStreams = settings.separateAudioStreams
         pendingUseAacAudio = settings.useAacAudio
         pendingAttachHwDspEqualizer = settings.attachHwDspEqualizer
@@ -354,6 +375,11 @@ class SettingsFragment : Fragment() {
         pendingWaitForWifiTimeout = settings.waitForWifiTimeout
         pendingBluetoothManagerServiceName = settings.bluetoothManagerServiceName
         pendingManualSecondaryBluetoothServiceName = settings.manualSecondaryBluetoothServiceName
+        pendingNativeWifiVersionExchange = settings.nativeWifiVersionExchange
+        pendingNativeApTransport = settings.nativeApTransport
+        pendingHotspotSsid = settings.hotspotSsid
+        pendingHotspotPassword = settings.hotspotPassword
+        pendingHotspotInterface = settings.hotspotInterface
         pendingInsetLeft = settings.insetLeft
         pendingInsetTop = settings.insetTop
         pendingInsetRight = settings.insetRight
@@ -445,6 +471,7 @@ class SettingsFragment : Fragment() {
         pendingBluetoothAddress?.let { settings.bluetoothAddress = it }
         pendingEnableAudioSink?.let { settings.enableAudioSink = it }
         pendingStaticAudioFocus?.let { settings.staticAudioFocus = it }
+        pendingPlaybackFocusMode?.let { settings.playbackFocusMode = it }
         pendingSeparateAudioStreams?.let { settings.separateAudioStreams = it }
         pendingUseAacAudio?.let { settings.useAacAudio = it }
         pendingAttachHwDspEqualizer?.let { settings.attachHwDspEqualizer = it }
@@ -483,6 +510,11 @@ class SettingsFragment : Fragment() {
         pendingWaitForWifiTimeout?.let { settings.waitForWifiTimeout = it }
         pendingBluetoothManagerServiceName?.let { settings.bluetoothManagerServiceName = it }
         pendingManualSecondaryBluetoothServiceName?.let { settings.manualSecondaryBluetoothServiceName = it }
+        pendingNativeWifiVersionExchange?.let { settings.nativeWifiVersionExchange = it }
+        pendingNativeApTransport?.let { settings.nativeApTransport = it }
+        pendingHotspotSsid?.let { settings.hotspotSsid = it }
+        pendingHotspotPassword?.let { settings.hotspotPassword = it }
+        pendingHotspotInterface?.let { settings.hotspotInterface = it }
 
         pendingInsetLeft?.let { settings.insetLeft = it }
         pendingInsetTop?.let { settings.insetTop = it }
@@ -556,6 +588,7 @@ class SettingsFragment : Fragment() {
                         pendingBluetoothAddress != settings.bluetoothAddress ||
                         pendingEnableAudioSink != settings.enableAudioSink ||
                         pendingStaticAudioFocus != settings.staticAudioFocus ||
+                        pendingPlaybackFocusMode != settings.playbackFocusMode ||
                         pendingSeparateAudioStreams != settings.separateAudioStreams ||
                         pendingUseAacAudio != settings.useAacAudio ||
                         pendingAttachHwDspEqualizer != settings.attachHwDspEqualizer ||
@@ -587,6 +620,11 @@ class SettingsFragment : Fragment() {
                         pendingWaitForWifiTimeout != settings.waitForWifiTimeout ||
                         pendingBluetoothManagerServiceName != settings.bluetoothManagerServiceName ||
                         pendingManualSecondaryBluetoothServiceName != settings.manualSecondaryBluetoothServiceName ||
+                        pendingNativeWifiVersionExchange != settings.nativeWifiVersionExchange ||
+                        pendingNativeApTransport != settings.nativeApTransport ||
+                        pendingHotspotSsid != settings.hotspotSsid ||
+                        pendingHotspotPassword != settings.hotspotPassword ||
+                        pendingHotspotInterface != settings.hotspotInterface ||
                         pendingUseLibusb != settings.useLibusb
 
         hasChanges = anyChange
@@ -603,6 +641,7 @@ class SettingsFragment : Fragment() {
                           pendingEnableRotary != settings.enableRotary ||
                           pendingEnableAudioSink != settings.enableAudioSink ||
                           pendingStaticAudioFocus != settings.staticAudioFocus ||
+                          pendingPlaybackFocusMode != settings.playbackFocusMode ||
                           pendingSeparateAudioStreams != settings.separateAudioStreams ||
                           pendingUseAacAudio != settings.useAacAudio ||
                           pendingAttachHwDspEqualizer != settings.attachHwDspEqualizer ||
@@ -792,6 +831,91 @@ class SettingsFragment : Fragment() {
         ))
 
         if (pendingWifiConnectionMode == 3) {
+            items.add(SettingItem.SegmentedButtonSettingEntry(
+                stableId = "nativeApTransport",
+                nameResId = R.string.native_ap_transport,
+                options = listOf(
+                    getString(R.string.native_ap_transport_wifi_direct),
+                    getString(R.string.native_ap_transport_hotspot)
+                ),
+                selectedIndex = if ((pendingNativeApTransport ?: 0) == 1) 1 else 0,
+                onOptionSelected = { index ->
+                    pendingNativeApTransport = index
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            if ((pendingNativeApTransport ?: 0) == 1) {
+                items.add(SettingItem.InfoBanner(
+                    stableId = "nativeApTransportHint",
+                    textResId = R.string.native_ap_transport_hint
+                ))
+
+                // The automatic read goes through the same non-public API that a locked-down
+                // device refuses outright, so on those units this override is the only way the
+                // route can learn the network name at all.
+                val manualSsid = pendingHotspotSsid.orEmpty()
+                items.add(SettingItem.SettingEntry(
+                    stableId = "hotspotSsidOverride",
+                    nameResId = R.string.hotspot_ssid_override,
+                    value = manualSsid.ifEmpty { getString(R.string.auto) },
+                    onClick = { _ ->
+                        DialogUtils.showTextInputDialogWithMessage(
+                            requireContext(),
+                            R.string.hotspot_ssid_override,
+                            R.string.hotspot_ssid_override_message,
+                            manualSsid,
+                            { newVal ->
+                                pendingHotspotSsid = newVal.trim()
+                                checkChanges()
+                                updateSettingsList()
+                            }
+                        )
+                    }
+                ))
+
+                val manualPassword = pendingHotspotPassword.orEmpty()
+                items.add(SettingItem.SettingEntry(
+                    stableId = "hotspotPasswordOverride",
+                    nameResId = R.string.hotspot_password_override,
+                    value = if (manualPassword.isEmpty()) getString(R.string.auto) else "\u2022".repeat(manualPassword.length),
+                    onClick = { _ ->
+                        DialogUtils.showTextInputDialogWithMessage(
+                            requireContext(),
+                            R.string.hotspot_password_override,
+                            R.string.hotspot_password_override_message,
+                            manualPassword,
+                            { newVal ->
+                                pendingHotspotPassword = newVal.trim()
+                                checkChanges()
+                                updateSettingsList()
+                            }
+                        )
+                    }
+                ))
+
+                val manualInterface = pendingHotspotInterface.orEmpty()
+                items.add(SettingItem.SettingEntry(
+                    stableId = "hotspotInterfaceOverride",
+                    nameResId = R.string.hotspot_interface_override,
+                    value = manualInterface.ifEmpty { getString(R.string.auto) },
+                    onClick = { _ ->
+                        DialogUtils.showTextInputDialogWithMessage(
+                            requireContext(),
+                            R.string.hotspot_interface_override,
+                            R.string.hotspot_interface_override_message,
+                            manualInterface,
+                            { newVal ->
+                                pendingHotspotInterface = newVal.trim()
+                                checkChanges()
+                                updateSettingsList()
+                            }
+                        )
+                    }
+                ))
+            }
+
             val currentServiceName = pendingBluetoothManagerServiceName ?: "bluetooth_manager"
             items.add(SettingItem.SettingEntry(
                 stableId = "bluetoothAdapterServiceName",
@@ -835,6 +959,18 @@ class SettingsFragment : Fragment() {
                             updateSettingsList()
                         }
                     )
+                }
+            ))
+
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "nativeWifiVersionExchange",
+                nameResId = R.string.native_wifi_version_exchange,
+                descriptionResId = R.string.native_wifi_version_exchange_description,
+                isChecked = pendingNativeWifiVersionExchange ?: false,
+                onCheckedChanged = { isChecked ->
+                    pendingNativeWifiVersionExchange = isChecked
+                    checkChanges()
+                    updateSettingsList()
                 }
             ))
         }
@@ -1265,6 +1401,9 @@ class SettingsFragment : Fragment() {
             ))
         }
 
+        // --- Theming Settings ---
+        items.add(SettingItem.CategoryHeader("theming", R.string.category_theming))
+
         items.add(SettingItem.SettingEntry(
             stableId = "loadingScreen",
             nameResId = R.string.loading_screen,
@@ -1273,6 +1412,15 @@ class SettingsFragment : Fragment() {
             else getString(R.string.loading_screen_custom),
             onClick = {
                 findNavController().navigate(R.id.action_settingsFragment_to_loadingScreenFragment)
+            }
+        ))
+
+        items.add(SettingItem.SettingEntry(
+            stableId = "customization",
+            nameResId = R.string.customization_title,
+            value = getString(R.string.customization_description),
+            onClick = {
+                findNavController().navigate(R.id.action_settingsFragment_to_customizationFragment)
             }
         ))
 
@@ -1417,6 +1565,49 @@ class SettingsFragment : Fragment() {
                     updateSettingsList()
                 }
             ))
+
+            // Applies to both focus routes: the dynamic one that runs while an AA audio channel
+            // plays, and static mode's permanent grab at connect.
+            val focusModes = listOf(
+                PlaybackFocusPolicy.Mode.AUTO,
+                PlaybackFocusPolicy.Mode.ALWAYS,
+                PlaybackFocusPolicy.Mode.NEVER
+            )
+            val currentMode = pendingPlaybackFocusMode ?: PlaybackFocusPolicy.Mode.AUTO
+            items.add(SettingItem.SegmentedButtonSettingEntry(
+                stableId = "playbackFocusMode",
+                nameResId = R.string.playback_focus_mode,
+                options = listOf(
+                    getString(R.string.playback_focus_mode_auto),
+                    getString(R.string.playback_focus_mode_always),
+                    getString(R.string.playback_focus_mode_never)
+                ),
+                selectedIndex = focusModes.indexOf(currentMode).coerceAtLeast(0),
+                onOptionSelected = { index ->
+                    pendingPlaybackFocusMode = focusModes.getOrElse(index) { PlaybackFocusPolicy.Mode.AUTO }
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            items.add(SettingItem.InfoBanner(
+                stableId = "playbackFocusModeHint",
+                textResId = when (currentMode) {
+                    PlaybackFocusPolicy.Mode.ALWAYS -> R.string.playback_focus_mode_always_hint
+                    PlaybackFocusPolicy.Mode.NEVER -> R.string.playback_focus_mode_never_hint
+                    else -> R.string.playback_focus_mode_auto_hint
+                }
+            ))
+
+            // The hints above are written for the dynamic path, which takes focus only while
+            // audio plays. Static mode takes it for the whole session, so say so rather than
+            // maintaining a second set of three.
+            if (pendingStaticAudioFocus == true) {
+                items.add(SettingItem.InfoBanner(
+                    stableId = "playbackFocusModeStaticHint",
+                    textResId = R.string.playback_focus_mode_static_hint
+                ))
+            }
         }
 
         items.add(SettingItem.ToggleSettingEntry(
@@ -1641,6 +1832,44 @@ class SettingsFragment : Fragment() {
                         }
                         dialog.dismiss()
                         updateSettingsList()
+                    }
+                    .show()
+            }
+        ))
+
+        val logLocations = Settings.LogLocation.entries
+        val logLocationNames = logLocations.map {
+            when (it) {
+                Settings.LogLocation.DEFAULT -> getString(R.string.log_location_default)
+                Settings.LogLocation.DOWNLOADS -> getString(R.string.log_location_downloads)
+            }
+        }.toTypedArray()
+        items.add(SettingItem.SettingEntry(
+            stableId = "logLocation",
+            nameResId = R.string.log_location,
+            value = when (settings.logLocation) {
+                Settings.LogLocation.DEFAULT -> getString(R.string.log_location_default)
+                Settings.LogLocation.DOWNLOADS -> getString(R.string.log_location_downloads)
+            },
+            onClick = {
+                val currentIndex = logLocations.indexOf(settings.logLocation)
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.log_location)
+                    .setSingleChoiceItems(logLocationNames, currentIndex) { dialog, which ->
+                        val newLocation = logLocations[which]
+                        val applyLocation: () -> Unit = {
+                            settings.logLocation = newLocation
+                            if (settings.logSource == Settings.LogSource.APPLOG_FILE) {
+                                AppLog.init(settings, requireContext().applicationContext)
+                            }
+                            dialog.dismiss()
+                            updateSettingsList()
+                        }
+                        if (newLocation == Settings.LogLocation.DOWNLOADS) {
+                            runWithDownloadsStoragePermission(applyLocation)
+                        } else {
+                            applyLocation()
+                        }
                     }
                     .show()
             }
@@ -3023,6 +3252,27 @@ class SettingsFragment : Fragment() {
     }
 
     private fun handleNativeAaSelection() {
+        // An external Bluetooth module is not a "might not work" — the phone is bonded to a chip
+        // this app cannot write to, so say so plainly and name the evidence instead of offering
+        // the generic "try it anyway".
+        val externalBtEvidence = BluetoothHelper.externalBtEvidence
+        if (externalBtEvidence != null) {
+            MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                .setTitle(R.string.external_bt_nativeaa)
+                .setMessage(getString(R.string.external_bt_nativeaa_desc, externalBtEvidence))
+                // Selecting the mode is still allowed: on a unit with a second, reachable radio
+                // the user can name it under the secondary-Bluetooth setting, and Native mode
+                // will then run. Without that it stays switched off, and the log says why.
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    pendingWifiConnectionMode = 3
+                    checkChanges()
+                    updateSettingsList()
+                    dialog.dismiss()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+            return
+        }
         if (NativeAaHandshakeManager.checkCompatibility(requireContext())) {
             MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                 .setTitle(R.string.supported_nativeaa)

@@ -129,18 +129,19 @@ class AapTransport(
         get() = pollThread?.isAlive ?: false
 
     private fun triggerFocusCycleRecovery() {
-        AppLog.w("AapTransport: Requesting recovery keyframe via focus cycle.")
-        send(com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent(gain = false, unsolicited = false))
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            if (isAlive) {
-                send(com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent(gain = true, unsolicited = true))
-            }
-        }, 100)
+        // Ask the phone for a fresh keyframe with an unsolicited focus GAIN only, the same nudge the
+        // startup keyframe watchdog uses. We deliberately do not release focus (gain=false) first:
+        // on some head unit / phone combos, releasing video focus drops the stream to a few fps and
+        // it never recovers, so a single transient dropped frame turned into a permanent freeze
+        // (issue #755). A gain-only request still makes the phone resend a keyframe without
+        // disturbing the running stream.
+        AppLog.w("AapTransport: Requesting recovery keyframe (unsolicited focus gain).")
+        send(com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent(gain = true, unsolicited = true))
     }
 
     init {
         micRecorder.listener = this
-        aapAudio = AapAudio(audioDecoder, audioManager, settings)
+        aapAudio = AapAudio(audioDecoder, audioManager, settings, context)
         aapVideo = AapVideo(videoDecoder, settings) {
             triggerFocusCycleRecovery()
         }

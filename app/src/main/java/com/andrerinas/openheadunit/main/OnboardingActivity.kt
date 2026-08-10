@@ -320,7 +320,7 @@ class OnboardingActivity : BaseActivity() {
             settings.useGpsForNavigation = checkedId == R.id.onb_gps_device
         }
 
-        // --- Car brand: a friendly identity sent to Android Auto (display name + both makes) ---
+        // --- Car brand: the display name sent to Android Auto, and the manufacturer with it ---
         bindVehicleStep()
     }
 
@@ -457,15 +457,19 @@ class OnboardingActivity : BaseActivity() {
         // Apply the display recommendation + chosen DPI on Next, so the user does not
         // have to press "Apply recommended settings" for it to take effect.
         if (step == STEP_DISPLAY || step == STEP_DPI) applyDisplaySettings()
-        // The chosen car brand fills the display name and both manufacturer fields, so it
-        // appears whichever identity field Android Auto reads.
+        // [BUG_FIX] The chosen name always becomes the display name, but only a real car brand
+        // may become the reported manufacturer. Reporting make "Google" alongside model
+        // "Desktop Head Unit" is what makes Android Auto list apps installed from outside the
+        // Play Store; sending our own app name as a manufacturer breaks that for no benefit,
+        // since the manufacturer is only read for the brand logo on Android Auto's exit button.
         if (step == STEP_VEHICLE) {
             val brand = findViewById<TextInputEditText>(R.id.onb_vehicle_input)
                 .text?.toString()?.trim().orEmpty()
             if (brand.isNotEmpty()) {
                 settings.vehicleDisplayName = brand
-                settings.vehicleMake = brand
-                settings.headUnitMake = brand
+                val make = if (brand.lowercase() in NOT_A_MANUFACTURER) DHU_MAKE else brand
+                settings.vehicleMake = make
+                settings.headUnitMake = make
             }
         }
         if (step == STEP_COUNT - 1) finishOnboarding() else goForward()
@@ -741,5 +745,11 @@ class OnboardingActivity : BaseActivity() {
         private const val STEP_VEHICLE = 8
         private const val STEP_PERMISSIONS = 9
         private const val STEP_READY = 10
+
+        // The manufacturer half of the Desktop Head Unit identity we report by default.
+        private const val DHU_MAKE = "Google"
+        // Names the car step offers that are not car brands: the head unit make itself and
+        // the app's own name. Lowercase, compared against a lowercased input.
+        private val NOT_A_MANUFACTURER = setOf("google", "open headunit")
     }
 }

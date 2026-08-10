@@ -178,7 +178,11 @@ class VehicleInfoFragment : Fragment() {
             nameResId = R.string.vehicle_make_label,
             value = pendingVehicleMake ?: "",
             onClick = {
-                showTextInputDialog(R.string.vehicle_make_label, pendingVehicleMake ?: "") { value ->
+                showTextInputDialogWithMessage(
+                    R.string.vehicle_make_label,
+                    R.string.vehicle_make_hint,
+                    pendingVehicleMake ?: ""
+                ) { value ->
                     pendingVehicleMake = value
                     checkChanges()
                     updateSettingsList()

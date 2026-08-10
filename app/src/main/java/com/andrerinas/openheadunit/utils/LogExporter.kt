@@ -27,6 +27,12 @@ object LogExporter {
     private var captureRestarts = 0
     private const val MAX_RESTARTS = 5
 
+    /**
+     * Ceiling for one capture file. Sits under [LogFilesHelper]'s 50 MB budget for the whole
+     * directory, so a single runaway capture cannot consume it.
+     */
+    private const val MAX_CAPTURE_BYTES = 16L * 1024 * 1024
+
     val isCapturing: Boolean get() = captureProcess != null
 
     /** Current capture verbosity while capturing, or null when no capture is active. */
@@ -56,7 +62,8 @@ object LogExporter {
         }
 
         stopCapture()
-        val logDir = LogFilesHelper.resolveLogDirectory(context, allowInternalFallback = false) ?: return
+        val settings = Settings(context)
+        val logDir = LogFilesHelper.resolveLogDirectory(context, settings, allowInternalFallback = false) ?: return
         LogFilesHelper.rotateLogs(logDir)
 
         val file = LogFilesHelper.createTimestampedLogFile(logDir)
@@ -79,12 +86,45 @@ object LogExporter {
             )
             captureProcess = process
             captureThread = Thread {
+                var capped = false
                 try {
                     FileOutputStream(file, true).use { out ->
-                        process.inputStream.copyTo(out)
+                        // Not copyTo(): at VERBOSE the filter is the whole system, and rotateLogs
+                        // only runs when a capture starts, so an unattended capture used to grow
+                        // until the disk did. Count what we write and stop at a bound instead.
+                        var written = file.length()
+                        val buffer = ByteArray(8 * 1024)
+                        while (true) {
+                            val read = process.inputStream.read(buffer)
+                            if (read < 0) break
+                            out.write(buffer, 0, read)
+                            written += read
+                            if (written >= MAX_CAPTURE_BYTES) {
+                                out.write(
+                                    "\n--- capture stopped: reached ${MAX_CAPTURE_BYTES / (1024 * 1024)} MB ---\n"
+                                        .toByteArray()
+                                )
+                                capped = true
+                                break
+                            }
+                        }
                     }
                 } catch (_: IOException) { }
-                // copyTo returned — logcat process died or was intentionally stopped
+
+                if (capped) {
+                    // Clear the process reference before destroying it so the restart below sees the
+                    // capture as intentionally ended. Deliberately not stopCapture(): that joins
+                    // captureThread, which is this thread.
+                    captureProcess = null
+                    process.destroy()
+                    AppLog.w(
+                        "LogExporter: capture stopped at ${MAX_CAPTURE_BYTES / (1024 * 1024)} MB. " +
+                            "Export this log and start a new capture if you still need one."
+                    )
+                    return@Thread
+                }
+
+                // the read loop ended — logcat process died or was intentionally stopped
                 if (captureProcess === process && captureRestarts < MAX_RESTARTS) {
                     captureRestarts++
                     AppLog.w("Log capture process exited, restarting (attempt $captureRestarts/$MAX_RESTARTS)")
@@ -123,7 +163,8 @@ object LogExporter {
                 ?.takeIf { it.exists() && it.length() > 0 }
         }
 
-        val logDir = LogFilesHelper.resolveLogDirectory(context, allowInternalFallback = false) ?: return null
+        val settings = Settings(context)
+        val logDir = LogFilesHelper.resolveLogDirectory(context, settings, allowInternalFallback = false) ?: return null
         LogFilesHelper.ensureDirectory(logDir)
 
         val source = captureFile

@@ -1,5 +1,6 @@
 package com.andrerinas.openheadunit.aap
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,6 +11,20 @@ class NativeHandoffPolicyTest {
     private val handshakeTimeout = NativeHandoffPolicy.HANDSHAKE_TIMEOUT_MS
     private val silentPokeInterval = NativeHandoffPolicy.SILENT_POKE_WARN_INTERVAL
     private val maxFailures = NativeHandoffPolicy.MAX_CONSECUTIVE_HANDSHAKE_FAILURES
+
+    @Test
+    fun `the settle cap leaves room for extensions but is not open-ended`() {
+        // The phone's own progress reports (WifiConnectStatus) push the settling deadline out in
+        // SETTLE_EXTENSION_MS steps. The cap has to be reachable in whole steps from the base
+        // window — otherwise the last extension is silently refused at an arbitrary point — and it
+        // has to be finite, so a phone that keeps saying "still joining" and never arrives cannot
+        // hold Bluetooth open and the wake poke suppressed forever.
+        assertTrue(NativeHandoffPolicy.MAX_SETTLE_MS > timeout)
+        assertEquals(
+            0L,
+            (NativeHandoffPolicy.MAX_SETTLE_MS - timeout) % WppHandshakeSession.SETTLE_EXTENSION_MS
+        )
+    }
 
     @Test
     fun `no handoff is settling before any credentials go out`() {
@@ -56,9 +71,9 @@ class NativeHandoffPolicyTest {
 
     @Test
     fun `handshake expires so a coroutine that never unwinds cannot latch it true`() {
-        // #706: on that head unit closing the socket does not unblock the pending read, so
-        // handleHandshake()'s cleanup never runs. Without this bound the old boolean stayed true
-        // for the life of the process, stopping the wake poke and the P2P join watchdog.
+        // Where closing the socket does not unblock the pending read, handleHandshake()'s cleanup
+        // never runs. Unbounded, the old boolean stayed true for the life of the process and took
+        // the wake poke and the P2P join watchdog down with it.
         assertFalse(
             NativeHandoffPolicy.isHandshaking(startedAtMs = 1_000L, nowMs = 1_000L + handshakeTimeout)
         )
@@ -92,8 +107,8 @@ class NativeHandoffPolicyTest {
 
     @Test
     fun `poke is blocked while a handoff is settling`() {
-        // The #760 case: the phone joining the group re-delivers credentials, which re-invokes
-        // triggerPoke() straight into the phone's DHCP exchange.
+        // The phone joining the group re-delivers credentials, which re-invokes triggerPoke()
+        // straight into the phone's DHCP exchange.
         assertFalse(
             NativeHandoffPolicy.shouldPoke(
                 settling = true, handshakeInFlight = false, sessionConnected = false

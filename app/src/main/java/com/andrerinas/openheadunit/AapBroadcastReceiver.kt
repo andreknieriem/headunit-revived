@@ -41,11 +41,6 @@ class AapBroadcastReceiver : BroadcastReceiver() {
             // Feed the single source of truth for geofence / night-by-area evaluation.
             com.andrerinas.openheadunit.location.LocationHolder.update(location)
 
-            // Apply Fake Speed if enabled
-            if (component.settings.fakeSpeed) {
-                location.speed = 0.5f // 0.5 m/s corresponds to 500 mm/s in Emil's logic
-            }
-
             if (component.settings.useGpsForNavigation) {
                 component.commManager.send(LocationUpdateEvent(location))
             }

@@ -12,6 +12,8 @@ import java.io.IOException
 import java.io.OutputStreamWriter
 import java.util.IllegalFormatException
 import java.util.Locale
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.atomic.AtomicInteger
 
 object AppLog {
 
@@ -24,60 +26,118 @@ object AppLog {
             }
         }
 
+        /**
+         * Writes to a file from one background thread fed by a bounded queue.
+         *
+         * Formatting and the write used to happen on the calling thread under a single lock shared
+         * by the AAP poll and send threads, the audio and video threads and the main thread — so at
+         * verbose, where several lines are emitted per frame, they serialised against each other and
+         * against a disk flush. Here a caller only timestamps the line and offers it to the queue.
+         *
+         * When the queue is full the oldest line is dropped rather than blocking the caller: losing
+         * log lines is always better than stalling the thread that produces them, and the count is
+         * reported so a capture never silently under-reports.
+         */
         class File(val file: IoFile) : Logger, Closeable {
-            private val lock = Any()
             private val writer = BufferedWriter(OutputStreamWriter(FileOutputStream(file, true), Charsets.UTF_8))
             private val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+            private val queue = ArrayBlockingQueue<Any>(QUEUE_CAPACITY)
+            private val dropped = AtomicInteger(0)
             @Volatile private var closed = false
 
-
-
-            override fun println(priority: Int, tag: String, msg: String) {
-                synchronized(lock) {
-                    if (closed) return
-                    try {
-                        val ts = dateFormat.format(java.util.Date())
-                        val level = when (priority) {
-                            Log.VERBOSE -> "V"
-                            Log.DEBUG -> "D"
-                            Log.INFO -> "I"
-                            Log.WARN -> "W"
-                            Log.ERROR -> "E"
-                            Log.ASSERT -> "A"
-                            else -> priority.toString()
-                        }
-                        writer.write("$ts [$tag:$level] $msg")
-                        writer.newLine()
-                    } catch (e: IOException) {
-                        Log.e(TAG, "Failed to write AppLog file ${file.absolutePath}", e)
-                    }
+            init {
+                Thread({ drainLoop() }, "AppLog-file-writer").apply {
+                    isDaemon = true
+                    priority = Thread.MIN_PRIORITY
+                    start()
                 }
             }
 
-            override fun close() {
-                synchronized(lock) {
-                    if (closed) return
-                    closed = true
-                    try {
-                        writer.flush()
-                    } catch (_: IOException) {
-                    }
-                    try {
-                        writer.close()
-                    } catch (_: IOException) {
-                    }
+            override fun println(priority: Int, tag: String, msg: String) {
+                if (closed) return
+                val level = when (priority) {
+                    Log.VERBOSE -> "V"
+                    Log.DEBUG -> "D"
+                    Log.INFO -> "I"
+                    Log.WARN -> "W"
+                    Log.ERROR -> "E"
+                    Log.ASSERT -> "A"
+                    else -> priority.toString()
                 }
+                // Timestamp here, not on the writer thread: the queue can lag, and a log whose
+                // timestamps are when a line was *written* rather than when it happened is useless
+                // for the millisecond-level causality these captures get read for.
+                val line = synchronized(dateFormat) { dateFormat.format(java.util.Date()) } +
+                        " [$tag:$level] $msg"
+                while (!queue.offer(line)) {
+                    if (queue.poll() == null) return
+                    dropped.incrementAndGet()
+                }
+            }
+
+            private fun drainLoop() {
+                try {
+                    while (true) {
+                        val item = queue.take()
+                        if (item !is String) break
+                        val line: String = item
+                        try {
+                            writer.write(line)
+                            writer.newLine()
+                            val lost = dropped.getAndSet(0)
+                            if (lost > 0) {
+                                writer.write("--- AppLog: $lost lines dropped, writer could not keep up ---")
+                                writer.newLine()
+                            }
+                            // Flush when the burst is over rather than per line, so a kill loses at
+                            // most what is still queued instead of a whole 8 KB buffer.
+                            if (queue.isEmpty()) writer.flush()
+                        } catch (e: IOException) {
+                            Log.e(TAG, "Failed to write AppLog file ${file.absolutePath}", e)
+                        }
+                    }
+                } catch (_: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
+                try { writer.flush() } catch (_: IOException) {}
+                try { writer.close() } catch (_: IOException) {}
+            }
+
+            /**
+             * Deliberately does not wait for the writer to finish. `close()` runs on the main thread
+             * from [AppLog.init] every time the log settings change, and joining a thread that is
+             * mid-flush to slow eMMC there is an ANR waiting to happen. The drain thread owns the
+             * writer and flushes and closes it once it sees the sentinel, so the file still ends up
+             * complete — just a moment later.
+             */
+            override fun close() {
+                if (closed) return
+                closed = true
+                // Make room for the sentinel even if producers had filled the queue.
+                while (!queue.offer(POISON)) {
+                    if (queue.poll() == null) break
+                }
+            }
+
+            private companion object {
+                const val QUEUE_CAPACITY = 4096
+
+                /** End marker; a distinct type so it can never collide with a real line. */
+                val POISON = Any()
             }
         }
     }
 
-    private var settings: Settings? = null
     @Volatile private var appLogFileLogger: Logger.File? = null
     @Volatile private var lastAppLogFile: IoFile? = null
     @Volatile private var currentLogSource: Settings.LogSource = Settings.LogSource.LOGCAT
 
     fun init(settings: Settings?, context: Context? = null) {
-        this.settings = settings
+        // Cache the level rather than resolving it per call: every call site below, and every
+        // LOG_VERBOSE/LOG_DEBUG guard, used to reach SharedPreferences.getInt() through
+        // Settings.exporterLogLevel — a lock plus a map lookup for lines that are mostly discarded.
+        // Every caller of init() is a place the level can change, so the cache cannot go stale.
+        cachedLogLevel = settings?.logLevel ?: Log.INFO
 
         val desiredSource = settings?.logSource ?: Settings.LogSource.LOGCAT
         val captureEnabled = settings?.exporterCaptureEnabled == true
@@ -104,7 +164,7 @@ object AppLog {
             return
         }
 
-        val logDir = LogFilesHelper.resolveLogDirectory(appContext) ?: appContext.filesDir
+        val logDir = LogFilesHelper.resolveLogDirectory(appContext, settings) ?: appContext.filesDir
         LogFilesHelper.rotateLogs(logDir)
 
         val logFile = LogFilesHelper.createTimestampedLogFile(logDir)
@@ -122,7 +182,10 @@ object AppLog {
 
     @Volatile
     var LOGGER: Logger = Logger.Android()
-    private val LOG_LEVEL get() = settings?.logLevel ?: Log.INFO
+
+    @Volatile
+    private var cachedLogLevel: Int = Log.INFO
+    private val LOG_LEVEL get() = cachedLogLevel
 
     val logSource: Settings.LogSource get() = currentLogSource
     val currentLogFile: IoFile? get() = appLogFileLogger?.file
@@ -134,47 +197,57 @@ object AppLog {
     val LOG_VERBOSE get() = LOG_LEVEL <= Log.VERBOSE
     val LOG_DEBUG get() = LOG_LEVEL <= Log.DEBUG
 
+    @JvmStatic
     fun i(msg: String) {
         if (isLoggable(Log.INFO)) log(Log.INFO, format(msg))
     }
 
+    @JvmStatic
     fun i(msg: String, vararg params: Any) {
         if (isLoggable(Log.INFO)) log(Log.INFO, format(msg, *params))
     }
 
+    @JvmStatic
     fun e(msg: String?) {
         if (isLoggable(Log.ERROR)) loge(format(msg ?: "Unknown error"), null)
     }
 
+    @JvmStatic
     fun e(msg: String, tr: Throwable) {
         if (isLoggable(Log.ERROR)) loge(format(msg), tr)
     }
 
+    @JvmStatic
     fun e(tr: Throwable) {
         if (isLoggable(Log.ERROR)) loge(tr.message ?: "Unknown error", tr)
     }
 
-
+    @JvmStatic
     fun e(msg: String?, vararg params: Any) {
         if (isLoggable(Log.ERROR)) loge(format(msg ?: "Unknown error", *params), null)
     }
 
+    @JvmStatic
     fun v(msg: String, vararg params: Any) {
         if (isLoggable(Log.VERBOSE)) log(Log.VERBOSE, format(msg, *params))
     }
 
+    @JvmStatic
     fun d(msg: String, vararg params: Any) {
         if (isLoggable(Log.DEBUG)) log(Log.DEBUG, format(msg, *params))
     }
 
+    @JvmStatic
     fun d(msg: String) {
         if (isLoggable(Log.DEBUG)) log(Log.DEBUG, format(msg))
     }
 
+    @JvmStatic
     fun w(msg: String) {
         if (isLoggable(Log.WARN)) log(Log.WARN, format(msg))
     }
 
+    @JvmStatic
     fun w(msg: String, vararg params: Any) {
         if (isLoggable(Log.WARN)) log(Log.WARN, format(msg, *params))
     }
@@ -206,7 +279,9 @@ object AppLog {
             e("IllegalFormatException: formatString='%s' numArgs=%d", msg, array.size)
             formatted = "$msg (An error occurred while formatting the message.)"
         }
-        val stackTrace = Throwable().fillInStackTrace().stackTrace
+        // Throwable's constructor already fills in the stack trace; calling fillInStackTrace()
+        // again captured the whole thing a second time, per emitted line.
+        val stackTrace = Throwable().stackTrace
         var string = "<unknown>"
         for (i in 2 until stackTrace.size) {
             val className = stackTrace[i].className

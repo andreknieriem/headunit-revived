@@ -30,6 +30,16 @@ class TextureProjectionView @JvmOverloads constructor(
     private var prevDrawMs: Long = 0L
     private val longFrameThresholdMs = 1200L
 
+    // Displayed-frame telemetry. VideoDecoder's throughput tick reports what it hands to the
+    // surface; this reports what the compositor actually put on screen. Only the difference
+    // between the two identifies a unit whose decoder keeps up while its picture does not, and
+    // this callback is the sole place that difference is observable - a TextureView composites
+    // through an external texture, so a consumer too slow to sample it silently loses frames
+    // rather than applying backpressure the decoder could notice.
+    private var drawnSinceLogValue: Long = 0L
+    private var lastDrawLogMs: Long = 0L
+    private val drawLogIntervalMs = 5000L
+
     init {
         surfaceTextureListener = this
     }
@@ -40,7 +50,9 @@ class TextureProjectionView @JvmOverloads constructor(
 
     override fun setVideoSize(width: Int, height: Int) {
         if (videoWidth == width && videoHeight == height) return
-        AppLog.i("TextureProjectionView", "Video size set to ${width}x$height")
+        // AppLog has no (tag, message) overload - the second argument was being consumed as a
+        // format parameter, so this line only ever printed "TextureProjectionView".
+        AppLog.i("TextureProjectionView: Video size set to ${width}x$height")
         videoWidth = width
         videoHeight = height
         ProjectionViewScaler.updateScale(this, videoWidth, videoHeight)
@@ -94,6 +106,19 @@ class TextureProjectionView @JvmOverloads constructor(
         }
         prevDrawMs = now
         lastFrameDrawnMsValue = now
+
+        drawnSinceLogValue++
+        if (lastDrawLogMs == 0L) {
+            lastDrawLogMs = now
+        } else {
+            val elapsed = now - lastDrawLogMs
+            if (elapsed >= drawLogIntervalMs) {
+                val fps = drawnSinceLogValue * 1000 / elapsed
+                AppLog.i("TextureProjectionView: displayed $drawnSinceLogValue frames in ${elapsed}ms (${fps}fps), longFrames=$longFrameEventsValue")
+                drawnSinceLogValue = 0L
+                lastDrawLogMs = now
+            }
+        }
     }
 
     override fun lastFrameDrawnMs(): Long = lastFrameDrawnMsValue

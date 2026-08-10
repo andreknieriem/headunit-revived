@@ -4,11 +4,10 @@ package com.andrerinas.openheadunit.aap
  * The window between "we sent the phone our WiFi credentials (Type 3)" and "the phone's TCP
  * session actually landed", and what the rest of the app is allowed to do during it.
  *
- * The phone still has to associate, run WPS and get a DHCP lease after Type 3 goes out, and on
- * slower hardware that takes far longer than the handshake itself — 21 s in a known-good 3.1.1
- * log. Anything that touches the Bluetooth radio or takes the P2P group owner off-channel in
- * that window can make the phone abandon the join, which surfaces as "Obtaining IP address"
- * forever on the phone (#760).
+ * The phone still has to associate, run WPS and get a DHCP lease after Type 3 goes out —
+ * measured at 21 s on slow hardware, far longer than the handshake itself. Touching the Bluetooth
+ * radio or taking the P2P group owner off-channel in that window makes the phone abandon the
+ * join, which it shows as "Obtaining IP address" forever.
  *
  * Split out as a pure object so the timing rules are unit-testable without Android, and so
  * [com.andrerinas.openheadunit.connection.NativeAaHandshakeManager] and
@@ -21,6 +20,12 @@ object NativeHandoffPolicy {
      *  this handoff and letting the wake poke retry. Generous on purpose: the cost of waiting too
      *  long is one slow retry, the cost of waiting too little is a dead connection. */
     const val SETTLE_TIMEOUT_MS = 45_000L
+
+    /** Hard ceiling on the settling window once the phone's own progress reports
+     *  ([com.andrerinas.openheadunit.aap.WppAction.ExtendSettle]) have extended it. Without a cap,
+     *  a phone that keeps saying "still joining" and never arrives holds the Bluetooth channel
+     *  open and the wake poke suppressed indefinitely. Three 15 s extensions past the base window. */
+    const val MAX_SETTLE_MS = 90_000L
 
     /** Longest a single credential exchange can legitimately take: the up-to-60 s wait for the
      *  P2P group's credentials, plus the 15 s wait for the phone's Type 2, plus slack. Past this
@@ -39,12 +44,11 @@ object NativeHandoffPolicy {
     /**
      * Whether a credential exchange is still in progress.
      *
-     * [startedAtMs] is an elapsed-realtime stamp, or 0 when no handshake is running. Bounded for
-     * the same reason [isSettling] is, and not merely as a belt-and-braces measure: on the #706
-     * reporter's head unit, closing the Bluetooth socket does not unblock a pending
-     * `readFully()`, so the handshake coroutine never reaches its own cleanup. A plain boolean
-     * latched true there and stayed true for the life of the process, which stopped the wake
-     * poke retrying and made `WifiDirectManager`'s join watchdog defer recovery forever.
+     * [startedAtMs] is an elapsed-realtime stamp, or 0 when no handshake is running. Bounded, and
+     * not merely as a belt-and-braces measure: on head units where closing the Bluetooth socket
+     * does not unblock a pending `readFully()`, the handshake coroutine never reaches its cleanup.
+     * A plain boolean latched true there for the life of the process, stopping the wake poke and
+     * making `WifiDirectManager`'s join watchdog defer recovery forever.
      */
     fun isHandshaking(startedAtMs: Long, nowMs: Long, timeoutMs: Long = HANDSHAKE_TIMEOUT_MS): Boolean =
         isWithinWindow(startedAtMs, nowMs, timeoutMs)
@@ -73,13 +77,12 @@ object NativeHandoffPolicy {
     /**
      * Whether to warn that the phone answers our wake pokes but never connects back.
      *
-     * That combination has exactly one common cause, and it is not something this app can fix:
-     * the phone's Android Auto is bound to a *different* Bluetooth device that also advertises
-     * the Android Auto service record. On the #706 reporter's unit that was the head unit's own
-     * OEM Bluetooth module ("CAR8032"), a separate chip that Android on the head unit cannot see,
-     * still advertising the service after its OEM app stopped answering on it. Gearhead kept
-     * reconnecting to it every 12 s and discarded every poke from our radio as
-     * `IGNORE_DIFFERENT_BLUETOOTH_DEVICE`. Our own log showed successful pokes and nothing wrong.
+     * That combination has one common cause and this app cannot fix it: the phone's Android Auto
+     * is bound to a *different* Bluetooth device that also advertises the Android Auto service
+     * record — typically the head unit's own OEM module, a separate chip Android on the unit
+     * cannot see, still advertising after its OEM app stopped answering. Gearhead reconnects to it
+     * every 12 s and discards our pokes as `IGNORE_DIFFERENT_BLUETOOTH_DEVICE`, while our log
+     * shows successful pokes and nothing wrong.
      *
      * [everAccepted] gates it to units that have never once been reached, so a unit that connects
      * normally and then has a bad run never sees it. Periodic rather than one-shot so it is still
@@ -97,12 +100,11 @@ object NativeHandoffPolicy {
     /**
      * Whether to serve an incoming Android Auto connection at all.
      *
-     * Exists to bound a leak we cannot otherwise close. The wait for the phone's Type 2 is a
-     * blocking read on a background coroutine, and on a head unit where `close()` does not
-     * interrupt a pending read — #706's does not — that coroutine never returns and its
-     * `Dispatchers.IO` thread is stranded for the life of the process. `cancel()` cannot help:
-     * there is no suspension point inside a blocking JNI read. Since the thread cannot be
-     * reclaimed, the only lever is to stop creating them.
+     * Bounds a leak we cannot otherwise close. The wait for the phone's Type 2 is a blocking read
+     * on a background coroutine, and where `close()` does not interrupt a pending read that
+     * coroutine never returns — its `Dispatchers.IO` thread is stranded for the life of the
+     * process, and `cancel()` cannot help because a blocking JNI read has no suspension point.
+     * The thread cannot be reclaimed, so the only lever is to stop creating them.
      *
      * A hard stop rather than a growing delay, because this failure is not transient: if the
      * stack drops our write, the 200th attempt fails exactly like the first, and each one costs a

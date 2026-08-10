@@ -5,7 +5,10 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import com.andrerinas.openheadunit.aap.AapSslContext
 import com.andrerinas.openheadunit.aap.AapTransport
+import com.andrerinas.openheadunit.aap.PlaybackFocusPolicy
+import com.andrerinas.openheadunit.aap.VideoStarvationPolicy
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.utils.BluetoothHelper
 import com.andrerinas.openheadunit.main.BackgroundNotification
 import com.andrerinas.openheadunit.ssl.SingleKeyKeyManager
 import com.andrerinas.openheadunit.utils.Settings
@@ -137,6 +140,11 @@ class CommManager(
      * device is fully closed before `openDevice()` is called on it again.
      */
     @Volatile private var _disconnectJob: kotlinx.coroutines.Job? = null
+
+    // Whether the session now ending ever completed its handshake, and how many sessions in a row
+    // have completed one and then carried no video at all. See VideoStarvationPolicy.
+    @Volatile private var sessionReachedHandshake = false
+    @Volatile private var starvedSessionStreak = 0
 
     private val _backgroundNotification = BackgroundNotification(context)
 
@@ -328,6 +336,10 @@ class CommManager(
                     _transport!!.onUpdateUiConfigReplyReceived = { onUpdateUiConfigReplyReceived?.invoke() }
                 }
                 if (_transport?.startHandshake(_connection!!) == true) {
+                    // A session that got this far had a working link to carry video on. See
+                    // VideoStarvationPolicy for what it means when one ends without carrying any.
+                    sessionReachedHandshake = true
+                    videoDecoder.framesRenderedThisSession = 0L
                     _connectionState.emit(ConnectionState.HandshakeComplete)
                 } else {
                     _connectionState.emit(ConnectionState.Error("Handshake failed"))
@@ -368,12 +380,26 @@ class CommManager(
             // In the default (dynamic) mode focus is acquired on demand via the AA protocol, so
             // an unconditional grab here would evict other media (e.g. the car radio) the moment
             // the phone connects, before AA plays anything.
+            //
+            // And even in static mode, not when the player we would evict is the head unit's own
+            // A2DP sink: it answers by AVRCP-pausing the phone that is about to project to us.
             if (settings.enableAudioSink && settings.staticAudioFocus) {
-                transport.aapAudio?.requestFocusChange(
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.AUDIOFOCUS_GAIN,
-                    AudioManager.OnAudioFocusChangeListener { }
-                )
+                val mode = settings.playbackFocusMode
+                val btMediaLinkActive = BluetoothHelper.isA2dpMediaLinkActive(context)
+                if (PlaybackFocusPolicy.shouldAcquirePermanent(
+                        mode = mode,
+                        staticAudioFocus = true,
+                        audioSinkEnabled = true,
+                        btMediaLinkActive = btMediaLinkActive)) {
+                    transport.aapAudio?.requestFocusChange(
+                        AudioManager.STREAM_MUSIC,
+                        AudioManager.AUDIOFOCUS_GAIN,
+                        AudioManager.OnAudioFocusChangeListener { }
+                    )
+                } else {
+                    AppLog.i("CommManager: Static Audio Focus - leaving system audio focus alone " +
+                            "(mode=$mode, bluetoothMedia=$btMediaLinkActive)")
+                }
             }
             transport.startReading()
             _connectionState.emit(ConnectionState.TransportStarted)
@@ -636,6 +662,13 @@ class CommManager(
         _connection = null
         lastKeyEvents.clear()
         keyStates.clear()
+        // Counts frames over the whole session rather than reading lastFrameRenderedMs, which the
+        // decoder zeroes every time the projection surface goes away — leaving projection before
+        // disconnecting is normal, and would otherwise make every such session look starved.
+        // Self-guarding against the re-entrant second call described above: the flag is consumed
+        // here, so the second pass sees a session that never reached the handshake and counts
+        // nothing.
+        noteSessionEnded(renderedAnyFrame = videoDecoder.framesRenderedThisSession > 0L)
         try {
             // Only send ByeByeRequest when we are initiating the disconnect (e.g. user pressed
             // disconnect). When the transport self-quit (read error, soTimeout), the connection
@@ -653,6 +686,30 @@ class CommManager(
             if (_connectionState.value !is ConnectionState.Disconnected) {
                 _connectionState.value = ConnectionState.Disconnected()
             }
+        }
+    }
+
+    /**
+     * Counts a finished session against [VideoStarvationPolicy] and, on a long enough run of
+     * sessions that carried no video at all, says what that means and what to do about it.
+     *
+     * The phone gives no reason we can see — it closes the socket and our read reports a plain EOF
+     * — so without this the log shows nothing but a healthy connection repeating forever.
+     */
+    private fun noteSessionEnded(renderedAnyFrame: Boolean) {
+        val reachedHandshake = sessionReachedHandshake
+        sessionReachedHandshake = false
+        starvedSessionStreak = VideoStarvationPolicy.nextStreak(
+            starvedSessionStreak, reachedHandshake, renderedAnyFrame
+        )
+        if (VideoStarvationPolicy.shouldAdvise(starvedSessionStreak)) {
+            AppLog.w(
+                "CommManager: $starvedSessionStreak sessions in a row ended without a single video " +
+                    "frame arriving. The phone is connecting and then giving up on the video stream, " +
+                    "which is what a WiFi link too slow to carry it looks like. Measured on a 2.4 GHz " +
+                    "access point at 1080p/60, where the same link held 800x480/30 indefinitely: move " +
+                    "the access point to 5 GHz, or lower the resolution and frame rate in Video settings."
+            )
         }
     }
 
