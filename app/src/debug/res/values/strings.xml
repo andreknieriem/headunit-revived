@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The debug build installs next to a store build (applicationIdSuffix ".dev"), so the launcher
+      shows two identical icons unless this one says which is which.
+    -->
+    <string name="title">Open Headunit Dev</string>
+</resources>

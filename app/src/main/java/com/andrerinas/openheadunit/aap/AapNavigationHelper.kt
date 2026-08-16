@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.andrerinas.openheadunit.BuildConfig
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.protocol.proto.NavigationStatus
 import com.andrerinas.openheadunit.aap.protocol.proto.NavigationStatus.NextTurnDetail.NextEvent as LegacyNextEvent
@@ -81,7 +82,12 @@ class AapNavigationHelper(
             totalTimeSeconds = prepared.totalTimeSeconds,
             estimatedArrival = prepared.estimatedArrival
         )
-        context.applicationContext.sendBroadcast(intent, NavigationUpdateIntent.BROADCAST_PERMISSION)
+        // BuildConfig, not NavigationUpdateIntent.BROADCAST_PERMISSION: the guard has to name the
+        // permission this build actually declares, and the side-by-side debug build declares a
+        // suffixed one so it can install next to a store build. Both come from the same value in
+        // build.gradle.kts, so the manifest and this call cannot disagree. The contract constant
+        // remains the canonical name for external consumers.
+        context.applicationContext.sendBroadcast(intent, BuildConfig.NAVIGATION_UPDATE_PERMISSION)
     }
 
     fun showNotificationForSnapshot(snapshot: NavigationSnapshot, distanceMeters: Int?) {
