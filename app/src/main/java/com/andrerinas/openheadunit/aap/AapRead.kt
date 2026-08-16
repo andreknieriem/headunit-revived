@@ -59,7 +59,7 @@ internal interface AapRead {
             // controls the Nearby-specific handshake settle-delay/drain skip in
             // AapTransport.handshake() and is unrelated to read framing.
             return if (connection is SocketAccessoryConnection)
-                AapReadSingleMessage(connection, transport.ssl, handler)
+                AapReadSingleMessage(connection, transport.ssl, handler, transport::sendIdleProbe)
             else
                 AapReadMultipleMessages(connection, transport.ssl, handler)
         }

@@ -285,6 +285,16 @@ internal class AapControlService(
                 AppLog.i("RX: Channel Close Notification on chan ${message.channel}")
                 return 0
             }
+            Control.ControlMsgType.MESSAGE_PING_RESPONSE_VALUE -> {
+                // Answer to AapTransport.sendIdleProbe(). Nothing to do with the payload: having
+                // arrived at all is the liveness proof, and the read loop has already reset its
+                // silence counter on the bytes. Handled explicitly so the probe does not show up
+                // as an unsupported message once per idle window.
+                if (AppLog.LOG_DEBUG) {
+                    AppLog.d("RX: Ping Response - link confirmed alive")
+                }
+                return 0
+            }
             else -> AppLog.e("Unsupported Control message type: ${message.type}")
         }
         return 0

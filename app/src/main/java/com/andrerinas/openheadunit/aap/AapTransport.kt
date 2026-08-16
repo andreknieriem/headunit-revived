@@ -636,6 +636,20 @@ class AapTransport(
         }
     }
 
+    /**
+     * Asks the phone to prove the link is still alive.
+     *
+     * The phone answers with `MESSAGE_PING_RESPONSE`, but the reply's *contents* do not matter and
+     * are not waited for: the read loop counts any inbound byte as proof, so the response resets
+     * the silence counter simply by arriving. See [IdleLinkProbePolicy].
+     */
+    internal fun sendIdleProbe() {
+        val ping = Control.PingRequest.newBuilder()
+            .setTimestamp(System.nanoTime())
+            .build()
+        send(AapMessage(Channel.ID_CTR, Control.ControlMsgType.MESSAGE_PING_REQUEST_VALUE, ping))
+    }
+
     internal fun gainVideoFocus() {
         context.sendBroadcast(ProjectionActivityRequest())
     }
