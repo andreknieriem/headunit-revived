@@ -31,7 +31,18 @@ $adb = 'C:\adb\adb.exe'
 
 $devPkg = 'com.andrerinas.headunitrevived.dev'
 $storePkg = 'com.andrerinas.headunitrevived'
-$apk = Join-Path $PSScriptRoot 'app\build\outputs\apk\github\debug\com.andrerinas.headunitrevived.dev_3.2.5_debug.apk'
+# Resolved by pattern, not by name: the version is part of the filename, so a hard-coded one goes
+# stale at the next bump and the script then fails with a missing-file error that says nothing
+# about why.
+$apkDir = Join-Path $PSScriptRoot 'app\build\outputs\apk\github\debug'
+
+function Get-ApkPath {
+    $found = Get-ChildItem -Path $apkDir -Filter '*.apk' -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+    if (-not $found) { throw "No APK in $apkDir - run '.\dev-note8.ps1 build' first" }
+    return $found.FullName
+}
 
 function Invoke-Gradle {
     param([string[]]$GradleArgs)
@@ -47,13 +58,13 @@ function Invoke-Gradle {
 switch ($Command) {
     'build' {
         Invoke-Gradle @(':app:assembleGithubDebug')
-        Get-Item $apk | Select-Object Name, @{n = 'MB'; e = { [math]::Round($_.Length / 1MB, 1) } }, LastWriteTime
+        Get-Item (Get-ApkPath) | Select-Object Name, @{n = 'MB'; e = { [math]::Round($_.Length / 1MB, 1) } }, LastWriteTime
     }
 
     'install' {
         Invoke-Gradle @(':app:assembleGithubDebug')
         # -r reinstalls in place and keeps captured logs and settings from the previous run.
-        & $adb install -r $apk
+        & $adb install -r (Get-ApkPath)
         & $adb shell "pm list packages | grep headunitrevived"
     }
 

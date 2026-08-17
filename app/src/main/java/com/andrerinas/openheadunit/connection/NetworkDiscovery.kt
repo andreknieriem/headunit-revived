@@ -42,6 +42,18 @@ class NetworkDiscovery(private val context: Context, private val listener: Liste
         private val PROBE_LOCK = Any()
     }
 
+    /**
+     * Failed 5289 probes in the sweep currently running, and the last exception kind seen.
+     *
+     * The sweep fans out 254 coroutines across [Dispatchers.IO], so the counter is atomic; the
+     * reason is a plain volatile because a representative sample is all the summary needs and
+     * racing writers would be reporting the same failure anyway.
+     */
+    private val probesFailed = java.util.concurrent.atomic.AtomicInteger(0)
+
+    @Volatile
+    private var lastProbeFailure: String? = null
+
     interface Listener {
         fun onServiceFound(ip: String, port: Int, socket: Socket? = null)
         /**
@@ -224,6 +236,9 @@ class NetworkDiscovery(private val context: Context, private val listener: Liste
         val myIp = getLocalIpAddress()
         AppLog.i("NetworkDiscovery: Scanning subnet: $subnet.*")
 
+        probesFailed.set(0)
+        lastProbeFailure = null
+
         val tasks = mutableListOf<Deferred<Boolean>>()
 
         // Scan range 1..254
@@ -239,7 +254,14 @@ class NetworkDiscovery(private val context: Context, private val listener: Liste
             })
         }
 
-        tasks.awaitAll()
+        val found = tasks.awaitAll().count { it }
+        val failed = probesFailed.getAndSet(0)
+        val reason = lastProbeFailure?.let { " (last: $it)" } ?: ""
+        AppLog.i(
+            "NetworkDiscovery: Swept $subnet.* — ${tasks.size} probed, $found responded, " +
+                    "$failed silent on 5289$reason"
+        )
+        lastProbeFailure = null
     }
 
     private fun getLocalIpAddress(): String? {
@@ -344,9 +366,14 @@ class NetworkDiscovery(private val context: Context, private val listener: Liste
             // A failed connect can still leave a half-open socket behind; close it rather than
             // waiting for the finalizer, which on the subnet sweep means 254 of them.
             try { socket.close() } catch (e2: Exception) {}
-            // Surface a failed Wifi Launcher probe so logs can tell "helper not listening"
-            // apart from "the scan never ran".
-            if (port == 5289) AppLog.d("NetworkDiscovery: $ip:5289 probe failed (${e.javaClass.simpleName}); Wifi Launcher not listening")
+            // Counted, not logged. Telling "helper not listening" apart from "the scan never ran"
+            // needs one fact per sweep, not one line per address: at a line per failed 5289 probe
+            // a single /24 sweep wrote 254 of them and four sweeps buried an entire connection
+            // fault under 60% of the capture. scanSubnet reports the tally instead.
+            if (port == 5289) {
+                probesFailed.incrementAndGet()
+                lastProbeFailure = e.javaClass.simpleName
+            }
             null
         }
     }
