@@ -10,18 +10,18 @@ import org.junit.Test
  * away from a stream that is working. A release across a healthy stream is a known way to drop one
  * to a few fps permanently, so the escalation is only ever correct in the one situation these
  * arguments describe together: a decoder rebuilt under a surface that has never shown a frame, on a
- * session that already proved itself, with the phone still sending.
+ * session that already proved itself, with the phone still on the link.
  */
 class WarmRelaunchKeyframePolicyTest {
 
-    /** A relaunch that has gone 2s without a picture while the phone streams: the whole point. */
+    /** A relaunch that has gone 5s without a picture while the phone is on the link: the whole point. */
     private fun warmRelaunch(
         sessionHasRendered: Boolean = true,
         renderedSinceSurfaceSet: Boolean = false,
         transportStarted: Boolean = true,
         msSinceSurfaceSet: Long = 5_000,
-        msSincePhoneBytes: Long = 100,
-        phoneAliveThresholdMs: Long = 1_500,
+        msSinceLinkActivity: Long = 100,
+        linkQuietThresholdMs: Long = ProjectionWatchdogPolicy.LINK_QUIET_MS,
         cycleAlreadySpent: Boolean = false,
         msSinceLastRequest: Long = 60_000
     ) = WarmRelaunchKeyframePolicy.decide(
@@ -29,8 +29,8 @@ class WarmRelaunchKeyframePolicyTest {
         renderedSinceSurfaceSet = renderedSinceSurfaceSet,
         transportStarted = transportStarted,
         msSinceSurfaceSet = msSinceSurfaceSet,
-        msSincePhoneBytes = msSincePhoneBytes,
-        phoneAliveThresholdMs = phoneAliveThresholdMs,
+        msSinceLinkActivity = msSinceLinkActivity,
+        linkQuietThresholdMs = linkQuietThresholdMs,
         cycleAlreadySpent = cycleAlreadySpent,
         msSinceLastRequest = msSinceLastRequest
     )
@@ -86,15 +86,32 @@ class WarmRelaunchKeyframePolicyTest {
     }
 
     @Test
-    fun `a phone that stopped sending is a pause, not a stall`() {
+    fun `a phone that has left the link is a disconnect, not a stall`() {
         assertEquals(
             Action.NONE,
-            warmRelaunch(msSincePhoneBytes = 1_501, phoneAliveThresholdMs = 1_500)
+            warmRelaunch(msSinceLinkActivity = ProjectionWatchdogPolicy.LINK_QUIET_MS + 1)
         )
         assertEquals(
             Action.CYCLE_FOCUS,
-            warmRelaunch(msSincePhoneBytes = 1_500, phoneAliveThresholdMs = 1_500)
+            warmRelaunch(msSinceLinkActivity = ProjectionWatchdogPolicy.LINK_QUIET_MS)
         )
+    }
+
+    @Test
+    fun `a phone that is silent on video but present on the link still gets the cycle`() {
+        // This gate used to read the age of the last *video* bytes against a 1.5s window. Android
+        // Auto sends no video at all while nothing on screen animates, so on a paused full-screen
+        // player it shut within seconds and stayed shut - and took the only escalation with it. A
+        // reporter's capture then has the cycle repairing that exact stream: paused upstream for
+        // minutes, keyframe 0.68s after the release. Video silence is not evidence of anything.
+        assertEquals(Action.CYCLE_FOCUS, warmRelaunch(msSinceLinkActivity = 2_000))
+    }
+
+    @Test
+    fun `a session with no link activity at all is never escalated`() {
+        // The caller reports "nothing has ever arrived" as Long.MAX_VALUE, and that must read as
+        // gone rather than as zero.
+        assertEquals(Action.NONE, warmRelaunch(msSinceLinkActivity = Long.MAX_VALUE))
     }
 
     @Test

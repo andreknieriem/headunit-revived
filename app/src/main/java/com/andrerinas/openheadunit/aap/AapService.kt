@@ -113,7 +113,14 @@ class AapService : Service(), UsbReceiver.Listener {
     private var nativeAaHandshakeManager: NativeAaHandshakeManager? = null
     private var nearbyManager: NearbyManager? = null
     private var wifiAutoStartReceiver: WifiAutoStartReceiver? = null
-    private var wirelessServer: WirelessServer? = null
+    // @Volatile: the handshake can now ask for a repair from Dispatchers.IO, so this is no
+    // longer read only from Main.
+    @Volatile private var wirelessServer: WirelessServer? = null
+    // Rebuild bookkeeping for WirelessServerRestartPolicy. The handshake asks about every 4s while a
+    // phone keeps arriving, so without a bound a port that cannot bind becomes a rebuild loop.
+    private var lastWirelessRebuildAtMs = 0L
+    private var wirelessRebuildsInWindow = 0
+    private var wirelessRebuildWindowStartedAtMs = 0L
     private var networkDiscovery: NetworkDiscovery? = null
     private var mediaSession: MediaSessionCompat? = null
 
@@ -1934,6 +1941,15 @@ class AapService : Service(), UsbReceiver.Listener {
                     if (activeWifiMode != 3 || settings.wifiConnectionMode != 3) {
                         AppLog.i("AapService: Initializing Native AA mode before poke...")
                         initWifiMode(force = true)
+                    } else if (nativeAaHandshakeManager?.isActive() != true) {
+                        // A completed handoff closes the AA listeners while leaving the manager
+                        // running, and start() returns immediately on isRunning - so calling it here
+                        // reopened nothing. The poke then woke the phone, the phone opened RFCOMM,
+                        // and nothing was listening: the button appeared to do nothing however many
+                        // times it was pressed. A full re-init is what reopens them, which is what
+                        // the Bluetooth auto-start path below already does for the same reason.
+                        AppLog.i("AapService: Native AA listeners are closed — re-arming before the poke.")
+                        initWifiMode(force = true)
                     } else {
                         AppLog.d("AapService: Already in Native AA mode, skipping re-init.")
                         // Just ensure servers are running if they were stopped for some reason
@@ -2328,7 +2344,50 @@ class AapService : Service(), UsbReceiver.Listener {
      * No-op if the server is already running.
      */
     private fun startWirelessServer() {
-        if (wirelessServer != null) return
+        val existing = wirelessServer
+        val action = WirelessServerRestartPolicy.decide(
+            assigned = existing != null,
+            alive = existing?.isAlive == true,
+            listening = existing?.isListening == true,
+            nowMs = android.os.SystemClock.elapsedRealtime(),
+            sessionBusy = commManager.isConnected,
+            lastRebuildAtMs = lastWirelessRebuildAtMs,
+            rebuildsInWindow = wirelessRebuildsInWindow,
+            windowStartedAtMs = wirelessRebuildWindowStartedAtMs,
+        )
+        val why = WirelessServerRestartPolicy.describe(action, existing != null, existing?.isListening == true)
+        when (action) {
+            WirelessServerRestartPolicy.Action.NO_OP,
+            WirelessServerRestartPolicy.Action.AWAIT -> {
+                AppLog.d("AapService: Wireless server not started - $why.")
+                return
+            }
+            WirelessServerRestartPolicy.Action.BACKOFF -> {
+                // INFO, not DEBUG. This is the state a stuck unit sits in, and the reporter logs
+                // that would have identified it are captured at INFO.
+                AppLog.i("AapService: Wireless server on 5288 is not accepting connections - $why.")
+                return
+            }
+            WirelessServerRestartPolicy.Action.REBUILD -> {
+                val now = android.os.SystemClock.elapsedRealtime()
+                wirelessRebuildsInWindow = WirelessServerRestartPolicy.nextRebuildCount(
+                    now, wirelessRebuildWindowStartedAtMs, wirelessRebuildsInWindow
+                )
+                wirelessRebuildWindowStartedAtMs =
+                    WirelessServerRestartPolicy.nextWindowStart(now, wirelessRebuildWindowStartedAtMs)
+                lastWirelessRebuildAtMs = now
+                AppLog.w("AapService: Rebuilding the wireless server on 5288 - $why (attempt $wirelessRebuildsInWindow).")
+                // Only this object, never stopWirelessServer(): that also clears activeWifiMode and
+                // activeHelperStrategy, and the mode has not changed - we are repairing inside it.
+                try { existing?.stopServer() } catch (e: Exception) {
+                    AppLog.d("AapService: Error stopping the previous wireless server: ${e.message}")
+                }
+                wirelessServer = null
+            }
+            WirelessServerRestartPolicy.Action.START -> {
+                AppLog.d("AapService: Starting the wireless server on 5288 - $why.")
+            }
+        }
         val settings = App.provide(this).settings
         val mode = settings.wifiConnectionMode
         val strategy = settings.helperConnectionStrategy
@@ -2379,6 +2438,40 @@ class AapService : Service(), UsbReceiver.Listener {
      * only then talk to the phone.
      */
     fun isWirelessServerListening(): Boolean = wirelessServer?.isListening == true
+
+    /**
+     * Tries to get the AAP port bound, and reports whether it is.
+     *
+     * Called by the Bluetooth handshake when it finds the port unbound with credentials already in
+     * hand. Until this existed the handshake could only give up, so a server that died once stayed
+     * dead for the life of the mode: the phone was woken, told to join a network, and left dialling
+     * a port nothing was listening on, every few seconds, indefinitely.
+     *
+     * The start is marshalled onto Main because every other caller of [startWirelessServer] runs
+     * there. Without that, this one arrives from `Dispatchers.IO` and can pass the "nothing is
+     * assigned" check at the same moment [initWifiMode] does, and both bind. `SO_REUSEADDR` does not
+     * help there - it covers a port in TIME_WAIT, not one with a live listener on it - so the loser
+     * throws and spends its retry budget losing to its own sibling.
+     *
+     * @param reason what asked, for the log.
+     * @param timeoutMs how long to wait for the bind after asking.
+     */
+    suspend fun ensureWirelessServerListening(reason: String, timeoutMs: Long): Boolean {
+        if (isWirelessServerListening()) return true
+        AppLog.i("AapService: $reason found port 5288 unbound. Trying to start the wireless server.")
+        withContext(Dispatchers.Main.immediate) { startWirelessServer() }
+
+        val deadline = android.os.SystemClock.elapsedRealtime() + timeoutMs
+        while (android.os.SystemClock.elapsedRealtime() < deadline) {
+            if (isWirelessServerListening()) {
+                AppLog.i("AapService: port 5288 is bound now.")
+                return true
+            }
+            delay(250)
+        }
+        AppLog.w("AapService: port 5288 is still not bound ${timeoutMs}ms after trying to start it.")
+        return false
+    }
 
     /** The transport mode 3 is configured to use. Read fresh: the user can change it in settings. */
     private fun nativeTransport(): NativeTransport =
@@ -3071,6 +3164,15 @@ class AapService : Service(), UsbReceiver.Listener {
         @Volatile var isListening = false
             private set
 
+        /**
+         * Whether the coroutine that owns the bind is still running.
+         *
+         * [isListening] alone cannot separate "binding, give it a moment" from "died and will never
+         * bind"; both are false. Replacing a server on the strength of that would tear down one that
+         * was about to succeed, and the replacement would then race it for the same port.
+         */
+        val isAlive: Boolean get() = job?.isActive == true
+
         fun start(registerNsd: Boolean = true) {
             nsdManager = getSystemService(Context.NSD_SERVICE) as? NsdManager
             if (nsdManager == null) {
@@ -3079,10 +3181,49 @@ class AapService : Service(), UsbReceiver.Listener {
                 registerNsd()
             }
 
+            // Outside the coroutine on purpose. Everything below runs on a scope that can already
+            // be cancelled, in which case the block never executes and prints nothing at all; this
+            // line is what tells a reader the difference between "never asked" and "asked, and the
+            // answer never came". Two complete reporter captures could not be told apart without it.
+            AppLog.i("WirelessServer: binding port 5288...")
+
             job = serviceScope.launch(Dispatchers.IO) {
                 try {
-                    serverSocket = ServerSocket(5288).apply { reuseAddress = true }
+                    // Unbound first, then the option, then bind. ServerSocket(int) binds inside the
+                    // constructor, so setting reuseAddress after it is a no-op on a socket that is
+                    // already bound - which is the whole failure this line was written to prevent.
+                    // The previous peer's connection sits in TIME_WAIT for minutes after a session
+                    // ends, so a re-init within that window threw BindException, isListening stayed
+                    // false, and the next handshake woke the phone over Bluetooth and handed it
+                    // nothing (NativeAaHandshakeManager aborts with "nothing is listening on 5288").
+                    var bound: ServerSocket? = null
+                    var attempt = 0
+                    while (isActive && bound == null) {
+                        attempt++
+                        try {
+                            bound = ServerSocket().apply {
+                                reuseAddress = true
+                                bind(java.net.InetSocketAddress(5288))
+                            }
+                        } catch (e: Exception) {
+                            // The last attempt rethrows, so a permanent failure still reaches the
+                            // catch below and is reported as an error rather than disappearing.
+                            if (attempt >= BIND_ATTEMPTS) throw e
+                            AppLog.w("WirelessServer: port 5288 did not bind on attempt $attempt of $BIND_ATTEMPTS (${e.javaClass.simpleName}: ${e.message}). Retrying in ${BIND_RETRY_DELAY_MS}ms.")
+                            delay(BIND_RETRY_DELAY_MS)
+                        }
+                    }
+                    if (bound == null) {
+                        AppLog.i("WirelessServer: stopped before port 5288 could be bound.")
+                        return@launch
+                    }
+                    serverSocket = bound
                     isListening = true
+                    // A bind that worked ends the rebuild budget: the next failure, whenever it
+                    // comes, is a fresh one and gets its own attempts.
+                    lastWirelessRebuildAtMs = 0L
+                    wirelessRebuildsInWindow = 0
+                    wirelessRebuildWindowStartedAtMs = 0L
                     AppLog.i("Wireless Server listening on port 5288")
                     logLocalNetworkInterfaces()
 
@@ -3110,7 +3251,10 @@ class AapService : Service(), UsbReceiver.Listener {
                         }
                     }
                 } catch (e: Exception) {
+                    // The cancelled branch used to be silent, which made a server that was torn
+                    // down indistinguishable from one that was never started.
                     if (isActive) AppLog.e("Wireless server error", e)
+                    else AppLog.i("WirelessServer: port 5288 released (${e.javaClass.simpleName}).")
                 } finally {
                     isListening = false
                     unregisterNsd()
@@ -3171,6 +3315,12 @@ class AapService : Service(), UsbReceiver.Listener {
     // -------------------------------------------------------------------------
 
     companion object {
+        /** Bind attempts before the wireless server gives up and reports the port unusable. */
+        private const val BIND_ATTEMPTS = 3
+
+        /** Gap between them. A port released by a peer that just left frees within this. */
+        private const val BIND_RETRY_DELAY_MS = 700L
+
         /**
          * If set to `true`, the service will call [System.exit] at the very end of [onDestroy].
          * This is used by `killOnDisconnect` to ensure all cleanup (like Car Mode) completes

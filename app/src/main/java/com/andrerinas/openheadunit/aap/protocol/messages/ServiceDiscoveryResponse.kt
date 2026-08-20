@@ -101,6 +101,7 @@ class ServiceDiscoveryResponse(private val context: Context)
                     mediaSinkServiceBuilder.availableWhileInCall = true
 
                     AppLog.i("[ServiceDiscovery] NegotiatedResolution is: ${HeadUnitScreenConfig.getNegotiatedWidth()}x${HeadUnitScreenConfig.getNegotiatedHeight()}")
+                    logNegotiatedCodecCapability(effectiveCodec, settings)
                     AppLog.i("[ServiceDiscovery] Margins are: ${phoneWidthMargin}x${phoneHeightMargin}")
 
                     mediaSinkServiceBuilder.addVideoConfigs(Control.Service.MediaSinkService.VideoConfiguration.newBuilder().apply {
@@ -255,6 +256,44 @@ class ServiceDiscoveryResponse(private val context: Context)
 
                 addAllServices(services)
             }.build()
+        }
+
+        /**
+         * Records whether a decoder on this device claims it can carry the profile we are about to
+         * ask the phone for.
+         *
+         * Nothing acts on the answer. It exists because this is the one place where the codec is
+         * decided - the 1440p rule above overrides the user's own choice - and until now nothing in
+         * the app asked a decoder anything before making it. A #219 reporter's Galaxy Tab S7 FE runs
+         * the resulting 2560x1440 HEVC on `c2.qti.hevc.decoder` and sheds frames in bursts, with the
+         * shedding confined to windows that also spent up to 2019ms of 5000 waiting for an input
+         * buffer. No log has ever said what that component claimed beforehand.
+         *
+         * A WARN here from a unit that reports artifacts is what would justify revisiting the rule.
+         */
+        private fun logNegotiatedCodecCapability(codec: Media.MediaCodecType, settings: com.andrerinas.openheadunit.utils.Settings) {
+            val mime = when (codec) {
+                Media.MediaCodecType.MEDIA_CODEC_VIDEO_H265 -> VideoDecoder.CodecType.H265.mimeType
+                Media.MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP -> VideoDecoder.CodecType.H264.mimeType
+                else -> return
+            }
+            val width = HeadUnitScreenConfig.getNegotiatedWidth()
+            val height = HeadUnitScreenConfig.getNegotiatedHeight()
+            if (width <= 0 || height <= 0) return
+            val capability = com.andrerinas.openheadunit.decoder.DecoderCapabilityReport
+                .query(mime, width, height, settings.fpsLimit)
+            if (capability == null) {
+                AppLog.i("[ServiceDiscovery] No decoder capability available for $mime at ${width}x$height")
+                return
+            }
+            if (capability.adequate) {
+                AppLog.i("[ServiceDiscovery] Negotiating a profile this device claims to carry: $capability")
+            } else {
+                AppLog.w(
+                    "[ServiceDiscovery] Negotiating a profile no decoder here claims to carry: $capability. " +
+                        "Frames shed under load and the artifacts that follow are the expected consequence."
+                )
+            }
         }
 
         private fun makeSensorType(type: Sensors.SensorType): Control.Service.SensorSourceService.Sensor {

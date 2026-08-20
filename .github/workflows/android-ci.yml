@@ -105,3 +105,60 @@ jobs:
             app/build/reports/tests/testGithubDebugUnitTest
             app/build/test-results/testGithubDebugUnitTest
           if-no-files-found: warn
+
+  lint:
+    name: Lint (NewApi)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # See the build job for why NDK/CMake are pinned and the install is retried.
+      - name: Install pinned NDK and CMake
+        run: |
+          for attempt in 1 2 3; do
+            sdkmanager "ndk;27.0.12077973" "cmake;3.22.1" && exit 0
+            echo "sdkmanager attempt $attempt failed; retrying in 15s..." >&2
+            sleep 15
+          done
+          echo "sdkmanager failed after 3 attempts" >&2
+          exit 1
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Android lint
+        run: ./gradlew :app:lintGithubDebug --stacktrace
+
+      # abortOnError is false in app/build.gradle.kts so ordinary lint findings do not
+      # block CI. NewApi is different: on a minSdk 16 app it is not a warning, it is a
+      # NoSuchMethodError on somebody's head unit the moment that code path is reached.
+      - name: Fail on NewApi findings
+        run: |
+          report=app/build/reports/lint-results-githubDebug.xml
+          if [ ! -f "$report" ]; then
+            echo "::error::lint report not found at $report"
+            exit 1
+          fi
+          if grep -q 'id="NewApi"' "$report"; then
+            echo "::error::NewApi: an API above minSdk is called unguarded"
+            grep -B2 -A4 'id="NewApi"' "$report"
+            exit 1
+          fi
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-githubDebug.*
+          if-no-files-found: warn

@@ -196,6 +196,15 @@ class CommManager(
         }
 
     /**
+     * When the phone last sent anything on any AAP channel, or `0` if it has not yet this session.
+     *
+     * Proof the link is alive, as distinct from proof the picture is moving. See
+     * [AapTransport.lastMessageReceivedMs].
+     */
+    val lastAapMessageMs: Long
+        get() = _transport?.lastMessageReceivedMs ?: 0L
+
+    /**
      * `true` while a connection exists **or** one is being set up.
      *
      * [isConnected] deliberately excludes [ConnectionState.Connecting], which is right for the
@@ -756,13 +765,33 @@ class CommManager(
      * rather than calling here, because it has to pair the release with a regain on the send handler.
      * Releasing focus across a stream that is rendering is a known way to lose one permanently, which
      * is why both sets of gates are as reluctant as they are.
+     *
+     * Both go through the transport's single claim on the lever, so a release can never be issued
+     * while another cycle is still waiting to send its regain. Returns false when the claim is
+     * refused - the caller must not then spend its own budget or schedule a regain, because no
+     * release went out for it to complete.
      */
-    fun releaseVideoFocusForKeyframe() {
-        if (_connectionState.value !is ConnectionState.TransportStarted) return
-        val transport = _transport ?: return
-        transport.ignoreNextStopRequest = true
+    fun releaseVideoFocusForKeyframe(): Boolean {
+        if (_connectionState.value !is ConnectionState.TransportStarted) return false
+        val transport = _transport ?: return false
+        if (!transport.beginFocusCycle()) {
+            AppLog.i("CommManager: a video-focus cycle is already in flight - not starting a second")
+            return false
+        }
         AppLog.i("CommManager: releasing video focus to force a keyframe")
-        transport.send(com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent(gain = false, unsolicited = false))
+        transport.sendKeyframeCycleRelease()
+        return true
+    }
+
+    /**
+     * Second half of a cycle started by [releaseVideoFocusForKeyframe], and the only correct way to
+     * end one: it sends the regain *and* hands the lever back, which a bare [send] would not.
+     */
+    fun retakeVideoFocusForKeyframe() {
+        _transport?.let {
+            it.send(com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent(gain = true, unsolicited = true))
+            it.endFocusCycle()
+        }
     }
 
     fun updateAudioGains() {

@@ -116,9 +116,9 @@ object WarmRelaunchKeyframePolicy {
      * @param transportStarted whether the AAP session is in its steady state. Nothing can be sent
      *   otherwise, and a handshake in progress will produce sink setup on its own.
      * @param msSinceSurfaceSet age of the current surface.
-     * @param msSincePhoneBytes age of the last video bytes from the phone. A phone that has stopped
-     *   sending has paused the stream deliberately; the reconnecting overlay owns that case.
-     * @param phoneAliveThresholdMs how recent [msSincePhoneBytes] must be to count as streaming.
+     * @param msSinceLinkActivity age of the last AAP message of any kind from the phone - the whole
+     *   link, not the video channel. See the gate below for why the distinction decides this policy.
+     * @param linkQuietThresholdMs how long that may be before the phone counts as gone.
      * @param cycleAlreadySpent whether this surface has already had its one focus cycle.
      * @param msSinceLastRequest age of the last keyframe request of any kind.
      */
@@ -127,8 +127,8 @@ object WarmRelaunchKeyframePolicy {
         renderedSinceSurfaceSet: Boolean,
         transportStarted: Boolean,
         msSinceSurfaceSet: Long,
-        msSincePhoneBytes: Long,
-        phoneAliveThresholdMs: Long,
+        msSinceLinkActivity: Long,
+        linkQuietThresholdMs: Long,
         cycleAlreadySpent: Boolean,
         msSinceLastRequest: Long
     ): Action {
@@ -137,8 +137,18 @@ object WarmRelaunchKeyframePolicy {
         if (renderedSinceSurfaceSet) return Action.NONE
         // A cold start has never rendered, so there is no "was working a moment ago" to restore.
         if (!sessionHasRendered) return Action.NONE
-        // The phone has stopped sending. A focus cycle cannot fix a stream that is paused upstream.
-        if (msSincePhoneBytes > phoneAliveThresholdMs) return Action.NONE
+        // The phone is gone. Nothing to ask, and the reconnecting overlay owns that case.
+        //
+        // This used to read the age of the last *video* bytes, against a 1.5s window, on the
+        // reasoning that a focus cycle cannot fix a stream paused upstream. Both halves were wrong.
+        // Android Auto sends no video at all while nothing on screen animates - the substance of the
+        // idle-screen work elsewhere in this package - so on a paused full-screen player the gate
+        // shuts within seconds and stays shut, taking the escalation with it. And a reporter's
+        // capture has the cycle repairing exactly that stream: paused upstream for minutes, keyframe
+        // 0.68s after the release, picture 0.70s.
+        //
+        // What the gate is for is a link that has gone away, and the app has that signal directly.
+        if (msSinceLinkActivity > linkQuietThresholdMs) return Action.NONE
         // Give the surface the healthy path's own worst case before escalating.
         if (msSinceSurfaceSet < ESCALATE_AFTER_SURFACE_MS) return Action.NONE
 
