@@ -15,6 +15,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.connection.usb.UsbAccessoryMode
+import com.andrerinas.openheadunit.connection.usb.UsbAttachPolicy
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceDiagnostics
 import com.andrerinas.openheadunit.connection.usb.UsbReceiver
@@ -148,9 +149,25 @@ class UsbAttachedActivity : Activity() {
         // Google VID (0x18D1) devices are almost certainly Android Auto phones or AA dongles
         // (e.g. AAWireless). Always attempt the AOA switch for these — skipping them would
         // break dongle users who haven't explicitly configured allowlists.
+        //
+        // [BUG_FIX] Every other make used to be refused here, because the vendor id was the only
+        // escape from the allow list. The device has already passed isAndroidDevice() above, so
+        // an unconfigured allow list is no reason to drop the attach — it means the user never
+        // set one, not that nothing is permitted. UsbAttachPolicy carries the reasoning.
         val isGoogleDevice = device.vendorId == 0x18D1
-        if (!isGoogleDevice && settings != null && !autoStartOnUsb && !settings.isConnectingDevice(deviceCompat)) {
-            AppLog.i("Skipping device ${deviceCompat.uniqueName} (not allowed and USB auto-start disabled)")
+        val allowList = settings?.allowedDevices ?: emptySet()
+        val mayAttempt = settings == null || UsbAttachPolicy.shouldAttemptAoaSwitch(
+            isGoogleVendor = isGoogleDevice,
+            autoStartOnUsb = autoStartOnUsb,
+            allowListConfigured = allowList.isNotEmpty(),
+            deviceAllowed = settings.isConnectingDevice(deviceCompat),
+        )
+        if (!mayAttempt) {
+            // Hand the attach to the service rather than swallowing it. This activity is what the
+            // system launches once it is the default handler, so a bare finish() here is the end
+            // of the road for that plug-in: no chooser is shown and nothing else is told.
+            AppLog.i("Not switching ${deviceCompat.uniqueName} here (not on the allow list); letting the service decide")
+            handOffToService()
             finish()
             return
         }
@@ -179,6 +196,20 @@ class UsbAttachedActivity : Activity() {
         }.start()
     }
 
+    /**
+     * Ask [AapService] to look at what is plugged in. Used wherever this activity declines to act
+     * itself: the system delivered the attach to us and nobody else will hear about it otherwise.
+     */
+    private fun handOffToService() {
+        try {
+            ContextCompat.startForegroundService(this, Intent(this, AapService::class.java).apply {
+                action = AapService.ACTION_CHECK_USB
+            })
+        } catch (e: Exception) {
+            AppLog.w("Could not hand the USB attach to the service: ${e.message}")
+        }
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
@@ -203,12 +234,15 @@ class UsbAttachedActivity : Activity() {
         }
 
         if (!isLocked && App.provide(this).commManager.connectionState.value !is CommManager.ConnectionState.TransportStarted) {
+            // A normal-mode re-attach used to be dropped here. noHistory means most re-attaches
+            // arrive as a fresh onCreate instead, but one that does reach this instance is the
+            // same dead end as declining in onCreate: nobody else is told.
             if (UsbDeviceCompat.isInAccessoryMode(device)) {
-                AppLog.e("Usb in accessory mode")
-                ContextCompat.startForegroundService(this, Intent(this, AapService::class.java).apply {
-                    action = AapService.ACTION_CHECK_USB
-                })
+                AppLog.i("Usb in accessory mode")
+            } else {
+                AppLog.i("Usb re-attached in normal mode; asking the service to check it")
             }
+            handOffToService()
         } else {
             AppLog.e("Thread already running")
         }

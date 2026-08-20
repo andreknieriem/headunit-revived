@@ -109,11 +109,20 @@
 
         </activity>
 
+        <!--
+            excludeFromRecents/noHistory/taskAffinity: this is a translucent trampoline the system
+            launches on every USB attach once it is the default handler. Without them it lands in
+            the app's own task and lingers there, so a later attach can be delivered to a stale
+            instance instead of starting a fresh one.
+        -->
         <activity
             android:name=".app.UsbAttachedActivity"
             android:directBootAware="true"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTop"
+            android:noHistory="true"
+            android:taskAffinity=""
             android:theme="@style/AppTheme.Translucent">
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
