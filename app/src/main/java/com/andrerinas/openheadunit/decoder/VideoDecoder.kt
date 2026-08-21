@@ -924,6 +924,14 @@ class VideoDecoder(
                     FeedResult.FED -> framesFed++
                     // Counted and answered where the real buffer capacity is known.
                     FeedResult.DROPPED_TOO_LARGE -> {}
+                    FeedResult.ERROR -> {
+                        // Already logged with the exception where it happened; logFeedDrop would
+                        // relabel it "Input buffer full", which is the one thing it was not. The
+                        // frame is a lost reference frame all the same, so ask for the keyframe.
+                        if (running && feedThread === self && codec != null) {
+                            notifyFrameDropped()
+                        }
+                    }
                     FeedResult.NO_INPUT_BUFFER -> {
                         // A teardown fails the same way a full queue does. Say nothing in that
                         // case: the frame is moot and the log line would appear on every
@@ -1567,6 +1575,9 @@ class VideoDecoder(
 
         /** Frame exceeds the codec's input buffer; dropped and accounted for inside. */
         DROPPED_TOO_LARGE,
+
+        /** The codec threw mid-feed; the frame is lost and the dequeued buffer was handed back. */
+        ERROR,
     }
 
     /**
@@ -1579,8 +1590,11 @@ class VideoDecoder(
      */
     private fun feedInputBuffer(buffer: ByteBuffer, arrivalNanos: Long): FeedResult {
         val currentCodec = codec ?: return FeedResult.NO_INPUT_BUFFER
+        // Outside the try so the catch can hand a dequeued buffer back, and so it can tell a
+        // throw before queueInputBuffer from one after it - the frame's fate differs.
+        var inputIndex = -1
+        var queued = false
         try {
-            var inputIndex = -1
             // ~300ms of patience. Anything much shorter gives up while the codec is merely busy:
             // at 30ms this reported a full input queue within a second of every decoder start,
             // before the component had drained its first buffers, on hardware that then went on to
@@ -1614,7 +1628,12 @@ class VideoDecoder(
                 @Suppress("DEPRECATION") inputBuffers?.get(inputIndex)
             }
 
-            if (inputBuffer == null) return FeedResult.NO_INPUT_BUFFER
+            if (inputBuffer == null) {
+                // Rare (a codec mid-flush can answer null), but the index is dequeued and must go
+                // back or the pool is one buffer shallower for the rest of the codec's life.
+                currentCodec.queueInputBuffer(inputIndex, 0, 0, 0, 0)
+                return FeedResult.NO_INPUT_BUFFER
+            }
             inputBuffer.clear()
 
             val capacity = inputBuffer.capacity()
@@ -1673,6 +1692,7 @@ class VideoDecoder(
             val pts = ((if (arrivalNanos > 0L) arrivalNanos else System.nanoTime()) - startTime) / 1000
 
             currentCodec.queueInputBuffer(inputIndex, 0, inputBuffer.limit(), pts, flags)
+            queued = true
             if (isKeyframe) {
                 // Fed, not yet repaired. The picture counts as repaired at the output side, where
                 // a keyframe that arrived holed is told apart from one that decodes.
@@ -1681,8 +1701,26 @@ class VideoDecoder(
             }
             return FeedResult.FED
         } catch (e: Exception) {
+            if (queued) {
+                // The frame reached the codec; only the bookkeeping after the queue failed. Calling
+                // it anything but fed would report a frame the codec holds as shed and spend a
+                // keyframe request on a picture that is not broken.
+                AppLog.e("Error after feeding input buffer", e)
+                return FeedResult.FED
+            }
+            if (inputIndex >= 0) {
+                // Hand the dequeued buffer back empty, or the codec's input pool is permanently one
+                // buffer shallower per throw - enough of these and every later feed times out with
+                // NO_INPUT_BUFFER, which the stall watchdog then answers with a rebuild the codec
+                // never earned.
+                try {
+                    currentCodec.queueInputBuffer(inputIndex, 0, 0, 0, 0)
+                } catch (returnError: Exception) {
+                    AppLog.e("Could not return the input buffer after a failed feed", returnError)
+                }
+            }
             AppLog.e("Error feeding input buffer", e)
-            return FeedResult.NO_INPUT_BUFFER
+            return FeedResult.ERROR
         }
     }
 
