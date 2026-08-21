@@ -178,11 +178,21 @@ class AapTransport(
     }
 
     // Escalation state for KeyframeCycleEscalationPolicy - see triggerFocusCycleRecovery().
-    // unrepairedSinceMs is when the picture was last known good: set by a shed reference frame,
-    // cleared when a keyframe reaches the codec. Zero means nothing is broken.
+    // unrepairedSinceMs is when the picture was last known good: set by a shed reference frame, a
+    // rebuilt or starved codec, or a corrupt access unit off the wire, and cleared when a keyframe
+    // reaches the codec. Zero means nothing is broken.
     private var unrepairedSinceMs = 0L
     private var focusCyclesUsedThisSession = 0
     private var lastFocusCycleMs = 0L
+
+    /**
+     * Lifetime spends and the budget's last movement, for
+     * [KeyframeCycleEscalationPolicy.cyclesToRefund]. The spend counter is what the per-drive
+     * ceiling reads and refunds never touch it; the stamp moves on every spend and every refund,
+     * so refunds accrue one per quiet window rather than all against the first spend.
+     */
+    private var focusCyclesSpentThisSession = 0
+    private var lastBudgetChangeMs = 0L
 
     /**
      * When an access unit last arrived broken on the wire, as opposed to when the decoder last had
@@ -252,26 +262,56 @@ class AapTransport(
      * release can, and has only ever been tested against one phone. It stays the first response.
      *
      * @param escalatable whether this caller's stream is live enough to earn a focus release if the
-     *   nudge goes unanswered. True for the dropped-frame path, which is gated on the decoder having
-     *   rendered, and for both decoder paths - a rebuilt or keyframe-starved codec is the case where
-     *   the picture is most certainly gone and least able to come back on its own. That last pair
-     *   used to pass false, on the grounds that a rebuild belongs to [WarmRelaunchKeyframePolicy]'s
-     *   window and two deciders must not reach for the same lever. The lever now has one owner
-     *   ([com.andrerinas.openheadunit.connection.CommManager.releaseVideoFocusForKeyframe]), so the
-     *   overlap is refused rather than argued about, and the ordering still favours the surface path:
-     *   it escalates at 850ms against this one's 2000ms.
-     *   [AapVideo]'s corruption path stays false only because it has no rendered-frame signal to
-     *   gate on.
+     *   nudge goes unanswered. True for the dropped-frame path, for both decoder paths (a rebuilt
+     *   or keyframe-starved codec is the picture most certainly gone and least able to come back),
+     *   and for [AapVideo]'s corruption path, all behind the same
+     *   [VideoDecoder.hasRenderedThisSession] gate. The corruption path used to pass a hard false,
+     *   which left a wire truncation with only the inert nudge and a picture that stayed broken
+     *   for tens of seconds until the phone's own keyframe, against the escalation's few. Lever
+     *   overlap with [WarmRelaunchKeyframePolicy] is handled by the lever's single owner
+     *   ([com.andrerinas.openheadunit.connection.CommManager.releaseVideoFocusForKeyframe]), and
+     *   the ordering still favours the surface path: 850ms against this one's 2000ms.
+     *
+     * @param wireCorruption whether the caller is reporting an access unit that arrived broken *on
+     *   the wire*, which is what [KeyframeCycleEscalationPolicy]'s quiet gate reads. Its own
+     *   parameter rather than `!escalatable`: those were the same bit inverted only because
+     *   [AapVideo] was the sole non-escalatable caller, so the stamp could not survive that path
+     *   becoming escalatable. Now the decoder paths report a consequence and say so, and the video
+     *   path reports a cause and says so.
      */
     @Synchronized
-    private fun triggerFocusCycleRecovery(escalatable: Boolean) {
+    private fun triggerFocusCycleRecovery(escalatable: Boolean, wireCorruption: Boolean) {
         AppLog.w("AapTransport: Requesting recovery keyframe (unsolicited focus gain).")
         send(VideoFocusEvent(gain = true, unsolicited = true))
 
-        // Stamped before the returns below, and deliberately on the path that returns early: a
-        // stream that is still losing frames is exactly the case where the clock is already running,
-        // and that is the case the stamp exists to let the escalation see.
-        if (!escalatable) lastWireCorruptionMs = SystemClock.elapsedRealtime()
+        // Settled quiet earns spent cycles back, judged before this fault stamps the corruption
+        // clock - the stretch being judged is the one this fault just ended. Granted here, on the
+        // fault that needs it, rather than on a timer: escalateIfStillUnrepaired() only runs while
+        // the clock is armed, and a repaired picture is exactly when a refund becomes possible.
+        val refundNow = SystemClock.elapsedRealtime()
+        val refund = KeyframeCycleEscalationPolicy.cyclesToRefund(
+            refundNow,
+            focusCyclesUsedThisSession,
+            focusCyclesSpentThisSession,
+            lastBudgetChangeMs,
+            lastWireCorruptionMs,
+            unrepairedSinceMs != 0L,
+        )
+        if (refund > 0) {
+            focusCyclesUsedThisSession -= refund
+            lastBudgetChangeMs = refundNow
+            AppLog.w(
+                "AapTransport: quiet stream earned back $refund focus cycle(s) " +
+                    "($focusCyclesUsedThisSession/${KeyframeCycleEscalationPolicy.MAX_CYCLES_PER_SESSION} " +
+                    "used, $focusCyclesSpentThisSession/${KeyframeCycleEscalationPolicy.MAX_CYCLES_PER_DRIVE} " +
+                    "spent this drive)"
+            )
+        }
+
+        // Stamped before the returns below, and deliberately also when this call goes on to arm
+        // nothing: a stream that is still losing frames is exactly the case where the clock is
+        // already running, and that is the case the stamp exists to let the escalation see.
+        if (wireCorruption) lastWireCorruptionMs = SystemClock.elapsedRealtime()
 
         if (!escalatable || unrepairedSinceMs != 0L) return
         // Stamped only once the check is actually armed. Setting it without a handler to run the
@@ -353,7 +393,9 @@ class AapTransport(
                     return
                 }
                 focusCyclesUsedThisSession++
+                focusCyclesSpentThisSession++
                 lastFocusCycleMs = now
+                lastBudgetChangeMs = now
                 AppLog.w(
                     "AapTransport: picture unrepaired for ${now - since}ms - cycling video focus " +
                         "($focusCyclesUsedThisSession/${KeyframeCycleEscalationPolicy.MAX_CYCLES_PER_SESSION})"
@@ -408,8 +450,14 @@ class AapTransport(
     init {
         micRecorder.listener = this
         aapAudio = AapAudio(audioDecoder, audioManager, settings, context)
+        // A corrupt access unit is the one fault the phone cannot heal for us inside a GOP, and
+        // hasRenderedThisSession is the gate that keeps this clear of the warm-up window
+        // [WarmRelaunchKeyframePolicy] owns - the same gate VideoDecoder.notifyFrameDropped uses.
         aapVideo = AapVideo(videoDecoder, settings) {
-            triggerFocusCycleRecovery(escalatable = false)
+            triggerFocusCycleRecovery(
+                escalatable = videoDecoder.hasRenderedThisSession,
+                wireCorruption = true,
+            )
         }
 
         // A rebuilt codec resumes on a P-frame and can render nothing until an IDR arrives, which
@@ -418,16 +466,16 @@ class AapTransport(
         // lever that can repair it was switched off: the old wiring abandoned the escalation clock
         // and armed nothing, so a decoder restarting every ten seconds could never reach a cycle.
         videoDecoder.onDecoderError = { _ ->
-            triggerFocusCycleRecovery(escalatable = true)
+            triggerFocusCycleRecovery(escalatable = true, wireCorruption = false)
         }
 
         // Same ask, from a decoder that is deliberately *not* rebuilding while it waits.
         videoDecoder.onKeyframeStarved = {
-            triggerFocusCycleRecovery(escalatable = true)
+            triggerFocusCycleRecovery(escalatable = true, wireCorruption = false)
         }
 
         videoDecoder.onFrameDropped = {
-            triggerFocusCycleRecovery(escalatable = true)
+            triggerFocusCycleRecovery(escalatable = true, wireCorruption = false)
         }
 
         videoDecoder.onKeyframeObserved = {
