@@ -1820,6 +1820,13 @@ class VideoDecoder(
             try {
                 val outputIndex = currentCodec.dequeueOutputBuffer(bufferInfo, 10000L)
                 if (outputIndex >= 0) {
+                    // The codec produced output, whatever the screen ends up showing. This is the
+                    // stall watchdog's clock and it is deliberately not the render stamp: the two
+                    // were the same fact only while every dequeued buffer was also displayed, and
+                    // anything that legitimately holds a decoded frame off the screen must not
+                    // read as a codec that stopped decoding. lastFrameRenderedMs stays the display
+                    // watchdogs' instrument and is stamped only when a frame reaches the surface.
+                    lastOutputMs = SystemClock.elapsedRealtime()
                     // Catch up to the newest ready frame instead of replaying the backlog. A link
                     // that goes quiet for a few hundred milliseconds delivers what it owed in one
                     // burst; showing every frame of it walks the picture forward in slow motion and
@@ -1874,7 +1881,6 @@ class VideoDecoder(
                     currentCodec.releaseOutputBuffer(renderIndex, true)
                     lastFrameRenderedMs = SystemClock.elapsedRealtime()
                     renderedThisSession = true
-                    lastOutputMs = lastFrameRenderedMs
                     // bufferInfo carries the last successful dequeue, which is renderIndex. The
                     // frames released ahead of it in this pass decoded earlier and so have smaller
                     // timestamps, and the ones the catch-up branch discarded decoded too - so this
