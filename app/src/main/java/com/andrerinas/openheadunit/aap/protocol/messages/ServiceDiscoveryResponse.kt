@@ -268,16 +268,16 @@ class ServiceDiscoveryResponse(private val context: Context)
 
         /**
          * Records whether a decoder on this device claims it can carry the profile we are about to
-         * ask the phone for.
+         * ask the phone for. Diagnostic only; nothing acts on the answer.
          *
-         * Nothing acts on the answer. It exists because this is the one place where the codec is
-         * decided - the 1440p rule above overrides the user's own choice - and until now nothing in
-         * the app asked a decoder anything before making it. A #219 reporter's Galaxy Tab S7 FE runs
-         * the resulting 2560x1440 HEVC on `c2.qti.hevc.decoder` and sheds frames in bursts, with the
-         * shedding confined to windows that also spent up to 2019ms of 5000 waiting for an input
-         * buffer. No log has ever said what that component claimed beforehand.
+         * This is the one place the codec is decided (the 1440p rule above overrides the user's
+         * choice), and nothing used to ask the decoder anything before making it - so a reporter
+         * log could never say whether the forced profile fit the hardware.
          *
-         * A WARN here from a unit that reports artifacts is what would justify revisiting the rule.
+         * A `sustains=false` WARN here is not by itself grounds to step the profile down: it has
+         * been seen from a unit whose throughput proved the decoder was keeping up, with the
+         * artifacts coming off the wire instead. Revisit the rule only when a log shows the decoder
+         * itself failing behind one of these lines.
          */
         private fun logNegotiatedCodecCapability(codec: Media.MediaCodecType, settings: com.andrerinas.openheadunit.utils.Settings) {
             val mime = when (codec) {
