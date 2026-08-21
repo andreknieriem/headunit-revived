@@ -32,6 +32,26 @@ object ProjectionWatchdogPolicy {
     const val FRAME_GAP_MS = 10_000L
 
     /**
+     * How long the display consumer may draw nothing, with video still arriving, before the
+     * projection view is torn down and rebuilt (issue #650's recovery).
+     *
+     * Named here rather than inside the activity so other code can be pinned against it:
+     * rebuilding the view costs a black flash, an EGL disconnect and touch loss, so anything that
+     * deliberately holds frames off the screen must provably finish before this watchdog can see
+     * it as a stall. The relation lives in CorruptionConcealmentPolicy's tests.
+     */
+    const val DISPLAY_FREEZE_MS = 5_000L
+
+    /**
+     * How often the projection watchdog looks. Detection runs at this granularity, so a condition
+     * is seen up to one tick *after* its threshold is crossed - never before. What the tick cannot
+     * do is shorten a deadline: anything racing [DISPLAY_FREEZE_MS] needs its margin under the
+     * threshold itself, plus whatever age the last drawn frame already had when the race started,
+     * since the watchdog measures from the draw.
+     */
+    const val WATCHDOG_TICK_MS = 2_000L
+
+    /**
      * How long the whole AAP link must *also* have been silent before a stopped picture is called a
      * lost connection.
      *
