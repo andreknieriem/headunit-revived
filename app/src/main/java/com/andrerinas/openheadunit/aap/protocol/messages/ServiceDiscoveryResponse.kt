@@ -180,6 +180,14 @@ class ServiceDiscoveryResponse(private val context: Context)
                     }.build()
                     services.add(audio0)
                 }
+            } else {
+                // Without this line a muted head unit is indistinguishable from a broken one. The
+                // channels are never declared, so the phone never opens them, so nothing about the
+                // silence appears anywhere in the log and every audio instrument reads zero. It
+                // has already cost one test round. Named in the user's terms so a reporter can act
+                // on it, the same way the Bluetooth service does below.
+                AppLog.i("Audio sink is off in Settings. Skipping the media and speech audio " +
+                        "channels - the phone will not send audio and this is not a fault")
             }
 
             // Microphone Service (Channel 7) - Always required for AA connection (Assistant)

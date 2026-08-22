@@ -505,10 +505,16 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     private var displayStallRecoveries = 0
     private var lastDisplayStallRecoveryMs = 0L
     private var firstUndrawnMs = 0L
-    // Sliding window (~10s at the 2s watchdog cadence) of long frames per tick.
+    // Sliding window of long frames per tick, with the clock reading each slot was written at.
+    // The times are what make it a window: this check returns early whenever the phone is not
+    // currently sending video, so the ticks that run are not evenly spaced and counting slots alone
+    // turns ten seconds into however long five surviving ticks happened to span. See
+    // ProjectionWatchdogPolicy.longFramesInWindow.
     private val longFrameTickWindow = LongArray(5)
+    private val longFrameTickTimes = LongArray(5)
     private var longFrameTickIndex = 0
     private var prevLongFrameCount = 0L
+    private var prevLongFrameTickMs = 0L
     // Session-scoped backend override applied after repeated stalls. Never persisted, so the
     // user's chosen viewMode is restored on the next launch.
     private var forcedViewModeOverride: Settings.ViewMode? = null
@@ -543,12 +549,22 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             return
         }
 
-        // Slide the long-frame window (this runs ~every 2s from the reconnecting watchdog).
+        // Slide the long-frame window (this runs ~every 2s from the reconnecting watchdog, but only
+        // on the ticks that get past the gates above, which is why each slot carries its time).
         val longFrames = projectionView.longFrameEvents()
-        longFrameTickWindow[longFrameTickIndex] = (longFrames - prevLongFrameCount).coerceAtLeast(0)
+        longFrameTickWindow[longFrameTickIndex] = ProjectionWatchdogPolicy.longFramesThisTick(
+            longFrameEvents = longFrames,
+            previousEvents = prevLongFrameCount,
+            previousTickMs = prevLongFrameTickMs,
+            nowMs = now
+        )
+        longFrameTickTimes[longFrameTickIndex] = now
         longFrameTickIndex = (longFrameTickIndex + 1) % longFrameTickWindow.size
         prevLongFrameCount = longFrames
-        val longFramesInWindow = longFrameTickWindow.sum()
+        prevLongFrameTickMs = now
+        val longFramesInWindow = ProjectionWatchdogPolicy.longFramesInWindow(
+            longFrameTickWindow, longFrameTickTimes, now
+        )
 
         // Baseline for the case where the consumer never drew a single frame after the overlay was
         // dismissed (drawn stays 0): time it from when that state was first seen.
@@ -596,7 +612,9 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         // The rebuilt view starts its counters from zero.
         firstUndrawnMs = 0L
         prevLongFrameCount = 0L
+        prevLongFrameTickMs = 0L
         longFrameTickWindow.fill(0L)
+        longFrameTickTimes.fill(0L)
         recreateProjectionView()
     }
 

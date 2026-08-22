@@ -23,6 +23,7 @@ import com.andrerinas.openheadunit.aap.NativeGroupBandPolicy
 import com.andrerinas.openheadunit.aap.NativeHandoffPolicy
 import com.andrerinas.openheadunit.aap.P2pOperatingChannelPolicy
 import com.andrerinas.openheadunit.aap.P2pChannelPolicy
+import com.andrerinas.openheadunit.aap.StationCoexistencePolicy
 import com.andrerinas.openheadunit.utils.ToastUtils
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
@@ -159,7 +160,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      * split one group across two identities and merge two groups into one.
      */
     private var lastUnfriendlyChannelSsid: String? = null
-    private var lastCoexistenceSsid: String? = null
+    private var lastCoexistenceKey: String? = null
     private var lastNativeGroupStatusMessage: String? = null
 
     // Native AA join recovery state. The watchdog fires if the phone never joins our quiet-host
@@ -695,10 +696,18 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      *
      * Frequencies make the diagnosis exact when both are known: the same channel is shared airtime,
      * different channels means the radio is also retuning between them. Several head units report
-     * the group frequency as 0, so say what is known and do not withhold the warning over it.
+     * the group frequency as 0, and on those the comparison cannot be made at all - which is what
+     * [StationCoexistencePolicy] is for. It describes and never prescribes: two units have now
+     * been measured running clean in exactly the state the old line told them to change.
      *
-     * Logged once per group rather than once per callback, because requestGroupInfo() is issued
-     * several places, so this runs three or four times for one group.
+     * Both arms print. The unjoined one used to return silently, which made the *good* arm of that
+     * comparison the only one with a line in it and left a missing line meaning either "not joined"
+     * or "the read threw". Whether the unit is joined is the single variable that separated a clean
+     * session from one losing picture and sound every ten seconds on the unit that prompted this,
+     * so a capture that cannot be sorted into an arm is a capture that cannot be used.
+     *
+     * Logged once per group and state rather than once per callback, because requestGroupInfo() is
+     * issued several places, so this runs three or four times for one group.
      */
     private fun logStationCoexistence(ssid: String, groupFrequency: Int) {
         try {
@@ -710,22 +719,28 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             // head unit is routine (the service runs without the projection activity in front),
             // so keying on either would silently report "not associated" on the newer Android
             // versions where this diagnosis is worth having. supplicantState survives redaction.
-            if (info.supplicantState != android.net.wifi.SupplicantState.COMPLETED) {
-                lastCoexistenceSsid = null
-                return
-            }
-            if (ssid == lastCoexistenceSsid) return
-            lastCoexistenceSsid = ssid
+            val associated = info.supplicantState == android.net.wifi.SupplicantState.COMPLETED
+
+            // The key carries the association state as well as the group, so a station that drops
+            // or joins part-way through one group says so once more rather than staying on
+            // whatever it said first. Still one line per group per state.
+            val key = if (associated) "$ssid|joined" else "$ssid|alone"
+            if (key == lastCoexistenceKey) return
+            lastCoexistenceKey = key
 
             val staFrequency = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 info.frequency
             } else 0
-            val relation = when {
-                staFrequency <= 0 || groupFrequency <= 0 -> "one of the two frequencies is unavailable"
-                staFrequency == groupFrequency -> "same channel, the two networks share airtime"
-                else -> "different channels, the radio has to switch between them"
+            val finding = if (associated) {
+                StationCoexistencePolicy.describe(staFrequency, groupFrequency)
+            } else {
+                StationCoexistencePolicy.describeNotAssociated(groupFrequency)
             }
-            AppLog.w("WifiDirectManager: This unit is connected to another WiFi network while hosting the WiFi Direct group (station $staFrequency MHz, group $groupFrequency MHz: $relation). One radio serving both can stall projected video and audio together for a few hundred milliseconds at a time. Disconnecting the other network, or using the head unit hotspot instead, removes the contention.")
+            val line = "WifiDirectManager: ${finding.message}"
+            when (finding.level) {
+                StationCoexistencePolicy.Level.WARN -> AppLog.w(line)
+                StationCoexistencePolicy.Level.INFO -> AppLog.i(line)
+            }
         } catch (e: Exception) {
             AppLog.d("WifiDirectManager: Could not read station state for coexistence check: ${e.message}")
         }
@@ -1066,7 +1081,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         nativeRequestedBand = NativeGroupBandPolicy.Band.UNSPECIFIED
         legacyChannelFallbackUsed = false
         lastUnfriendlyChannelSsid = null
-        lastCoexistenceSsid = null
+        lastCoexistenceKey = null
         lastFrequencyUnreadableSsid = null
         nativeJoinWatchdogSsid = null
         nativeRecreateCount = 0
@@ -1514,7 +1529,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         nativeGroupCreationMode = NATIVE_GROUP_MODE_UNKNOWN
         native5GhzBandMismatchRetries = 0
         lastUnfriendlyChannelSsid = null
-        lastCoexistenceSsid = null
+        lastCoexistenceKey = null
         lastFrequencyUnreadableSsid = null
         nativeJoinWatchdogSsid = null
         nativeRecreateCount = 0

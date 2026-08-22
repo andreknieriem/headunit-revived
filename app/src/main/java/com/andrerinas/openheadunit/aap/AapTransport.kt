@@ -139,10 +139,18 @@ class AapTransport(
     }
     private var sendHandler: Handler? = null
     private val sendHandlerCallback = Handler.Callback {
+        // Timed because the media channels are flow-controlled: acks that stay in here stall video
+        // and audio together and leave control traffic alone, which is indistinguishable from the
+        // phone going quiet unless one end or the other is actually measured. This thread serves one
+        // socket, so the write's own duration is the time the uplink refused to drain.
+        val startedMs = SystemClock.elapsedRealtime()
         this.sendEncryptedMessage(
             data = it.obj as ByteArray,
             length = it.arg2
         )
+        val finishedMs = SystemClock.elapsedRealtime()
+        uplinkStallMonitor.onWrite(finishedMs - startedMs, finishedMs)
+            ?.let { report -> AppLog.i("AapTransport: %s", report) }
         return@Callback true
     }
 
@@ -170,11 +178,41 @@ class AapTransport(
      */
     private val linkGapMonitor = LinkGapMonitor()
 
+    /**
+     * The same measurement again, per media channel.
+     *
+     * The link series above is deaf to the fault these were added for: the phone pings about once a
+     * second on CONTROL for the life of the session, so a session whose picture and sound are both
+     * gone still scores a healthy link. Measured across five captures of that fault, the link series
+     * printed twice and never named an outage longer than 1.8 s while the picture was dead for six
+     * seconds out of every ten. Whether video and audio went quiet *together* is the fact that
+     * separates a dead radio from a stalled media path, and it takes three series to see it.
+     */
+    private val videoGapMonitor = LinkGapMonitor(
+        LinkGapMonitor.SUBJECT_VIDEO,
+        LinkGapMonitor.MIN_GAPS_MEDIA,
+        LinkGapMonitor.MAX_DEAD_PERCENT_MEDIA
+    )
+    private val audioGapMonitor = LinkGapMonitor(
+        LinkGapMonitor.SUBJECT_AUDIO,
+        LinkGapMonitor.MIN_GAPS_MEDIA,
+        LinkGapMonitor.MAX_DEAD_PERCENT_MEDIA
+    )
+
+    /** Whether our own writes are draining. See [UplinkStallMonitor]. */
+    private val uplinkStallMonitor = UplinkStallMonitor()
+
     /** Called for every decrypted inbound message, from [AapMessageHandlerType.handle]. */
-    internal fun noteMessageReceived() {
+    internal fun noteMessageReceived(channel: Int) {
         val now = SystemClock.elapsedRealtime()
         lastMessageReceivedMs = now
         linkGapMonitor.onMessage(now)?.let { AppLog.i("AapTransport: %s", it) }
+        when {
+            channel == Channel.ID_VID ->
+                videoGapMonitor.onMessage(now)?.let { AppLog.i("AapTransport: %s", it) }
+            Channel.isAudio(channel) ->
+                audioGapMonitor.onMessage(now)?.let { AppLog.i("AapTransport: %s", it) }
+        }
     }
 
     // Escalation state for KeyframeCycleEscalationPolicy - see triggerFocusCycleRecovery().
@@ -531,6 +569,9 @@ class AapTransport(
         // previous phone would read as a live link for the first seconds of this one.
         lastMessageReceivedMs = 0L
         linkGapMonitor.reset()
+        videoGapMonitor.reset()
+        audioGapMonitor.reset()
+        uplinkStallMonitor.reset()
 
         sendThread = HandlerThread("AapTransport:Handler::Send", Process.THREAD_PRIORITY_AUDIO)
         sendThread!!.start()
