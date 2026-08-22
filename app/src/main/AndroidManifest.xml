@@ -35,15 +35,8 @@
         android:name="android.hardware.bluetooth"
         android:required="false" />
 
-    <!--
-      Name comes from a placeholder so the side-by-side debug build can declare its own.
-      A permission is owned by whichever package declares it first, system-wide: two packages
-      declaring the same name is INSTALL_FAILED_DUPLICATE_PERMISSION, which would make the debug
-      build uninstallable next to a store build. The placeholder's default is the canonical name,
-      so a release declares exactly what it always did.
-    -->
     <permission
-        android:name="${navigationUpdatePermission}"
+        android:name="com.andrerinas.openheadunit.permission.NAVIGATION_UPDATE"
         android:protectionLevel="signature" />
 
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />

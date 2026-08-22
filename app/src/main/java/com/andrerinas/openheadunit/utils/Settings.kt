@@ -7,7 +7,6 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
-import com.andrerinas.openheadunit.BuildConfig
 import com.andrerinas.openheadunit.aap.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.aap.VideoFaultInjector
 import com.andrerinas.openheadunit.decoder.DeviceMemoryProfile
@@ -163,7 +162,7 @@ class Settings(private val context: Context) {
         }
 
     var exporterLogLevel: LogExporter.LogLevel
-        get() = LogExporter.LogLevel.entries.getOrElse(prefs.getInt(KEY_LOG_LEVEL, defaultLogLevel.ordinal)) { defaultLogLevel }
+        get() = LogExporter.LogLevel.entries.getOrElse(prefs.getInt(KEY_LOG_LEVEL, LogExporter.LogLevel.INFO.ordinal)) { LogExporter.LogLevel.INFO }
         set(value) { prefs.edit().putInt(KEY_LOG_LEVEL, value.ordinal).apply() }
 
     enum class LogSource {
@@ -177,21 +176,16 @@ class Settings(private val context: Context) {
     }
 
     var logSource: LogSource
-        get() = LogSource.entries.getOrElse(prefs.getInt(KEY_LOG_SOURCE, defaultLogSource.ordinal)) { defaultLogSource }
+        get() = LogSource.entries.getOrElse(prefs.getInt(KEY_LOG_SOURCE, LogSource.LOGCAT.ordinal)) { LogSource.LOGCAT }
         set(value) { prefs.edit().putInt(KEY_LOG_SOURCE, value.ordinal).apply() }
 
     var logLocation: LogLocation
         get() = LogLocation.entries.getOrElse(prefs.getInt(KEY_LOG_LOCATION, LogLocation.DEFAULT.ordinal)) { LogLocation.DEFAULT }
         set(value) { prefs.edit().putInt(KEY_LOG_LOCATION, value.ordinal).apply() }
 
-    /**
-     * Whether log capture should be active across restarts.
-     *
-     * Default: off for a shipped build, on for the side-by-side diagnostics build
-     * (see [defaultCaptureEnabled]).
-     */
+    /** Whether log capture should be active across restarts. Default: false (disabled). */
     var exporterCaptureEnabled: Boolean
-        get() = prefs.getBoolean(KEY_LOG_CAPTURE_ENABLED, defaultCaptureEnabled)
+        get() = prefs.getBoolean(KEY_LOG_CAPTURE_ENABLED, false)
         set(value) { prefs.edit().putBoolean(KEY_LOG_CAPTURE_ENABLED, value).apply() }
     val logLevel: Int get() = exporterLogLevel.logLevel
 
@@ -1001,37 +995,6 @@ class Settings(private val context: Context) {
         const val KEY_LOG_LOCATION = "log-location"
         /** Persist whether log capture should be active across restarts. */
         const val KEY_LOG_CAPTURE_ENABLED = "log-capture-enabled"
-
-        /*
-         * Logging defaults.
-         *
-         * A shipped build stays quiet: capture writes to storage continuously and most users never
-         * need it. A build installed specifically to investigate a fault has the opposite default,
-         * because the alternative is that the first reproduction of an intermittent bug — the drive
-         * where it actually dropped — produces nothing, and the user is asked to hit it again with
-         * the setting turned on. These are *defaults* only: they seed the preference and any choice
-         * made in the settings UI is stored and wins from then on.
-         */
-
-        private val diagnosticsBuild: Boolean get() = BuildConfig.DEV_DIAGNOSTICS
-
-        /** Capture to a file from first launch on a diagnostics build. */
-        private val defaultCaptureEnabled: Boolean get() = diagnosticsBuild
-
-        /**
-         * DEBUG, not VERBOSE: verbose emits several lines per video frame, which on a device slow
-         * enough to be dropping the connection is itself a load the investigation would be
-         * measuring. DEBUG keeps the connection lifecycle without that.
-         */
-        private val defaultLogLevel: LogExporter.LogLevel
-            get() = if (diagnosticsBuild) LogExporter.LogLevel.DEBUG else LogExporter.LogLevel.INFO
-
-        /**
-         * A file survives the disconnect; logcat's ring buffer does not. A drop that happens
-         * mid-drive is read hours later, by which time the ring has long since wrapped.
-         */
-        private val defaultLogSource: LogSource
-            get() = if (diagnosticsBuild) LogSource.APPLOG_FILE else LogSource.LOGCAT
 
         const val KEY_MEDIA_VOLUME_OFFSET = "media-volume-offset"
         const val KEY_ASSISTANT_VOLUME_OFFSET = "assistant-volume-offset"

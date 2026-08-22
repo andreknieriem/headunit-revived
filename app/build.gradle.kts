@@ -85,18 +85,6 @@ android {
         // This is scanned at build time from values-XX directories
         buildConfigField("String", "AVAILABLE_LOCALES", "\"${availableLocales.joinToString(",")}\"")
 
-        // Off for every build that is not the side-by-side debug one below, so a release cannot
-        // pick up capture-by-default by forgetting to override it.
-        buildConfigField("boolean", "DEV_DIAGNOSTICS", "false")
-
-        // The signature permission guarding NavigationUpdateIntent broadcasts. Declared in the
-        // manifest and named again at the send site, so both read it from here and cannot drift.
-        // This is the canonical name third-party navigation consumers already hold — do not change
-        // it for a shipped build. See NavigationUpdateIntent.BROADCAST_PERMISSION.
-        val navigationUpdatePermission = "com.andrerinas.openheadunit.permission.NAVIGATION_UPDATE"
-        manifestPlaceholders["navigationUpdatePermission"] = navigationUpdatePermission
-        buildConfigField("String", "NAVIGATION_UPDATE_PERMISSION", "\"$navigationUpdatePermission\"")
-
         externalNativeBuild {
             cmake {
                 cppFlags("")
@@ -176,29 +164,7 @@ android {
         }
 
         getByName("debug") {
-            // Installs alongside a store build instead of replacing it, so a field problem can be
-            // reproduced against an instrumented build without giving up the working one on the
-            // same device. The namespace is untouched, so every class keeps its name and only the
-            // installed identity differs — same trick the applicationId/namespace split above uses.
-            applicationIdSuffix = ".dev"
-            versionNameSuffix = "-dev"
-
-            // Diagnostics that are wrong to ship but right on a device being investigated: log
-            // capture starts on first launch rather than waiting for someone to find the setting
-            // and reproduce the fault a second time. See Settings.exporterCaptureEnabled.
-            buildConfigField("boolean", "DEV_DIAGNOSTICS", "true")
-
-            // Own the permission under a distinct name, or the install fails outright:
-            // a signature permission belongs to the first package that declares it, so sharing
-            // the canonical name with an installed store build is INSTALL_FAILED_DUPLICATE_PERMISSION.
-            // Broadcasts from this build are therefore guarded by (and only visible to holders of)
-            // the .dev name — third-party navigation consumers listen for the canonical one and so
-            // will not see updates from this build. That is the intended trade: the store build
-            // beside it still serves them.
-            val devNavigationUpdatePermission =
-                "com.andrerinas.openheadunit.permission.NAVIGATION_UPDATE.dev"
-            manifestPlaceholders["navigationUpdatePermission"] = devNavigationUpdatePermission
-            buildConfigField("String", "NAVIGATION_UPDATE_PERMISSION", "\"$devNavigationUpdatePermission\"")
+            // debugging setup
         }
     }
 
