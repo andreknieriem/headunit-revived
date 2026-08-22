@@ -21,6 +21,7 @@ import com.andrerinas.openheadunit.aap.WppStage
 import com.andrerinas.openheadunit.utils.BluetoothHelper
 import com.andrerinas.openheadunit.aap.protocol.proto.Wireless
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.utils.CredentialsNotice
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import android.os.Build
@@ -1043,7 +1044,7 @@ class NativeAaHandshakeManager(
                             AppLog.e(
                                 "NativeAA: These credentials carried no BSSID, which this phone may " +
                                     "have refused for that reason alone. Read the access point's MAC " +
-                                    "and set it as the static BSSID in Advanced settings."
+                                    "and set it as the static BSSID under Wireless connection in Settings."
                             )
                         }
                     }
@@ -1193,7 +1194,11 @@ class NativeAaHandshakeManager(
                         // purpose-built hardware, every source in the chain is blocked by permission
                         // and no setting will unblock them. Say so, or the log sends the reader back
                         // to a location toggle that is already on.
-                        AppLog.e("NativeAA: If location is already on, this device cannot read its own WiFi Direct MAC at all. Read it from the system (P2P device address) and set it as the static BSSID in Advanced settings.")
+                        AppLog.e("NativeAA: If location is already on, this device cannot read its own WiFi Direct MAC at all. Read it from the system (P2P device address) and set it as the static BSSID under Wireless connection in Settings.")
+                        // The loudest failure on this route and, until now, the only one with no
+                        // user-visible signal whatsoever: two error lines in a log, and a phone that
+                        // simply never arrives.
+                        CredentialsNotice.showBssidUnavailable(context)
                         // Triggering a P2P refresh so the next attempt has a valid BSSID
                         context.triggerWifiDirectRefresh()
                         // Not fed to the session as CredentialsUnavailable: its failure reason
@@ -1207,11 +1212,16 @@ class NativeAaHandshakeManager(
                         // ships without a real BSSID, see NativeCredentialsPolicy. The point is that
                         // a refusal is a message we can explain; this line is the first to look at
                         // when one arrives.
-                        AppLog.w("NativeAA: No usable BSSID for this access point — sending the credentials without one, which most phones refuse. Set a BSSID by hand in Advanced settings if the phone does not join.")
+                        AppLog.w("NativeAA: No usable BSSID for this access point — sending the credentials without one, which most phones refuse. Set a BSSID by hand under Wireless connection in Settings if the phone does not join.")
                         credBssid = ""
                         bssidOmitted = true
                     }
                 }
+            } else {
+                // A real address this time, so the BSSID notice is stale. Cleared here rather than
+                // on a completed session because this is exactly the condition that notice
+                // describes, and the handshake can still fail afterwards for reasons it does not.
+                CredentialsNotice.clearBssidUnavailable(context)
             }
 
             // The port the credentials point at must be bound before they go out. The phone's next
@@ -1406,6 +1416,26 @@ class NativeAaHandshakeManager(
     }
 
     data class ProtobufMessage(val type: Int, val payload: ByteArray)
+
+    /**
+     * A session is up, so the wake-up loop has nothing left to do.
+     *
+     * The loop already refuses to poke once a session exists, but it only asks at the top of each
+     * iteration and an iteration is a 15 s hold plus a 15 s gap. A reporter's capture has it
+     * exiting 4.1 s after the SSL handshake and 30 s is the worst case, all of it spent opening
+     * RFCOMM connections into a link that is already carrying Android Auto. Each one raises an
+     * OS-level ACL_CONNECTED that AutoStartReceiver reads as the user's phone arriving.
+     *
+     * Cheap and idempotent: safe to call on every connect, whatever the transport.
+     */
+    fun onSessionEstablished() {
+        if (pokeJob?.isActive == true) {
+            AppLog.i("NativeAA: session is up — cancelling the poke retry loop")
+        }
+        pokeJob?.cancel()
+        pokeJob = null
+        lastPokeTriggerCredentials = null
+    }
 
     fun stop() {
         isRunning = false

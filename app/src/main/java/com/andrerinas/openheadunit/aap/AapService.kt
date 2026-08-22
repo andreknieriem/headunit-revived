@@ -769,6 +769,30 @@ class AapService : Service(), UsbReceiver.Listener {
         wifiDirectManager = WifiDirectManager(this)
         softApCredentialsProvider = SoftApCredentialsProvider(this, serviceScope, App.provide(this).settings)
 
+        // Before anything can start a transport, not after. initWifiMode() runs inline on this
+        // thread for every mode except one, and the hotspot provider it starts resolves on IO fast
+        // enough to publish while onCreate is still running, on any unit whose access point is
+        // already up. Wired below the start call, that delivery arrived with nobody listening, and
+        // the provider, having found its network, never looked again: no poke, no credentials for
+        // the handshake, and a head unit that sits there looking healthy. CredentialsHandoff
+        // latches as well, so neither half of this depends on the other being right.
+        wifiDirectManager?.setCredentialsListener { ssid, psk, ip, bssid ->
+            onNativeCredentials(ssid, psk, ip, bssid)
+        }
+        // Settling counts as in-flight here: isHandshakeInFlight() goes false the instant Type 3
+        // is written, but the phone still has to associate, do WPS and get a DHCP lease, and
+        // recreating the group in that window hands it an SSID it can no longer join.
+        wifiDirectManager?.setNativeHandshakeStateProvider {
+            nativeAaHandshakeManager?.isHandshakeInFlight() == true ||
+                nativeAaHandshakeManager?.isHandoffSettling() == true
+        }
+        wifiDirectManager?.setNativeSessionConnectedProvider { commManager.isConnected }
+        wifiDirectManager?.setNativeGroupInvalidatedListener { nativeAaHandshakeManager?.invalidateCredentials() }
+        softApCredentialsProvider?.setCredentialsListener { ssid, psk, ip, bssid ->
+            onNativeCredentials(ssid, psk, ip, bssid)
+        }
+        softApCredentialsProvider?.setInvalidatedListener { nativeAaHandshakeManager?.invalidateCredentials() }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             try {
                 nearbyManager = NearbyManager(this, serviceScope) { socket ->
@@ -791,24 +815,6 @@ class AapService : Service(), UsbReceiver.Listener {
             initWifiModeWithOptionalWait()
         }
         scheduleBootLoopStrikeClear()
-        wifiDirectManager?.setCredentialsListener { ssid, psk, ip, bssid ->
-            onNativeCredentials(ssid, psk, ip, bssid)
-        }
-        // Settling counts as in-flight here: isHandshakeInFlight() goes false the instant Type 3
-        // is written, but the phone still has to associate, do WPS and get a DHCP lease, and
-        // recreating the group in that window hands it an SSID it can no longer join.
-        wifiDirectManager?.setNativeHandshakeStateProvider {
-            nativeAaHandshakeManager?.isHandshakeInFlight() == true ||
-                nativeAaHandshakeManager?.isHandoffSettling() == true
-        }
-        wifiDirectManager?.setNativeSessionConnectedProvider { commManager.isConnected }
-        wifiDirectManager?.setNativeGroupInvalidatedListener { nativeAaHandshakeManager?.invalidateCredentials() }
-        softApCredentialsProvider?.setCredentialsListener { ssid, psk, ip, bssid ->
-            onNativeCredentials(ssid, psk, ip, bssid)
-        }
-        softApCredentialsProvider?.setInvalidatedListener { nativeAaHandshakeManager?.invalidateCredentials() }
-
-
         checkAlreadyConnectedUsb()
         registerNetworkMonitor()
     }
@@ -1006,7 +1012,15 @@ class AapService : Service(), UsbReceiver.Listener {
     private fun onConnected() {
         isSwitchingToAccessory.set(false)
         updateNotification()
-        acquireWifiLock()
+        // Whatever the transport, the wake-up loop has nothing left to do. Event driven rather
+        // than left to the loop's own 15 s poll.
+        nativeAaHandshakeManager?.onSessionEstablished()
+        quiesceWirelessForWiredSession()
+        if (UsbSessionQuiescePolicy.shouldAcquireWifiLock(commManager.isWirelessSession)) {
+            acquireWifiLock()
+        }
+        // After the quiesce, which may have just stopped the P2P group: shouldStartForSession()
+        // asks for a wireless Native AA session, so a wired one gets no VPN either way.
         maybeStartSessionDummyVpn()
 
         // Silent audio hack removed to prevent mixing/resampling stuttering issues
@@ -1201,7 +1215,13 @@ class AapService : Service(), UsbReceiver.Listener {
             val mode = settings.wifiConnectionMode
             val strategy = settings.helperConnectionStrategy
 
-            if (mode == 3) {
+            // This session ran over USB and took the wireless stack down when it came up. Putting
+            // it back is a single initWifiMode(force = true), and it subsumes both the mode-3 reset
+            // and the user-exit teardown below: the group is already gone, so running those as well
+            // would race a stop() against the re-arm's createGroup.
+            val rearmedAfterWiredSession = rearmWirelessAfterWiredSession()
+
+            if (mode == 3 && !rearmedAfterWiredSession) {
                 if (state.isUserExit) {
                     AppLog.i("AapService: Native AA user exit. Stopping handshake manager.")
                     nativeAaHandshakeManager?.stop()
@@ -1224,7 +1244,9 @@ class AapService : Service(), UsbReceiver.Listener {
             // the existing group for fast reconnection there. Must await CommManager's async
             // teardown first so we never remove the P2P interface while the
             // ByeByeRequest/socket-close is still in flight.
-            if (state.isUserExit && WifiModePolicy.usesWifiDirect(mode, strategy, nativeTransport())) {
+            if (rearmedAfterWiredSession) {
+                // Nothing further to tear down; the re-arm owns the wireless stack from here.
+            } else if (state.isUserExit && WifiModePolicy.usesWifiDirect(mode, strategy, nativeTransport())) {
                 commManager.awaitDisconnectComplete()
                 AppLog.i("AapService: CommManager teardown complete. Stopping WiFi Direct group.")
                 wifiDirectManager?.stop()
@@ -1630,6 +1652,15 @@ class AapService : Service(), UsbReceiver.Listener {
             return
         }
 
+        // A wired session is live and we took the wireless stack down for it. Every automatic
+        // entry point lands here, including the Bluetooth auto-start a poke can raise on the unit
+        // itself, so without this the stack walks straight back up underneath a session that has
+        // no use for it. rearmWirelessAfterWiredSession() is what lets it back in.
+        if (wirelessQuiescedForWiredSession && commManager.isConnected && !commManager.isWirelessSession) {
+            AppLog.i("AapService: wireless bring-up requested while a USB session is live — not arming it")
+            return
+        }
+
         val settings = App.provide(this).settings
         val mode = settings.wifiConnectionMode
         val strategy = settings.helperConnectionStrategy
@@ -1725,6 +1756,66 @@ class AapService : Service(), UsbReceiver.Listener {
 
         activeWifiMode = mode
         activeHelperStrategy = strategy
+    }
+
+    /**
+     * Whether this session's wireless teardown is ours to undo. Set by
+     * [quiesceWirelessForWiredSession], read once by [rearmWirelessAfterWiredSession].
+     */
+    @Volatile private var wirelessQuiescedForWiredSession = false
+
+    /**
+     * Shut the wireless stack down for the duration of a USB session. See
+     * [UsbSessionQuiescePolicy] for why any of it is running in the first place.
+     */
+    private fun quiesceWirelessForWiredSession() {
+        if (!UsbSessionQuiescePolicy.shouldQuiesce(commManager.isWirelessSession)) return
+
+        val settings = App.provide(this).settings
+        val mode = settings.wifiConnectionMode
+        val strategy = settings.helperConnectionStrategy
+
+        AppLog.i(
+            "AapService: USB session established while wireless mode $mode/$strategy was armed — " +
+                "stopping the wireless stack for the duration of it"
+        )
+        wirelessQuiescedForWiredSession = true
+
+        // Cancel a sweep already in flight, not just the re-arm. startDiscovery()'s isBusy gate
+        // stops the *next* sweep; the one running keeps probing 254 addresses on two ports each
+        // underneath a session that no longer needs it.
+        networkDiscovery?.stop()
+        nearbyManager?.stop()
+        // Closes the RFCOMM listeners and cancels the poke loop, which is the half with teeth: a
+        // poke can wake AutoStartReceiver into initWifiMode(force = true) and rebuild the group.
+        nativeAaHandshakeManager?.stop()
+        if (UsbSessionQuiescePolicy.shouldStopWifiDirectGroup(
+                commManager.isWirelessSession,
+                WifiModePolicy.usesWifiDirect(mode, strategy, nativeTransport())
+            )
+        ) {
+            // Also cancels the Native AA join watchdog, which was otherwise left firing every 60 s
+            // for a phone that is never going to join.
+            wifiDirectManager?.stop()
+        }
+    }
+
+    /**
+     * Put back whatever [quiesceWirelessForWiredSession] took down. Runs on any end to the wired
+     * session, user exit included: unplugging has to return the unit to its configured mode.
+     */
+    private fun rearmWirelessAfterWiredSession(): Boolean {
+        val quiesced = wirelessQuiescedForWiredSession
+        wirelessQuiescedForWiredSession = false
+        val mode = App.provide(this).settings.wifiConnectionMode
+        if (!UsbSessionQuiescePolicy.shouldRearmWireless(quiesced, mode != 0)) return false
+
+        AppLog.i("AapService: wired session ended — re-arming wireless mode $mode")
+        serviceScope.launch {
+            delay(1500) // Same settle the Native AA reconnect path allows the P2P hardware.
+            initWifiMode(force = true)
+        }
+        return true
     }
 
     private fun acquireWifiLock() {

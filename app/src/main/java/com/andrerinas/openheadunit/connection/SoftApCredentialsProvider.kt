@@ -10,6 +10,8 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.ApInterfaceCandidate
+import com.andrerinas.openheadunit.aap.CredentialsHandoff
+import com.andrerinas.openheadunit.aap.NativeNetworkCredentials
 import com.andrerinas.openheadunit.aap.SoftApBssidPolicy
 import com.andrerinas.openheadunit.aap.NativeCredentialsPolicy
 import com.andrerinas.openheadunit.aap.SoftApCredentials
@@ -18,6 +20,7 @@ import com.andrerinas.openheadunit.aap.SoftApCredentialsPolicy
 import com.andrerinas.openheadunit.aap.SoftApNetworkPolicy
 import com.andrerinas.openheadunit.aap.SoftApState
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.utils.CredentialsNotice
 import com.andrerinas.openheadunit.utils.HotspotConfigReader
 import com.andrerinas.openheadunit.utils.HotspotManager
 import com.andrerinas.openheadunit.utils.InterfaceMacReader
@@ -70,7 +73,14 @@ class SoftApCredentialsProvider(
         private const val WIFI_AP_STATE_DISABLED = 11
     }
 
-    private var onCredentialsReady: ((ssid: String, psk: String, ip: String, bssid: String) -> Unit)? = null
+    /**
+     * The handover itself, rather than a bare callback field.
+     *
+     * [beginResolve] runs on IO and can reach [publish] before the service that owns the listener has
+     * finished starting, and a set of credentials dropped there is never resolved again. See
+     * [CredentialsHandoff].
+     */
+    private val credentialsHandoff = CredentialsHandoff()
     private var onInvalidated: (() -> Unit)? = null
 
     private var resolveJob: Job? = null
@@ -133,7 +143,7 @@ class SoftApCredentialsProvider(
     }
 
     fun setCredentialsListener(callback: (String, String, String, String) -> Unit) {
-        this.onCredentialsReady = callback
+        credentialsHandoff.setListener { callback(it.ssid, it.psk, it.ip, it.bssid) }
     }
 
     fun setInvalidatedListener(callback: () -> Unit) {
@@ -175,6 +185,8 @@ class SoftApCredentialsProvider(
         isRunning = false
         resolveJob?.cancel()
         resolveJob = null
+        // The network these describe is going away with this run; the next one resolves its own.
+        credentialsHandoff.clear()
         autoEnabled = false
         triedAutoEnable = false
         reportedConfigUnreadable = false
@@ -206,6 +218,10 @@ class SoftApCredentialsProvider(
                 force = true
             )
         }
+        // The toast is the fastest signal for a user who happens to be watching, and it is gone in
+        // seconds for one who is driving. This is the same message somewhere they can come back to,
+        // and it opens the screen holding the two settings that fix it.
+        CredentialsNotice.showHotspotConfigUnreadable(context)
     }
 
     private fun beginResolve() {
@@ -405,7 +421,18 @@ class SoftApCredentialsProvider(
         }
 
         AppLog.i("SoftApCredentials: SUCCESS - Providing credentials from ${iface.name}: SSID=$ssid, IP=$ip, BSSID=${bssid.ifEmpty { "<none>" }}")
-        onCredentialsReady?.invoke(ssid, psk, ip, bssid)
+        // Whatever was wrong is not wrong any more, and a notice telling the user to go and fix a
+        // working configuration is worse than none at all.
+        CredentialsNotice.clearHotspotConfigUnreadable(context)
+        if (!credentialsHandoff.publish(NativeNetworkCredentials(ssid, psk, ip, bssid))) {
+            // Held rather than lost, so the connection still happens, but say so, because until
+            // this line existed the log of a unit that never woke its phone was identical to the
+            // log of one idling with everything healthy, and there is nothing further to grep for.
+            AppLog.w(
+                "SoftApCredentials: the access point resolved before anything was listening for it; " +
+                    "holding the credentials until it is."
+            )
+        }
         return SoftApCredentialsAttempt.PUBLISHED
     }
 

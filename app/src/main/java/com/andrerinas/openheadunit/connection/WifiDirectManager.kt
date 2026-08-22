@@ -23,6 +23,7 @@ import com.andrerinas.openheadunit.aap.NativeGroupBandPolicy
 import com.andrerinas.openheadunit.aap.NativeHandoffPolicy
 import com.andrerinas.openheadunit.aap.P2pOperatingChannelPolicy
 import com.andrerinas.openheadunit.aap.P2pChannelPolicy
+import com.andrerinas.openheadunit.aap.SoftApBssidPolicy
 import com.andrerinas.openheadunit.aap.StationCoexistencePolicy
 import com.andrerinas.openheadunit.utils.ToastUtils
 import com.andrerinas.openheadunit.utils.AppLog
@@ -489,16 +490,34 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 }
             }
             discoveredInterface = iface
-            val isBssidSet = appSettings.staticBSSID != "0"
+            // [BUG_FIX] The override is checked for shape, not merely for being set. It used to be
+            // taken verbatim whenever it was anything other than the unset sentinel "0", which meant
+            // a mistyped address won the chain, did not match the masked-string test below, and so
+            // suppressed all six fallbacks — and the failure then surfaced 30 s later at Type 3 time
+            // as a message blaming location services. SoftApBssidPolicy has validated this on the
+            // hotspot route since the same bug was found there; this is the other half.
+            val rawOverride = appSettings.staticBSSID
+            // choose() rather than isUsable(), for the normalisation: it accepts a hand-typed
+            // address written with dashes or in lower case and hands back the colon-separated upper
+            // case the phone is given. The hotspot route has read the override through this call
+            // since it was written.
+            val overrideBssid = SoftApBssidPolicy.choose(rawOverride, null, null)
+            val isBssidSet = overrideBssid.isNotEmpty()
 
-            var bssid = if (appSettings.staticBSSID == "0" || appSettings.staticBSSID == null) {
-                getWifiDirectMac(iface)
-            } else {
-                appSettings.staticBSSID
-            }
+            var bssid: String = if (isBssidSet) overrideBssid else getWifiDirectMac(iface)
             if (isBssidSet) {
                 AppLog.i("WifiDirectManager: Initial BSSID from App settings: $bssid")
             } else {
+                if (!rawOverride.isNullOrEmpty() && rawOverride != "0") {
+                    // Said out loud rather than silently ignored: the user typed something, and
+                    // "your static BSSID is being ignored" is the only line that explains why the
+                    // value they set is not the one in the credentials.
+                    AppLog.w(
+                        "WifiDirectManager: the static BSSID setting ('$rawOverride') is not a MAC " +
+                            "address, so it is being ignored. Set it to six hex pairs " +
+                            "(XX:XX:XX:XX:XX:XX) or clear it to detect one automatically."
+                    )
+                }
                 AppLog.i("WifiDirectManager: Initial BSSID from scan: $bssid")
             }
 
@@ -658,7 +677,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                                     "replaced while this was waiting for an IP, and the phone must not be " +
                                     "sent a network that no longer exists."
                             )
-                        } else if (finalIp != null && bssid != null) {
+                        } else if (finalIp != null) {
                             AppLog.i("WifiDirectManager: SUCCESS - Providing credentials to listener. SSID=$ssid, IP=$finalIp, BSSID=$bssid")
                             onCredentialsReady?.invoke(ssid, psk, finalIp, bssid)
                         } else {
@@ -668,6 +687,19 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                         AppLog.e("WifiDirectManager: Error in credential delivery thread", e)
                     }
                 }.start()
+            } else {
+                // Nothing is delivered without a name, and this used to be the one exit from
+                // onGroupInfoAvailable that said nothing at all: the symptom reached the log 30 s
+                // later as the handshake's generic "No WiFi credentials available", pointing at the
+                // credentials wait rather than at the group that never named itself.
+                AppLog.e(
+                    "WifiDirectManager: the P2P group came up without a network name, so there is " +
+                        "nothing to hand the phone and no credentials will be sent." +
+                        // Only the Native AA join watchdog armed above recovers from this. On the
+                        // other paths nothing does, and a log that promised a recreate everywhere
+                        // would send the reader looking for one that never comes.
+                        if (isNativeAaMode() && isOwner) " The join watchdog will recreate it." else ""
+                )
             }
         } else {
             if (groupInfoRetries < 20) {

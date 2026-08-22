@@ -25,7 +25,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
+import com.andrerinas.openheadunit.aap.CredentialField
 import com.andrerinas.openheadunit.aap.MediaKeyRoutingPolicy
+import com.andrerinas.openheadunit.aap.NativeCredentialsPreflightPolicy
+import com.andrerinas.openheadunit.aap.NativeTransport
+import com.andrerinas.openheadunit.aap.PreflightReport
+import com.andrerinas.openheadunit.aap.SoftApBssidPolicy
 import com.andrerinas.openheadunit.aap.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.aap.VideoFaultInjector
 import com.andrerinas.openheadunit.decoder.DeviceMemoryProfile
@@ -47,16 +52,21 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.pm.PackageManager
 import com.andrerinas.openheadunit.connection.NativeAaHandshakeManager
+import com.andrerinas.openheadunit.connection.NativeCredentialsPreflight
 import com.andrerinas.openheadunit.utils.BluetoothHelper
 import androidx.lifecycle.lifecycleScope
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SettingsFragment : Fragment() {
     private lateinit var settings: Settings
+
+    /** The in-flight credentials pre-flight, so a second one replaces it rather than racing it. */
+    private var preflightJob: Job? = null
     private lateinit var settingsRecyclerView: RecyclerView
     private lateinit var settingsAdapter: SettingsAdapter
     private lateinit var toolbar: MaterialToolbar
@@ -869,9 +879,14 @@ class SettingsFragment : Fragment() {
                 ),
                 selectedIndex = if ((pendingNativeApTransport ?: 0) == 1) 1 else 0,
                 onOptionSelected = { index ->
+                    val changed = pendingNativeApTransport != index
                     pendingNativeApTransport = index
                     checkChanges()
                     updateSettingsList()
+                    // The two transports need different things of the device, and the hotspot one
+                    // needs the two fields most units cannot supply — so this is the second moment
+                    // worth checking, not just mode selection.
+                    if (changed) runCredentialsPreflight()
                 }
             ))
 
@@ -1176,7 +1191,18 @@ class SettingsFragment : Fragment() {
                     R.string.static_bssid_enter_value,
                     if (bssid == "0" || bssid == null) "" else bssid,
                     { newVal ->
-                        pendingStaticBSSID = if (newVal.isNullOrBlank()) "0" else newVal.trim()
+                        val trimmed = newVal?.trim().orEmpty()
+                        // Validated here rather than accepted and dealt with later. A value that is
+                        // not MAC-shaped still beats every automatic source, so it does not fail at
+                        // entry — it fails 30 s into a connection with a message about location
+                        // services, which is the wrong thing to send somebody looking for.
+                        when {
+                            trimmed.isEmpty() -> pendingStaticBSSID = "0"
+                            SoftApBssidPolicy.isUsable(trimmed) -> pendingStaticBSSID = trimmed
+                            else -> Toast.makeText(
+                                requireContext(), R.string.preflight_invalid_bssid, Toast.LENGTH_LONG
+                            ).show()
+                        }
                         checkChanges()
                         updateSettingsList()
                     }
@@ -3534,9 +3560,7 @@ class SettingsFragment : Fragment() {
                 // the user can name it under the secondary-Bluetooth setting, and Native mode
                 // will then run. Without that it stays switched off, and the log says why.
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    pendingWifiConnectionMode = 3
-                    checkChanges()
-                    updateSettingsList()
+                    acceptNativeAaMode()
                     dialog.dismiss()
                 }
                 .setNegativeButton(android.R.string.cancel, null)
@@ -3548,9 +3572,7 @@ class SettingsFragment : Fragment() {
                 .setTitle(R.string.supported_nativeaa)
                 .setMessage(R.string.supported_nativeaa_desc)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    pendingWifiConnectionMode = 3
-                    checkChanges()
-                    updateSettingsList()
+                    acceptNativeAaMode()
                     dialog.dismiss()
                 }
                 .setNegativeButton(android.R.string.cancel, null)
@@ -3560,13 +3582,207 @@ class SettingsFragment : Fragment() {
                 .setTitle(R.string.not_supported_nativeaa)
                 .setMessage(R.string.not_supported_nativeaa_desc)
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    pendingWifiConnectionMode = 3
-                    checkChanges()
-                    updateSettingsList()
+                    acceptNativeAaMode()
                     dialog.dismiss()
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
+        }
+    }
+
+    /**
+     * Take the mode, then check whether this unit can actually run it.
+     *
+     * All three branches of [handleNativeAaSelection] end here. Selecting the mode is never blocked,
+     * which is the behaviour those branches already had: they warn and let the user through, because
+     * the app's own compatibility read is a prediction and the user's hardware is not.
+     */
+    private fun acceptNativeAaMode() {
+        pendingWifiConnectionMode = 3
+        checkChanges()
+        updateSettingsList()
+        runCredentialsPreflight()
+    }
+
+    /**
+     * Ask what this unit can tell a phone about its own network, and prompt for whatever it cannot.
+     *
+     * The reason this exists at the moment of *selection* rather than at connect time: every one of
+     * these verdicts was already produced, correctly, during the handshake, and reported as a log
+     * line and a toast over the projection screen. Users read neither, so the route gets reported as
+     * broken while the two fields that would fix it sit unset a few rows below. Here the user is
+     * already in Settings with a keyboard.
+     *
+     * Silent unless something is certain. See [NativeCredentialsPreflightPolicy].
+     */
+    private fun runCredentialsPreflight() {
+        // The dialogs that reach here are not lifecycle-aware and are not dismissed with the view,
+        // so this can be called after the view is gone — where viewLifecycleOwner throws rather
+        // than returning null, before any isAdded check inside could help.
+        val owner = view?.let { viewLifecycleOwner } ?: return
+        val transport = NativeTransport.fromSetting(pendingNativeApTransport ?: 0)
+        // One probe at a time. The transport control fires this on every change, and each run costs
+        // up to ~1.5 s waiting on requestDeviceInfo plus an `ip link` subprocess — so toggling back
+        // and forth would otherwise stack coroutines and show a dialog on top of a dialog.
+        preflightJob?.cancel()
+        preflightJob = owner.lifecycleScope.launch {
+            val report = try {
+                val probe = NativeCredentialsPreflight.probe(
+                    context = requireContext().applicationContext,
+                    transport = transport,
+                    // The pending values, not the saved ones: the user may have typed an override
+                    // in this session and not saved yet, and asking for it again would be absurd.
+                    manualSsid = pendingHotspotSsid.orEmpty(),
+                    manualPassword = pendingHotspotPassword.orEmpty(),
+                    staticBssid = pendingStaticBSSID,
+                    hotspotInterface = pendingHotspotInterface.orEmpty()
+                )
+                NativeCredentialsPreflightPolicy.evaluate(transport, probe)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // A pre-flight that fails is not a finding. Saying nothing is the same outcome the
+                // user had before this existed.
+                AppLog.w("SettingsFragment: the credentials pre-flight could not run: ${e.message}")
+                return@launch
+            }
+            if (!isAdded || !report.hasFindings) return@launch
+
+            AppLog.i("SettingsFragment: credentials pre-flight for $transport: ${report.verdicts}")
+            showPreflightReport(report)
+        }
+    }
+
+    /**
+     * Names everything the probe is sure of, in one dialog, and offers the remedy for each.
+     *
+     * One dialog rather than a chain of them. Both findings can apply at once, and the entry dialogs
+     * only call back when the user confirms - a cancelled one would leave a chained follow-up
+     * unreachable, which is how the location advice would get lost on exactly the unit that needs
+     * both.
+     */
+    private fun showPreflightReport(report: PreflightReport) {
+        if (!isAdded) return
+        val body = StringBuilder(getString(R.string.preflight_intro))
+        report.mustEnter.forEach { body.append("\n\n\u2022 ").append(getString(labelFor(it))) }
+        if (report.locationServicesOff) {
+            body.append("\n\n\u2022 ").append(getString(R.string.preflight_item_location))
+        }
+
+        val builder = MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+            .setTitle(R.string.preflight_title)
+            .setMessage(body.toString())
+            // Never blocking. The mode is already selected and stays selected: the user may know
+            // something the probe does not, or may simply want to try it and see.
+            .setNegativeButton(R.string.preflight_later, null)
+
+        if (report.mustEnter.isNotEmpty()) {
+            builder.setPositiveButton(R.string.preflight_enter_now) { dialog, _ ->
+                dialog.dismiss()
+                promptForField(report.mustEnter, 0)
+            }
+            if (report.locationServicesOff) {
+                builder.setNeutralButton(R.string.preflight_open_location) { dialog, _ ->
+                    dialog.dismiss()
+                    openLocationSettings()
+                }
+            }
+        } else {
+            // Location is the only finding, so the toggle is the whole remedy and gets the main
+            // button. Nothing here is worth typing by hand while it is off.
+            builder.setPositiveButton(R.string.open_settings) { dialog, _ ->
+                dialog.dismiss()
+                openLocationSettings()
+            }
+        }
+        builder.show()
+    }
+
+    private fun labelFor(field: CredentialField): Int = when (field) {
+        CredentialField.HOTSPOT_NAME -> R.string.preflight_item_hotspot_name
+        CredentialField.HOTSPOT_PASSWORD -> R.string.preflight_item_hotspot_password
+        CredentialField.BSSID -> R.string.preflight_item_bssid
+    }
+
+    /**
+     * Walks the missing fields one dialog at a time, reusing the same entry dialogs and the same
+     * explanatory copy as the settings rows themselves, so the two routes cannot drift apart.
+     *
+     * Recursive on [index] rather than a loop, because each dialog resolves on a callback.
+     */
+    private fun promptForField(missing: List<CredentialField>, index: Int) {
+        if (!isAdded || index >= missing.size) return
+        val next = { promptForField(missing, index + 1) }
+
+        when (missing[index]) {
+            CredentialField.HOTSPOT_NAME -> DialogUtils.showTextInputDialogWithMessage(
+                requireContext(),
+                R.string.hotspot_ssid_override,
+                R.string.hotspot_ssid_override_message,
+                pendingHotspotSsid.orEmpty()
+            ) { newVal ->
+                pendingHotspotSsid = newVal.trim()
+                checkChanges()
+                updateSettingsList()
+                next()
+            }
+
+            CredentialField.HOTSPOT_PASSWORD -> DialogUtils.showTextInputDialogWithMessage(
+                requireContext(),
+                R.string.hotspot_password_override,
+                R.string.hotspot_password_override_message,
+                pendingHotspotPassword.orEmpty()
+            ) { newVal ->
+                pendingHotspotPassword = newVal.trim()
+                checkChanges()
+                updateSettingsList()
+                next()
+            }
+
+            CredentialField.BSSID -> DialogUtils.showTextInputDialogWithMessage(
+                requireContext(),
+                R.string.static_bssid_title,
+                R.string.static_bssid_desc,
+                pendingStaticBSSID?.takeIf { SoftApBssidPolicy.isUsable(it) }.orEmpty()
+            ) { newVal ->
+                // Checked here as well as at the row, because a value that is not MAC-shaped is
+                // worse than none: it beats every automatic source and fails much later, at Type 3
+                // time, with a message that blames location services.
+                val trimmed = newVal.trim()
+                when {
+                    trimmed.isEmpty() -> {
+                        pendingStaticBSSID = "0"
+                        checkChanges()
+                        updateSettingsList()
+                        next()
+                    }
+                    SoftApBssidPolicy.isUsable(trimmed) -> {
+                        pendingStaticBSSID = trimmed
+                        checkChanges()
+                        updateSettingsList()
+                        next()
+                    }
+                    else -> {
+                        Toast.makeText(requireContext(), R.string.preflight_invalid_bssid, Toast.LENGTH_LONG).show()
+                        // Ask again rather than move on: this is the field where a wrong value does
+                        // more harm than no value.
+                        promptForField(missing, index)
+                    }
+                }
+            }
+        }
+    }
+
+    /** The same deep-link shape as [showPermissionDialog], including its refusal to crash. */
+    private fun openLocationSettings() {
+        try {
+            startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+        } catch (e: Exception) {
+            try {
+                startActivity(Intent(android.provider.Settings.ACTION_SETTINGS))
+            } catch (e2: Exception) {
+                AppLog.w("SettingsFragment: could not open the location settings: ${e2.message}")
+            }
         }
     }
 
