@@ -384,7 +384,7 @@
     <string name="wireless_connection_settings">Wireless Connection</string>
     <string name="category_graphic">Graphic</string>
 
-    <string name="static_bssid_title">Static BSSID</string>
+    <string name="static_bssid_title">Static BSSID (MAC Address)</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
     <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
 
@@ -690,12 +690,8 @@
     <string name="debug_video_fault_rate" translatable="false">Fault rate (one in N)</string>
     <string name="debug_video_fault_budget" translatable="false">Fault budget</string>
     <string name="debug_force_memory_profile" translatable="false">Force memory profile</string>
-    <string name="debug_force_p2p_band_24" translatable="false">Force WiFi Direct onto 2.4 GHz</string>
-    <string name="p2p_legacy_5ghz" translatable="false">Ask for 5 GHz on Android 9 and older</string>
-    <string name="p2p_legacy_5ghz_description" translatable="false">Below Android 10 there is no way to request a band, so the group lands wherever the driver puts it, often on 2.4 GHz. This asks for 5 GHz instead. Turn it back off if no group forms: a unit whose WiFi Direct cannot host 5 GHz fails rather than falling back. No effect on Android 10 and newer.</string>
     <string name="p2p_legacy_5ghz_upper" translatable="false">Use the upper 5 GHz range</string>
     <string name="p2p_legacy_5ghz_upper_description" translatable="false">Asks for channel 149 instead of 36. Try only if 36 fails, since regions allow one range or the other.</string>
-    <string name="debug_force_p2p_band_24_description" translatable="false">Hosts the WiFi Direct group on 2.4 GHz instead of asking for 5 GHz, and stops remaking a group that lands there. For reproducing 2.4 GHz link faults on a 5 GHz unit. Applies on the next connection.</string>
     <string name="debug_video_low_latency" translatable="false">Request decoder low-latency mode</string>
     <string name="debug_video_low_latency_description" translatable="false">Sets the vendor low-latency MediaFormat key when configuring the video decoder. Falls back automatically if the decoder rejects it.</string>
     <string name="show_fps_counter_description">Display a real-time FPS overlay in the top-left corner during projection.</string>
@@ -845,7 +841,17 @@
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
-    <string name="native_ap_transport_hint">Experimental. The phone joins this device\'s own hotspot instead of a WiFi Direct group. Switch the hotspot on yourself before connecting, and set it to 5 GHz if you can - over 2.4 GHz the phone connects and then drops the session repeatedly without any picture, unless you lower the resolution and frame rate. If the network name cannot be read automatically, enter it below.</string>
+    <string name="native_ap_transport_hint">The phone joins this device\'s own hotspot instead of a WiFi Direct group. Switch it on before connecting.</string>
+    <string name="hotspot_band">Hotspot band</string>
+    <string name="hotspot_band_auto">Auto</string>
+    <string name="hotspot_band_5ghz">5 GHz only</string>
+    <string name="hotspot_band_24ghz">2.4 GHz only</string>
+    <string name="hotspot_band_hint">Auto asks for 5 GHz and falls back to 2.4 GHz. 2.4 GHz is reliable up to 720p, so pick 5 GHz only above that.</string>
+    <string name="wifi_direct_band">WiFi Direct band</string>
+    <string name="wifi_direct_band_auto">Auto</string>
+    <string name="wifi_direct_band_5ghz">5 GHz only</string>
+    <string name="wifi_direct_band_24ghz">2.4 GHz only</string>
+    <string name="wifi_direct_band_hint">Auto asks for 5 GHz and falls back to 2.4 GHz, and on Android 9 and older asks for a 5 GHz channel first. 2.4 GHz is reliable up to 720p, so pick 5 GHz only above that.</string>
     <string name="hotspot_interface_override">Hotspot network interface</string>
     <string name="hotspot_interface_override_message">Leave blank to work it out automatically. Set this if the log says more than one interface could be the access point, or picks the wrong one. The name is the one the log reports after &quot;Providing credentials from&quot;, or the entry holding your hotspot\'s address in &quot;ip -brief addr&quot; from a shell. Common names: ap0, wlan0, wlan1, wlan2, softap0, ra0.</string>
     <string name="hotspot_ssid_override">Hotspot name (manual)</string>
