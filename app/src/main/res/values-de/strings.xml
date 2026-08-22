@@ -848,7 +848,6 @@
     <string name="hotspot_ssid_override_message">Leer lassen zum automatischen Auslesen. Falls das Auslesen fehlschlägt, gib hier den genauen Hotspot-Namen ein.</string>
     <string name="hotspot_password_override">Hotspot-Passwort (Manuell)</string>
     <string name="hotspot_password_override_message">Leer lassen zum automatischen Auslesen. Das Passwort wird dem Smartphone zur Verbindung übergeben.</string>
-    <string name="hotspot_config_unreadable_toast">Hotspot-Name konnte nicht ausgelesen werden. Bitte manuell in den Einstellungen eintragen.</string>
     <string name="native_wifi_version_exchange">Moderner Handshake (Versionsaustausch)</string>
     <string name="native_wifi_version_exchange_description">Öffnet den Bluetooth-Handshake mit Übermittlung der Protokollversion (wie Werks-Headunits). Standardmäßig AUS. Versuchen, wenn Wireless nach einem Android Auto Update fehlschlägt.</string>
 <string name="onb_ready_extras_title">Bevor du fertig bist, kannst du noch einrichten:</string>

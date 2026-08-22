@@ -899,11 +899,16 @@ class SettingsFragment : Fragment() {
                 // The automatic read goes through the same non-public API that a locked-down
                 // device refuses outright, so on those units this override is the only way the
                 // route can learn the network name at all.
+                //
+                // Both rows carry the banner's own search phrase as a keyword, and the banner
+                // seeds the same string: the condition needs the pair, and a search on either
+                // title alone reaches one of them.
                 val manualSsid = pendingHotspotSsid.orEmpty()
                 items.add(SettingItem.SettingEntry(
                     stableId = "hotspotSsidOverride",
                     nameResId = R.string.hotspot_ssid_override,
                     value = manualSsid.ifEmpty { getString(R.string.auto) },
+                    searchKeywords = getString(R.string.connection_issue_remedy_hotspot_query),
                     onClick = { _ ->
                         DialogUtils.showTextInputDialogWithMessage(
                             requireContext(),
@@ -924,6 +929,7 @@ class SettingsFragment : Fragment() {
                     stableId = "hotspotPasswordOverride",
                     nameResId = R.string.hotspot_password_override,
                     value = if (manualPassword.isEmpty()) getString(R.string.auto) else "\u2022".repeat(manualPassword.length),
+                    searchKeywords = getString(R.string.connection_issue_remedy_hotspot_query),
                     onClick = { _ ->
                         DialogUtils.showTextInputDialogWithMessage(
                             requireContext(),
@@ -2302,6 +2308,27 @@ class SettingsFragment : Fragment() {
                 searchInput?.clearFocus()
                 hideKeyboard(view)
             }
+
+        applyRequestedSearchQuery()
+    }
+
+    /**
+     * Seed the search box when a caller asked for one particular row.
+     *
+     * Setting the text goes through the watcher above, so the filter and the re-render come for
+     * free. The extra is removed once used: it is an instruction for this opening of the screen,
+     * and leaving it on the intent would re-apply it on every rotation and recreate, overwriting
+     * whatever the user had typed since.
+     */
+    private fun applyRequestedSearchQuery() {
+        val intent = activity?.intent ?: return
+        val query = intent.getStringExtra(SettingsActivity.EXTRA_SEARCH_QUERY)
+        if (query.isNullOrBlank()) return
+        intent.removeExtra(SettingsActivity.EXTRA_SEARCH_QUERY)
+        searchInput?.setText(query)
+        // Focus would open the keyboard over the very rows we just filtered to, which on a short
+        // head unit panel is the whole list.
+        searchInput?.clearFocus()
     }
 
     private fun hideKeyboard(view: View) {

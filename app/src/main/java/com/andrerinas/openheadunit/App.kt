@@ -95,12 +95,6 @@ class App : Application() {
             bootChannel.description = "Shown once after boot to open the app"
             bootChannel.setShowBadge(false)
             component.notificationManager.createNotificationChannel(bootChannel)
-
-            // Its own channel rather than the boot one: this is the only notification the user is
-            // meant to act on later rather than dismiss, and it must stay switchable on its own.
-            val setupChannel = NotificationChannel(setupNeededChannel, "Connection Setup", NotificationManager.IMPORTANCE_HIGH)
-            setupChannel.description = "Shown when this device cannot supply the WiFi details Android Auto needs"
-            component.notificationManager.createNotificationChannel(setupChannel)
         }
 
         // Register the main broadcast receiver safely for Android 14+ using ContextCompat
@@ -119,7 +113,6 @@ class App : Application() {
     companion object {
         const val defaultChannel = "headunit_service_v2"
         const val bootStartChannel = "headunit_boot_start"
-        const val setupNeededChannel = "headunit_setup_needed"
         val appStartTime = SystemClock.elapsedRealtime()
         var appThemeManager: AppThemeManager? = null
         var isPiPActive = false

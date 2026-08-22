@@ -1472,6 +1472,46 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("native-wifi-version-exchange", false)
         set(value) = prefs.edit().putBoolean("native-wifi-version-exchange", value).apply()
 
+    // ---------------------------------------------------------------------------------------------
+    // Standing connection failures.
+    //
+    // A record of observation rather than a preference, so these follow different rules from
+    // everything else in this file: nothing in a manager's stop()/start(), a mode change or a user
+    // exit clears them. Each is cleared only by the condition itself ceasing to be true, at the one
+    // site that can know that. See utils/ConnectionIssues.
+    //
+    // Wall clock, not SystemClock.elapsedRealtime(): the banner renders a time and these outlive a
+    // reboot, which an elapsed-realtime stamp does not survive. Every other stamp on this route is
+    // elapsed realtime, so the AtEpochMs suffix is the reminder that these are not.
+    //
+    // 0 means "not standing" in all four.
+    // ---------------------------------------------------------------------------------------------
+
+    /** The phone connected over Bluetooth, we wrote, and nothing ever came back. */
+    var connectionIssueBluetoothSilentAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-bt-silent", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-bt-silent", value).apply()
+
+    /** No usable BSSID, which the WiFi Direct route aborts on rather than sending. */
+    var connectionIssueBssidAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-bssid", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-bssid", value).apply()
+
+    /** The device will not name its own access point, so the phone had nothing to join. */
+    var connectionIssueHotspotConfigAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-hotspot-config", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-hotspot-config", value).apply()
+
+    /**
+     * When the user last dismissed the failure banner.
+     *
+     * Compared against the raise stamps rather than clearing them, so a dismissal hides the
+     * occurrence the user has seen and the next failure brings the banner back on its own.
+     */
+    var connectionIssueDismissedAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-dismissed-at", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-dismissed-at", value).apply()
+
     // Manual fallback for dual-radio head units whose second radio isn't discoverable via
     // ServiceManager.listServices() at all. Empty = disabled (rely on automatic discovery only).
     var manualSecondaryBluetoothServiceName: String

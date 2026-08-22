@@ -852,13 +852,17 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="hotspot_config_unreadable_toast">Can\'t read this device\'s hotspot name. Set it manually under Hotspot name/password in Settings.</string>
 
     <!-- Native AA credential pre-flight: what this unit can and cannot tell the phone about its own network -->
-    <string name="credentials_notice_hotspot_title">Android Auto needs your hotspot details</string>
-    <string name="credentials_notice_hotspot_text">This device will not let apps read its own hotspot name and password, so there is nothing to give the phone. Tap to open Settings and enter them under Hotspot name (manual) and Hotspot password (manual).</string>
-    <string name="credentials_notice_bssid_title">Android Auto needs this device\'s WiFi address</string>
-    <string name="credentials_notice_bssid_text">The phone will refuse to join without it, so the connection was stopped. Tap to open Settings, then turn on Location, or enter the address under Static BSSID.</string>
+
+    <!-- The failure banner on the main screen. One per condition, shown after a failed attempt. -->
+    <string name="connection_issue_banner_bt_silent">Your phone connected over Bluetooth, but nothing this unit sent ever reached it. This is a fault in the head unit\'s Bluetooth that this app cannot work around. Tap to switch to USB, Wireless Helper or Auto, which do not need the Bluetooth handshake.</string>
+    <string name="connection_issue_banner_bssid">This unit could not read its own WiFi MAC address (BSSID), so your phone was never told which network to join. Tap to turn on Location, or to enter the address by hand.</string>
+    <string name="connection_issue_banner_hotspot_config">This unit will not tell the app its hotspot name and password, so your phone had nothing to join. Tap to enter them by hand.</string>
+    <string name="connection_issue_banner_dismiss">Dismiss</string>
+    <!-- What the hotspot banner types into the settings search. Both override rows carry it
+         as a search keyword, so this one string is what makes the tap reach the pair. -->
+    <string name="connection_issue_remedy_hotspot_query">Hotspot name and password</string>
 
     <string name="preflight_title">Before you connect</string>
     <string name="preflight_intro">This device cannot supply everything Android Auto needs, so the phone will not be able to join:</string>
