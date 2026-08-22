@@ -29,9 +29,15 @@ class NearbySocket : Socket() {
         /**
          * Comfortably longer than a working handshake and shorter than the ~16 s Nearby itself takes
          * to fail the payload, so the log records why the link died rather than only that it did.
-         * A phone that answers at all answers in well under a second.
+         * A phone that answers at all answers in well under a second; a measured session completes
+         * SSL at 1.2-1.3 s.
+         *
+         * It must also stay strictly inside `AapTransport.HANDSHAKE_TIMEOUT_MS` (10 s). At 12 s it
+         * sat outside that budget, so the handshake always abandoned the attempt first and the
+         * explanation below -- the entire reason the wait is bounded rather than indefinite -- could
+         * never be reached.
          */
-        const val STREAM_WAIT_MS = 12_000L
+        const val STREAM_WAIT_MS = 8_000L
     }
 
     var inputStreamWrapper: InputStream?
@@ -52,8 +58,29 @@ class NearbySocket : Socket() {
         }
 
     override fun isConnected() = true
-    
+
     override fun getInetAddress(): InetAddress = InetAddress.getLoopbackAddress()
+
+    /**
+     * Closes the two Nearby streams this socket is made of.
+     *
+     * The `close()` overrides further down belong to the wrapper objects handed out by
+     * [getInputStream] and [getOutputStream], and `java.net.Socket.close()` does not call them --
+     * it closes a file descriptor this socket does not have. Without this, both Nearby streams
+     * survived every teardown that went through the socket.
+     *
+     * Each close is independent: the second must still run when the first throws, and a stream that
+     * is already gone is not a failure worth propagating out of a teardown path.
+     */
+    override fun close() {
+        try { internalInputStream?.close() } catch (e: Exception) {
+            com.andrerinas.openheadunit.utils.AppLog.d("NearbySocket: inbound stream close: ${e.message}")
+        }
+        try { internalOutputStream?.close() } catch (e: Exception) {
+            com.andrerinas.openheadunit.utils.AppLog.d("NearbySocket: outbound stream close: ${e.message}")
+        }
+        super.close()
+    }
 
     override fun getInputStream(): InputStream {
         com.andrerinas.openheadunit.utils.AppLog.d("NearbySocket: getInputStream() called")
