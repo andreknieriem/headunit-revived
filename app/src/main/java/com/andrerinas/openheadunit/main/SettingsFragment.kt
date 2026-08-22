@@ -39,6 +39,7 @@ import com.andrerinas.openheadunit.utils.LocaleHelper
 import com.andrerinas.openheadunit.BuildConfig
 import com.andrerinas.openheadunit.utils.LogExporter
 import com.andrerinas.openheadunit.utils.SettingsBackupManager
+import com.andrerinas.openheadunit.utils.VpnControl
 import com.andrerinas.openheadunit.utils.DialogUtils
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -180,6 +181,21 @@ class SettingsFragment : Fragment() {
         } else {
             Toast.makeText(requireContext(), R.string.bt_permission_denied, Toast.LENGTH_LONG).show()
         }
+    }
+
+    // VpnControl.consentIntent() needs an Activity the first time and returns null forever
+    // afterwards, so this dialog is the one moment a Fragment has to be involved. AapService can
+    // start the VPN with no Activity once this has run. On the Play Store flavor the toggle that
+    // launches this is never rendered, because VpnControl.isVpnAvailable() is false there.
+    private var pendingKeepDummyVpn = false
+    private val vpnConsentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val granted = result.resultCode == android.app.Activity.RESULT_OK
+        settings.keepDummyVpnDuringSession = granted && pendingKeepDummyVpn
+        pendingKeepDummyVpn = false
+        if (!granted && VpnControl.consentDeniedRes != 0) {
+            Toast.makeText(requireContext(), VpnControl.consentDeniedRes, Toast.LENGTH_LONG).show()
+        }
+        updateSettingsList()
     }
 
     private val storagePermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -986,6 +1002,90 @@ class SettingsFragment : Fragment() {
                     updateSettingsList()
                 }
             ))
+
+            // The band levers live here rather than under Debug because they are read in exactly
+            // one place - WifiDirectManager.createQuietGroup(), reachable only from the Native AA
+            // quiet host - so they do nothing on any other connection mode. Applied immediately
+            // rather than through the pending/save flow: each takes effect on the next connection
+            // and there is nothing to confirm.
+
+            // Puts the Native AA P2P group on 2.4 GHz, which the rig can otherwise never run: the
+            // group is requested as 5 GHz and any group that lands on 2.4 GHz is torn down and
+            // remade. Both of those come off together - see NativeGroupBandPolicy.
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "debugForceP2pBand24",
+                nameResId = R.string.debug_force_p2p_band_24,
+                descriptionResId = R.string.debug_force_p2p_band_24_description,
+                isChecked = settings.debugForceP2pBand24,
+                searchKeywords = "2.4 ghz band wifi direct p2p group native link outage",
+                onCheckedChanged = { isChecked ->
+                    settings.debugForceP2pBand24 = isChecked
+                    updateSettingsList()
+                }
+            ))
+
+            // Below Android 10 there is no band request at all, so this is the only lever those
+            // units have. Off by default: the request is a frequency whitelist, so a unit that
+            // cannot host a 5 GHz group owner fails to create one rather than falling back - see
+            // the retry in WifiDirectManager.
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "p2pLegacyFiveGhz",
+                nameResId = R.string.p2p_legacy_5ghz,
+                descriptionResId = R.string.p2p_legacy_5ghz_description,
+                isChecked = settings.p2pLegacyFiveGhz,
+                searchKeywords = "5 ghz band wifi direct legacy android 9 channel 36 stutter",
+                onCheckedChanged = { isChecked ->
+                    settings.p2pLegacyFiveGhz = isChecked
+                    updateSettingsList()
+                }
+            ))
+
+            if (settings.p2pLegacyFiveGhz) {
+                items.add(SettingItem.ToggleSettingEntry(
+                    stableId = "p2pLegacyFiveGhzUpperBand",
+                    nameResId = R.string.p2p_legacy_5ghz_upper,
+                    descriptionResId = R.string.p2p_legacy_5ghz_upper_description,
+                    isChecked = settings.p2pLegacyFiveGhzUpperBand,
+                    searchKeywords = "channel 149 upper 5 ghz unii region",
+                    onCheckedChanged = { isChecked ->
+                        settings.p2pLegacyFiveGhzUpperBand = isChecked
+                        updateSettingsList()
+                    }
+                ))
+            }
+
+            // Rendering it here is half the gate: AapService re-tests the connection mode before
+            // acting on it, because a preference turned on under Native AA and then hidden by a
+            // mode change would otherwise put a blackholing tun on a USB session. The other half
+            // is DummyVpnPolicy.shouldStartForSession.
+            if (VpnControl.isVpnAvailable()) {
+                items.add(SettingItem.ToggleSettingEntry(
+                    stableId = "keepDummyVpnDuringSession",
+                    // Through VpnControl, not R: this copy lives in the github flavor's
+                    // resources so it is absent from the Play Store build entirely.
+                    nameResId = VpnControl.toggleNameRes,
+                    descriptionResId = VpnControl.toggleDescriptionRes,
+                    isChecked = settings.keepDummyVpnDuringSession,
+                    searchKeywords = "vpn offline tun stutter dropout audio video 2.4 ghz network scan",
+                    onCheckedChanged = { isChecked ->
+                        if (!isChecked) {
+                            settings.keepDummyVpnDuringSession = false
+                            updateSettingsList()
+                        } else {
+                            // Null once this app is already the prepared VPN app, which is the
+                            // state AapService needs to start it with no Activity.
+                            val consent = VpnControl.consentIntent(requireContext())
+                            if (consent == null) {
+                                settings.keepDummyVpnDuringSession = true
+                                updateSettingsList()
+                            } else {
+                                pendingKeepDummyVpn = true
+                                vpnConsentLauncher.launch(consent)
+                            }
+                        }
+                    }
+                ))
+            }
         }
 
         // Sub-setting for Headunit Server (Manual vs Auto)
@@ -1855,51 +1955,6 @@ class SettingsFragment : Fragment() {
                     .show()
             }
         ))
-
-        // Puts the Native AA P2P group on 2.4 GHz, which the rig can otherwise never run: the group
-        // is requested as 5 GHz and any group that lands on 2.4 GHz is torn down and remade. Both of
-        // those come off together - see NativeGroupBandPolicy. Applies on the next connection.
-        items.add(SettingItem.ToggleSettingEntry(
-            stableId = "debugForceP2pBand24",
-            nameResId = R.string.debug_force_p2p_band_24,
-            descriptionResId = R.string.debug_force_p2p_band_24_description,
-            isChecked = settings.debugForceP2pBand24,
-            searchKeywords = "2.4 ghz band wifi direct p2p group native link outage",
-            onCheckedChanged = { isChecked ->
-                settings.debugForceP2pBand24 = isChecked
-                updateSettingsList()
-            }
-        ))
-
-        // Below Android 10 there is no band request at all, so this is the only lever those units
-        // have. Off by default: the request is a frequency whitelist, so a unit that cannot host a
-        // 5 GHz group owner fails to create one rather than falling back - see the retry in
-        // WifiDirectManager. Applies on the next connection.
-        items.add(SettingItem.ToggleSettingEntry(
-            stableId = "p2pLegacyFiveGhz",
-            nameResId = R.string.p2p_legacy_5ghz,
-            descriptionResId = R.string.p2p_legacy_5ghz_description,
-            isChecked = settings.p2pLegacyFiveGhz,
-            searchKeywords = "5 ghz band wifi direct legacy android 9 channel 36 stutter",
-            onCheckedChanged = { isChecked ->
-                settings.p2pLegacyFiveGhz = isChecked
-                updateSettingsList()
-            }
-        ))
-
-        if (settings.p2pLegacyFiveGhz) {
-            items.add(SettingItem.ToggleSettingEntry(
-                stableId = "p2pLegacyFiveGhzUpperBand",
-                nameResId = R.string.p2p_legacy_5ghz_upper,
-                descriptionResId = R.string.p2p_legacy_5ghz_upper_description,
-                isChecked = settings.p2pLegacyFiveGhzUpperBand,
-                searchKeywords = "channel 149 upper 5 ghz unii region",
-                onCheckedChanged = { isChecked ->
-                    settings.p2pLegacyFiveGhzUpperBand = isChecked
-                    updateSettingsList()
-                }
-            ))
-        }
 
         // Deliberately corrupts the video stream so the reassembler's failure paths can be
         // exercised on a working unit. Applies on the next connection, and every injected fault is

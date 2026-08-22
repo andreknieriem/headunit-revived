@@ -397,6 +397,30 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("p2p-legacy-5ghz-upper", value).apply() }
 
     /**
+     * Keeps this app's dummy VPN up for the life of a Native AA session, not only offline Self Mode.
+     *
+     * Two reporters on different hardware describe the same periodic media outage going quiet while
+     * the dummy VPN happened to be active. **The mechanism is unproven.** The setting's own
+     * description tells the user it is so the chip stops looking for other networks, which is the
+     * working theory and the right thing to tell somebody deciding whether to try it, but nothing
+     * in this app has measured that and this comment must not be read as saying otherwise.
+     *
+     * Off by default. While it is up, every *other* app on the head unit loses IPv4: the tun routes
+     * 0.0.0.0/0 into a descriptor nobody reads. This app is excluded from it, so the projection
+     * link is unaffected.
+     *
+     * Inert on the Play Store flavor, which ships no VPN at all: [VpnControl.isVpnAvailable] is
+     * false there, so the toggle is never rendered and nothing acts on this value.
+     *
+     * Only acted on for a Native AA wireless session; see
+     * [com.andrerinas.openheadunit.aap.DummyVpnPolicy.shouldStartForSession], which explains why
+     * the mode has to be re-tested at the point of use rather than trusted from this flag.
+     */
+    var keepDummyVpnDuringSession: Boolean
+        get() = prefs.getBoolean("keep-dummy-vpn-during-session", false)
+        set(value) { prefs.edit().putBoolean("keep-dummy-vpn-during-session", value).apply() }
+
+    /**
      * Asks the decoder for low-latency mode, through whichever key its vendor understands.
      *
      * Off by default, and it stays off until a log from a real device shows a component accepting the
