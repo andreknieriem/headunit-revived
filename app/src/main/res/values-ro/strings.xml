@@ -943,4 +943,10 @@
     <string name="hide_battery_level_label">Ascunde nivelul bateriei telefonului</string>
     <string name="hide_clock_label">Ascunde ceasul</string>
     <string name="might_broken_on_newer_aa_versions">Această funcție s-ar putea să nu funcționeze pe versiunile mai noi de Android Auto</string>
+    <string name="auto_connect_delay">Întârziere conectare automată</string>
+    <string name="auto_connect_delay_description">Așteaptă înainte de a încerca conectarea la pornire (util dacă Wi-Fi necesită timp pentru activare)</string>
+    <string name="auto_connect_delay_none">Niciuna (Instant)</string>
+    <string name="auto_connect_delay_seconds_format">%d s</string>
+    <string name="auto_connect_delay_custom">Personalizat…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (întârziere %2$ds)</string>
 </resources>

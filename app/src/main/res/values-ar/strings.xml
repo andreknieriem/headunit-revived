@@ -944,4 +944,10 @@
     <string name="hide_battery_level_label">إخفاء مستوى بطارية الهاتف</string>
     <string name="hide_clock_label">إخفاء الساعة</string>
     <string name="might_broken_on_newer_aa_versions">قد لا تعمل هذه الميزة في إصدارات Android Auto الأحدث</string>
+    <string name="auto_connect_delay">تأخير الاتصال التلقائي</string>
+    <string name="auto_connect_delay_description">الانتظار قبل محاولة الاتصال عند بدء التشغيل (مفيد إذا كان الواي فاي يحتاج وقتاً للتشغيل)</string>
+    <string name="auto_connect_delay_none">بدون (فوري)</string>
+    <string name="auto_connect_delay_seconds_format">%d ث</string>
+    <string name="auto_connect_delay_custom">مخصص…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (تأخير %2$dث)</string>
 </resources>

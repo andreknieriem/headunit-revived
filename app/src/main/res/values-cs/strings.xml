@@ -946,4 +946,10 @@
     <string name="hide_battery_level_label">Skrýt stav baterie telefonu</string>
     <string name="hide_clock_label">Skrýt hodiny</string>
     <string name="might_broken_on_newer_aa_versions">Tato funkce nemusí fungovat na novějších verzích Android Auto</string>
+    <string name="auto_connect_delay">Zpoždění automatického připojení</string>
+    <string name="auto_connect_delay_description">Počkat před pokusem o připojení při startu (užitečné, pokud Wi-Fi potřebuje čas na probuzení)</string>
+    <string name="auto_connect_delay_none">Žádné (Okamžitě)</string>
+    <string name="auto_connect_delay_seconds_format">%d s</string>
+    <string name="auto_connect_delay_custom">Vlastní…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (zpoždění %2$ds)</string>
 </resources>

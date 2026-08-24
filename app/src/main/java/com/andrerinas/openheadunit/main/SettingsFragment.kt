@@ -3645,10 +3645,16 @@ class SettingsFragment : Fragment() {
                 }
             } else null
         }
-        return if (enabledNames.isEmpty()) {
+        val delay = settings.autoConnectDelaySeconds
+        val baseSummary = if (enabledNames.isEmpty()) {
             getString(R.string.auto_connect_all_disabled)
         } else {
             enabledNames.joinToString(" → ")
+        }
+        return if (enabledNames.isNotEmpty() && delay > 0) {
+            getString(R.string.auto_connect_delay_summary_format, baseSummary, delay)
+        } else {
+            baseSummary
         }
     }
 

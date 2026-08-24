@@ -949,4 +949,10 @@
     <string name="hide_battery_level_label">Ẩn mức pin điện thoại</string>
     <string name="hide_clock_label">Ẩn đồng hồ</string>
     <string name="might_broken_on_newer_aa_versions">Tính năng này có thể không hoạt động trên các phiên bản Android Auto mới hơn</string>
+    <string name="auto_connect_delay">Độ trễ tự động kết nối</string>
+    <string name="auto_connect_delay_description">Chờ trước khi thử kết nối lúc khởi động (hữu ích nếu Wi-Fi cần thời gian để kích hoạt)</string>
+    <string name="auto_connect_delay_none">Không (Tức thì)</string>
+    <string name="auto_connect_delay_seconds_format">%d giây</string>
+    <string name="auto_connect_delay_custom">Tùy chỉnh…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (trễ %2$d giây)</string>
 </resources>

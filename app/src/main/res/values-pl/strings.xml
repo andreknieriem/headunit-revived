@@ -945,4 +945,10 @@
     <string name="hide_battery_level_label">Ukryj poziom baterii telefonu</string>
     <string name="hide_clock_label">Ukryj zegar</string>
     <string name="might_broken_on_newer_aa_versions">Ta funkcja może nie działać na nowszych wersjach Android Auto</string>
+    <string name="auto_connect_delay">Opóźnienie automatycznego łączenia</string>
+    <string name="auto_connect_delay_description">Odczekaj przed próbą połączenia przy uruchomieniu (przydatne, gdy Wi-Fi potrzebuje czasu na aktywację)</string>
+    <string name="auto_connect_delay_none">Brak (Natychmiast)</string>
+    <string name="auto_connect_delay_seconds_format">%d s</string>
+    <string name="auto_connect_delay_custom">Niestandardowy…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$ds opóźnienia)</string>
 </resources>

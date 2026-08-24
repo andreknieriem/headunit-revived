@@ -942,4 +942,10 @@
     <string name="hide_battery_level_label">Telefon akkumulátorszint elrejtése</string>
     <string name="hide_clock_label">Óra elrejtése</string>
     <string name="might_broken_on_newer_aa_versions">Ez a funkció előfordulhat, hogy nem működik az Android Auto újabb verzióin</string>
+    <string name="auto_connect_delay">Automatikus csatlakozási késleltetés</string>
+    <string name="auto_connect_delay_description">Várakozás a csatlakozás előtt indításkor (hasznos, ha a Wi-Fi-nek időre van szüksége az ébredéshez)</string>
+    <string name="auto_connect_delay_none">Nincs (Azonnali)</string>
+    <string name="auto_connect_delay_seconds_format">%d mp</string>
+    <string name="auto_connect_delay_custom">Egyéni…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$d mp késleltetés)</string>
 </resources>

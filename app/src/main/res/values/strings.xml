@@ -999,4 +999,10 @@
     <string name="hide_battery_level_label">Hide the Phone\'s Battery Level</string>
     <string name="hide_clock_label">Hide the Clock</string>
     <string name="might_broken_on_newer_aa_versions">This functionality might not work on newer versions of Android Auto</string>
+    <string name="auto_connect_delay">Auto-Connect Delay</string>
+    <string name="auto_connect_delay_description">Wait before attempting to connect on startup (useful if Wi-Fi needs time to wake up)</string>
+    <string name="auto_connect_delay_none">None (Instant)</string>
+    <string name="auto_connect_delay_seconds_format">%d s</string>
+    <string name="auto_connect_delay_custom">Custom…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$ds delay)</string>
 </resources>

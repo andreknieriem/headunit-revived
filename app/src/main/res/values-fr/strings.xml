@@ -995,4 +995,10 @@
     <string name="hide_battery_level_label">Masquer le niveau de batterie du téléphone</string>
     <string name="hide_clock_label">Masquer l\'horloge</string>
     <string name="might_broken_on_newer_aa_versions">Cette fonctionnalité peut ne pas fonctionner sur les versions récentes d\'Android Auto</string>
+    <string name="auto_connect_delay">Délai d\'auto-connexion</string>
+    <string name="auto_connect_delay_description">Attendre avant de tenter la connexion au démarrage (utile si le Wi-Fi met du temps à s\'activer)</string>
+    <string name="auto_connect_delay_none">Aucun (Instantané)</string>
+    <string name="auto_connect_delay_seconds_format">%d s</string>
+    <string name="auto_connect_delay_custom">Personnalisé…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$ds de délai)</string>
 </resources>

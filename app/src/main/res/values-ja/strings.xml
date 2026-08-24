@@ -950,4 +950,10 @@
     <string name="hide_battery_level_label">スマートフォンのバッテリー残量を非表示</string>
     <string name="hide_clock_label">時計を非表示</string>
     <string name="might_broken_on_newer_aa_versions">この機能は新しいバージョンのAndroid Autoでは動作しない可能性があります</string>
+    <string name="auto_connect_delay">自動接続の遅延</string>
+    <string name="auto_connect_delay_description">起動時に接続を試行する前に待機します（Wi-Fiの復帰に時間がかかる場合に有効）</string>
+    <string name="auto_connect_delay_none">なし (即時)</string>
+    <string name="auto_connect_delay_seconds_format">%d 秒</string>
+    <string name="auto_connect_delay_custom">カスタム…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$d秒の遅延)</string>
 </resources>

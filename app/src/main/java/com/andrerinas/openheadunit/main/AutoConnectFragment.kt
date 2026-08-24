@@ -32,6 +32,12 @@ class AutoConnectFragment : Fragment() {
     // Snapshot of initial state for change detection
     private lateinit var initialOrder: List<String>
     private lateinit var initialEnabled: Map<String, Boolean>
+    private var initialDelaySeconds = 0
+    private var pendingDelaySeconds = 0
+
+    // Views for delay setting
+    private lateinit var cardDelay: View
+    private lateinit var delayValue: android.widget.TextView
 
     // Methods hidden because they do not apply to the chosen connection (kept in the saved
     // order so they are not lost when switching connection type later).
@@ -56,6 +62,16 @@ class AutoConnectFragment : Fragment() {
             Settings.AUTO_CONNECT_SELF_MODE to settings.autoStartSelfMode,
             Settings.AUTO_CONNECT_SINGLE_USB to settings.autoConnectSingleUsbDevice
         )
+        initialDelaySeconds = settings.autoConnectDelaySeconds
+        pendingDelaySeconds = initialDelaySeconds
+
+        // Delay setting card
+        cardDelay = view.findViewById(R.id.card_delay)
+        delayValue = view.findViewById(R.id.delay_value)
+        updateDelayDisplay()
+        cardDelay.setOnClickListener {
+            showDelaySelectionDialog()
+        }
 
         // Build method list in priority order
         val methods = initialOrder.mapNotNull { id ->
@@ -88,6 +104,80 @@ class AutoConnectFragment : Fragment() {
                 handleBackPress()
             }
         })
+    }
+
+    private fun updateDelayDisplay() {
+        if (pendingDelaySeconds == 0) {
+            delayValue.text = getString(R.string.auto_connect_delay_none)
+        } else {
+            delayValue.text = getString(R.string.auto_connect_delay_seconds_format, pendingDelaySeconds)
+        }
+    }
+
+    private fun showDelaySelectionDialog() {
+        val delayPresets = listOf(0, 2, 5, 10, 15, 20, 30)
+        val options = mutableListOf<String>()
+        var selectedIndex = -1
+
+        for ((index, sec) in delayPresets.withIndex()) {
+            val label = if (sec == 0) {
+                getString(R.string.auto_connect_delay_none)
+            } else {
+                getString(R.string.auto_connect_delay_seconds_format, sec)
+            }
+            options.add(label)
+            if (pendingDelaySeconds == sec) {
+                selectedIndex = index
+            }
+        }
+
+        // Custom option
+        options.add(getString(R.string.auto_connect_delay_custom))
+        if (selectedIndex == -1) {
+            selectedIndex = options.size - 1
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.auto_connect_delay)
+            .setSingleChoiceItems(options.toTypedArray(), selectedIndex) { dialog, which ->
+                dialog.dismiss()
+                if (which < delayPresets.size) {
+                    pendingDelaySeconds = delayPresets[which]
+                    updateDelayDisplay()
+                    checkChanges()
+                } else {
+                    showCustomDelayDialog()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showCustomDelayDialog() {
+        val context = requireContext()
+        val editText = android.widget.EditText(context).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(pendingDelaySeconds.toString())
+            setSelection(text.length)
+        }
+
+        val container = android.widget.FrameLayout(context).apply {
+            val padding = (16 * resources.displayMetrics.density).toInt()
+            setPadding(padding, padding / 2, padding, padding / 2)
+            addView(editText)
+        }
+
+        AlertDialog.Builder(context)
+            .setTitle(R.string.auto_connect_delay)
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val input = editText.text.toString().trim().toIntOrNull() ?: 0
+                pendingDelaySeconds = input.coerceIn(0, 60)
+                updateDelayDisplay()
+                checkChanges()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun methodDefinition(id: String): Pair<Int, Int>? {
@@ -148,7 +238,8 @@ class AutoConnectFragment : Fragment() {
 
         // Compare against the initial state minus the hidden (non-applicable) methods.
         hasChanges = currentOrder != initialOrder.filterNot { it in hiddenMethodIds } ||
-            currentEnabled != initialEnabled.filterKeys { it !in hiddenMethodIds }
+            currentEnabled != initialEnabled.filterKeys { it !in hiddenMethodIds } ||
+            pendingDelaySeconds != initialDelaySeconds
         updateSaveButtonState()
     }
 
@@ -168,10 +259,12 @@ class AutoConnectFragment : Fragment() {
         enabledStates[Settings.AUTO_CONNECT_LAST_SESSION]?.let { settings.autoConnectLastSession = it }
         enabledStates[Settings.AUTO_CONNECT_SELF_MODE]?.let { settings.autoStartSelfMode = it }
         enabledStates[Settings.AUTO_CONNECT_SINGLE_USB]?.let { settings.autoConnectSingleUsbDevice = it }
+        settings.autoConnectDelaySeconds = pendingDelaySeconds
 
         // Update snapshot
         initialOrder = orderedIds.toList()
         initialEnabled = enabledStates.toMap()
+        initialDelaySeconds = pendingDelaySeconds
 
         hasChanges = false
         updateSaveButtonState()

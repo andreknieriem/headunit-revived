@@ -947,4 +947,10 @@
     <string name="hide_battery_level_label">Приховати рівень заряду телефону</string>
     <string name="hide_clock_label">Приховати годинник</string>
     <string name="might_broken_on_newer_aa_versions">Ця функція може не працювати на новіших версіях Android Auto</string>
+    <string name="auto_connect_delay">Затримка автопідключення</string>
+    <string name="auto_connect_delay_description">Зачекати перед спробою підключення під час запуску (корисно, якщо Wi-Fi потрібен час для активації)</string>
+    <string name="auto_connect_delay_none">Немає (Миттєво)</string>
+    <string name="auto_connect_delay_seconds_format">%d с</string>
+    <string name="auto_connect_delay_custom">Користувацький…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (затримка %2$dс)</string>
 </resources>

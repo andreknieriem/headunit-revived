@@ -945,4 +945,10 @@
     <string name="hide_battery_level_label">隱藏手機電量圖示</string>
     <string name="hide_clock_label">隱藏時钟</string>
     <string name="might_broken_on_newer_aa_versions">此功能在較新版本的 Android Auto 上可能無法正常運作</string>
+    <string name="auto_connect_delay">自動連線延遲</string>
+    <string name="auto_connect_delay_description">啟動時等待指定時間後再嘗試連線（若 Wi-Fi 啟動需要時間時很有用）</string>
+    <string name="auto_connect_delay_none">無（立即）</string>
+    <string name="auto_connect_delay_seconds_format">%d 秒</string>
+    <string name="auto_connect_delay_custom">自訂…</string>
+    <string name="auto_connect_delay_summary_format">%1$s（延遲 %2$d 秒）</string>
 </resources>

@@ -118,6 +118,7 @@ object SettingsBackupManager {
         "attach_hw_dsp_equalizer" to ValueType.BOOLEAN,
         "use-native-ssl" to ValueType.BOOLEAN,
         "auto-start-self-mode" to ValueType.BOOLEAN,
+        "auto-connect-delay-seconds" to ValueType.INT,
         "auto-start-on-usb" to ValueType.BOOLEAN,
         "auto-start-on-boot" to ValueType.BOOLEAN,
         "auto-start-on-screen-on" to ValueType.BOOLEAN,

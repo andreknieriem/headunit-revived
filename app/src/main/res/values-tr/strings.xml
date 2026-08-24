@@ -941,4 +941,10 @@
     <string name="hide_battery_level_label">Telefonun pil seviyesini gizle</string>
     <string name="hide_clock_label">Saati gizle</string>
     <string name="might_broken_on_newer_aa_versions">Bu özellik Android Auto\'nun daha yeni sürümlerinde çalışmayabilir</string>
+    <string name="auto_connect_delay">Otomatik Bağlantı Gecikmesi</string>
+    <string name="auto_connect_delay_description">Başlangıçta bağlanmayı denemeden önce bekle (Wi-Fi\'nin uyanması zaman alıyorsa faydalıdır)</string>
+    <string name="auto_connect_delay_none">Yok (Anında)</string>
+    <string name="auto_connect_delay_seconds_format">%d sn</string>
+    <string name="auto_connect_delay_custom">Özel…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$d sn gecikme)</string>
 </resources>

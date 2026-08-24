@@ -943,4 +943,10 @@
     <string name="hide_battery_level_label">휴대전화 배터리 잔량 숨기기</string>
     <string name="hide_clock_label">시계 숨기기</string>
     <string name="might_broken_on_newer_aa_versions">이 기능은 최신 버전의 Android Auto에서 작동하지 않을 수 있습니다</string>
+    <string name="auto_connect_delay">자동 연결 지연</string>
+    <string name="auto_connect_delay_description">시작 시 연결을 시도하기 전에 대기합니다 (Wi-Fi 활성화에 시간이 필요한 경우 유용)</string>
+    <string name="auto_connect_delay_none">없음 (즉시)</string>
+    <string name="auto_connect_delay_seconds_format">%d초</string>
+    <string name="auto_connect_delay_custom">사용자 지정…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$d초 지연)</string>
 </resources>

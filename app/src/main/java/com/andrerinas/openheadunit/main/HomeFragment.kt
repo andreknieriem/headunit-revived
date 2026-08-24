@@ -43,6 +43,7 @@ import com.andrerinas.openheadunit.connection.UsbAccessoryMode
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 
 class HomeFragment : Fragment() {
 
@@ -131,39 +132,53 @@ class HomeFragment : Fragment() {
                 Intent(requireContext(), AapService::class.java))
         }
 
-        for (methodId in appSettings.autoConnectPriorityOrder) {
-            if (commManager.isConnected) break
-            when (methodId) {
-                Settings.AUTO_CONNECT_LAST_SESSION -> {
-                    if (appSettings.autoConnectLastSession && !hasAttemptedAutoConnect && !commManager.isConnected) {
-                        hasAttemptedAutoConnect = true
-                        if (attemptAutoConnect()) {
-                            (requireActivity() as? MainActivity)?.beginAutoConnect(
-                                "auto-connect last session",
-                                MainActivity.ConnectionUiMode.PILL
-                            )
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isAutoConnectEnabled = appSettings.autoStartSelfMode ||
+                appSettings.autoConnectLastSession ||
+                appSettings.autoConnectSingleUsbDevice
+
+            val delaySec = appSettings.autoConnectDelaySeconds
+            if (isAutoConnectEnabled && delaySec > 0 && !forceSelfModeLaunch && !commManager.isConnected) {
+                AppLog.i("HomeFragment: Waiting ${delaySec}s before attempting auto-connect...")
+                delay(delaySec * 1000L)
+            }
+
+            if (!isAdded || commManager.isConnected) return@launch
+
+            for (methodId in appSettings.autoConnectPriorityOrder) {
+                if (commManager.isConnected) break
+                when (methodId) {
+                    Settings.AUTO_CONNECT_LAST_SESSION -> {
+                        if (appSettings.autoConnectLastSession && !hasAttemptedAutoConnect && !commManager.isConnected) {
+                            hasAttemptedAutoConnect = true
+                            if (attemptAutoConnect()) {
+                                (requireActivity() as? MainActivity)?.beginAutoConnect(
+                                    "auto-connect last session",
+                                    MainActivity.ConnectionUiMode.PILL
+                                )
+                            }
                         }
                     }
-                }
-                Settings.AUTO_CONNECT_SELF_MODE -> {
-                    if ((appSettings.autoStartSelfMode || forceSelfModeLaunch) && !hasAutoStarted && !commManager.isConnected) {
-                        hasAutoStarted = true
-                        forceSelfModeLaunch = false // Reset once processed
-                        (requireActivity() as? MainActivity)?.beginAutoConnect(
-                            "auto-start self mode",
-                            MainActivity.ConnectionUiMode.PILL
-                        )
-                        startSelfMode()
-                    }
-                }
-                Settings.AUTO_CONNECT_SINGLE_USB -> {
-                    if (appSettings.autoConnectSingleUsbDevice && !hasAttemptedSingleUsbAutoConnect && !commManager.isConnected) {
-                        hasAttemptedSingleUsbAutoConnect = true
-                        if (attemptSingleUsbAutoConnect()) {
+                    Settings.AUTO_CONNECT_SELF_MODE -> {
+                        if ((appSettings.autoStartSelfMode || forceSelfModeLaunch) && !hasAutoStarted && !commManager.isConnected) {
+                            hasAutoStarted = true
+                            forceSelfModeLaunch = false // Reset once processed
                             (requireActivity() as? MainActivity)?.beginAutoConnect(
-                                "auto-connect single USB",
+                                "auto-start self mode",
                                 MainActivity.ConnectionUiMode.PILL
                             )
+                            startSelfMode()
+                        }
+                    }
+                    Settings.AUTO_CONNECT_SINGLE_USB -> {
+                        if (appSettings.autoConnectSingleUsbDevice && !hasAttemptedSingleUsbAutoConnect && !commManager.isConnected) {
+                            hasAttemptedSingleUsbAutoConnect = true
+                            if (attemptSingleUsbAutoConnect()) {
+                                (requireActivity() as? MainActivity)?.beginAutoConnect(
+                                    "auto-connect single USB",
+                                    MainActivity.ConnectionUiMode.PILL
+                                )
+                            }
                         }
                     }
                 }

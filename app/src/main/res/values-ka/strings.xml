@@ -927,4 +927,10 @@
     <string name="hide_battery_level_label">ტელეფონის ელემენტის დამალვა</string>
     <string name="hide_clock_label">საათის დამალვა</string>
     <string name="might_broken_on_newer_aa_versions">ეს ფუნქცია შესაძლოა არ იმუშაოს Android Auto-ს ახალ ვერსიებზე</string>
+    <string name="auto_connect_delay">ავტო-დაკავშირების დაყოვნება</string>
+    <string name="auto_connect_delay_description">დალოდება ჩართვისას დაკავშირებამდე (სასარგებლოა, თუ Wi-Fi-ს გააქტიურებისთვის დრო სჭირდება)</string>
+    <string name="auto_connect_delay_none">არცერთი (მყისიერად)</string>
+    <string name="auto_connect_delay_seconds_format">%d წმ</string>
+    <string name="auto_connect_delay_custom">მორგებული…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$dწმ დაყოვნება)</string>
 </resources>
