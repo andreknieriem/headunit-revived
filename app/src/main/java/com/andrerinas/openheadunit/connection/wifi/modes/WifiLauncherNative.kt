@@ -35,7 +35,12 @@ class WifiLauncherNative : WifiLauncher {
 
     override fun hasWifiDirect() = strategy == NativeStrategy.WIFI_DIRECT
 
-    override fun hasWirelessServer() = strategy == NativeStrategy.WIFI_DIRECT
+    // Both transports, not just the P2P one. The credentials this mode hands the phone name
+    // port 5288 whichever network carries them, and the phone dials it the moment it has
+    // joined. Gated on the strategy, the hotspot route bound nothing until the handshake
+    // noticed and repaired it, so every attempt paid the port wait first and a phone
+    // reconnecting on credentials it already had found nothing listening at all.
+    override fun hasWirelessServer() = true
 
     override fun hasLocalDiscovery() = false
 
@@ -44,6 +49,9 @@ class WifiLauncherNative : WifiLauncher {
 
         handshakeManager = NativeAaHandshakeManager(service, this, service.serviceScope)
         softApCredentialsProvider = SoftApCredentialsProvider(service, service.serviceScope, settings)
+        // Above the strategy branch, not inside it: the provider resolves on IO the instant it is
+        // started, and on a unit whose access point is already up that is tens of milliseconds.
+        setupSoftAp()
 
         // Skip the whole route, not just the handshake, when the Bluetooth this unit's
         // phone is bonded to isn't reachable from here: with no Bluetooth channel there is
@@ -85,6 +93,22 @@ class WifiLauncherNative : WifiLauncher {
             handshakeManager?.stop()
     }
 
+    /**
+     * Wires the access-point transport's two callbacks.
+     *
+     * Called for every strategy, and before either transport is started. Registered inside
+     * [setupWifiDirect] it never ran on the hotspot route at all: the provider resolved the access
+     * point, published onto a latch with nobody listening, and stopped looking. The
+     * handshake then waited on credentials that had already been found, the refresh it asks for
+     * every ten seconds published into the same latch, and the unit sat there looking healthy.
+     */
+    private fun setupSoftAp() {
+        softApCredentialsProvider?.setCredentialsListener { ssid, psk, ip, bssid ->
+            onNativeCredentials(ssid, psk, ip, bssid)
+        }
+        softApCredentialsProvider?.setInvalidatedListener { handshakeManager?.invalidateCredentials() }
+    }
+
     private fun setupWifiDirect(wifiDirectManager: WifiDirectManager) {
         val commManager = App.provide(service).commManager
 
@@ -101,10 +125,6 @@ class WifiLauncherNative : WifiLauncher {
         }
         wifiDirectManager.setNativeSessionConnectedProvider { commManager.isConnected }
         wifiDirectManager.setNativeGroupInvalidatedListener { handshakeManager?.invalidateCredentials() }
-        softApCredentialsProvider?.setCredentialsListener { ssid, psk, ip, bssid ->
-            onNativeCredentials(ssid, psk, ip, bssid)
-        }
-        softApCredentialsProvider?.setInvalidatedListener { handshakeManager?.invalidateCredentials() }
     }
 
     /**
