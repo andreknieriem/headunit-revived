@@ -5,6 +5,7 @@
 - USB-Blacklist Filter to prevent the app from asking for non Android phones
 - Added: Option to disable the clock, thanks to @MrEAlderson
 - Added: French translation 🇫🇷 thanks to @phiDu-fr
+- Fix/session lifecycle and video concealment
 
 ### v.3.2.6
 - Fix settings UI crash and dpi input on older Android devices
