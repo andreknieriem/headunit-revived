@@ -2034,22 +2034,17 @@ class AapService : Service(), UsbReceiver.Listener {
                 // onCreate() already armed everything moments ago and re-running would tear
                 // down and recreate the P2P group (new random SSID/passphrase) right as it's
                 // being delivered to the phone.
-                // A successful handoff closes the AA listeners, so isActive() is false for the
-                // whole life of a working session — without the connection check below, any
-                // later ACL_CONNECTED (the phone's own Bluetooth profiles reconnecting, or one
-                // of our pokes) would tear down a session that is projecting fine.
-                // Asked of the setting, never of the active launcher. A Native user exit stops the
-                // launcher and nulls it, which is precisely the state this branch exists to
-                // recover from, so reading `active` for the mode made it unreachable exactly when
-                // it was needed. The handshake checks below still go through the launcher: a null
-                // one has no handshake running, which is the answer they want.
+                // The rest of the rule, including why the mode is asked of the setting and never
+                // of the launcher, lives on BtAutoStartRearmPolicy.
                 val sessionUp = commManager.isConnected ||
                     commManager.connectionState.value is CommManager.ConnectionState.Connecting
                 val launcher = wifiLauncherManager.active as? WifiLauncherNative
 
-                if (settings.wifiConnectionMode == WifiLauncherMode.NATIVE && !sessionUp &&
-                    launcher?.handshakeManager?.isActive() != true &&
-                    launcher?.handshakeManager?.isAttemptInFlight() != true) {
+                if (BtAutoStartRearmPolicy.shouldRearm(
+                        settings.wifiConnectionMode,
+                        sessionUp,
+                        launcher?.handshakeManager?.isActive(),
+                        launcher?.handshakeManager?.isAttemptInFlight())) {
                     AppLog.i("AapService: Bluetooth auto-start — Native AA handshake manager was stopped, re-arming.")
                     userExitedAA = false
                     userExitCooldownUntil = 0L
