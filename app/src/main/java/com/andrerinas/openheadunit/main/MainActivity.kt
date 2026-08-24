@@ -1029,6 +1029,13 @@ class MainActivity : BaseActivity() {
             unregisterReceiver(finishReceiver)
             isFinishReceiverRegistered = false
         }
+        // Registered in stopAutoConnectVideo(), so without this it outlives the activity that owns
+        // it: every destroyed instance leaves a receiver behind that answers the next recreate
+        // request by calling recreate() on an activity that is already gone.
+        if (isRecreateReceiverRegistered) {
+            unregisterReceiver(recreateReceiver)
+            isRecreateReceiverRegistered = false
+        }
         if (isFinishing) {
             AppLog.i("MainActivity finishing, resetting auto-start flag.")
             HomeFragment.resetAutoStart()
