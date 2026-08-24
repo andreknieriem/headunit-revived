@@ -29,9 +29,14 @@ enum class LinkLossTrigger {
  */
 object LinkLossTeardownPolicy {
 
+    /**
+     * @param launcher the wireless route that is armed, or null when none is. Null is a real state
+     *   rather than a missing argument: a wired session quiesces the wireless stack, and a shutdown
+     *   arriving in that window still has a session to close.
+     */
     fun shouldTearDown(
         trigger: LinkLossTrigger,
-        launcher: WifiLauncher,
+        launcher: WifiLauncher?,
         sessionIsWireless: Boolean = true
     ): Boolean = when (trigger) {
         // The whole device is going, so every route's link is going with it — USB included.
@@ -43,12 +48,12 @@ object LinkLossTeardownPolicy {
         // A USB session rides none of it and must be left alone whatever the settings say.
         LinkLossTrigger.WIFI_STATION_DISABLING ->
             sessionIsWireless &&
-                !launcher.hasWifiDirect() &&
+                launcher?.hasWifiDirect() != true &&
                 !ridesOwnAccessPoint(launcher)
     }
 
     /** The two routes where the phone sits on an access point this device is hosting. */
-    private fun ridesOwnAccessPoint(launcher: WifiLauncher): Boolean {
+    private fun ridesOwnAccessPoint(launcher: WifiLauncher?): Boolean {
         return when (launcher) {
             is WifiLauncherNative -> launcher.strategy == NativeStrategy.HOTSPOT
             is WifiLauncherHelper -> launcher.strategy == HelperStrategy.HEADUNIT_HOTSPOT

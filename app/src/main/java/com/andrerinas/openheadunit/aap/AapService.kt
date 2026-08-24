@@ -662,7 +662,11 @@ class AapService : Service(), UsbReceiver.Listener {
         pendingResult: () -> BroadcastReceiver.PendingResult
     ) {
         if (!commManager.isConnected) return
-        val launcher = wifiLauncherManager.active ?: return
+        // Not `?: return`. A wired session quiesces the wireless stack and leaves no active
+        // launcher, and a shutdown arriving in that window still has a session to close in an
+        // orderly way - which is the whole reason DEVICE_SHUTDOWN applies to USB as well. The
+        // policy takes the null and answers for it.
+        val launcher = wifiLauncherManager.active
 
         if (!LinkLossTeardownPolicy.shouldTearDown(
                 trigger,
@@ -1516,12 +1520,17 @@ class AapService : Service(), UsbReceiver.Listener {
                 serviceScope.launch {
                     delay(500)
 
-                    if (!wifiLauncherManager.forceStartDiscoveryScan()) {
-                        // Folded into a sweep that was already running — which was started for the
-                        // network we have just left. Do not cancel it; just do not make the next
-                        // one wait ten seconds either.
-                        rescanWithoutWaiting = true
-                        AppLog.i("NetworkMonitor: a scan was already in flight; the next one will not wait")
+                    when (wifiLauncherManager.forceStartDiscoveryScan()) {
+                        false -> {
+                            // Folded into a sweep that was already running — which was started for
+                            // the network we have just left. Do not cancel it; just do not make the
+                            // next one wait ten seconds either.
+                            rescanWithoutWaiting = true
+                            AppLog.i("NetworkMonitor: a scan was already in flight; the next one will not wait")
+                        }
+                        // No discovery loop on this route at all, so there is nothing to hurry.
+                        null -> AppLog.d("NetworkMonitor: no discovery loop to kick")
+                        true -> {}
                     }
                 }
             }
@@ -1642,7 +1651,10 @@ class AapService : Service(), UsbReceiver.Listener {
      * Whether this session's wireless teardown is ours to undo. Set by
      * [quiesceWirelessForWiredSession], read once by [rearmWirelessAfterWiredSession].
      */
-    @Volatile private var wirelessQuiescedForWiredSession = false
+    // Read by WifiLauncherManager.setActive, which refuses to arm the wireless stack under a live
+    // wired session.
+    @Volatile var wirelessQuiescedForWiredSession = false
+        private set
 
     /**
      * Shut the wireless stack down for the duration of a USB session. See
