@@ -560,7 +560,7 @@
     <string name="loading_screen_select_file">Datei auswählen</string>
     <string name="loading_screen_remove">Entfernen</string>
     <string name="loading_screen_recommendation">Empfohlene Auflösung: %1$dx%2$d</string>
-    <string name="loading_screen_supported_formats">Unterstützt: Bilder (PNG, JPG, BMP, WEBP, GIF) \u2022 Videos (MP4, MKV, WEBM, 3GP) \u2022 Max: 10 MB</string>
+    <string name="loading_screen_supported_formats">Unterstützt: Bilder (PNG, JPG, BMP, WEBP, GIF) • Videos (MP4, MKV, WEBM, 3GP) • Max: 10 MB</string>
     <string name="loading_screen_no_media">Kein benutzerdefiniertes Medium ausgewählt</string>
     <string name="loading_screen_file_too_large">Datei ist zu groß (max. 10 MB)</string>
     <string name="loading_screen_unsupported_format">Format nicht unterstützt. Verwenden Sie eine Bild- oder Videodatei</string>
@@ -920,4 +920,31 @@
         <item>Volkswagen</item>
         <item>Volvo</item>
     </string-array>
+
+    <!-- Auto-added missing translations -->
+    <string name="hotspot_band">Hotspot-Frequenzband</string>
+    <string name="hotspot_band_auto">Automatisch</string>
+    <string name="hotspot_band_5ghz">Nur 5 GHz</string>
+    <string name="hotspot_band_24ghz">Nur 2,4 GHz</string>
+    <string name="hotspot_band_hint">Automatisch fordert 5 GHz an und weicht auf 2,4 GHz aus. 2,4 GHz ist bis 720p zuverlässig, wähle darüber nur 5 GHz.</string>
+    <string name="wifi_direct_band">WiFi Direct Frequenzband</string>
+    <string name="wifi_direct_band_auto">Automatisch</string>
+    <string name="wifi_direct_band_5ghz">Nur 5 GHz</string>
+    <string name="wifi_direct_band_24ghz">Nur 2,4 GHz</string>
+    <string name="wifi_direct_band_hint">Automatisch fordert 5 GHz an und weicht auf 2,4 GHz aus (auf Android 9 und älter wird zuerst ein 5-GHz-Kanal angefordert). 2,4 GHz reicht bis 720p, darüber wird 5 GHz empfohlen.</string>
+    <string name="connection_issue_banner_bt_silent">Dein Telefon hat sich über Bluetooth verbunden, aber nichts von diesem Gerät gesendetes kam an. Dies ist ein Bluetooth-Problem des Headunits. Tippe hier, um auf USB, Wireless Helper oder Auto zu wechseln.</string>
+    <string name="connection_issue_banner_bssid">Dieses Gerät konnte seine eigene WLAN-MAC-Adresse (BSSID) nicht ermitteln. Tippe hier, um den Standort zu aktivieren oder die Adresse manuell einzugeben.</string>
+    <string name="connection_issue_banner_hotspot_config">Dieses Gerät kann Hotspot-Name und -Passwort nicht an die App übergeben. Tippe hier, um sie manuell einzugeben.</string>
+    <string name="connection_issue_banner_dismiss">Schließen</string>
+    <string name="connection_issue_remedy_hotspot_query">Hotspot-Name und Passwort</string>
+    <string name="preflight_title">Vor dem Verbinden</string>
+    <string name="preflight_intro">Dieses Gerät kann nicht alle erforderlichen Daten bereitstellen, sodass das Telefon nicht beitreten kann:</string>
+    <string name="preflight_item_hotspot_name">Hotspot-Name: Dieses Gerät erlaubt Apps das Auslesen nicht.</string>
+    <string name="preflight_item_hotspot_password">Hotspot-Passwort: Ohne Passwort wird dem Telefon ein offenes Netzwerk angeboten, das es ablehnt.</string>
+    <string name="preflight_item_bssid">WLAN-Adresse (BSSID): Keine Quelle auf diesem Gerät meldet eine Adresse.</string>
+    <string name="preflight_item_location">Standort ist deaktiviert, daher blendet Android die WLAN-Adresse für Apps aus. Standort aktivieren behebt das Problem.</string>
+    <string name="preflight_enter_now">Jetzt eingeben</string>
+    <string name="preflight_open_location">Standort</string>
+    <string name="preflight_later">Später</string>
+    <string name="preflight_invalid_bssid">Ungültige WLAN-Adresse. Gib sechs hexadezimale Zahlenpaare ein, z. B. 02:1A:11:FF:3C:4D.</string>
 </resources>

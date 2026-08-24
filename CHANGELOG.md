@@ -1,8 +1,9 @@
 # Changelog
-### v.3.3.0-alpha
+### v.3.3.0-beta1
 - Begin for theming of the App.
 - Refactor WiFi-Code from AapService into their own classes for better maintenance, thanks to @MrEAlderson
 - USB-Blacklist Filter to prevent the app from asking for non Android phones
+- Added: French translation 🇫🇷 thanks to @phiDu-fr
 
 ### v.3.2.6
 - Fix settings UI crash and dpi input on older Android devices

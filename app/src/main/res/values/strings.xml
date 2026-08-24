@@ -405,7 +405,7 @@
     <string name="bt_permission_denied_title">Bluetooth Permission Required</string>
     <string name="bt_permission_denied_message">Bluetooth permission is required to select paired devices. Please grant it in app settings.</string>
     <string name="overlay_permission_title">Background Start Permission</string>
-    <string name="overlay_permission_description">To allow Open Headunit to open automatically when Bluetooth connects, please enable the "Display over other apps" permission in the next screen.</string>
+    <string name="overlay_permission_description">To allow Open Headunit to open automatically when Bluetooth connects, please enable the \"Display over other apps\" permission in the next screen.</string>
     <string name="open_settings">Settings</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="right_hand_drive">Right-hand drive</string>
@@ -783,7 +783,7 @@
     <string name="auto_enable_hotspot">Auto-Enable Hotspot</string>
     <string name="auto_enable_hotspot_description">Automatically starts a Wi-Fi hotspot on this device. (Won\'t work on every device)</string>
     <string name="hotspot_warning_title">Experimental Feature</string>
-    <string name="hotspot_warning_message">This feature uses reflection and might not work on all devices. It may also require the "Modify system settings" permission to be granted manually.</string>
+    <string name="hotspot_warning_message">This feature uses reflection and might not work on all devices. It may also require the \"Modify system settings\" permission to be granted manually.</string>
     <string name="hotspot_permission_title">Permission Required</string>
     <string name="hotspot_permission_message">The hotspot feature requires the \"Modify system settings\" permission. Please enable it in the next screen.</string>
 
@@ -838,7 +838,7 @@
     <string name="loading_screen_select_file">Select file</string>
     <string name="loading_screen_remove">Remove</string>
     <string name="loading_screen_recommendation">Recommended resolution: %1$dx%2$d</string>
-    <string name="loading_screen_supported_formats">Supported: Images (PNG, JPG, BMP, WEBP, GIF) \u2022 Videos (MP4, MKV, WEBM, 3GP) \u2022 Max: 10 MB</string>
+    <string name="loading_screen_supported_formats">Supported: Images (PNG, JPG, BMP, WEBP, GIF) • Videos (MP4, MKV, WEBM, 3GP) • Max: 10 MB</string>
     <string name="loading_screen_no_media">No custom media selected</string>
     <string name="loading_screen_file_too_large">File is too large (max 10 MB)</string>
     <string name="loading_screen_unsupported_format">Unsupported format. Use an image or video file</string>
