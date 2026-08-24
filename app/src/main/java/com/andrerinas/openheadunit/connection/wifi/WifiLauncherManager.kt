@@ -5,7 +5,7 @@ import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
 
-class WifiLauncherManager(val service: AapService) {
+open class WifiLauncherManager(val service: AapService) {
 
     val sharedServices: WifiLauncherSharedServices = WifiLauncherSharedServices(service)
     var active: WifiLauncher? = null

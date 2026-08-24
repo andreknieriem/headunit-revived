@@ -13,14 +13,16 @@ enum class NativeStrategy(val id: Int) {
 
         val DEFAULT: NativeStrategy = WIFI_DIRECT
 
-
         fun byIdOrDefault(id: Int): NativeStrategy {
             for (strategy in NativeStrategy.entries) {
                 if (strategy.id == id)
                     return strategy
             }
-
             return DEFAULT
         }
+
+        fun fromSetting(setting: Int): NativeStrategy = byIdOrDefault(setting)
     }
 }
+
+typealias NativeTransport = NativeStrategy

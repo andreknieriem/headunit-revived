@@ -33,7 +33,7 @@ class WifiLauncherNative : WifiLauncher {
 
     override fun hasSameStartConfiguration(launcher: WifiLauncher) = launcher is WifiLauncherNative && launcher.strategy == strategy
 
-    override fun hasWifiDirect() = true
+    override fun hasWifiDirect() = strategy == NativeStrategy.WIFI_DIRECT
 
     override fun hasWirelessServer() = strategy == NativeStrategy.WIFI_DIRECT
 

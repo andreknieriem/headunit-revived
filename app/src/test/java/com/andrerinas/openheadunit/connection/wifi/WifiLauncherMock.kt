@@ -16,9 +16,9 @@ object WifiLauncherMock {
         val manager = mock<WifiLauncherManager>()
 
         if (mode == WifiLauncherMode.HELPER)
-            return WifiLauncherHelper(manager, helperStrategy!!)
+            return WifiLauncherHelper(manager, helperStrategy ?: HelperStrategy.DEFAULT)
         else if (mode == WifiLauncherMode.NATIVE)
-            return WifiLauncherNative(manager, nativeStrategy!!)
+            return WifiLauncherNative(manager, nativeStrategy ?: NativeStrategy.DEFAULT)
         else // we can just use factory, if strategy wouldn't default from settings
             return mode.factory(manager)
     }

@@ -1,7 +1,6 @@
-package com.andrerinas.openheadunit.aap
+package com.andrerinas.openheadunit.connection.wifi.direct
 
-import com.andrerinas.openheadunit.connection.wifi.direct.WifiP2pChannelPolicy
-import com.andrerinas.openheadunit.connection.wifi.direct.WifiP2pOperatingChannelPolicy
+import com.andrerinas.openheadunit.aap.P2pBandPreference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,7 +11,7 @@ import org.junit.Test
  * turns an operating channel into `(channel <= 14 ? 2407 : 5000) + channel * 5` and disallows
  * everything either side of it. If these numbers are wrong the driver is asked for the wrong band.
  */
-class WifiP2POperatingChannelPolicyTest {
+class WifiP2pOperatingChannelPolicyTest {
 
     private val api27 = 27
     private val api29 = 29
@@ -41,7 +40,7 @@ class WifiP2POperatingChannelPolicyTest {
 
     @Test
     fun `the 2_4 GHz conversion agrees with the one that reads a group's frequency back`() {
-        // P2pChannelPolicy converts frequency to channel and this converts channel to frequency, so
+        // WifiP2pChannelPolicy converts frequency to channel and this converts channel to frequency, so
         // a round trip has to close. It did not: this policy was written with a flat 5 MHz step and
         // answered 2477 for channel 14, which the other object would have read back as no channel
         // at all. Any future divergence between the two shows up here first.
@@ -71,38 +70,76 @@ class WifiP2POperatingChannelPolicyTest {
 
     @Test
     fun `a modern device is never given a channel, because it has the supported band request`() {
+        for (preference in P2pBandPreference.values()) {
+            assertEquals("$preference", emptyList<Int>(), WifiP2pOperatingChannelPolicy.attemptChannels(api29, preference))
+            assertEquals(
+                "$preference",
+                emptyList<Int>(),
+                WifiP2pOperatingChannelPolicy.attemptChannels(api34, preference, useUpperBand = true)
+            )
+        }
+    }
+
+    @Test
+    fun `an old device tries 5 GHz and then 2_4 GHz, so a unit that cannot host one still gets a group`() {
+        // The request is a disallowed-frequency list, so naming a band a unit cannot host used to
+        // leave it with nowhere legal to put a group rather than on the other band. Both rungs are
+        // offered before the caller gives the restriction back entirely.
+        assertEquals(listOf(36, 6), WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO))
+    }
+
+    @Test
+    fun `5 GHz only never names a 2_4 GHz channel, on either range`() {
+        assertEquals(listOf(36), WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ))
         assertEquals(
-            WifiP2pOperatingChannelPolicy.CHANNEL_UNRESTRICTED,
-            WifiP2pOperatingChannelPolicy.operatingChannel(api29, requestFiveGhz = true),
+            listOf(149),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ, useUpperBand = true)
         )
+        for (useUpper in listOf(false, true)) {
+            for (channel in WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ, useUpper)) {
+                assertTrue(
+                    "channel $channel is not 5 GHz",
+                    WifiP2pOperatingChannelPolicy.frequencyMhzFor(channel) > 5000
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `2_4 GHz only asks for one channel and never a 5 GHz one`() {
+        assertEquals(listOf(6), WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_2_4GHZ))
         assertEquals(
-            WifiP2pOperatingChannelPolicy.CHANNEL_UNRESTRICTED,
-            WifiP2pOperatingChannelPolicy.operatingChannel(api34, requestFiveGhz = true, useUpperBand = true),
+            "the upper-band flag belongs to the 5 GHz rung, which this preference never reaches",
+            listOf(6),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_2_4GHZ, useUpperBand = true)
         )
     }
 
     @Test
-    fun `the default is to ask for nothing, so an untouched install behaves as it always did`() {
-        assertEquals(
-            WifiP2pOperatingChannelPolicy.CHANNEL_UNRESTRICTED,
-            WifiP2pOperatingChannelPolicy.operatingChannel(api27, requestFiveGhz = false),
-        )
-    }
-
-    @Test
-    fun `opting in on an old device asks for channel 36`() {
-        assertEquals(36, WifiP2pOperatingChannelPolicy.operatingChannel(api27, requestFiveGhz = true))
+    fun `every rung is a channel the platform will accept`() {
+        for (preference in P2pBandPreference.values()) {
+            for (useUpper in listOf(false, true)) {
+                for (channel in WifiP2pOperatingChannelPolicy.attemptChannels(api27, preference, useUpper)) {
+                    assertTrue("$preference/$channel", WifiP2pOperatingChannelPolicy.isRequestable(channel))
+                    assertTrue(
+                        "a rung must never be the sentinel that means 'ask for nothing'",
+                        channel != WifiP2pOperatingChannelPolicy.CHANNEL_UNRESTRICTED
+                    )
+                }
+            }
+        }
     }
 
     @Test
     fun `the upper band is only reached when it is asked for`() {
         assertEquals(
-            149,
-            WifiP2pOperatingChannelPolicy.operatingChannel(api27, requestFiveGhz = true, useUpperBand = true),
+            listOf(149, 6),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, useUpperBand = true),
         )
         assertEquals(
-            WifiP2pOperatingChannelPolicy.CHANNEL_UNRESTRICTED,
-            WifiP2pOperatingChannelPolicy.operatingChannel(api27, requestFiveGhz = false, useUpperBand = true),
+            "the flag must not smuggle UNII-3 onto a preference that never asks for 5 GHz",
+            listOf(6),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_2_4GHZ, useUpperBand = true),
         )
     }
 

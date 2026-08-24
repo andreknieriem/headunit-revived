@@ -24,7 +24,7 @@ abstract class WifiLauncher(val manager: WifiLauncherManager) {
     }
 
 
-    protected val service = manager.service
+    protected val service get() = manager.service
 
-    protected val settings = App.provide(service).settings
+    protected val settings get() = App.provide(service).settings
 }
