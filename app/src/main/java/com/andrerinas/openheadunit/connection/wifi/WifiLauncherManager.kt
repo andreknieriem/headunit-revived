@@ -12,9 +12,9 @@ open class WifiLauncherManager(val service: AapService) {
         private set
 
 
-    fun isActive(): Boolean = active != null
+    val isActive: Boolean get() = active != null
 
-    fun getActiveMode(): WifiLauncherMode? = active?.mode
+    val activeMode: WifiLauncherMode? get() = active?.mode
 
     fun setActiveFromSettings(force: Boolean = false, noInfoToasts: Boolean = true) {
         val settings = App.provide(service).settings

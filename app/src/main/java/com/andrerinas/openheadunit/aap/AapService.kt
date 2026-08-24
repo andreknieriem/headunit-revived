@@ -1211,7 +1211,7 @@ class AapService : Service(), UsbReceiver.Listener {
         serviceScope.launch(Dispatchers.IO) {
             val rearmedAfterWiredSession = rearmWirelessAfterWiredSession()
 
-            if (wifiLauncherManager.getActiveMode() == WifiLauncherMode.NATIVE && !rearmedAfterWiredSession) {
+            if (wifiLauncherManager.activeMode == WifiLauncherMode.NATIVE && !rearmedAfterWiredSession) {
                 if (state.isUserExit) {
                     AppLog.i("AapService: Native AA user exit. Stopping active launcher.")
                     wifiLauncherManager.stop()
@@ -1277,7 +1277,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
         val settings = App.provide(this).settings
 
-        if (wifiLauncherManager.isActive()) {
+        if (wifiLauncherManager.isActive) {
             // Skip reconnect for user-initiated exits — the user explicitly wants to stop.
             if (state.isUserExit) {
                 AppLog.i("AapService: User exit with wirelessServer active. Not restarting discovery.")
@@ -1909,7 +1909,7 @@ class AapService : Service(), UsbReceiver.Listener {
                     val settings = App.provide(this).settings
                     val activeLauncher = wifiLauncherManager.active
 
-                    if (wifiLauncherManager.getActiveMode() != WifiLauncherMode.NATIVE || settings.wifiConnectionMode != WifiLauncherMode.NATIVE) {
+                    if (wifiLauncherManager.activeMode != WifiLauncherMode.NATIVE || settings.wifiConnectionMode != WifiLauncherMode.NATIVE) {
                         AppLog.i("AapService: Initializing Native AA mode before poke...")
                         wifiLauncherManager.setActiveFromSettings(force = true)
                     } else if (activeLauncher is WifiLauncherNative && activeLauncher.handshakeManager?.isActive() != true) {

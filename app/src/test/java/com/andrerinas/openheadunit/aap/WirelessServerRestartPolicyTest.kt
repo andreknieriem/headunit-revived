@@ -78,8 +78,11 @@ class WirelessServerRestartPolicyTest {
     fun `a port that will never bind stops being retried`() {
         val action = WirelessServerRestartPolicy.decide(
             assigned = true, alive = false, listening = false, nowMs = now + 30_000L,
-            history = WirelessServerHistory(lastRebuildAtMs = now, rebuildsInWindow = WirelessServerRestartPolicy.MAX_REBUILDS_PER_WINDOW,
-            windowStartedAtMs = now),
+            history = WirelessServerHistory(
+                lastRebuildAtMs = now,
+                rebuildsInWindow = WirelessServerRestartPolicy.MAX_REBUILDS_PER_WINDOW,
+                windowStartedAtMs = now
+            ),
         )
         assertEquals(Action.BACKOFF, action)
     }
@@ -94,8 +97,11 @@ class WirelessServerRestartPolicyTest {
             Action.REBUILD,
             WirelessServerRestartPolicy.decide(
                 assigned = true, alive = false, listening = false, nowMs = muchLater,
-                history = WirelessServerHistory(lastRebuildAtMs = now, rebuildsInWindow = WirelessServerRestartPolicy.MAX_REBUILDS_PER_WINDOW,
-                windowStartedAtMs = now),
+                history = WirelessServerHistory(
+                    lastRebuildAtMs = now,
+                    rebuildsInWindow = WirelessServerRestartPolicy.MAX_REBUILDS_PER_WINDOW,
+                    windowStartedAtMs = now
+                ),
             ),
         )
         assertEquals(1, WirelessServerRestartPolicy.nextRebuildCount(muchLater, now, 3))

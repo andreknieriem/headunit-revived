@@ -41,8 +41,8 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("advanced-settings-active", value).apply() }
 
     var allowedDevices: Set<String>
-        get() = prefs.getStringSet("allow-devices", null)?.toSet() ?: emptySet()
-        set(devices) {
+        @Synchronized get() = prefs.getStringSet("allow-devices", null)?.toSet() ?: emptySet()
+        @Synchronized set(devices) {
             prefs.edit().putStringSet("allow-devices", devices).apply()
         }
 
@@ -757,8 +757,8 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("listen-for-usb-devices", value).apply() }
 
     var usbBlacklist: Set<String>
-        get() = prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()
-        set(value) { prefs.edit().putStringSet("usb-blacklist", value).apply() }
+        @Synchronized get() = prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()
+        @Synchronized set(value) { prefs.edit().putStringSet("usb-blacklist", value).apply() }
 
     fun formatUsbVidPidKey(vid: Int, pid: Int): String {
         return String.format(java.util.Locale.US, "%04x:%04x", vid, pid).lowercase()
@@ -768,23 +768,26 @@ class Settings(private val context: Context) {
         return String.format(java.util.Locale.US, "VID: 0x%04X, PID: 0x%04X", vid, pid)
     }
 
+    @Synchronized
     fun isUsbDeviceBlacklisted(vid: Int, pid: Int): Boolean {
         val key = formatUsbVidPidKey(vid, pid)
         return usbBlacklist.contains(key)
     }
 
+    @Synchronized
     fun addUsbDeviceToBlacklist(vid: Int, pid: Int) {
         val key = formatUsbVidPidKey(vid, pid)
-        val set = usbBlacklist.toMutableSet()
+        val set = (prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()).toMutableSet()
         set.add(key)
-        usbBlacklist = set
+        prefs.edit().putStringSet("usb-blacklist", set).apply()
     }
 
+    @Synchronized
     fun removeUsbDeviceFromBlacklist(vid: Int, pid: Int) {
         val key = formatUsbVidPidKey(vid, pid)
-        val set = usbBlacklist.toMutableSet()
+        val set = (prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()).toMutableSet()
         set.remove(key)
-        usbBlacklist = set
+        prefs.edit().putStringSet("usb-blacklist", set).apply()
     }
 
     var showToastMessages: Boolean

@@ -49,8 +49,11 @@ class LinkLossTeardownPolicyTest {
         assertFalse(
             LinkLossTeardownPolicy.shouldTearDown(
                 LinkLossTrigger.WIFI_STATION_DISABLING,
-                WifiLauncherMock.create(WifiLauncherMode.NATIVE,  HelperStrategy.COMMON_WIFI,
-                NativeStrategy.WIFI_DIRECT)
+                WifiLauncherMock.create(
+                    WifiLauncherMode.NATIVE,
+                    HelperStrategy.COMMON_WIFI,
+                    NativeStrategy.WIFI_DIRECT
+                )
             )
         )
         assertFalse(
@@ -94,7 +97,9 @@ class LinkLossTeardownPolicyTest {
         // a USB session that vanishes as by a wireless one.
         assertTrue(
             LinkLossTeardownPolicy.shouldTearDown(
-                LinkLossTrigger.DEVICE_SHUTDOWN, WifiLauncherMock.create(WifiLauncherMode.AUTO,  HelperStrategy.COMMON_WIFI), sessionIsWireless = false
+                LinkLossTrigger.DEVICE_SHUTDOWN,
+                WifiLauncherMock.create(WifiLauncherMode.AUTO, HelperStrategy.COMMON_WIFI),
+                sessionIsWireless = false
             )
         )
     }

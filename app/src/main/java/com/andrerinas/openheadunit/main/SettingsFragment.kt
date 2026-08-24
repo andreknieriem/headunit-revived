@@ -1962,7 +1962,7 @@ class SettingsFragment : Fragment() {
             stableId = "hideClock",
             nameResId = R.string.hide_clock_label,
             descriptionResId = null,
-            isChecked = pendingHideClock!!,
+            isChecked = pendingHideClock ?: settings.hideClock,
             onCheckedChanged = { isChecked ->
                 pendingHideClock = isChecked
                 checkChanges()
@@ -1974,7 +1974,7 @@ class SettingsFragment : Fragment() {
             stableId = "hidePhoneSignal",
             nameResId = R.string.hide_phone_signal_label,
             descriptionResId = R.string.might_broken_on_newer_aa_versions,
-            isChecked = pendingHidePhoneSignal!!,
+            isChecked = pendingHidePhoneSignal ?: settings.hidePhoneSignal,
             onCheckedChanged = { isChecked ->
                 pendingHidePhoneSignal = isChecked
                 checkChanges()
@@ -1986,7 +1986,7 @@ class SettingsFragment : Fragment() {
             stableId = "hideBatteryLevel",
             nameResId = R.string.hide_battery_level_label,
             descriptionResId = R.string.might_broken_on_newer_aa_versions,
-            isChecked = pendingHideBatteryLevel!!,
+            isChecked = pendingHideBatteryLevel ?: settings.hideBatteryLevel,
             onCheckedChanged = { isChecked ->
                 pendingHideBatteryLevel = isChecked
                 checkChanges()

@@ -14,7 +14,6 @@ import com.andrerinas.openheadunit.decoder.VideoDecoder
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.HeadUnitScreenConfig
 import com.google.protobuf.Message
-import java.util.BitSet
 
 class ServiceDiscoveryResponse(private val context: Context)
     : AapMessage(Channel.ID_CTR, Control.ControlMsgType.MESSAGE_SERVICE_DISCOVERY_RESPONSE_VALUE, makeProto(context)) {
@@ -238,10 +237,9 @@ class ServiceDiscoveryResponse(private val context: Context)
             }.build()
             services.add(navigationStatus)
 
-            var sessionConfig = 0
-            if (settings.hideClock) sessionConfig = sessionConfig or 0x01
-            if (settings.hidePhoneSignal) sessionConfig = sessionConfig or 0x02
-            if (settings.hideBatteryLevel) sessionConfig = sessionConfig or 0x04
+            val sessionConfig = (if (settings.hideClock) 0x01 else 0) or
+                (if (settings.hidePhoneSignal) 0x02 else 0) or
+                (if (settings.hideBatteryLevel) 0x04 else 0)
             // 0x08 is "CAN_PLAY_NATIVE_MEDIA_DURING_VR"
 
             return Control.ServiceDiscoveryResponse.newBuilder().apply {

@@ -132,13 +132,13 @@ class WirelessServer(
                         if (commManager.isConnected) {
                             AppLog.w("WirelessServer: Already connected, dropping client from ${clientSocket.inetAddress}")
                             withContext(Dispatchers.IO) {
-                                try { clientSocket.close() } catch (e: Exception) {}
+                                try { clientSocket.close() } catch (e: Exception) { AppLog.d("WirelessServer: Error closing dropped client socket", e) }
                             }
-                        } else if (SystemClock.elapsedRealtime() <  service.userExitCooldownUntil) {
+                        } else if (SystemClock.elapsedRealtime() < service.userExitCooldownUntil) {
                             // [FIX] User just exited AA — reject the instant reconnection.
                             AppLog.w("WirelessServer: Rejecting connection from ${clientSocket.inetAddress} — user exit cooldown active (${service.userExitCooldownUntil - SystemClock.elapsedRealtime()}ms remaining)")
                             withContext(Dispatchers.IO) {
-                                try { clientSocket.close() } catch (_: Exception) {}
+                                try { clientSocket.close() } catch (e: Exception) { AppLog.d("WirelessServer: Error closing cooldown client socket", e) }
                             }
                         } else {
                             AppLog.i("WirelessServer: Accepted client connection from ${clientSocket.inetAddress}. Passing to CommManager...")
@@ -155,7 +155,7 @@ class WirelessServer(
             } finally {
                 isListening = false
                 unregisterNsd()
-                try { serverSocket?.close() } catch (_: Exception) {}
+                try { serverSocket?.close() } catch (e: Exception) { AppLog.d("WirelessServer: Error closing server socket in finally", e) }
             }
         }
     }
@@ -203,6 +203,6 @@ class WirelessServer(
         job?.cancel()
         job = null
         // Close the socket to unblock the accept() call in the coroutine.
-        try { serverSocket?.close() } catch (e: Exception) {}
+        try { serverSocket?.close() } catch (e: Exception) { AppLog.d("WirelessServer: Error closing server socket in stopServer", e) }
     }
 }

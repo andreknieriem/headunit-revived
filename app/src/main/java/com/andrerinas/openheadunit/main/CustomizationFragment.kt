@@ -614,16 +614,21 @@ class CustomizationFragment : Fragment() {
             presetContainer.addView(rowLayout)
         }
 
-        val textWatcher = hexEditText.doOnTextChanged { text, _, _, _ ->
-            if (isInternalTextChange) return@doOnTextChanged
-            val input = text?.toString()?.trim() ?: ""
-            if (input.isNotEmpty()) {
-                val parsed = ColorUtils.parseColorSafely(input, -1)
-                if (parsed != -1) {
-                    updateDialogPreview(parsed)
+        val textWatcher = object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
+                if (isInternalTextChange) return
+                val input = text?.toString()?.trim() ?: ""
+                if (input.isNotEmpty()) {
+                    val parsed = ColorUtils.parseColorSafely(input, -1)
+                    if (parsed != -1) {
+                        updateDialogPreview(parsed)
+                    }
                 }
             }
+            override fun afterTextChanged(s: android.text.Editable?) {}
         }
+        hexEditText.addTextChangedListener(textWatcher)
 
         MaterialAlertDialogBuilder(ctx)
             .setView(dialogView)

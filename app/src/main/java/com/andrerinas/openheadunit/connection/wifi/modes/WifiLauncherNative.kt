@@ -35,12 +35,12 @@ class WifiLauncherNative : WifiLauncher {
 
     override fun hasWifiDirect() = strategy == NativeStrategy.WIFI_DIRECT
 
-    override fun hasWirelessServer() = strategy == NativeStrategy.WIFI_DIRECT
+    override fun hasWirelessServer() = true
 
     override fun hasLocalDiscovery() = false
 
     override fun start(noInfoToasts: Boolean) {
-        val wifiDirect = manager.sharedServices.wifiDirectManager!!
+        val wifiDirect = manager.sharedServices.wifiDirectManager
 
         handshakeManager = NativeAaHandshakeManager(service, this, service.serviceScope)
         softApCredentialsProvider = SoftApCredentialsProvider(service, service.serviceScope, settings)
@@ -60,7 +60,7 @@ class WifiLauncherNative : WifiLauncher {
                 // itself is the user's to switch on; the provider only resolves and watches it.
                 AppLog.i("AapService: Native AA on the head unit hotspot — resolving access point credentials.")
                 softApCredentialsProvider?.start()
-            } else {
+            } else if (wifiDirect != null) {
                 // Start WiFi Direct as a "quiet host" (P2P Group for phone to join)
                 // We let WifiDirectManager handle the WiFi state (enabling if needed)
                 setupWifiDirect(wifiDirect)
