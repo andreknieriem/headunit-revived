@@ -3,6 +3,7 @@
 - Begin for theming of the App.
 - Refactor WiFi-Code from AapService into their own classes for better maintenance, thanks to @MrEAlderson
 - USB-Blacklist Filter to prevent the app from asking for non Android phones
+- Added: Option to disable the clock, thanks to @MrEAlderson
 - Added: French translation 🇫🇷 thanks to @phiDu-fr
 
 ### v.3.2.6

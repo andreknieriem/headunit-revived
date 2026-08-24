@@ -35,7 +35,7 @@ class WifiLauncherNative : WifiLauncher {
 
     override fun hasWifiDirect() = strategy == NativeStrategy.WIFI_DIRECT
 
-    override fun hasWirelessServer() = true
+    override fun hasWirelessServer() = strategy == NativeStrategy.WIFI_DIRECT
 
     override fun hasLocalDiscovery() = false
 
