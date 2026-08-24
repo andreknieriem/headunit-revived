@@ -73,10 +73,15 @@ open class WifiLauncherManager(val service: AapService) {
         active?.start(noInfoToasts)
     }
 
+    /**
+     * Tears down the active launcher and, at [WifiLauncherStopSequence.LAST], everything shared.
+     *
+     * Not gated on there being an active launcher. Self Mode binds the wireless server directly,
+     * without arming a mode, so an early return here left the port bound after the session ended
+     * and after onDestroy. Each of the shared stops already handles being called with nothing
+     * running.
+     */
     fun stop(seq: WifiLauncherStopSequence = WifiLauncherStopSequence.ANY) {
-        if (active == null)
-            return
-
         active?.stop(seq)
 
         if (seq.handledAt(WifiLauncherStopSequence.LAST)) {

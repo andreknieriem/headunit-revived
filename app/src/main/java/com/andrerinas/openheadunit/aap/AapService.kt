@@ -74,6 +74,7 @@ import com.andrerinas.openheadunit.connection.wifi.WifiLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherStopSequence
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherHelper
+import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherManual
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherNative
 import com.andrerinas.openheadunit.connection.wifi.server.WirelessServer
 import com.andrerinas.openheadunit.main.BackgroundNotification
@@ -1649,10 +1650,10 @@ class AapService : Service(), UsbReceiver.Listener {
 
     /**
      * Whether this session's wireless teardown is ours to undo. Set by
-     * [quiesceWirelessForWiredSession], read once by [rearmWirelessAfterWiredSession].
+     * [quiesceWirelessForWiredSession], cleared by [rearmWirelessAfterWiredSession], and read by
+     * `WifiLauncherManager.setActive`, which refuses to arm the wireless stack while it is true and
+     * a wired session is live.
      */
-    // Read by WifiLauncherManager.setActive, which refuses to arm the wireless stack under a live
-    // wired session.
     @Volatile var wirelessQuiescedForWiredSession = false
         private set
 
@@ -2060,9 +2061,23 @@ class AapService : Service(), UsbReceiver.Listener {
                 if (endpointId != null) {
                     AppLog.i("AapService: Connecting to Nearby endpoint $endpointId")
 
-                    val launcher = WifiLauncherHelper(wifiLauncherManager, HelperStrategy.NEARBY_DEVICES)
-                    wifiLauncherManager.setActive(launcher, force = true)
-                    launcher.nearbyManager?.connectToEndpoint(endpointId)
+                    // The endpoint id came from the advertiser that is running. Replacing the
+                    // launcher first stopped it - and stopDiscovery() with it - then handed the id
+                    // to a client that had discovered nothing, so requestConnection() was asking
+                    // about an endpoint it had never seen. It also switched a user in Auto or
+                    // Native mode over to Helper/Nearby without being asked.
+                    //
+                    // Only when nothing is running is a launcher built, and then the endpoint is
+                    // stale by the same argument, so the fresh scan is all that can be offered.
+                    val active = wifiLauncherManager.active as? WifiLauncherHelper
+                    if (active != null && active.strategy == HelperStrategy.NEARBY_DEVICES) {
+                        active.nearbyManager?.connectToEndpoint(endpointId)
+                    } else {
+                        AppLog.i("AapService: Nearby is not the running transport — arming it before connecting.")
+                        val launcher = WifiLauncherHelper(wifiLauncherManager, HelperStrategy.NEARBY_DEVICES)
+                        wifiLauncherManager.setActive(launcher, force = true)
+                        launcher.nearbyManager?.connectToEndpoint(endpointId)
+                    }
                 }
             }
             ACTION_DISCONNECT            -> {
@@ -2749,7 +2764,19 @@ class AapService : Service(), UsbReceiver.Listener {
             }
 
             AppLog.i("SelfMode: AA < 17.4 detected. Starting WirelessServer on 5288 and running legacy triggers...")
-            wifiLauncherManager.setActive(WifiLauncherMode.NATIVE)
+            // The port, not a wireless mode. Self Mode projects this device's own Android Auto over
+            // the loopback address; it needs 5288 bound and nothing else. Arming the Native
+            // launcher instead replaced whatever mode the user had configured, created a P2P group
+            // and opened the RFCOMM listeners and poke loop it has no use for, could be refused
+            // outright by the boot-loop guard, no-opped for a user already in Native mode because
+            // it did not force, and on the hotspot strategy never bound 5288 at all - while the
+            // magic intent below still points Gearhead at 127.0.0.1:5288.
+            //
+            // The launcher argument only decides whether an NSD record is registered, and Self Mode
+            // wants none: WifiLauncherManual answers false and starts nothing of its own.
+            wifiLauncherManager.sharedServices.startWirelessServer(
+                wifiLauncherManager.active ?: WifiLauncherManual(wifiLauncherManager)
+            )
 
             val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && connectivityManager.activeNetwork == null) {
