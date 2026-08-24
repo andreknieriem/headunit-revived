@@ -242,8 +242,8 @@
     <string name="reset_settings">Réinitialiser aux valeurs par défaut</string>
     <string name="reset_settings_confirm">Es-tu sûr de vouloir réinitialiser tous les paramètres à leurs valeurs par défaut ? Cela redémarrera l\'application.</string>
     <string name="reset_settings_description">Efface toute la configuration, les données mises en cache et les préférences d\'auto-connexion. L\'application redémarrera pour appliquer les paramètres d\'usine.</string>
-    <string name="gps_for_navigation">Gps pour la navigation</string>
-    <string name="gps_for_navigation_description">Utiliser le Gps pour la navigation</string>
+    <string name="gps_for_navigation">GPS pour la navigation</string>
+    <string name="gps_for_navigation_description">Utiliser le GPS pour la navigation</string>
     <string name="enabled">Activé</string>
     <string name="disabled">Désactivé</string>
     <string name="resolution">Résolution</string>

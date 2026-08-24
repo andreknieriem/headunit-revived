@@ -151,6 +151,6 @@ class UserExitHotspotPolicyTest {
         }
         // Not vacuous: each does claim something.
         assertTrue(UserExitHotspotPolicy.usesHeadUnitHotspot(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.HOTSPOT))
-        assertTrue(WifiModePolicy.usesWifiDirect(3, 0, NativeStrategy.WIFI_DIRECT))
+        assertTrue(WifiModePolicy.usesWifiDirect(WifiLauncherMode.NATIVE, 0, NativeStrategy.WIFI_DIRECT))
     }
 }

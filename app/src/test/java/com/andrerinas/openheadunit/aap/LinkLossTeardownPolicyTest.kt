@@ -21,7 +21,7 @@ class LinkLossTeardownPolicyTest {
                     val launcher = WifiLauncherMock.create(
                         WifiLauncherMode.byIdOrDefault(mode),
                         HelperStrategy.byIdOrDefault(strategy),
-                        transport);
+                        transport)
 
                     assertTrue(
                         "mode=$mode strategy=$strategy transport=$transport",
