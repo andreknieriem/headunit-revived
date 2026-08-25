@@ -75,6 +75,8 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 - Added: Option to disable the clock, thanks to @MrEAlderson
 - Added: French translation 🇫🇷 thanks to @phiDu-fr
 - Fix/session lifecycle and video concealment
+- Video: pace the transport thread instead of shedding reference frames
+- UI: a destroyed activity stops listening, and a recycled row keeps its subtitle
 
 ### v.3.2.6
 - Fix settings UI crash and dpi input on older Android devices
