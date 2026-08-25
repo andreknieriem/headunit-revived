@@ -1,5 +1,6 @@
 package com.andrerinas.openheadunit.aap
 
+import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApCredentials
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

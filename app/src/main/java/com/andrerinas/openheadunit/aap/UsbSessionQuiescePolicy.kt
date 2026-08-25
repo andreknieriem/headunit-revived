@@ -49,6 +49,25 @@ object UsbSessionQuiescePolicy {
     fun shouldAcquireWifiLock(sessionIsWireless: Boolean): Boolean = sessionIsWireless
 
     /**
+     * Whether to refuse a request to arm the wireless stack.
+     *
+     * The mirror of [shouldQuiesce], for the window between it and [shouldRearmWireless]. Every
+     * automatic entry point reaches wireless bring-up - a settings save, the WiFi auto-start
+     * receiver, the Bluetooth auto-start that one of our own pokes can raise - and none of them
+     * knows a wired session is up. Without this, the stack we just took down comes back underneath
+     * it, and on the Native route that means recreating the P2P group and restarting the poke loop
+     * beside a session that is already projecting.
+     *
+     * All three conditions matter: a live wireless session must not be refused, and neither must a
+     * bring-up on a unit that never quiesced anything.
+     */
+    fun shouldRefuseBringUp(
+        quiescedForThisSession: Boolean,
+        sessionIsLive: Boolean,
+        sessionIsWireless: Boolean
+    ): Boolean = quiescedForThisSession && sessionIsLive && !sessionIsWireless
+
+    /**
      * Whether a disconnect has to put the wireless stack back.
      *
      * True only if we were the ones who took it down. Unplugging must return the unit to whatever

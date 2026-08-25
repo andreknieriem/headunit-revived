@@ -1,6 +1,8 @@
 package com.andrerinas.openheadunit.aap
 
-import com.andrerinas.openheadunit.aap.WirelessServerRestartPolicy.Action
+import com.andrerinas.openheadunit.connection.wifi.server.WirelessServerHistory
+import com.andrerinas.openheadunit.connection.wifi.server.WirelessServerRestartPolicy
+import com.andrerinas.openheadunit.connection.wifi.server.WirelessServerRestartPolicy.Action
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -23,7 +25,7 @@ class WirelessServerRestartPolicyTest {
             Action.NO_OP,
             WirelessServerRestartPolicy.decide(
                 assigned = true, alive = true, listening = true, nowMs = now,
-                lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never,
+                history = WirelessServerHistory(lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never),
             ),
         )
     }
@@ -34,7 +36,7 @@ class WirelessServerRestartPolicyTest {
             Action.START,
             WirelessServerRestartPolicy.decide(
                 assigned = false, alive = false, listening = false, nowMs = now,
-                lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never,
+                history = WirelessServerHistory(lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never),
             ),
         )
     }
@@ -47,7 +49,7 @@ class WirelessServerRestartPolicyTest {
             Action.REBUILD,
             WirelessServerRestartPolicy.decide(
                 assigned = true, alive = false, listening = false, nowMs = now,
-                lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never,
+                history = WirelessServerHistory(lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never),
             ),
         )
     }
@@ -61,7 +63,7 @@ class WirelessServerRestartPolicyTest {
             val at = now + attempt * 4_000L
             val action = WirelessServerRestartPolicy.decide(
                 assigned = true, alive = false, listening = false, nowMs = at,
-                lastRebuildAtMs = lastRebuild, rebuildsInWindow = 1, windowStartedAtMs = now,
+                history = WirelessServerHistory(lastRebuildAtMs = lastRebuild, rebuildsInWindow = 1, windowStartedAtMs = now),
             )
             if (at - lastRebuild < WirelessServerRestartPolicy.REBUILD_COOLDOWN_MS) {
                 assertEquals("attempt $attempt at +${at - now}ms", Action.BACKOFF, action)
@@ -76,8 +78,11 @@ class WirelessServerRestartPolicyTest {
     fun `a port that will never bind stops being retried`() {
         val action = WirelessServerRestartPolicy.decide(
             assigned = true, alive = false, listening = false, nowMs = now + 30_000L,
-            lastRebuildAtMs = now, rebuildsInWindow = WirelessServerRestartPolicy.MAX_REBUILDS_PER_WINDOW,
-            windowStartedAtMs = now,
+            history = WirelessServerHistory(
+                lastRebuildAtMs = now,
+                rebuildsInWindow = WirelessServerRestartPolicy.MAX_REBUILDS_PER_WINDOW,
+                windowStartedAtMs = now
+            ),
         )
         assertEquals(Action.BACKOFF, action)
     }
@@ -92,8 +97,11 @@ class WirelessServerRestartPolicyTest {
             Action.REBUILD,
             WirelessServerRestartPolicy.decide(
                 assigned = true, alive = false, listening = false, nowMs = muchLater,
-                lastRebuildAtMs = now, rebuildsInWindow = WirelessServerRestartPolicy.MAX_REBUILDS_PER_WINDOW,
-                windowStartedAtMs = now,
+                history = WirelessServerHistory(
+                    lastRebuildAtMs = now,
+                    rebuildsInWindow = WirelessServerRestartPolicy.MAX_REBUILDS_PER_WINDOW,
+                    windowStartedAtMs = now
+                ),
             ),
         )
         assertEquals(1, WirelessServerRestartPolicy.nextRebuildCount(muchLater, now, 3))
@@ -115,7 +123,7 @@ class WirelessServerRestartPolicyTest {
             Action.REBUILD,
             WirelessServerRestartPolicy.decide(
                 assigned = true, alive = false, listening = false, nowMs = 500L,
-                lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never,
+                history = WirelessServerHistory(lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never),
             ),
         )
     }
@@ -142,7 +150,7 @@ class WirelessServerRestartPolicyTest {
             Action.AWAIT,
             WirelessServerRestartPolicy.decide(
                 assigned = true, alive = true, listening = false, nowMs = now,
-                lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never,
+                history = WirelessServerHistory(lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never),
             ),
         )
     }
@@ -155,7 +163,7 @@ class WirelessServerRestartPolicyTest {
             Action.NO_OP,
             WirelessServerRestartPolicy.decide(
                 assigned = true, alive = false, listening = false, nowMs = now, sessionBusy = true,
-                lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never,
+                history = WirelessServerHistory(lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never),
             ),
         )
     }
@@ -168,7 +176,7 @@ class WirelessServerRestartPolicyTest {
                 for (listening in listOf(false, true)) {
                     seen += WirelessServerRestartPolicy.decide(
                         assigned = assigned, alive = alive, listening = listening, nowMs = now,
-                        lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never,
+                        history = WirelessServerHistory(lastRebuildAtMs = never, rebuildsInWindow = 0, windowStartedAtMs = never),
                     )
                 }
             }

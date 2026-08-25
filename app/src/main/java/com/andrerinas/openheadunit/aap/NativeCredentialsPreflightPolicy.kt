@@ -1,5 +1,9 @@
 package com.andrerinas.openheadunit.aap
 
+import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApBssidPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApCredentials
+import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeCredentialsPolicy
+
 /** One of the values the Native AA handshake has to hand the phone. */
 enum class CredentialField {
     /** The access point's name. Hotspot transport only. */

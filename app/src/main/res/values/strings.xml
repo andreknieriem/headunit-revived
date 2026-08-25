@@ -179,6 +179,12 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="allowed">Allowed</string>
     <string name="ignored">Ignored</string>
+    <string name="blacklisted">Blacklisted</string>
+    <string name="usb_blacklist_title">USB Device Blacklist</string>
+    <string name="usb_blacklist_description">Devices in the blacklist will be completely ignored on connection (no auto-start, no prompts).</string>
+    <string name="add_to_blacklist">Add to Blacklist</string>
+    <string name="remove_from_blacklist">Remove from Blacklist</string>
+    <string name="usb_device_action_title">USB Device Action</string>
     <string name="exit">Exit</string>
     <string name="video">Android Auto</string>
     <string name="self_mode">Self Mode</string>
@@ -219,6 +225,29 @@
     <string name="use_gradient_background_description_on_auto">The app draws its own background with the gradient circle centered. Does not apply to Extreme Dark mode</string>
     <string name="use_gradient_background_description_off_auto">The app\'s classic background is being used. Does not apply to Extreme Dark mode</string>
     <string name="category_dark_mode">Dark Mode</string>
+    <string name="category_theming">Theming</string>
+    <string name="customization_title">Customization</string>
+    <string name="customization_description">Customize home screen background and visual appearance</string>
+    <string name="home_background_image">Background Image</string>
+    <string name="home_background_image_description">Choose a custom image for the main home screen</string>
+    <string name="home_background_default">Default (bg.png)</string>
+    <string name="home_background_custom">Custom Image</string>
+    <string name="btn_choose_image">Choose Image</string>
+    <string name="btn_reset_default">Reset to Default</string>
+    <string name="home_button_colors">Button Colors &amp; Gradients</string>
+    <string name="home_button_colors_description">Customize the colors and gradients of the 4 home screen buttons</string>
+    <string name="btn_color_self_mode">Self Mode Button</string>
+    <string name="btn_color_usb">USB Button</string>
+    <string name="btn_color_wifi">WiFi Button</string>
+    <string name="btn_color_settings">Settings Button</string>
+    <string name="btn_reset_colors">Reset All Button Colors</string>
+    <string name="pick_color_title">Pick Button Color</string>
+    <string name="color_preset_default">Default</string>
+    <string name="color_custom_hex">Hex Color</string>
+    <string name="home_button_scale">Button Size</string>
+    <string name="home_button_scale_description">Adjust the size of the 4 home screen buttons</string>
+    <string name="home_button_scale_preview">Live Home Screen Preview</string>
+    <string name="btn_reset_scale">Reset Button Size</string>
     <string name="category_automation">Automation</string>
     <string name="dark_mode_settings">Dark Mode Settings</string>
     <string name="app_theme_short">App</string>
@@ -376,7 +405,7 @@
     <string name="bt_permission_denied_title">Bluetooth Permission Required</string>
     <string name="bt_permission_denied_message">Bluetooth permission is required to select paired devices. Please grant it in app settings.</string>
     <string name="overlay_permission_title">Background Start Permission</string>
-    <string name="overlay_permission_description">To allow Open Headunit to open automatically when Bluetooth connects, please enable the "Display over other apps" permission in the next screen.</string>
+    <string name="overlay_permission_description">To allow Open Headunit to open automatically when Bluetooth connects, please enable the \"Display over other apps\" permission in the next screen.</string>
     <string name="open_settings">Settings</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="right_hand_drive">Right-hand drive</string>
@@ -694,6 +723,7 @@
     <string name="p2p_legacy_5ghz_upper_description" translatable="false">Asks for channel 149 instead of 36. Try only if 36 fails, since regions allow one range or the other.</string>
     <string name="debug_video_low_latency" translatable="false">Request decoder low-latency mode</string>
     <string name="debug_video_low_latency_description" translatable="false">Sets the vendor low-latency MediaFormat key when configuring the video decoder. Falls back automatically if the decoder rejects it.</string>
+    <string name="debug_video_feed_hold" translatable="false">Simulate a slow decoder</string>
     <string name="show_fps_counter_description">Display a real-time FPS overlay in the top-left corner during projection.</string>
 
     <!-- Auto-start permission strings -->
@@ -754,7 +784,7 @@
     <string name="auto_enable_hotspot">Auto-Enable Hotspot</string>
     <string name="auto_enable_hotspot_description">Automatically starts a Wi-Fi hotspot on this device. (Won\'t work on every device)</string>
     <string name="hotspot_warning_title">Experimental Feature</string>
-    <string name="hotspot_warning_message">This feature uses reflection and might not work on all devices. It may also require the "Modify system settings" permission to be granted manually.</string>
+    <string name="hotspot_warning_message">This feature uses reflection and might not work on all devices. It may also require the \"Modify system settings\" permission to be granted manually.</string>
     <string name="hotspot_permission_title">Permission Required</string>
     <string name="hotspot_permission_message">The hotspot feature requires the \"Modify system settings\" permission. Please enable it in the next screen.</string>
 
@@ -809,7 +839,7 @@
     <string name="loading_screen_select_file">Select file</string>
     <string name="loading_screen_remove">Remove</string>
     <string name="loading_screen_recommendation">Recommended resolution: %1$dx%2$d</string>
-    <string name="loading_screen_supported_formats">Supported: Images (PNG, JPG, BMP, WEBP, GIF) \u2022 Videos (MP4, MKV, WEBM, 3GP) \u2022 Max: 10 MB</string>
+    <string name="loading_screen_supported_formats">Supported: Images (PNG, JPG, BMP, WEBP, GIF) • Videos (MP4, MKV, WEBM, 3GP) • Max: 10 MB</string>
     <string name="loading_screen_no_media">No custom media selected</string>
     <string name="loading_screen_file_too_large">File is too large (max 10 MB)</string>
     <string name="loading_screen_unsupported_format">Unsupported format. Use an image or video file</string>
@@ -965,4 +995,15 @@
     <string name="rename_notice_title">Our name is changing to Open Headunit</string>
     <string name="rename_notice_message">Headunit Revived is growing, thanks to you, and it is turning into something of its own: Open Headunit. We are rolling the new name out over the next updates, so you may still see the old name in some places for a while.\n\nSame app, same people behind it, and all your settings stay exactly as they are.</string>
     <string name="rename_notice_button">Got it</string>
+    <string name="category_ui">UI</string>
+    <string name="hide_phone_signal_label">Hide the Phone\'s Signal</string>
+    <string name="hide_battery_level_label">Hide the Phone\'s Battery Level</string>
+    <string name="hide_clock_label">Hide the Clock</string>
+    <string name="might_broken_on_newer_aa_versions">This functionality might not work on newer versions of Android Auto</string>
+    <string name="auto_connect_delay">Auto-Connect Delay</string>
+    <string name="auto_connect_delay_description">Wait before attempting to connect on startup (useful if Wi-Fi needs time to wake up)</string>
+    <string name="auto_connect_delay_none">None (Instant)</string>
+    <string name="auto_connect_delay_seconds_format">%d s</string>
+    <string name="auto_connect_delay_custom">Custom…</string>
+    <string name="auto_connect_delay_summary_format">%1$s (%2$ds delay)</string>
 </resources>

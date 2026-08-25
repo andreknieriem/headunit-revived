@@ -1,5 +1,8 @@
 package com.andrerinas.openheadunit.aap
 
+import com.andrerinas.openheadunit.connection.wifi.modes.native.ApBand
+import com.andrerinas.openheadunit.connection.wifi.modes.native.HotspotBandPreference
+import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApBandPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

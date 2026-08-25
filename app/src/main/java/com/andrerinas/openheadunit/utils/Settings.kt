@@ -14,6 +14,9 @@ import com.andrerinas.openheadunit.aap.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
+import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeStrategy
+import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 
 class Settings(private val context: Context) {
 
@@ -33,14 +36,18 @@ class Settings(private val context: Context) {
         return allowDevices.contains(deviceCompat.uniqueName)
     }
 
+    var isAdvancedSettingsActive: Boolean
+        get() = prefs.getBoolean("advanced-settings-active", false)
+        set(value) { prefs.edit().putBoolean("advanced-settings-active", value).apply() }
+
     var allowedDevices: Set<String>
-        get() = prefs.getStringSet("allow-devices", HashSet<String>())!!
-        set(devices) {
+        @Synchronized get() = prefs.getStringSet("allow-devices", null)?.toSet() ?: emptySet()
+        @Synchronized set(devices) {
             prefs.edit().putStringSet("allow-devices", devices).apply()
         }
 
     var networkAddresses: Set<String>
-        get() = prefs.getStringSet("network-addresses", HashSet<String>())!!
+        get() = prefs.getStringSet("network-addresses", null)?.toSet() ?: emptySet()
         set(addrs) {
             prefs.edit().putStringSet("network-addresses", addrs).apply()
         }
@@ -444,6 +451,24 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("debug-video-low-latency", false)
         set(value) { prefs.edit().putBoolean("debug-video-low-latency", value).apply() }
 
+    /**
+     * Holds the feed thread for this many milliseconds after every frame it hands the codec,
+     * simulating a decoder slower than the stream.
+     *
+     * Off at 0, and meant to stay off. The backpressure path only engages when a codec cannot
+     * drain the negotiated rate, which a healthy rig never produces - so without this there is
+     * no way to show the pacing works except to wait for a reporter's next drive. The hold sits
+     * after the feed rather than inside the codec's own wait, so the codec stays healthy and
+     * rendering while the queue fills: the same shape as a real decoder at its ceiling, which
+     * keeps decoding all through the event. A session with this on announces it loudly at
+     * feed-thread start, so a captured log can never be mistaken for a log of a real fault.
+     * Capped so a forgotten setting slows a session to a crawl rather than reading as a dead
+     * decoder.
+     */
+    var debugVideoFeedHoldMs: Int
+        get() = prefs.getInt("debug-video-feed-hold-ms", 0)
+        set(value) { prefs.edit().putInt("debug-video-feed-hold-ms", value.coerceIn(0, 250)).apply() }
+
     /** One in this many of the targeted messages is faulted. See [debugVideoFaultInjection]. */
     var debugVideoFaultRate: Int
         get() = prefs.getInt("debug-video-fault-rate", VideoFaultInjector.DEFAULT_RATE)
@@ -504,24 +529,36 @@ class Settings(private val context: Context) {
         get() = prefs.getString("head-unit-model", "Desktop Head Unit")!!
         set(value) { prefs.edit().putString("head-unit-model", value).apply() }
 
+    var hideBatteryLevel: Boolean
+        get() = prefs.getBoolean("hide-battery-level", false)
+        set(value) { prefs.edit().putBoolean("hide-battery-level", value).apply() }
+
+    var hidePhoneSignal: Boolean
+        get() = prefs.getBoolean("hide-phone-signal", false)
+        set(value) { prefs.edit().putBoolean("hide-phone-signal", value).apply() }
+
+    var hideClock: Boolean
+        get() = prefs.getBoolean("hide-clock", false)
+        set(value) { prefs.edit().putBoolean("hide-clock", value).apply() }
+
     // 0 = Manual, 1 = Auto (Headunit Server), 2 = Helper (Wifi Launcher), 3 = Native AA
-    var wifiConnectionMode: Int
+    var wifiConnectionMode: WifiLauncherMode
         get() {
             // Migration: Check if old helper boolean exists
             if (prefs.contains("wifi-launcher-mode")) {
                 val old = prefs.getBoolean("wifi-launcher-mode", false)
                 val newMode = if (old) 2 else 1
                 prefs.edit().putInt("wifi-connection-mode", newMode).remove("wifi-launcher-mode").apply()
-                return newMode
+                return WifiLauncherMode.byIdOrDefault(newMode)
             }
             // Migration: Check if native-aa-wireless was true
             if (prefs.getBoolean("native-aa-wireless", false)) {
                 prefs.edit().putInt("wifi-connection-mode", 3).remove("native-aa-wireless").apply()
-                return 3
+                return WifiLauncherMode.NATIVE
             }
-            return prefs.getInt("wifi-connection-mode", 2) // Default 2 (Wireless Helper)
+            return WifiLauncherMode.byIdOrDefault(prefs.getInt("wifi-connection-mode", -1))
         }
-        set(value) { prefs.edit().putInt("wifi-connection-mode", value).apply() }
+        set(value) { prefs.edit().putInt("wifi-connection-mode", value.id).apply() }
 
     var videoCodec: String
         get() = prefs.getString("video-codec", "Auto")!!
@@ -713,6 +750,10 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("auto-start-self-mode", false)
         set(value) { prefs.edit().putBoolean("auto-start-self-mode", value).apply() }
 
+    var autoConnectDelaySeconds: Int
+        get() = prefs.getInt("auto-connect-delay-seconds", 0)
+        set(value) { prefs.edit().putInt("auto-connect-delay-seconds", value).apply() }
+
     var autoStartOnUsb: Boolean
         get() = prefs.getBoolean("auto-start-on-usb", false)
         set(value) { prefs.edit().putBoolean("auto-start-on-usb", value).apply() }
@@ -736,6 +777,40 @@ class Settings(private val context: Context) {
     var listenForUsbDevices: Boolean
         get() = prefs.getBoolean("listen-for-usb-devices", true)
         set(value) { prefs.edit().putBoolean("listen-for-usb-devices", value).apply() }
+
+    var usbBlacklist: Set<String>
+        @Synchronized get() = prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()
+        @Synchronized set(value) { prefs.edit().putStringSet("usb-blacklist", value).apply() }
+
+    fun formatUsbVidPidKey(vid: Int, pid: Int): String {
+        return String.format(java.util.Locale.US, "%04x:%04x", vid, pid).lowercase()
+    }
+
+    fun formatUsbVidPidDisplay(vid: Int, pid: Int): String {
+        return String.format(java.util.Locale.US, "VID: 0x%04X, PID: 0x%04X", vid, pid)
+    }
+
+    @Synchronized
+    fun isUsbDeviceBlacklisted(vid: Int, pid: Int): Boolean {
+        val key = formatUsbVidPidKey(vid, pid)
+        return usbBlacklist.contains(key)
+    }
+
+    @Synchronized
+    fun addUsbDeviceToBlacklist(vid: Int, pid: Int) {
+        val key = formatUsbVidPidKey(vid, pid)
+        val set = (prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()).toMutableSet()
+        set.add(key)
+        prefs.edit().putStringSet("usb-blacklist", set).apply()
+    }
+
+    @Synchronized
+    fun removeUsbDeviceFromBlacklist(vid: Int, pid: Int) {
+        val key = formatUsbVidPidKey(vid, pid)
+        val set = (prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()).toMutableSet()
+        set.remove(key)
+        prefs.edit().putStringSet("usb-blacklist", set).apply()
+    }
 
     var showToastMessages: Boolean
         get() = prefs.getBoolean("show-toast-messages", true)
@@ -837,6 +912,39 @@ class Settings(private val context: Context) {
     var loadingScreenScalePercent: Int
         get() = prefs.getInt("loading-screen-scale-percent", 100)
         set(value) { prefs.edit().putInt("loading-screen-scale-percent", value).apply() }
+
+    // Custom home screen background image
+    var homeBackgroundImagePath: String
+        get() = prefs.getString("home-background-image-path", "") ?: ""
+        set(value) { prefs.edit().putString("home-background-image-path", value).apply() }
+
+    // Custom button colors for Home screen (0 = default gradient)
+    var customSelfModeButtonColor: Int
+        get() = prefs.getInt("custom-self-mode-button-color", 0)
+        set(value) { prefs.edit().putInt("custom-self-mode-button-color", value).apply() }
+
+    var customUsbButtonColor: Int
+        get() = prefs.getInt("custom-usb-button-color", 0)
+        set(value) { prefs.edit().putInt("custom-usb-button-color", value).apply() }
+
+    var customWifiButtonColor: Int
+        get() = prefs.getInt("custom-wifi-button-color", 0)
+        set(value) { prefs.edit().putInt("custom-wifi-button-color", value).apply() }
+
+    var customSettingsButtonColor: Int
+        get() = prefs.getInt("custom-settings-button-color", 0)
+        set(value) { prefs.edit().putInt("custom-settings-button-color", value).apply() }
+
+    // Custom button scaling percentage for Home screen (default = 100%, valid range 60..120)
+    var homeButtonScalePercent: Int
+        get() {
+            val saved = prefs.getInt("home-button-scale-percent", 100)
+            return if (saved in 60..120) saved else 100
+        }
+        set(value) {
+            val valid = if (value in 60..120) value else 100
+            prefs.edit().putInt("home-button-scale-percent", valid).apply()
+        }
 
     @SuppressLint("ApplySharedPref")
     fun commit() {
@@ -1446,10 +1554,9 @@ class Settings(private val context: Context) {
         get() = prefs.getInt("wait-for-wifi-timeout", 10)
         set(value) { prefs.edit().putInt("wait-for-wifi-timeout", value).apply() }
 
-    // 0 = Common Wifi (NSD), 1 = Wifi Direct P2P, 2 = Nearby Devices, 3 = Phone Hotspot (Host), 4 = Headunit Hotspot (Passive)
-    var helperConnectionStrategy: Int
-        get() = prefs.getInt("helper-connection-strategy", 2) // Default to Nearby Devices (2)
-        set(value) = prefs.edit().putInt("helper-connection-strategy", value).apply()
+    var helperConnectionStrategy: HelperStrategy
+        get() = HelperStrategy.byIdOrDefault(prefs.getInt("helper-connection-strategy", -1))
+        set(value) = prefs.edit().putInt("helper-connection-strategy", value.id).apply()
 
     var lastNearbyDeviceName: String
         get() = prefs.getString("last-nearby-device-name", "")!!
@@ -1465,9 +1572,9 @@ class Settings(private val context: Context) {
     // Deliberately not folded into helperConnectionStrategy: that setting belongs to mode 2 and
     // means something different in every one of its five values. A wireless mode that reuses
     // another mode's selector is how the two call sites of the old usesWifiDirect() drifted apart.
-    var nativeApTransport: Int
-        get() = prefs.getInt("native-ap-transport", 0)
-        set(value) = prefs.edit().putInt("native-ap-transport", value).apply()
+    var nativeApStrategy: NativeStrategy
+        get() = NativeStrategy.byIdOrDefault(prefs.getInt("native-ap-transport", -1))
+        set(value) = prefs.edit().putInt("native-ap-transport", value.id).apply()
 
     // Whether the Native AA handshake opens with a WifiVersionRequest (Type 4), as real head units
     // and the OEM ZLink app do, instead of going straight to WifiStartRequest.

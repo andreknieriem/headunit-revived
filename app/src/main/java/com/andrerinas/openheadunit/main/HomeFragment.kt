@@ -26,24 +26,24 @@ import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapProjectionActivity
 import com.andrerinas.openheadunit.aap.AapService
-import com.andrerinas.openheadunit.connection.NearbyManager
+import com.andrerinas.openheadunit.connection.wifi.modes.helper.NearbyManager
 import com.andrerinas.openheadunit.connection.UsbDeviceCompat
 import android.content.res.Configuration
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.AppPermissions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collect
 import com.andrerinas.openheadunit.utils.Settings
 import com.andrerinas.openheadunit.utils.VpnControl
 import com.andrerinas.openheadunit.utils.BluetoothHelper
 import com.andrerinas.openheadunit.connection.UsbReceiver
 import com.andrerinas.openheadunit.connection.UsbAccessoryMode
+import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
+import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 
 class HomeFragment : Fragment() {
 
@@ -132,39 +132,53 @@ class HomeFragment : Fragment() {
                 Intent(requireContext(), AapService::class.java))
         }
 
-        for (methodId in appSettings.autoConnectPriorityOrder) {
-            if (commManager.isConnected) break
-            when (methodId) {
-                Settings.AUTO_CONNECT_LAST_SESSION -> {
-                    if (appSettings.autoConnectLastSession && !hasAttemptedAutoConnect && !commManager.isConnected) {
-                        hasAttemptedAutoConnect = true
-                        if (attemptAutoConnect()) {
-                            (requireActivity() as? MainActivity)?.beginAutoConnect(
-                                "auto-connect last session",
-                                MainActivity.ConnectionUiMode.PILL
-                            )
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isAutoConnectEnabled = appSettings.autoStartSelfMode ||
+                appSettings.autoConnectLastSession ||
+                appSettings.autoConnectSingleUsbDevice
+
+            val delaySec = appSettings.autoConnectDelaySeconds
+            if (isAutoConnectEnabled && delaySec > 0 && !forceSelfModeLaunch && !commManager.isConnected) {
+                AppLog.i("HomeFragment: Waiting ${delaySec}s before attempting auto-connect...")
+                delay(delaySec * 1000L)
+            }
+
+            if (!isAdded || commManager.isConnected) return@launch
+
+            for (methodId in appSettings.autoConnectPriorityOrder) {
+                if (commManager.isConnected) break
+                when (methodId) {
+                    Settings.AUTO_CONNECT_LAST_SESSION -> {
+                        if (appSettings.autoConnectLastSession && !hasAttemptedAutoConnect && !commManager.isConnected) {
+                            hasAttemptedAutoConnect = true
+                            if (attemptAutoConnect()) {
+                                (requireActivity() as? MainActivity)?.beginAutoConnect(
+                                    "auto-connect last session",
+                                    MainActivity.ConnectionUiMode.PILL
+                                )
+                            }
                         }
                     }
-                }
-                Settings.AUTO_CONNECT_SELF_MODE -> {
-                    if ((appSettings.autoStartSelfMode || forceSelfModeLaunch) && !hasAutoStarted && !commManager.isConnected) {
-                        hasAutoStarted = true
-                        forceSelfModeLaunch = false // Reset once processed
-                        (requireActivity() as? MainActivity)?.beginAutoConnect(
-                            "auto-start self mode",
-                            MainActivity.ConnectionUiMode.PILL
-                        )
-                        startSelfMode()
-                    }
-                }
-                Settings.AUTO_CONNECT_SINGLE_USB -> {
-                    if (appSettings.autoConnectSingleUsbDevice && !hasAttemptedSingleUsbAutoConnect && !commManager.isConnected) {
-                        hasAttemptedSingleUsbAutoConnect = true
-                        if (attemptSingleUsbAutoConnect()) {
+                    Settings.AUTO_CONNECT_SELF_MODE -> {
+                        if ((appSettings.autoStartSelfMode || forceSelfModeLaunch) && !hasAutoStarted && !commManager.isConnected) {
+                            hasAutoStarted = true
+                            forceSelfModeLaunch = false // Reset once processed
                             (requireActivity() as? MainActivity)?.beginAutoConnect(
-                                "auto-connect single USB",
+                                "auto-start self mode",
                                 MainActivity.ConnectionUiMode.PILL
                             )
+                            startSelfMode()
+                        }
+                    }
+                    Settings.AUTO_CONNECT_SINGLE_USB -> {
+                        if (appSettings.autoConnectSingleUsbDevice && !hasAttemptedSingleUsbAutoConnect && !commManager.isConnected) {
+                            hasAttemptedSingleUsbAutoConnect = true
+                            if (attemptSingleUsbAutoConnect()) {
+                                (requireActivity() as? MainActivity)?.beginAutoConnect(
+                                    "auto-connect single USB",
+                                    MainActivity.ConnectionUiMode.PILL
+                                )
+                            }
                         }
                     }
                 }
@@ -217,7 +231,7 @@ class HomeFragment : Fragment() {
 
         // [FIX] Skip manual WiFi connection if Native AA is selected.
         // Native AA handles its own handshake via Bluetooth/P2P.
-        if (appSettings.wifiConnectionMode == 3) {
+        if (appSettings.wifiConnectionMode == WifiLauncherMode.NATIVE) {
             AppLog.i("HomeFragment: Native AA mode active. Skipping manual auto-connect attempt.")
             return false
         }
@@ -236,7 +250,7 @@ class HomeFragment : Fragment() {
 
         return when (connectionType) {
             Settings.CONNECTION_TYPE_WIFI -> {
-                if (appSettings.wifiConnectionMode == 1) {
+                if (appSettings.wifiConnectionMode == WifiLauncherMode.AUTO) {
                     val ip = appSettings.lastConnectionIp
                     if (ip.isNotEmpty()) {
                         AppLog.i("Auto-connect: Attempting WiFi connection to $ip")
@@ -461,7 +475,7 @@ class HomeFragment : Fragment() {
         wifi.setOnClickListener {
             val mode = App.provide(requireContext()).settings.wifiConnectionMode
             when (mode) {
-                1 -> { // Auto (Headunit Server) - One-Shot Scan
+                WifiLauncherMode.AUTO -> { // Auto (Headunit Server) - One-Shot Scan
                     if (commManager.isConnected) {
                         // Already connected
                     } else if (AapService.scanningState.value) {
@@ -478,12 +492,12 @@ class HomeFragment : Fragment() {
                         ContextCompat.startForegroundService(requireContext(), intent)
                     }
                 }
-                2 -> { // Helper (Wireless Launcher)
+                WifiLauncherMode.HELPER -> { // Helper (Wireless Launcher)
                     if (commManager.isConnected) {
                         // Already connected
                     } else {
                         val strategy = App.provide(requireContext()).settings.helperConnectionStrategy
-                        if (strategy == 4) {
+                        if (strategy == HelperStrategy.HEADUNIT_HOTSPOT) {
                             if (!AapService.scanningState.value) {
                                 (requireActivity() as? MainActivity)?.beginAutoConnect(
                                     "manual WiFi helper scan",
@@ -497,7 +511,7 @@ class HomeFragment : Fragment() {
                             com.andrerinas.openheadunit.utils.ShareHotspotQrDialog.show(
                                 requireContext()
                             )
-                        } else if (strategy == 2) {
+                        } else if (strategy == HelperStrategy.NEARBY_DEVICES) {
                             // Nearby Devices — show live discovery dialog
                             showNearbyDeviceSelector()
                         } else if (AapService.scanningState.value) {
@@ -515,7 +529,7 @@ class HomeFragment : Fragment() {
                         }
                     }
                 }
-                3 -> { // Native AA
+                WifiLauncherMode.NATIVE -> { // Native AA
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                         ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                         bluetoothPermissionLauncher.launch(android.Manifest.permission.BLUETOOTH_CONNECT)
@@ -523,7 +537,7 @@ class HomeFragment : Fragment() {
                         showNativeAaDeviceSelector()
                     }
                 }
-                else -> { // Manual (0) -> Open List
+                WifiLauncherMode.MANUAL -> { // Manual (0) -> Open List
                     val controller = findNavController()
                     if (controller.currentDestination?.id == R.id.homeFragment) {
                         controller.navigate(R.id.action_homeFragment_to_networkListFragment)

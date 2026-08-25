@@ -74,8 +74,8 @@ android {
         applicationId = "com.andrerinas.headunitrevived"
         minSdk = 16
         targetSdk = 36
-        versionCode = 98
-        versionName = "3.2.6"
+        versionCode = 100
+        versionName = "3.3.0-beta1"
         setProperty("archivesBaseName", "${applicationId}_${versionName}")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
@@ -230,13 +230,12 @@ dependencies {
     // ViewModel and LiveData
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
     kapt("androidx.lifecycle:lifecycle-compiler:2.6.2")
-
-    // KTX
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0")
     implementation(project(":contract"))

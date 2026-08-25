@@ -33,11 +33,11 @@ class ServiceDiscoveryResponse(private val context: Context)
                     if (settings.useGpsForNavigation) {
                         sources.addSensors(makeSensorType(Sensors.SensorType.LOCATION))
                     }
-                    
+
                     // Always announce Night sensor, as we control it via NightModeManager
                     sources.addSensors(makeSensorType(Sensors.SensorType.NIGHT))
                     AppLog.i("[ServiceDiscovery] Announcing NIGHT sensor support. Strategy: ${settings.nightMode}")
-                    
+
                 }.build()
             }.build()
 
@@ -67,7 +67,7 @@ class ServiceDiscoveryResponse(private val context: Context)
                             Media.MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP
                         }
                         "Auto" -> {
-                            // Only use H.265 in Auto mode for 4K or if explicitly needed, 
+                            // Only use H.265 in Auto mode for 4K or if explicitly needed,
                             // otherwise prefer stable H.264
                             val negotiatedResolution = HeadUnitScreenConfig.negotiatedResolutionType
                             if (negotiatedResolution == Control.Service.MediaSinkService.VideoConfiguration.VideoCodecResolutionType._3840x2160 &&
@@ -128,7 +128,7 @@ class ServiceDiscoveryResponse(private val context: Context)
                         setWidth(HeadUnitScreenConfig.getNegotiatedWidth()) // Use negotiated width
                         setHeight(HeadUnitScreenConfig.getNegotiatedHeight()) // Use negotiated height
                     }.build()
-                    
+
                     if (settings.enableRotary) {
                         AppLog.i("[ServiceDiscovery] Announcing Rotary/Touchpad support")
                         it.touchpad = Control.Service.InputSourceService.TouchConfig.newBuilder().apply {
@@ -136,7 +136,7 @@ class ServiceDiscoveryResponse(private val context: Context)
                             setHeight(HeadUnitScreenConfig.getNegotiatedHeight())
                         }.build()
                     }
-                    
+
                     it.addAllKeycodesSupported(KeyCode.supported)
                 }.build()
             }.build()
@@ -237,9 +237,14 @@ class ServiceDiscoveryResponse(private val context: Context)
             }.build()
             services.add(navigationStatus)
 
+            val sessionConfig = (if (settings.hideClock) 0x01 else 0) or
+                (if (settings.hidePhoneSignal) 0x02 else 0) or
+                (if (settings.hideBatteryLevel) 0x04 else 0)
+            // 0x08 is "CAN_PLAY_NATIVE_MEDIA_DURING_VR"
+
             return Control.ServiceDiscoveryResponse.newBuilder().apply {
                 make = settings.vehicleMake
-                model = settings.vehicleModel
+                model = settings.vehicleModel // fun fact: AA checks internally if it ends with "truck"?!
                 year = settings.vehicleYear
                 vehicleId = settings.vehicleId
                 headUnitModel = settings.headUnitModel
@@ -248,7 +253,8 @@ class ServiceDiscoveryResponse(private val context: Context)
                 headUnitSoftwareVersion = "0.1.0"
                 driverPosition = if (settings.rightHandDrive) Control.DriverPosition.DRIVER_POSITION_RIGHT else Control.DriverPosition.DRIVER_POSITION_LEFT
                 canPlayNativeMediaDuringVr = false
-                hideProjectedClock = false
+                hideProjectedClock = settings.hideClock
+                sessionConfiguration = sessionConfig
                 setDisplayName(settings.vehicleDisplayName)
 
                 setHeadunitInfo(com.andrerinas.openheadunit.aap.protocol.proto.Common.HeadUnitInfo.newBuilder().apply {

@@ -1,5 +1,9 @@
 package com.andrerinas.openheadunit.aap
 
+import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
+import com.andrerinas.openheadunit.connection.wifi.WifiModePolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
+import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeStrategy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -8,20 +12,20 @@ import org.junit.Test
 class UserExitHotspotPolicyTest {
 
     private fun exit(
-        mode: Int,
-        strategy: Int = 2,
-        transport: NativeTransport = NativeTransport.WIFI_DIRECT,
+        mode: WifiLauncherMode,
+        helperStrategy: HelperStrategy = HelperStrategy.NEARBY_DEVICES,
+        nativeStrategy: NativeStrategy = NativeStrategy.WIFI_DIRECT,
         autoEnableHotspot: Boolean = true,
         teardownProvenUnsafe: Boolean = false
     ) = UserExitHotspotPolicy.onUserExit(
-        mode, strategy, transport, autoEnableHotspot, teardownProvenUnsafe
+        mode, helperStrategy, nativeStrategy, autoEnableHotspot, teardownProvenUnsafe
     )
 
     @Test
     fun `native AA on this unit's own access point takes it down when the app may drive it`() {
         assertEquals(
             HotspotExitAction.DISABLE,
-            exit(mode = 3, transport = NativeTransport.HOTSPOT, autoEnableHotspot = true)
+            exit(mode = WifiLauncherMode.NATIVE, nativeStrategy = NativeStrategy.HOTSPOT, autoEnableHotspot = true)
         )
     }
 
@@ -29,7 +33,7 @@ class UserExitHotspotPolicyTest {
     fun `the helper's head-unit-hotspot strategy is the same route by another name`() {
         assertEquals(
             HotspotExitAction.DISABLE,
-            exit(mode = 2, strategy = 4, autoEnableHotspot = true)
+            exit(mode = WifiLauncherMode.HELPER, helperStrategy = HelperStrategy.HEADUNIT_HOTSPOT, autoEnableHotspot = true)
         )
     }
 
@@ -39,11 +43,11 @@ class UserExitHotspotPolicyTest {
         // hotspot the user turned on by hand could be left off with nothing able to restore it.
         assertEquals(
             HotspotExitAction.WARN_LEFT_UP,
-            exit(mode = 3, transport = NativeTransport.HOTSPOT, autoEnableHotspot = false)
+            exit(mode = WifiLauncherMode.NATIVE, nativeStrategy = NativeStrategy.HOTSPOT, autoEnableHotspot = false)
         )
         assertEquals(
             HotspotExitAction.WARN_LEFT_UP,
-            exit(mode = 2, strategy = 4, autoEnableHotspot = false)
+            exit(mode = WifiLauncherMode.HELPER, helperStrategy = HelperStrategy.HEADUNIT_HOTSPOT, autoEnableHotspot = false)
         )
     }
 
@@ -53,21 +57,21 @@ class UserExitHotspotPolicyTest {
         // tear down the group and the hotspot at once.
         assertEquals(
             HotspotExitAction.NONE,
-            exit(mode = 3, transport = NativeTransport.WIFI_DIRECT, autoEnableHotspot = true)
+            exit(mode = WifiLauncherMode.NATIVE, nativeStrategy = NativeStrategy.WIFI_DIRECT, autoEnableHotspot = true)
         )
-        assertEquals(HotspotExitAction.NONE, exit(mode = 2, strategy = 1, autoEnableHotspot = true))
+        assertEquals(HotspotExitAction.NONE, exit(mode = WifiLauncherMode.HELPER, helperStrategy = HelperStrategy.WIFI_DIRECT, autoEnableHotspot = true))
     }
 
     @Test
     fun `the helper's other strategies and the server mode are left alone`() {
-        for (strategy in listOf(0, 2, 3)) {
+        for (strategy in listOf(HelperStrategy.COMMON_WIFI, HelperStrategy.NEARBY_DEVICES, HelperStrategy.PHONE_HOTSPOT)) {
             assertEquals(
                 "helper strategy $strategy hosts no access point",
                 HotspotExitAction.NONE,
-                exit(mode = 2, strategy = strategy)
+                exit(mode = WifiLauncherMode.HELPER, helperStrategy = strategy)
             )
         }
-        assertEquals(HotspotExitAction.NONE, exit(mode = 1, strategy = 0))
+        assertEquals(HotspotExitAction.NONE, exit(mode = WifiLauncherMode.AUTO, helperStrategy = HelperStrategy.COMMON_WIFI))
     }
 
     @Test
@@ -76,11 +80,11 @@ class UserExitHotspotPolicyTest {
         // depend on a setting that has no meaning in that mode.
         assertEquals(
             HotspotExitAction.DISABLE,
-            exit(mode = 2, strategy = 4, transport = NativeTransport.WIFI_DIRECT)
+            exit(mode = WifiLauncherMode.HELPER, helperStrategy = HelperStrategy.HEADUNIT_HOTSPOT, nativeStrategy = NativeStrategy.WIFI_DIRECT)
         )
         assertEquals(
             HotspotExitAction.NONE,
-            exit(mode = 2, strategy = 0, transport = NativeTransport.HOTSPOT)
+            exit(mode = WifiLauncherMode.HELPER, helperStrategy = HelperStrategy.COMMON_WIFI, nativeStrategy = NativeStrategy.HOTSPOT)
         )
     }
 
@@ -92,8 +96,8 @@ class UserExitHotspotPolicyTest {
         assertEquals(
             HotspotExitAction.WARN_LEFT_UP,
             exit(
-                mode = 3,
-                transport = NativeTransport.HOTSPOT,
+                mode = WifiLauncherMode.NATIVE,
+                nativeStrategy = NativeStrategy.HOTSPOT,
                 autoEnableHotspot = true,
                 teardownProvenUnsafe = true
             )
@@ -106,15 +110,15 @@ class UserExitHotspotPolicyTest {
         assertEquals(
             HotspotExitAction.NONE,
             exit(
-                mode = 3,
-                transport = NativeTransport.WIFI_DIRECT,
+                mode = WifiLauncherMode.NATIVE,
+                nativeStrategy = NativeStrategy.WIFI_DIRECT,
                 autoEnableHotspot = true,
                 teardownProvenUnsafe = true
             )
         )
         assertEquals(
             HotspotExitAction.NONE,
-            exit(mode = 1, autoEnableHotspot = true, teardownProvenUnsafe = true)
+            exit(mode = WifiLauncherMode.AUTO, autoEnableHotspot = true, teardownProvenUnsafe = true)
         )
     }
 
@@ -123,8 +127,8 @@ class UserExitHotspotPolicyTest {
         assertEquals(
             HotspotExitAction.DISABLE,
             exit(
-                mode = 3,
-                transport = NativeTransport.HOTSPOT,
+                mode = WifiLauncherMode.NATIVE,
+                nativeStrategy = NativeStrategy.HOTSPOT,
                 autoEnableHotspot = true,
                 teardownProvenUnsafe = false
             )
@@ -133,9 +137,12 @@ class UserExitHotspotPolicyTest {
 
     @Test
     fun `this policy and usesWifiDirect never both claim the same disconnect`() {
-        for (mode in 1..3) {
-            for (strategy in 0..4) {
-                for (transport in NativeTransport.values()) {
+        for (mode in WifiLauncherMode.entries) {
+            if (mode == WifiLauncherMode.MANUAL)
+                continue
+
+            for (strategy in HelperStrategy.entries) {
+                for (transport in NativeStrategy.entries) {
                     val hotspot = UserExitHotspotPolicy.usesHeadUnitHotspot(mode, strategy, transport)
                     val p2p = WifiModePolicy.usesWifiDirect(mode, strategy, transport)
                     assertFalse("mode=$mode strategy=$strategy transport=$transport", hotspot && p2p)
@@ -143,7 +150,32 @@ class UserExitHotspotPolicyTest {
             }
         }
         // Not vacuous: each does claim something.
-        assertTrue(UserExitHotspotPolicy.usesHeadUnitHotspot(3, 0, NativeTransport.HOTSPOT))
-        assertTrue(WifiModePolicy.usesWifiDirect(3, 0, NativeTransport.WIFI_DIRECT))
+        assertTrue(UserExitHotspotPolicy.usesHeadUnitHotspot(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.HOTSPOT))
+        assertTrue(WifiModePolicy.usesWifiDirect(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.WIFI_DIRECT))
+    }
+
+    /**
+     * The other half of "exact complements", and the one that goes wrong silently.
+     *
+     * "Never both" stays true if one arm is deleted outright, which is how the soft-AP half came to
+     * have no caller while this test file was still green. Every route where the phone is sitting
+     * on a network this device is hosting has to be claimed by one of the two, because being
+     * claimed by neither means the network is left up and the phone never leaves it.
+     */
+    @Test
+    fun `every route that hosts the phone's network is claimed by one of the two`() {
+        val hosting = listOf(
+            Triple(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.WIFI_DIRECT),
+            Triple(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.HOTSPOT),
+            Triple(WifiLauncherMode.HELPER, HelperStrategy.WIFI_DIRECT, NativeStrategy.WIFI_DIRECT),
+            Triple(WifiLauncherMode.HELPER, HelperStrategy.HEADUNIT_HOTSPOT, NativeStrategy.WIFI_DIRECT)
+        )
+        for ((mode, strategy, transport) in hosting) {
+            assertTrue(
+                "mode=$mode strategy=$strategy transport=$transport hosts the network and nothing takes it down",
+                WifiModePolicy.usesWifiDirect(mode, strategy, transport) ||
+                    UserExitHotspotPolicy.usesHeadUnitHotspot(mode, strategy, transport)
+            )
+        }
     }
 }

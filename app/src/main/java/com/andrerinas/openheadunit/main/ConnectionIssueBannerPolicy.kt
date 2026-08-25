@@ -1,7 +1,7 @@
 package com.andrerinas.openheadunit.main
 
 import com.andrerinas.openheadunit.aap.NativeTransport
-import com.andrerinas.openheadunit.aap.SoftApBssidPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApBssidPolicy
 import com.andrerinas.openheadunit.utils.ConnectionIssue
 import com.andrerinas.openheadunit.utils.StandingIssue
 
