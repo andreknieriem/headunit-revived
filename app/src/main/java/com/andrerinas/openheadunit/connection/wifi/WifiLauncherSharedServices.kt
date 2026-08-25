@@ -11,7 +11,6 @@ import com.andrerinas.openheadunit.connection.wifi.server.WirelessServerHistory
 import com.andrerinas.openheadunit.connection.wifi.server.WirelessServerRestartPolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.HotspotManager
-import com.andrerinas.openheadunit.utils.VpnControl
 import java.net.Socket
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -132,7 +131,10 @@ class WifiLauncherSharedServices(val service: AapService) {
         wirelessServer?.stopServer()
         wirelessServer = null
         scanningState.value = false
-        VpnControl.stopVpn(service)
+        // No VpnControl.stopVpn() here. The dummy VPN belongs to Self Mode or to the session that
+        // asked for it, never to the wireless server, and update() runs this on every mode change
+        // - which is what took a user's VPN down three milliseconds after it came up. The owning
+        // teardowns call AapService.stopDummyVpn(); see DummyVpnPolicy.
     }
 
     /**
@@ -242,7 +244,10 @@ class WifiLauncherSharedServices(val service: AapService) {
             )
         }
 
-        localDiscovery?.startScan()
+        // Forwarded, not dropped. Both one-shot callers - the Auto-mode retry after an unclean
+        // disconnect, and the scan button - were asking for a single sweep and getting the
+        // self-rescheduling loop instead.
+        localDiscovery?.startScan(oneShot)
     }
 
     private fun stopLocalDiscovery() {

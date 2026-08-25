@@ -151,6 +151,31 @@ class UserExitHotspotPolicyTest {
         }
         // Not vacuous: each does claim something.
         assertTrue(UserExitHotspotPolicy.usesHeadUnitHotspot(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.HOTSPOT))
-        assertTrue(WifiModePolicy.usesWifiDirect(WifiLauncherMode.NATIVE, 0, NativeStrategy.WIFI_DIRECT))
+        assertTrue(WifiModePolicy.usesWifiDirect(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.WIFI_DIRECT))
+    }
+
+    /**
+     * The other half of "exact complements", and the one that goes wrong silently.
+     *
+     * "Never both" stays true if one arm is deleted outright, which is how the soft-AP half came to
+     * have no caller while this test file was still green. Every route where the phone is sitting
+     * on a network this device is hosting has to be claimed by one of the two, because being
+     * claimed by neither means the network is left up and the phone never leaves it.
+     */
+    @Test
+    fun `every route that hosts the phone's network is claimed by one of the two`() {
+        val hosting = listOf(
+            Triple(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.WIFI_DIRECT),
+            Triple(WifiLauncherMode.NATIVE, HelperStrategy.COMMON_WIFI, NativeStrategy.HOTSPOT),
+            Triple(WifiLauncherMode.HELPER, HelperStrategy.WIFI_DIRECT, NativeStrategy.WIFI_DIRECT),
+            Triple(WifiLauncherMode.HELPER, HelperStrategy.HEADUNIT_HOTSPOT, NativeStrategy.WIFI_DIRECT)
+        )
+        for ((mode, strategy, transport) in hosting) {
+            assertTrue(
+                "mode=$mode strategy=$strategy transport=$transport hosts the network and nothing takes it down",
+                WifiModePolicy.usesWifiDirect(mode, strategy, transport) ||
+                    UserExitHotspotPolicy.usesHeadUnitHotspot(mode, strategy, transport)
+            )
+        }
     }
 }

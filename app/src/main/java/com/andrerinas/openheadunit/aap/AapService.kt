@@ -74,6 +74,7 @@ import com.andrerinas.openheadunit.connection.wifi.WifiLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherStopSequence
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherHelper
+import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherManual
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherNative
 import com.andrerinas.openheadunit.connection.wifi.server.WirelessServer
 import com.andrerinas.openheadunit.main.BackgroundNotification
@@ -662,7 +663,11 @@ class AapService : Service(), UsbReceiver.Listener {
         pendingResult: () -> BroadcastReceiver.PendingResult
     ) {
         if (!commManager.isConnected) return
-        val launcher = wifiLauncherManager.active ?: return
+        // Not `?: return`. A wired session quiesces the wireless stack and leaves no active
+        // launcher, and a shutdown arriving in that window still has a session to close in an
+        // orderly way - which is the whole reason DEVICE_SHUTDOWN applies to USB as well. The
+        // policy takes the null and answers for it.
+        val launcher = wifiLauncherManager.active
 
         if (!LinkLossTeardownPolicy.shouldTearDown(
                 trigger,
@@ -1211,14 +1216,28 @@ class AapService : Service(), UsbReceiver.Listener {
         serviceScope.launch(Dispatchers.IO) {
             val rearmedAfterWiredSession = rearmWirelessAfterWiredSession()
 
+            // Read before anything stops the launcher, and remembered. WifiLauncherManager.stop()
+            // nulls `active`, so both decisions further down used to be taken from a launcher that
+            // was already gone and could only ever answer no.
+            val ranWifiDirect = wifiLauncherManager.active?.hasWifiDirect() ?: false
+            var wirelessTornDown = false
+
             if (wifiLauncherManager.activeMode == WifiLauncherMode.NATIVE && !rearmedAfterWiredSession) {
                 if (state.isUserExit) {
+                    // Awaited before the stop, not after it. stop() takes the P2P group down along
+                    // with the rest of the launcher, and removing the interface while the
+                    // ByeByeRequest and the socket close are still in flight is the race the
+                    // ordering below was written to prevent. Read off `active` afterwards, that
+                    // ordering could never apply to this mode at all.
+                    commManager.awaitDisconnectComplete()
                     AppLog.i("AapService: Native AA user exit. Stopping active launcher.")
                     wifiLauncherManager.stop()
+                    wirelessTornDown = true
                 } else {
                     // Unexpected disconnect — reset and re-initialize for auto-reconnect.
                     AppLog.i("AapService: Native AA Mode disconnected. Resetting manager and group in 1.5s...")
                     wifiLauncherManager.stop()
+                    wirelessTornDown = true
                     serviceScope.launch {
                         delay(1500) // Give hardware time to settle before re-initializing P2P
                         wifiLauncherManager.setActiveFromSettings(force = true)
@@ -1236,11 +1255,73 @@ class AapService : Service(), UsbReceiver.Listener {
             // ByeByeRequest/socket-close is still in flight.
             if (rearmedAfterWiredSession) {
                 // Nothing further to tear down; the re-arm owns the wireless stack from here.
-            } else if (state.isUserExit && (wifiLauncherManager.active?.hasWifiDirect() ?: false)) {
+            } else if (state.isUserExit && ranWifiDirect && !wirelessTornDown) {
                 commManager.awaitDisconnectComplete()
                 AppLog.i("AapService: CommManager teardown complete. Stopping WiFi Direct group.")
                 wifiLauncherManager.sharedServices.wifiDirectManager?.stop()
                 wifiLauncherManager.restartDiscovery()
+            } else if (state.isUserExit) {
+                // The same question for the routes that run on a soft AP instead of a P2P group.
+                // Closing the socket does not make the phone leave the network: it stays
+                // associated and Android Auto retries its wireless setup until it throttles
+                // itself, so the access point has to go, and for the same reason as above only
+                // once CommManager has finished. Unlike a P2P group the access point is usually
+                // the user's own, and switching one back on is best effort, so it only comes down
+                // when they have already handed the app that job.
+                //
+                // Restarted rather than left down. It has to disappear for the phone to be put off
+                // it, but leaving it off charges the whole bring-up, measured at ~20s on a unit
+                // that refuses setSoftApConfiguration(), to the next connection with the phone
+                // waiting through it. Paying it here spends the same seconds while the user is
+                // already walking away.
+                //
+                // Asked of the settings, not of the launcher: on the native route the launcher is
+                // stopped a few lines above, and this decision is the exact complement of the
+                // WiFi Direct one, so a route that answers no there has to be able to answer yes
+                // here.
+                val action = UserExitHotspotPolicy.onUserExit(
+                    settings.wifiConnectionMode,
+                    settings.helperConnectionStrategy,
+                    settings.nativeApStrategy,
+                    settings.autoEnableHotspot,
+                    settings.hotspotTeardownProvenUnsafe
+                )
+                if (action != HotspotExitAction.NONE) {
+                    commManager.awaitDisconnectComplete()
+                    // Stop watching an access point nobody is connecting over, either way: this
+                    // holds a system broadcast receiver and can still re-enable the hotspot on its
+                    // own long after the user has finished with it. The native launcher does it at
+                    // this sequence position for exactly this reason.
+                    wifiLauncherManager.stop(WifiLauncherStopSequence.BEFORE_HOTSPOT_DISABLE)
+                }
+                when (action) {
+                    HotspotExitAction.DISABLE -> {
+                        AppLog.i("AapService: CommManager teardown complete. Restarting the hotspot so the phone leaves the network.")
+                        if (!HotspotManager.restart(this@AapService)) {
+                            // The one way to learn that this radio will not host an access point
+                            // again once it has been taken down. Remembered so it costs the user
+                            // one hotspot rather than one per session: from here on this device's
+                            // access point is left alone and the phone is told, in the branch
+                            // below, what that means.
+                            settings.hotspotTeardownProvenUnsafe = true
+                            AppLog.w(
+                                "AapService: This device did not bring its access point back after " +
+                                    "the app took it down, so it will not be taken down again. " +
+                                    "Ending a session will leave the phone on the network from now " +
+                                    "on - end it from the phone's own Android Auto notification if " +
+                                    "that becomes a problem."
+                            )
+                        }
+                    }
+                    HotspotExitAction.WARN_LEFT_UP -> AppLog.w(
+                        "AapService: Stopping the connection does not switch this device's hotspot " +
+                            "off - either the app was not given charge of it, or this device has " +
+                            "already shown it cannot switch one back on. So the phone stays " +
+                            "associated and Android Auto will keep retrying its wireless setup; " +
+                            "switch the hotspot off by hand, or end the session from the phone."
+                    )
+                    HotspotExitAction.NONE -> {}
+                }
             }
 
             App.provide(this@AapService).audioDecoder.stop()
@@ -1440,12 +1521,17 @@ class AapService : Service(), UsbReceiver.Listener {
                 serviceScope.launch {
                     delay(500)
 
-                    if (!wifiLauncherManager.forceStartDiscoveryScan()) {
-                        // Folded into a sweep that was already running — which was started for the
-                        // network we have just left. Do not cancel it; just do not make the next
-                        // one wait ten seconds either.
-                        rescanWithoutWaiting = true
-                        AppLog.i("NetworkMonitor: a scan was already in flight; the next one will not wait")
+                    when (wifiLauncherManager.forceStartDiscoveryScan()) {
+                        false -> {
+                            // Folded into a sweep that was already running — which was started for
+                            // the network we have just left. Do not cancel it; just do not make the
+                            // next one wait ten seconds either.
+                            rescanWithoutWaiting = true
+                            AppLog.i("NetworkMonitor: a scan was already in flight; the next one will not wait")
+                        }
+                        // No discovery loop on this route at all, so there is nothing to hurry.
+                        null -> AppLog.d("NetworkMonitor: no discovery loop to kick")
+                        true -> {}
                     }
                 }
             }
@@ -1564,9 +1650,12 @@ class AapService : Service(), UsbReceiver.Listener {
 
     /**
      * Whether this session's wireless teardown is ours to undo. Set by
-     * [quiesceWirelessForWiredSession], read once by [rearmWirelessAfterWiredSession].
+     * [quiesceWirelessForWiredSession], cleared by [rearmWirelessAfterWiredSession], and read by
+     * `WifiLauncherManager.setActive`, which refuses to arm the wireless stack while it is true and
+     * a wired session is live.
      */
-    @Volatile private var wirelessQuiescedForWiredSession = false
+    @Volatile var wirelessQuiescedForWiredSession = false
+        private set
 
     /**
      * Shut the wireless stack down for the duration of a USB session. See
@@ -1945,17 +2034,17 @@ class AapService : Service(), UsbReceiver.Listener {
                 // onCreate() already armed everything moments ago and re-running would tear
                 // down and recreate the P2P group (new random SSID/passphrase) right as it's
                 // being delivered to the phone.
-                // A successful handoff closes the AA listeners, so isActive() is false for the
-                // whole life of a working session — without the connection check below, any
-                // later ACL_CONNECTED (the phone's own Bluetooth profiles reconnecting, or one
-                // of our pokes) would tear down a session that is projecting fine.
+                // The rest of the rule, including why the mode is asked of the setting and never
+                // of the launcher, lives on BtAutoStartRearmPolicy.
                 val sessionUp = commManager.isConnected ||
                     commManager.connectionState.value is CommManager.ConnectionState.Connecting
-                val launcher = wifiLauncherManager.active
+                val launcher = wifiLauncherManager.active as? WifiLauncherNative
 
-                if (launcher is WifiLauncherNative && !sessionUp &&
-                    launcher.handshakeManager?.isActive() != true &&
-                    launcher.handshakeManager?.isAttemptInFlight() != true) {
+                if (BtAutoStartRearmPolicy.shouldRearm(
+                        settings.wifiConnectionMode,
+                        sessionUp,
+                        launcher?.handshakeManager?.isActive(),
+                        launcher?.handshakeManager?.isAttemptInFlight())) {
                     AppLog.i("AapService: Bluetooth auto-start — Native AA handshake manager was stopped, re-arming.")
                     userExitedAA = false
                     userExitCooldownUntil = 0L
@@ -1967,9 +2056,23 @@ class AapService : Service(), UsbReceiver.Listener {
                 if (endpointId != null) {
                     AppLog.i("AapService: Connecting to Nearby endpoint $endpointId")
 
-                    val launcher = WifiLauncherHelper(wifiLauncherManager, HelperStrategy.NEARBY_DEVICES)
-                    wifiLauncherManager.setActive(launcher, force = true)
-                    launcher.nearbyManager?.connectToEndpoint(endpointId)
+                    // The endpoint id came from the advertiser that is running. Replacing the
+                    // launcher first stopped it - and stopDiscovery() with it - then handed the id
+                    // to a client that had discovered nothing, so requestConnection() was asking
+                    // about an endpoint it had never seen. It also switched a user in Auto or
+                    // Native mode over to Helper/Nearby without being asked.
+                    //
+                    // Only when nothing is running is a launcher built, and then the endpoint is
+                    // stale by the same argument, so the fresh scan is all that can be offered.
+                    val active = wifiLauncherManager.active as? WifiLauncherHelper
+                    if (active != null && active.strategy == HelperStrategy.NEARBY_DEVICES) {
+                        active.nearbyManager?.connectToEndpoint(endpointId)
+                    } else {
+                        AppLog.i("AapService: Nearby is not the running transport — arming it before connecting.")
+                        val launcher = WifiLauncherHelper(wifiLauncherManager, HelperStrategy.NEARBY_DEVICES)
+                        wifiLauncherManager.setActive(launcher, force = true)
+                        launcher.nearbyManager?.connectToEndpoint(endpointId)
+                    }
                 }
             }
             ACTION_DISCONNECT            -> {
@@ -2656,7 +2759,19 @@ class AapService : Service(), UsbReceiver.Listener {
             }
 
             AppLog.i("SelfMode: AA < 17.4 detected. Starting WirelessServer on 5288 and running legacy triggers...")
-            wifiLauncherManager.setActive(WifiLauncherMode.NATIVE)
+            // The port, not a wireless mode. Self Mode projects this device's own Android Auto over
+            // the loopback address; it needs 5288 bound and nothing else. Arming the Native
+            // launcher instead replaced whatever mode the user had configured, created a P2P group
+            // and opened the RFCOMM listeners and poke loop it has no use for, could be refused
+            // outright by the boot-loop guard, no-opped for a user already in Native mode because
+            // it did not force, and on the hotspot strategy never bound 5288 at all - while the
+            // magic intent below still points Gearhead at 127.0.0.1:5288.
+            //
+            // The launcher argument only decides whether an NSD record is registered, and Self Mode
+            // wants none: WifiLauncherManual answers false and starts nothing of its own.
+            wifiLauncherManager.sharedServices.startWirelessServer(
+                wifiLauncherManager.active ?: WifiLauncherManual(wifiLauncherManager)
+            )
 
             val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && connectivityManager.activeNetwork == null) {

@@ -91,4 +91,36 @@ class UsbSessionQuiescePolicyTest {
             )
         )
     }
+
+    /**
+     * The window between quiescing and re-arming, which nothing guarded. Every automatic entry
+     * point reaches wireless bring-up and none of them knows a wired session is up, so the stack
+     * that was just taken down came back underneath it.
+     */
+    @Test
+    fun `a bring-up is refused only under a live wired session we quiesced for`() {
+        assertTrue(
+            UsbSessionQuiescePolicy.shouldRefuseBringUp(
+                quiescedForThisSession = true, sessionIsLive = true, sessionIsWireless = false
+            )
+        )
+        // A live wireless session is not what we quiesced for; never refuse it.
+        assertFalse(
+            UsbSessionQuiescePolicy.shouldRefuseBringUp(
+                quiescedForThisSession = true, sessionIsLive = true, sessionIsWireless = true
+            )
+        )
+        // The wired session has ended; the re-arm has to get through.
+        assertFalse(
+            UsbSessionQuiescePolicy.shouldRefuseBringUp(
+                quiescedForThisSession = true, sessionIsLive = false, sessionIsWireless = false
+            )
+        )
+        // Nothing was ever taken down, so there is nothing to protect.
+        assertFalse(
+            UsbSessionQuiescePolicy.shouldRefuseBringUp(
+                quiescedForThisSession = false, sessionIsLive = true, sessionIsWireless = false
+            )
+        )
+    }
 }
