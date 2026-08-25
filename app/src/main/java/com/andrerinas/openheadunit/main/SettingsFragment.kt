@@ -2012,6 +2012,32 @@ class SettingsFragment : Fragment() {
             }
         ))
 
+        // Slows the feed thread so the enqueue backpressure path can be exercised on a working
+        // unit - a codec that cannot drain the negotiated rate is otherwise only reachable on
+        // hardware we do not have. Applies on the next connection, and the feed thread announces
+        // the hold loudly at start. A tool, not a preference, so applied immediately.
+        val feedHolds = listOf(0, 10, 25, 40, 100)
+        val feedHoldNames = feedHolds
+            .map { if (it == 0) "Off" else "${it}ms per frame" }
+            .toTypedArray()
+        items.add(SettingItem.SettingEntry(
+            stableId = "debugVideoFeedHold",
+            nameResId = R.string.debug_video_feed_hold,
+            value = if (settings.debugVideoFeedHoldMs == 0) "Off" else "${settings.debugVideoFeedHoldMs}ms per frame",
+            searchKeywords = "slow decoder feed hold backpressure pacing test",
+            onClick = {
+                val currentIndex = feedHolds.indexOf(settings.debugVideoFeedHoldMs).coerceAtLeast(0)
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.debug_video_feed_hold)
+                    .setSingleChoiceItems(feedHoldNames, currentIndex) { dialog, which ->
+                        settings.debugVideoFeedHoldMs = feedHolds[which]
+                        dialog.dismiss()
+                        updateSettingsList()
+                    }
+                    .show()
+            }
+        ))
+
         // Deliberately corrupts the video stream so the reassembler's failure paths can be
         // exercised on a working unit. Applies on the next connection, and every injected fault is
         // logged loudly - see VideoFaultInjector. Applied immediately rather than through the

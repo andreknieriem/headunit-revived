@@ -444,6 +444,24 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("debug-video-low-latency", false)
         set(value) { prefs.edit().putBoolean("debug-video-low-latency", value).apply() }
 
+    /**
+     * Holds the feed thread for this many milliseconds after every frame it hands the codec,
+     * simulating a decoder slower than the stream.
+     *
+     * Off at 0, and meant to stay off. The backpressure path only engages when a codec cannot
+     * drain the negotiated rate, which a healthy rig never produces - so without this there is
+     * no way to show the pacing works except to wait for a reporter's next drive. The hold sits
+     * after the feed rather than inside the codec's own wait, so the codec stays healthy and
+     * rendering while the queue fills: the same shape as a real decoder at its ceiling, which
+     * keeps decoding all through the event. A session with this on announces it loudly at
+     * feed-thread start, so a captured log can never be mistaken for a log of a real fault.
+     * Capped so a forgotten setting slows a session to a crawl rather than reading as a dead
+     * decoder.
+     */
+    var debugVideoFeedHoldMs: Int
+        get() = prefs.getInt("debug-video-feed-hold-ms", 0)
+        set(value) { prefs.edit().putInt("debug-video-feed-hold-ms", value.coerceIn(0, 250)).apply() }
+
     /** One in this many of the targeted messages is faulted. See [debugVideoFaultInjection]. */
     var debugVideoFaultRate: Int
         get() = prefs.getInt("debug-video-fault-rate", VideoFaultInjector.DEFAULT_RATE)

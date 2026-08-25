@@ -694,6 +694,7 @@
     <string name="p2p_legacy_5ghz_upper_description" translatable="false">Asks for channel 149 instead of 36. Try only if 36 fails, since regions allow one range or the other.</string>
     <string name="debug_video_low_latency" translatable="false">Request decoder low-latency mode</string>
     <string name="debug_video_low_latency_description" translatable="false">Sets the vendor low-latency MediaFormat key when configuring the video decoder. Falls back automatically if the decoder rejects it.</string>
+    <string name="debug_video_feed_hold" translatable="false">Simulate a slow decoder</string>
     <string name="show_fps_counter_description">Display a real-time FPS overlay in the top-left corner during projection.</string>
 
     <!-- Auto-start permission strings -->
