@@ -19,8 +19,6 @@ class SelfLauncherServices(
     val fakeNetwork by lazy { createFakeNetwork(0) }
     val fakeWifiInfo by lazy { createFakeWifiInfo() }
 
-    private var isWifiLauncherActive = false
-
 
     /** Reflectively constructs an `android.net.Network` from a raw network ID integer. */
     private fun createFakeNetwork(netId: Int): Parcelable? {
@@ -47,21 +45,5 @@ class SelfLauncherServices(
             } catch (e: Exception) {}
             wifiInfo
         } catch (e: Exception) { null }
-    }
-
-    suspend fun runWifiLauncher() {
-        if (isWifiLauncherActive)
-            return
-        isWifiLauncherActive = true
-
-        wifiLauncherManager.setActive(WifiLauncherMode.NATIVE)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && connectivityManager.activeNetwork == null) {
-            // Wait up to 1 second for the Dummy VPN to become the active network
-            for (i in 1..10) {
-                if (connectivityManager.activeNetwork != null) break
-                delay(100)
-            }
-        }
     }
 }
