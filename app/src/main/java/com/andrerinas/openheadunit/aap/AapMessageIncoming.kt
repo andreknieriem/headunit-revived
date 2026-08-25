@@ -3,6 +3,7 @@ package com.andrerinas.openheadunit.aap
 import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.MsgType
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.utils.Utils
 
 internal class AapMessageIncoming(header: EncryptedHeader, ba: ByteArrayWithLimit)
     : AapMessage(header.chan, header.flags.toByte(), Utils.bytesToInt(ba.data, 0, true), calcOffset(header), ba.limit, ba.data) {

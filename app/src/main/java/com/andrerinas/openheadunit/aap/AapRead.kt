@@ -2,8 +2,8 @@ package com.andrerinas.openheadunit.aap
 
 import android.content.Context
 import android.os.SystemClock
-import com.andrerinas.openheadunit.connection.AccessoryConnection
-import com.andrerinas.openheadunit.connection.SocketAccessoryConnection
+import com.andrerinas.openheadunit.connection.projection.ProjectionConnection
+import com.andrerinas.openheadunit.connection.projection.SocketProjectionConnection
 import com.andrerinas.openheadunit.decoder.MicRecorder
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.aap.protocol.Channel
@@ -25,11 +25,11 @@ internal interface AapRead {
      *   [VideoFaultInjector.Stage]. Only one of the two is ever non-null in a session.
      */
     abstract class Base internal constructor(
-            private val connection: AccessoryConnection?,
-            internal val ssl: AapSsl,
-            internal val handler: AapMessageHandler,
-            private val onVideoRunHoled: (discardAssembledUnit: Boolean) -> Unit = {},
-            internal val faultInjector: VideoFaultInjector? = null) : AapRead {
+        private val connection: ProjectionConnection?,
+        internal val ssl: AapSsl,
+        internal val handler: AapMessageHandler,
+        private val onVideoRunHoled: (discardAssembledUnit: Boolean) -> Unit = {},
+        internal val faultInjector: VideoFaultInjector? = null) : AapRead {
 
         /** Every line [faultInjector] prints. Shared wording with [AapVideo]'s - see the class. */
         internal val faultReporter = VideoFaultReporter("AapRead")
@@ -150,12 +150,12 @@ internal interface AapRead {
             AppLog.w("AapRead: %s on %s - %s%s", result.outcome, channelName, result, suffix)
         }
 
-        protected abstract fun doRead(connection: AccessoryConnection): Int
+        protected abstract fun doRead(connection: ProjectionConnection): Int
     }
 
     object Factory {
         fun create(
-            connection: AccessoryConnection,
+            connection: ProjectionConnection,
             transport: AapTransport,
             recorder: MicRecorder,
             aapAudio: AapAudio,
@@ -193,7 +193,7 @@ internal interface AapRead {
 
             val onVideoRunHoled = { discard: Boolean -> aapVideo.onFragmentRunHoled(discard) }
 
-            return if (connection is SocketAccessoryConnection)
+            return if (connection is SocketProjectionConnection)
                 AapReadSingleMessage(connection, transport.ssl, handler, onVideoRunHoled, readerFaults)
             else
                 AapReadMultipleMessages(connection, transport.ssl, handler, onVideoRunHoled, readerFaults)

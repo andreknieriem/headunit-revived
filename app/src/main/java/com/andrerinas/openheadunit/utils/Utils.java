@@ -1,6 +1,4 @@
-package com.andrerinas.openheadunit.aap;
-
-import com.andrerinas.openheadunit.utils.AppLog;
+package com.andrerinas.openheadunit.utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

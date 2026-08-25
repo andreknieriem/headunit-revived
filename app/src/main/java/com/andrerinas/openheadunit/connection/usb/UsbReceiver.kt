@@ -1,4 +1,4 @@
-package com.andrerinas.openheadunit.connection
+package com.andrerinas.openheadunit.connection.usb
 
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -35,7 +35,7 @@ class UsbReceiver(private val mListener: Listener)          // USB Broadcast Rec
             return
         }
 
-        val device: UsbDevice = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        val device: UsbDevice = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
         } else {
             @Suppress("DEPRECATION")

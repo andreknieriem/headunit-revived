@@ -1,10 +1,10 @@
-package com.andrerinas.openheadunit.connection
+package com.andrerinas.openheadunit.connection.usb
 
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbManager
-import com.andrerinas.openheadunit.aap.Utils
+import com.andrerinas.openheadunit.utils.Utils
 import com.andrerinas.openheadunit.utils.AppLog
 
 class UsbAccessoryMode(private val usbMgr: UsbManager) {

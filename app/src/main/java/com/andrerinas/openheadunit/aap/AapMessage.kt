@@ -3,6 +3,7 @@ package com.andrerinas.openheadunit.aap
 
 import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.MsgType
+import com.andrerinas.openheadunit.utils.Utils
 import com.google.protobuf.CodedOutputStream
 import com.google.protobuf.Message
 

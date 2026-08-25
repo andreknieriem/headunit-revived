@@ -1,28 +1,27 @@
 package com.andrerinas.openheadunit.aap
 
-import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.messages.Messages
-import com.andrerinas.openheadunit.connection.AccessoryConnection
+import com.andrerinas.openheadunit.connection.projection.ProjectionConnection
 import com.andrerinas.openheadunit.utils.AppLog
-import java.nio.BufferUnderflowException
+import com.andrerinas.openheadunit.utils.Utils
 import java.nio.ByteBuffer
 
 internal class AapReadMultipleMessages(
-        connection: AccessoryConnection,
-        ssl: AapSsl,
-        handler: AapMessageHandler,
-        onVideoRunHoled: (discardAssembledUnit: Boolean) -> Unit = {},
-        faultInjector: VideoFaultInjector? = null)
+    connection: ProjectionConnection,
+    ssl: AapSsl,
+    handler: AapMessageHandler,
+    onVideoRunHoled: (discardAssembledUnit: Boolean) -> Unit = {},
+    faultInjector: VideoFaultInjector? = null)
     : AapRead.Base(connection, ssl, handler, onVideoRunHoled, faultInjector) {
 
     // Increase buffers to 4MB to handle large 1080p/4K/HEVC I-frames
-    private val fifo = ByteBuffer.allocate(4 * 1024 * 1024) 
+    private val fifo = ByteBuffer.allocate(4 * 1024 * 1024)
     private val recvBuffer = ByteArray(Messages.DEF_BUFFER_LENGTH)
     private val recvHeader = AapMessageIncoming.EncryptedHeader()
-    private val msgBuffer = ByteArray(4 * 1024 * 1024) 
+    private val msgBuffer = ByteArray(4 * 1024 * 1024)
     private val skipBuffer = ByteArray(4)
 
-    override fun doRead(connection: AccessoryConnection): Int {
+    override fun doRead(connection: ProjectionConnection): Int {
         val size = try {
             connection.recvBlocking(recvBuffer, recvBuffer.size, 5000, false)
         } catch (e: Exception) {
@@ -80,7 +79,7 @@ internal class AapReadMultipleMessages(
             if (recvHeader.enc_len > msgBuffer.size || recvHeader.enc_len < 0) {
                 AppLog.e("AapRead: Invalid message length (${recvHeader.enc_len}). Resetting FIFO.")
                 fifo.clear()
-                return 
+                return
             }
 
             if (fifo.remaining() < recvHeader.enc_len) {

@@ -12,8 +12,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.net.wifi.WifiManager
-import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -44,9 +42,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.media.session.MediaButtonReceiver
-import com.andrerinas.openheadunit.connection.UsbAccessoryMode
-import com.andrerinas.openheadunit.connection.UsbDeviceCompat
-import com.andrerinas.openheadunit.connection.UsbReceiver
+import com.andrerinas.openheadunit.connection.usb.UsbReceiver
 import com.andrerinas.openheadunit.location.GpsLocationService
 import com.andrerinas.openheadunit.utils.LocaleHelper
 import com.andrerinas.openheadunit.utils.LogExporter
@@ -56,7 +52,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.SystemClock
-import java.util.concurrent.atomic.AtomicBoolean
 import android.app.NotificationManager
 import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
@@ -65,6 +60,8 @@ import android.media.AudioFocusRequest
 import android.view.View
 import android.view.WindowManager
 import android.media.AudioManager
+import com.andrerinas.openheadunit.connection.SelfLauncherManager
+import com.andrerinas.openheadunit.connection.usb.UsbLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTeardownPolicy
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTrigger
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
@@ -97,17 +94,18 @@ import com.andrerinas.openheadunit.utils.protoUint32ToLong
  * - **WiFi (server)**: [WirelessServer] accepts incoming sockets from AA Wireless / Self Mode
  * - **Self Mode**: starts [WirelessServer] and launches the AA Wireless Setup Activity on-device
  */
-class AapService : Service(), UsbReceiver.Listener {
+class AapService : Service() {
 
     // SupervisorJob prevents a child coroutine failure from cancelling the whole scope
     val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private lateinit var uiModeManager: UiModeManager
-    private lateinit var usbReceiver: UsbReceiver
     private var nightModeManager: NightModeManager? = null
     private var wifiAutoStartReceiver: WifiAutoStartReceiver? = null
     private var mediaSession: MediaSessionCompat? = null
     private val wifiLauncherManager = WifiLauncherManager(this)
+    private val usbLauncherManager = UsbLauncherManager(this)
+    private val selfLauncherManager = SelfLauncherManager(this, wifiLauncherManager)
 
     /**
      * Set when a link-loss teardown closed the session because station WiFi was going away.
@@ -135,7 +133,7 @@ class AapService : Service(), UsbReceiver.Listener {
             null
         }
     }
-    private var permanentFocusRequest: android.media.AudioFocusRequest? = null
+    private var permanentFocusRequest: AudioFocusRequest? = null
 
     private var lastAaMediaMetadata: MediaPlayback.MediaMetaData? = null
     private var lastAaPlaybackPositionMs: Long = 0L
@@ -217,7 +215,6 @@ class AapService : Service(), UsbReceiver.Listener {
      */
     private var isDestroying = false
     private var hasEverConnected = false
-    private var accessoryHandshakeFailures = 0
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -233,16 +230,7 @@ class AapService : Service(), UsbReceiver.Listener {
      * mode change runs, so a user's VPN went down moments after it came up. Ownership is what
      * decides now, and a VPN with no owner is never touched.
      */
-    private var dummyVpnOwner: DummyVpnPolicy.Owner? = null
-
-    /**
-     * Takes down a Self Mode VPN whose phone never arrived.
-     *
-     * [stopWirelessServer] used to do this by accident. Without it a user who starts Self Mode and
-     * walks away leaves a tun that routes 0.0.0.0/0 into a descriptor nobody reads, and the unit
-     * has no IPv4 until the service dies.
-     */
-    private var selfModeVpnWatchdog: Job? = null
+    var dummyVpnOwner: DummyVpnPolicy.Owner? = null
 
     /**
      * Partial wake lock acquired when the service starts from boot/screen-on.
@@ -269,17 +257,6 @@ class AapService : Service(), UsbReceiver.Listener {
     }
 
     /**
-     * Guards against duplicate [UsbAccessoryMode.connectAndSwitch] calls AND duplicate
-     * [connectUsbWithRetry] calls for devices already in accessory mode.
-     *
-     * Set to `true` synchronously on the main thread before launching any background
-     * USB connect/switch coroutine. Checked in [checkAlreadyConnectedUsb] to prevent
-     * multiple concurrent connection attempts on the same device.
-     * Cleared in the coroutine's finally block, or on disconnect.
-     */
-    private val isSwitchingToAccessory = AtomicBoolean(false)
-
-    /**
      * Set when the phone sends VIDEO_FOCUS_NATIVE (user tapped "Exit" in AA).
      * Suppresses [scheduleReconnectIfNeeded] so we don't try to reconnect to a
      * stale dongle that hasn't re-enumerated yet.
@@ -291,6 +268,8 @@ class AapService : Service(), UsbReceiver.Listener {
     var userExitCooldownUntil = 0L
 
     private val commManager get() = App.provide(this).commManager
+
+    fun isSelfModeActive() = selfLauncherManager.isActive
 
     fun updateMediaSessionState(isPlaying: Boolean) {
         mediaSessionIsPlaying = isPlaying
@@ -612,7 +591,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
         if (commManager.isConnected ||
             commManager.connectionState.value is CommManager.ConnectionState.Connecting ||
-            isSwitchingToAccessory.get()) {
+            usbLauncherManager.isSwitchingToProjection()) {
             AppLog.i("WakeDetect: already connected/connecting, skipping ($trigger)")
             return
         }
@@ -626,7 +605,7 @@ class AapService : Service(), UsbReceiver.Listener {
 
         if (settings.autoStartOnUsb) {
             AppLog.i("WakeDetect: checking USB devices (trigger=$trigger)")
-            checkAlreadyConnectedUsb(force = true)
+            usbLauncherManager.checkAlreadyConnected(force = true)
         }
     }
 
@@ -637,12 +616,12 @@ class AapService : Service(), UsbReceiver.Listener {
     private fun onPossibleWake(trigger: String) {
         if (commManager.isConnected ||
             commManager.connectionState.value is CommManager.ConnectionState.Connecting ||
-            isSwitchingToAccessory.get()) return
+            usbLauncherManager.isSwitchingToProjection()) return
 
         val settings = App.provide(this).settings
         if (settings.autoStartOnUsb) {
             AppLog.i("WakeDetect: possible wake, checking USB (trigger=$trigger)")
-            checkAlreadyConnectedUsb(force = true)
+            usbLauncherManager.checkAlreadyConnected(force = true)
         }
     }
 
@@ -742,7 +721,7 @@ class AapService : Service(), UsbReceiver.Listener {
         }
 
         if (commManager.connectionState.value is CommManager.ConnectionState.Connecting ||
-            isSwitchingToAccessory.get()) {
+            usbLauncherManager.isSwitchingToProjection()) {
             AppLog.i("WakeDetect: already connecting, skipping screen-on auto-start")
             return
         }
@@ -754,7 +733,7 @@ class AapService : Service(), UsbReceiver.Listener {
         val settings = App.provide(this).settings
         if (settings.autoStartOnUsb) {
             AppLog.i("WakeDetect: checking USB devices on screen on")
-            checkAlreadyConnectedUsb(force = true)
+            usbLauncherManager.checkAlreadyConnected(force = true)
         }
     }
 
@@ -767,6 +746,7 @@ class AapService : Service(), UsbReceiver.Listener {
     override fun onCreate() {
         super.onCreate()
         AppLog.i("AapService creating...")
+        instance = this
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -815,7 +795,7 @@ class AapService : Service(), UsbReceiver.Listener {
             initWifiModeWithOptionalWait()
         }
         scheduleBootLoopStrikeClear()
-        checkAlreadyConnectedUsb()
+        usbLauncherManager.checkAlreadyConnected()
         registerNetworkMonitor()
     }
 
@@ -862,7 +842,7 @@ class AapService : Service(), UsbReceiver.Listener {
                     }
                     is CommManager.ConnectionState.TransportStarted -> {
                         hasEverConnected = true
-                        accessoryHandshakeFailures = 0
+                        usbLauncherManager.projectionHandshakeFailures = 0
                         sendBroadcast(Intent(ACTION_REQUEST_NIGHT_MODE_UPDATE).apply {
                             setPackage(packageName)
                         })
@@ -877,7 +857,7 @@ class AapService : Service(), UsbReceiver.Listener {
                         // where they happen; the silent-peer streak lives in CommManager for that
                         // reason.
                         if (state.message.contains("Handshake failed")) {
-                            onHandshakeFailed()
+                            usbLauncherManager.onHandshakeFailed()
                         }
                     }
                     is CommManager.ConnectionState.Disconnected -> {
@@ -1010,7 +990,7 @@ class AapService : Service(), UsbReceiver.Listener {
      * that [VideoDecoder.setSurface] is always called before the first video frame arrives.
      */
     private fun onConnected() {
-        isSwitchingToAccessory.set(false)
+        usbLauncherManager.setSwitchingToProjection(false)
         updateNotification()
         // Whatever the transport, the wake-up loop has nothing left to do. Event driven rather
         // than left to the loop's own 15 s poll.
@@ -1180,7 +1160,7 @@ class AapService : Service(), UsbReceiver.Listener {
      * 4. Scheduling a reconnect attempt if applicable (see [scheduleReconnectIfNeeded])
      */
     private fun onDisconnected(state: CommManager.ConnectionState.Disconnected) {
-        isSwitchingToAccessory.set(false)
+        usbLauncherManager.setSwitchingToProjection(false)
         releaseWifiLock()
         stopDummyVpn(DummyVpnPolicy.Reason.SESSION_ENDED)
 
@@ -1268,9 +1248,9 @@ class AapService : Service(), UsbReceiver.Listener {
      * disconnect) produce `isClean = false`.
      */
     private fun scheduleReconnectIfNeeded(state: CommManager.ConnectionState.Disconnected) {
-        if (selfMode) {
+        if (selfLauncherManager.isActive) {
             AppLog.i("AapService: Self Mode disconnected. Not restarting.")
-            selfMode = false
+            selfLauncherManager.isActive = false
             wifiLauncherManager.stop()
             return
         }
@@ -1312,7 +1292,7 @@ class AapService : Service(), UsbReceiver.Listener {
             AppLog.i("AapService: USB disconnect. Scheduling reconnect check in ${USB_RECONNECT_DELAY_MS}ms...")
             serviceScope.launch {
                 delay(USB_RECONNECT_DELAY_MS)
-                if (!commManager.isConnected) checkAlreadyConnectedUsb(force = true)
+                if (!commManager.isConnected) usbLauncherManager.checkAlreadyConnected(force = true)
             }
         }
 
@@ -1333,7 +1313,7 @@ class AapService : Service(), UsbReceiver.Listener {
     }
 
     private fun registerReceivers() {
-        usbReceiver = UsbReceiver(this)
+        usbLauncherManager.register()
         ContextCompat.registerReceiver(
             this, nightModeUpdateReceiver,
             IntentFilter(ACTION_REQUEST_NIGHT_MODE_UPDATE),
@@ -1342,11 +1322,6 @@ class AapService : Service(), UsbReceiver.Listener {
         ContextCompat.registerReceiver(
             this, sensorRefreshReceiver,
             IntentFilter(ACTION_REFRESH_SENSORS).apply { addAction(ACTION_RESTART_AUDIO) },
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-        ContextCompat.registerReceiver(
-            this, usbReceiver,
-            UsbReceiver.createFilter(),
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         // Runtime-registered MEDIA_BUTTON receiver.
@@ -1652,35 +1627,13 @@ class AapService : Service(), UsbReceiver.Listener {
     /**
      * Takes the dummy VPN down, but only for a teardown that owns it - see [DummyVpnPolicy].
      */
-    private fun stopDummyVpn(reason: DummyVpnPolicy.Reason) {
+    fun stopDummyVpn(reason: DummyVpnPolicy.Reason) {
         val owner = dummyVpnOwner
         if (!DummyVpnPolicy.shouldStop(owner, reason)) return
         AppLog.i("AapService: releasing the dummy VPN (owner=$owner, reason=$reason)")
         VpnControl.stopVpn(this)
         dummyVpnOwner = null
-        selfModeVpnWatchdog?.cancel()
-        selfModeVpnWatchdog = null
-    }
-
-    /**
-     * Records that a Self Mode VPN - started by `HomeFragment`, which owns the consent dialog - is
-     * ours to clean up, and arms the watchdog that does it if no phone ever arrives.
-     */
-    private fun adoptSelfModeDummyVpn() {
-        // Nothing to adopt where the flavor has no VPN - see VpnControl.
-        if (!VpnControl.isVpnAvailable()) return
-        if (dummyVpnOwner == null) dummyVpnOwner = DummyVpnPolicy.Owner.SELF_MODE
-        selfModeVpnWatchdog?.cancel()
-        selfModeVpnWatchdog = serviceScope.launch {
-            delay(SELF_MODE_VPN_TIMEOUT_MS)
-            if (!commManager.isConnected) {
-                AppLog.w(
-                    "AapService: Self Mode brought the dummy VPN up ${SELF_MODE_VPN_TIMEOUT_MS}ms " +
-                        "ago and no phone arrived. Taking it down so this unit gets its network back."
-                )
-                stopDummyVpn(DummyVpnPolicy.Reason.SELF_MODE_NEVER_CONNECTED)
-            }
-        }
+        selfLauncherManager.stopDummyVpnWatchdog()
     }
 
     /**
@@ -1692,8 +1645,8 @@ class AapService : Service(), UsbReceiver.Listener {
      * session.
      */
     private fun maybeStartSessionDummyVpn() {
-        selfModeVpnWatchdog?.cancel()
-        selfModeVpnWatchdog = null
+        selfLauncherManager.stopDummyVpnWatchdog()
+
         val available = VpnControl.isVpnAvailable()
         val wanted = DummyVpnPolicy.shouldStartForSession(
             keepDuringSession = App.provide(this).settings.keepDummyVpnDuringSession,
@@ -1703,7 +1656,7 @@ class AapService : Service(), UsbReceiver.Listener {
             nativeWirelessSession = commManager.isWirelessSession &&
                 App.provide(this).settings.wifiConnectionMode == WifiLauncherMode.NATIVE,
             currentOwner = dummyVpnOwner,
-            selfMode = selfMode,
+            selfMode = selfLauncherManager.isActive,
             vpnAvailable = available,
             // Short-circuited on purpose: the Play Store flavor must not reach a prepare() call
             // at all, and the stub would answer false anyway.
@@ -1804,7 +1757,7 @@ class AapService : Service(), UsbReceiver.Listener {
             unregisterReceiver(nightModeUpdateReceiver)
             unregisterReceiver(sensorRefreshReceiver)
         } catch (_: Exception) {}
-        try { unregisterReceiver(usbReceiver) } catch (_: Exception) {}
+        usbLauncherManager.unregister()
         try { unregisterReceiver(mediaButtonReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(wakeDetectReceiver) } catch (_: Exception) {}
         try { App.provide(this).carKeysManager.unregisterReceivers() } catch (e: Exception) { AppLog.w("AapService: Error unregistering carKeysManager: ${e.message}") }
@@ -1819,6 +1772,7 @@ class AapService : Service(), UsbReceiver.Listener {
         try { serviceScope.cancel() } catch (_: Exception) {}
         try { LogExporter.stopCapture() } catch (_: Exception) {}
         super.onDestroy()
+        instance = null
         if (killProcessOnDestroy) {
             AppLog.i("AapService: killProcessOnDestroy is true. Triggering System.exit(0).")
             System.exit(0)
@@ -1875,7 +1829,7 @@ class AapService : Service(), UsbReceiver.Listener {
         }
 
         when (intent?.action) {
-            ACTION_START_SELF_MODE       -> startSelfMode()
+            ACTION_START_SELF_MODE       -> selfLauncherManager.start()
             ACTION_START_WIRELESS        -> {
                 // Asked for from the UI, so the user is present: release the boot-loop pause
                 // rather than silently ignoring them.
@@ -1984,334 +1938,14 @@ class AapService : Service(), UsbReceiver.Listener {
                 // Caller already invoked commManager.connect(socket); the connectionState
                 // observer in observeConnectionState() handles the rest — nothing to do here.
             }
-            ACTION_CHECK_USB             -> checkAlreadyConnectedUsb(force = true)
+            ACTION_CHECK_USB             -> usbLauncherManager.checkAlreadyConnected(force = true)
             else                         -> {
                 if (intent?.action == null || intent.action == Intent.ACTION_MAIN) {
-                    checkAlreadyConnectedUsb()
+                    usbLauncherManager.checkAlreadyConnected()
                 }
             }
         }
         return START_STICKY
-    }
-
-    // -------------------------------------------------------------------------
-    // USB
-    // -------------------------------------------------------------------------
-
-    override fun onUsbAttach(device: UsbDevice) {
-        if (!UsbDeviceCompat.isAndroidDevice(device)) {
-            AppLog.i("Ignoring non-Android USB device attached in service (VID: ${device.vendorId}): ${device.deviceName}")
-            return
-        }
-        userExitedAA = false
-        if (UsbDeviceCompat.isInAccessoryMode(device)) {
-            // Device already in AOA mode (re-enumerated after UsbAttachedActivity switched it).
-            AppLog.i("USB accessory device attached, connecting.")
-            launchMainActivityIfNeeded("USB accessory attach")
-            checkAlreadyConnectedUsb(force = true)
-        } else {
-            // UsbAttachedActivity normally handles normal-mode devices via a manifest intent
-            // filter. However, some headunits (especially Chinese MediaTek units) don't
-            // deliver USB_DEVICE_ATTACHED to activities on cold start. As a fallback,
-            // check after a delay to give UsbAttachedActivity a chance to handle it first.
-            val deviceName = UsbDeviceCompat(device).uniqueName
-            AppLog.i("Normal USB device attached: $deviceName. Will check auto-connect in ${USB_ATTACH_FALLBACK_DELAY_MS}ms...")
-            launchMainActivityIfNeeded("USB normal attach ($deviceName)")
-            serviceScope.launch {
-                delay(USB_ATTACH_FALLBACK_DELAY_MS)
-                if (!commManager.isConnected && !isSwitchingToAccessory.get()) {
-                    AppLog.i("UsbAttachedActivity didn't handle $deviceName. Trying from service...")
-                    checkAlreadyConnectedUsb(force = true)
-                }
-            }
-        }
-    }
-
-    override fun onUsbDetach(device: UsbDevice) {
-        userExitedAA = false
-        if (commManager.isConnectedToUsbDevice(device)) {
-            // Cable physically removed — the USB connection is already dead, so skip the
-            // ByeByeRequest send (which would block ~1 s trying to write to a gone device).
-            commManager.disconnect(sendByeBye = false, isUserExit = false)
-        }
-    }
-
-    override fun onUsbAccessoryDetach() {
-        AppLog.i("USB Accessory detached. This might be a transient state (e.g., 100% battery). Attempting to re-sync...")
-        userExitedAA = false
-        if (commManager.isConnected) {
-            commManager.disconnect(sendByeBye = false, isUserExit = false)
-        }
-
-        // Wait a bit and check if the device is still there in normal mode
-        serviceScope.launch {
-            delay(1500) // Give the phone/system time to settle its USB state
-            AppLog.i("Accessory detach cooldown finished. Checking for re-connection...")
-            checkAlreadyConnectedUsb(force = true)
-        }
-    }
-
-    override fun onUsbPermission(granted: Boolean, connect: Boolean, device: UsbDevice) {
-        if (!UsbDeviceCompat.isAndroidDevice(device)) {
-            AppLog.i("Ignoring USB permission callback for non-Android device (VID: ${device.vendorId}): ${device.deviceName}")
-            return
-        }
-        val deviceName = UsbDeviceCompat(device).uniqueName
-        if (granted) {
-            AppLog.i("USB permission granted for $deviceName")
-            if (UsbDeviceCompat.isInAccessoryMode(device)) {
-                isSwitchingToAccessory.set(true)
-                serviceScope.launch {
-                    try {
-                        connectUsbWithRetry(device)
-                    } finally {
-                        isSwitchingToAccessory.set(false)
-                    }
-                }
-            } else {
-                isSwitchingToAccessory.set(true)
-                val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-                val settings = App.provide(this).settings
-                val usbMode = UsbAccessoryMode(usbManager)
-                serviceScope.launch(Dispatchers.IO) {
-                    try {
-                        if (usbMode.connectAndSwitch(device, settings.useLibusb)) {
-                            AppLog.i("Successfully requested switch to accessory mode for $deviceName")
-                        } else {
-                            AppLog.w("USB permission granted but connectAndSwitch failed for $deviceName")
-                        }
-                    } finally {
-                        isSwitchingToAccessory.set(false)
-                    }
-                }
-            }
-        } else {
-            AppLog.w("USB permission denied for $deviceName")
-            ToastUtils.showToast(this, getString(R.string.usb_permission_denied), Toast.LENGTH_LONG)
-        }
-    }
-
-    private fun requestUsbPermission(device: UsbDevice) {
-        val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-        val permissionIntent = UsbReceiver.createPermissionPendingIntent(this)
-        AppLog.i("Requesting USB permission for ${UsbDeviceCompat(device).uniqueName}")
-        try {
-            ToastUtils.showToast(this, getString(R.string.requesting_usb_permission), Toast.LENGTH_SHORT)
-            usbManager.requestPermission(device, permissionIntent)
-        } catch (e: Exception) {
-            AppLog.e("Failed to request USB permission: ${e.message}. This device might not support USB permission dialogs.", e)
-            ToastUtils.showToast(this, getString(R.string.error_usb_permission_failed), Toast.LENGTH_LONG)
-        }
-    }
-
-    /**
-     * Called when a handshake fails. If an accessory-mode device is still present,
-     * it's likely a stale wireless AA dongle. Force re-enumeration by sending AOA
-     * descriptors — this resets the dongle's USB state so the next connection
-     * starts with clean buffers.
-     */
-    private fun onHandshakeFailed() {
-        val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-        val accessoryDevice = usbManager.deviceList.values.firstOrNull {
-            UsbDeviceCompat.isInAccessoryMode(it)
-        } ?: return
-
-        accessoryHandshakeFailures++
-        val deviceName = UsbDeviceCompat(accessoryDevice).uniqueName
-        AppLog.w("Handshake failed on accessory device $deviceName (failure #$accessoryHandshakeFailures)")
-
-        if (accessoryHandshakeFailures > MAX_STALE_ACCESSORY_RETRIES) {
-            AppLog.i("Stale accessory detected: forcing re-enumeration via AOA descriptors for $deviceName")
-            accessoryHandshakeFailures = 0
-            val settings = App.provide(this).settings
-            val usbMode = UsbAccessoryMode(usbManager)
-            isSwitchingToAccessory.set(true)
-            serviceScope.launch(Dispatchers.IO) {
-                try {
-                    if (usbMode.connectAndSwitch(accessoryDevice, settings.useLibusb)) {
-                        AppLog.i("AOA re-enumeration requested for stale device $deviceName")
-                    } else {
-                        AppLog.w("AOA re-enumeration failed for $deviceName")
-                    }
-                } catch (e: Exception) {
-                    AppLog.e("AOA re-enumeration for $deviceName failed with exception", e)
-                } finally {
-                    isSwitchingToAccessory.set(false)
-                }
-            }
-        }
-    }
-
-    /**
-     * Scans currently connected USB devices and connects to any that are already in
-     * Android Open Accessory (AOA) mode, or attempts to switch a known device into AOA mode.
-     *
-     * @param force When `true`, bypasses the [autoConnectLastSession] guard. Use `true` when
-     *              called in response to an actual USB attach event or from [UsbAttachedActivity],
-     *              because the user has explicitly plugged in a device. Use `false` (default)
-     *              for the startup scan in [onCreate].
-     */
-    private fun checkAlreadyConnectedUsb(force: Boolean = false) {
-        val settings = App.provide(this).settings
-        val lastSession = settings.autoConnectLastSession
-        val singleUsb = settings.autoConnectSingleUsbDevice
-        val usbAutoStart = settings.autoStartOnUsb
-
-        if (!force && !lastSession && !singleUsb && !usbAutoStart) return
-        if (commManager.isConnected ||
-            commManager.connectionState.value is CommManager.ConnectionState.Connecting ||
-            isSwitchingToAccessory.get()) return
-
-        val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-        val deviceList = usbManager.deviceList.values.filter { UsbDeviceCompat.isAndroidDevice(it) }
-
-        // Check for devices already in accessory mode first.
-        // After AOA switch the device re-enumerates and appears as a new USB device — we must
-        // request permission for this new device before openDevice(), or SecurityException occurs.
-        for (device in deviceList) {
-            if (UsbDeviceCompat.isInAccessoryMode(device)) {
-                val deviceName = UsbDeviceCompat(device).uniqueName
-                AppLog.i("Found device already in accessory mode: $deviceName")
-                if (!usbManager.hasPermission(device)) {
-                    AppLog.i("Accessory-mode device has no permission (re-enumerated); requesting permission: $deviceName")
-                    requestUsbPermission(device)
-                    return
-                }
-                isSwitchingToAccessory.set(true)
-                serviceScope.launch {
-                    try {
-                        connectUsbWithRetry(device)
-                    } finally {
-                        isSwitchingToAccessory.set(false)
-                    }
-                }
-                return
-            }
-        }
-
-        // Last-session mode: reconnect to a known/allowed device
-        if (lastSession) {
-            for (device in deviceList) {
-                val deviceCompat = UsbDeviceCompat(device)
-                if (settings.isConnectingDevice(deviceCompat)) {
-                    if (usbManager.hasPermission(device)) {
-                        AppLog.i("Found known USB device with permission: ${deviceCompat.uniqueName}. Switching to accessory mode.")
-                        isSwitchingToAccessory.set(true)
-                        val usbMode = UsbAccessoryMode(usbManager)
-                        serviceScope.launch(Dispatchers.IO) {
-                            try {
-                                if (usbMode.connectAndSwitch(device, settings.useLibusb)) {
-                                    AppLog.i("Successfully requested switch to accessory mode for ${deviceCompat.uniqueName}")
-                                } else {
-                                    AppLog.w("connectAndSwitch failed for ${deviceCompat.uniqueName}")
-                                }
-                            } finally {
-                                isSwitchingToAccessory.set(false)
-                            }
-                        }
-                        return
-                    } else {
-                        AppLog.i("Found known USB device but no permission: ${deviceCompat.uniqueName}, requesting...")
-                        requestUsbPermission(device)
-                        return
-                    }
-                }
-            }
-        }
-
-        // USB auto-start mode: attempt AOA switch for any single non-accessory device
-        if (usbAutoStart) {
-            val nonAccessoryDevices = deviceList.filter { !UsbDeviceCompat.isInAccessoryMode(it) }
-            if (nonAccessoryDevices.size == 1) {
-                performSingleUsbConnect(nonAccessoryDevices[0])
-                return
-            }
-        }
-
-        // Single-USB mode: connect if there's exactly one candidate device.
-        // If the user has marked specific devices as "Allowed" in the USB list,
-        // only count those — so non-AA peripherals (dashcams, USB audio, etc.)
-        // don't prevent auto-connect. Falls back to counting all devices when
-        // no devices have been explicitly allowed (fresh install).
-        if (singleUsb) {
-            val nonAccessoryDevices = deviceList.filter { !UsbDeviceCompat.isInAccessoryMode(it) }
-            val allowed = settings.allowedDevices
-            val candidates = if (allowed.isNotEmpty()) {
-                nonAccessoryDevices.filter { allowed.contains(UsbDeviceCompat(it).uniqueName) }
-            } else {
-                nonAccessoryDevices
-            }
-            if (allowed.isNotEmpty() && candidates.size != nonAccessoryDevices.size) {
-                AppLog.i("Single USB auto-connect: ${nonAccessoryDevices.size} USB device(s) present, ${candidates.size} allowed")
-            }
-            if (candidates.size == 1) {
-                performSingleUsbConnect(candidates[0])
-                return
-            }
-        }
-
-        // Fallback: if force=true and we have a single Google VID device in normal mode,
-        // switch it to accessory mode. This handles cases where UsbAttachedActivity didn't fire.
-        if (force) {
-            val nonAccessoryDevices = deviceList.filter { !UsbDeviceCompat.isInAccessoryMode(it) }
-            val googleDevices = nonAccessoryDevices.filter { it.vendorId == 0x18D1 }
-            if (googleDevices.size == 1) {
-                AppLog.i("Fallback: force=true and found single Google normal-mode device ${UsbDeviceCompat(googleDevices[0]).uniqueName}. Switching to accessory mode.")
-                performSingleUsbConnect(googleDevices[0])
-            }
-        }
-    }
-
-    private fun performSingleUsbConnect(device: UsbDevice) {
-        val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-        if (usbManager.hasPermission(device)) {
-            val deviceName = UsbDeviceCompat(device).uniqueName
-            AppLog.i("Single USB auto-connect: connecting to $deviceName")
-            isSwitchingToAccessory.set(true)
-            val usbMode = UsbAccessoryMode(usbManager)
-            serviceScope.launch(Dispatchers.IO) {
-                try {
-                    if (usbMode.connectAndSwitch(device, settings.useLibusb)) {
-                        AppLog.i("Successfully requested switch to accessory mode for single USB device. Waiting for re-enumeration...")
-                    } else {
-                        AppLog.w("Single USB auto-connect: connectAndSwitch failed for $deviceName")
-                    }
-                } finally {
-                    isSwitchingToAccessory.set(false)
-                }
-            }
-        } else {
-            AppLog.i("Single USB auto-connect: device found but no permission, requesting...")
-            requestUsbPermission(device)
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Connection
-    // -------------------------------------------------------------------------
-
-    /**
-     * Attempts a USB connection up to [maxRetries] times with a 1.5 s delay between attempts.
-     *
-     * USB accessories occasionally fail on the first attach (the device hasn't fully
-     * enumerated yet), so retrying is necessary for reliability.
-     */
-    private suspend fun connectUsbWithRetry(device: UsbDevice, maxRetries: Int = 3) {
-        var retryCount = 0
-        var success = false
-        while (retryCount <= maxRetries && !success) {
-            if (retryCount > 0) {
-                AppLog.i("Retrying USB connection (attempt ${retryCount + 1}/$maxRetries)...")
-                delay(1500)
-                // A USB reattach during the delay could have already started a new connection;
-                // bail out to avoid two parallel retry loops competing on the same device.
-                if (commManager.isConnected ||
-                    commManager.connectionState.value is CommManager.ConnectionState.Connecting) return
-            }
-            commManager.connect(device)
-            success = commManager.connectionState.value is CommManager.ConnectionState.Connected
-            retryCount++
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -2383,7 +2017,7 @@ class AapService : Service(), UsbReceiver.Listener {
      * visible. Uses the same overlay trampoline technique as boot auto-start to bypass OEM
      * background activity start restrictions.
      */
-    private fun launchMainActivityIfNeeded(source: String) {
+    fun launchMainActivityIfNeeded(source: String) {
         val settings = App.provide(this).settings
         if (!settings.autoStartOnUsb || !settings.reopenOnReconnection) return
 
@@ -2579,218 +2213,20 @@ class AapService : Service(), UsbReceiver.Listener {
     }
 
     // -------------------------------------------------------------------------
-    // Self Mode
-    // -------------------------------------------------------------------------
-
-    /**
-     * "Self Mode" connects the device to itself over the loopback interface.
-     *
-     * Starts [WirelessServer] on port 5288, then launches the Google AA Wireless Setup
-     * Activity pointing at `127.0.0.1:5288`. This causes the AA Wireless app to treat
-     * the device as both the head unit and the phone, enabling a loopback session.
-     *
-     * [createFakeNetwork] and [createFakeWifiInfo] produce the Parcelable extras the
-     * AA Wireless activity requires; they are constructed reflectively because the
-     * relevant Android classes have no public constructors.
-     */
-    private fun isAaVersion174OrHigher(): Boolean {
-        return try {
-            val pInfo = packageManager.getPackageInfo("com.google.android.projection.gearhead", 0)
-            val vName = pInfo.versionName ?: ""
-            val parts = vName.split(".")
-            val major = parts.getOrNull(0)?.toIntOrNull() ?: 0
-            val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
-            AppLog.i("SelfMode: Installed AA version: $vName (major=$major, minor=$minor)")
-            major > 17 || (major == 17 && minor >= 4)
-        } catch (e: Exception) {
-            AppLog.w("SelfMode: Failed to query AA version: ${e.message}")
-            false
-        }
-    }
-
-    private fun openAaSettings() {
-        val intent = Intent().apply {
-            setClassName(
-                "com.google.android.projection.gearhead",
-                "com.google.android.projection.gearhead.companion.settings.DefaultSettingsActivity"
-            )
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        try {
-            startActivity(intent)
-        } catch (e: Exception) {
-            try {
-                val fallbackIntent = Intent("android.settings.APPLICATION_DETAILS_SETTINGS").apply {
-                    data = android.net.Uri.parse("package:com.google.android.projection.gearhead")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(fallbackIntent)
-            } catch (e2: Exception) {
-                AppLog.e("SelfMode: Failed to open AA settings: ${e2.message}")
-            }
-        }
-    }
-
-    @SuppressLint("MissingPermission", "HardwareIds")
-    private fun startSelfMode() {
-        selfMode = true
-        adoptSelfModeDummyVpn()
-
-        serviceScope.launch(Dispatchers.Main) {
-            if (isAaVersion174OrHigher()) {
-                AppLog.i("SelfMode: AA 17.4+ detected. Connecting directly to Headunit Server on 127.0.0.1:5277...")
-                val success = withContext(Dispatchers.IO) {
-                    commManager.connect("127.0.0.1", 5277)
-                    commManager.isConnected
-                }
-                if (!success && !commManager.isConnected) {
-                    AppLog.w("SelfMode: Headunit Server (127.0.0.1:5277) is NOT running.")
-                    ToastUtils.showToast(
-                        this@AapService,
-                        "Android Auto 17.4+ detected: Please start 'Headunit Server' in Android Auto Developer Settings!",
-                        Toast.LENGTH_LONG
-                    )
-                    openAaSettings()
-                }
-                return@launch
-            }
-
-            AppLog.i("SelfMode: AA < 17.4 detected. Starting WirelessServer on 5288 and running legacy triggers...")
-            wifiLauncherManager.setActive(WifiLauncherMode.NATIVE)
-
-            val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && connectivityManager.activeNetwork == null) {
-                // Wait up to 1 second for the Dummy VPN to become the active network
-                for (i in 1..10) {
-                    if (connectivityManager.activeNetwork != null) break
-                    delay(100)
-                }
-            }
-
-            val activeNetwork = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                connectivityManager.activeNetwork else null
-            val networkToUse = activeNetwork ?: createFakeNetwork(0)
-            val fakeWifiInfo = createFakeWifiInfo()
-
-            val magicalIntent = Intent().apply {
-                setClassName(
-                    "com.google.android.projection.gearhead",
-                    "com.google.android.apps.auto.wireless.setup.service.impl.WirelessStartupActivity"
-                )
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                putExtra("PARAM_HOST_ADDRESS", "127.0.0.1")
-                putExtra("PARAM_SERVICE_PORT", 5288)
-                networkToUse?.let { putExtra("PARAM_SERVICE_WIFI_NETWORK", it) }
-                fakeWifiInfo?.let { putExtra("wifi_info", it) }
-            }
-
-            try {
-                AppLog.i("Launching AA Wireless Startup via Activity...")
-                startActivity(magicalIntent)
-            } catch (e: Exception) {
-                AppLog.w("Activity launch failed (${e.message}). Attempting Broadcast fallback...")
-                try {
-
-                    AppLog.w("WirelessStartupActivity not found (AA 16.4+ detected).")
-                    if (Build.VERSION.SDK_INT <= 29) {
-                        // On Android 10, if Activity is gone, Broadcast will definitely be blocked by Gearhead's version check.
-                        AppLog.e("Self-mode blocked by Google on Android 10 (AA 16.4+). Skipping broadcast fallback.")
-                        ToastUtils.showToast(this@AapService, getString(R.string.failed_self_mode_android10), Toast.LENGTH_LONG)
-                    } else {
-                        val receiverIntent = Intent().apply {
-                            setClassName(
-                                "com.google.android.projection.gearhead",
-                                "com.google.android.apps.auto.wireless.setup.receiver.WirelessStartupReceiver"
-                            )
-                            action = "com.google.android.apps.auto.wireless.setup.receiver.wirelessstartup.START"
-                            putExtra("ip_address", "127.0.0.1")
-                            putExtra("projection_port", 5288)
-                            networkToUse?.let { putExtra("PARAM_SERVICE_WIFI_NETWORK", it) }
-                            fakeWifiInfo?.let { putExtra("wifi_info", it) }
-                            addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-                        }
-                        sendBroadcast(receiverIntent)
-                        AppLog.i("Broadcast fallback 1 (WirelessStartupReceiver) sent.")
-
-                        // Fallback 2: WifiBluetoothReceiver (START_WIRELESS_PROJECTION) for AA 17.4+
-                        val bondedAddress = try {
-                            val adapter = BluetoothHelper.getBluetoothAdapter(this@AapService)
-                            val bonded = adapter?.bondedDevices
-                            val connectedDevice = bonded?.firstOrNull { dev ->
-                                try {
-                                    val m = dev.javaClass.getMethod("isConnected")
-                                    (m.invoke(dev) as? Boolean) == true
-                                } catch (e: Exception) { false }
-                            }
-                            val targetDev = connectedDevice ?: bonded?.firstOrNull()
-                            val selfAddr: String? = try { adapter?.address } catch (se: SecurityException) { null }
-                            AppLog.i("SelfMode BT Discovery: bondedCount=${bonded?.size ?: 0}, connectedMac=${connectedDevice?.address}, selectedMac=${targetDev?.address}")
-                            targetDev?.address ?: if (!selfAddr.isNullOrBlank() && selfAddr != "02:00:00:00:00:00") selfAddr else null
-                        } catch (e: Throwable) {
-                            AppLog.w("Failed to get bonded BT device address: ${e.message}")
-                            null
-                        } ?: "00:11:22:33:44:55"
-
-                        val btReceiverIntent = Intent("com.google.android.projection.gearhead.START_WIRELESS_PROJECTION").apply {
-                            setClassName(
-                                "com.google.android.projection.gearhead",
-                                "com.google.android.apps.auto.wireless.bluetooth.WifiBluetoothReceiver"
-                            )
-                            putExtra("DEVICE_ADDRESS", bondedAddress)
-                            addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-                        }
-                        sendBroadcast(btReceiverIntent)
-                        AppLog.i("Broadcast fallback 2 (WifiBluetoothReceiver START_WIRELESS_PROJECTION with MAC $bondedAddress) sent.")
-                    }
-                } catch (e2: Exception) {
-                    AppLog.e("All triggers failed", e2)
-                    ToastUtils.showToast(this@AapService, getString(R.string.failed_start_android_auto), Toast.LENGTH_SHORT)
-                }
-            }
-        }
-    }
-
-    /** Reflectively constructs an `android.net.Network` from a raw network ID integer. */
-    private fun createFakeNetwork(netId: Int): Parcelable? {
-        val parcel = Parcel.obtain()
-        return try {
-            parcel.writeInt(netId)
-            parcel.setDataPosition(0)
-            val creator = Class.forName("android.net.Network").getField("CREATOR").get(null) as Parcelable.Creator<*>
-            creator.createFromParcel(parcel) as Parcelable
-        } catch (e: Exception) { null } finally { parcel.recycle() }
-    }
-
-    /** Reflectively constructs a `WifiInfo` with a fake SSID for the Self Mode intent. */
-    private fun createFakeWifiInfo(): Parcelable? {
-        return try {
-            val wifiInfoClass = Class.forName("android.net.wifi.WifiInfo")
-            val wifiInfo = wifiInfoClass.getDeclaredConstructor()
-                .apply { isAccessible = true }
-                .newInstance() as Parcelable
-            try {
-                wifiInfoClass.getDeclaredField("mSSID")
-                    .apply { isAccessible = true }
-                    .set(wifiInfo, "\"Headunit-Fake-Wifi\"")
-            } catch (e: Exception) {}
-            wifiInfo
-        } catch (e: Exception) { null }
-    }
-
-    // -------------------------------------------------------------------------
     // Companion
     // -------------------------------------------------------------------------
 
     companion object {
+        @Volatile
+        var instance: AapService? = null
+            private set
+
         /**
          * If set to `true`, the service will call [System.exit] at the very end of [onDestroy].
          * This is used by `killOnDisconnect` to ensure all cleanup (like Car Mode) completes
          * before the process dies.
          */
         var killProcessOnDestroy: Boolean = false
-
-        /** `true` while a Self Mode session is active. */
-        var selfMode = false
 
         val wifiDirectName = MutableStateFlow<String?>(null)
 
@@ -2799,13 +2235,6 @@ class AapService : Service(), UsbReceiver.Listener {
          * Observed by `HomeFragment` via a lifecycle-aware flow collector.
          */
         val scanningState = MutableStateFlow(false)
-
-        /**
-         * How long a Self Mode dummy VPN may stay up with no phone before it is taken down.
-         *
-         * stopWirelessServer() used to do this cleanup by accident, on the next mode change.
-         */
-        private const val SELF_MODE_VPN_TIMEOUT_MS = 120_000L
 
         private const val BOOT_START_NOTIFICATION_ID = 42
         private const val BOOT_LOOP_NOTIFICATION_ID = 43
@@ -2834,9 +2263,6 @@ class AapService : Service(), UsbReceiver.Listener {
          */
         const val ACTION_CONNECT_SOCKET            = "com.andrerinas.openheadunit.ACTION_CONNECT_SOCKET"
 
-        /** Max handshake failures on a stale accessory device before forcing AOA re-enumeration. */
-        private const val MAX_STALE_ACCESSORY_RETRIES = 1
-
         /** Delay before retrying USB connection after an unexpected disconnect. */
         private const val USB_RECONNECT_DELAY_MS = 3000L
 
@@ -2858,10 +2284,6 @@ class AapService : Service(), UsbReceiver.Listener {
         /** Cooldown period after user-initiated exit. During this window, the WirelessServer
          *  rejects incoming connections to prevent the phone from instantly reconnecting. */
         private const val USER_EXIT_COOLDOWN_MS = 5000L
-
-        /** Delay before AapService tries to handle a normal-mode USB attach as a fallback
-         *  when UsbAttachedActivity doesn't fire (common on Chinese MediaTek headunits). */
-        private const val USB_ATTACH_FALLBACK_DELAY_MS = 2000L
 
         /** Screen-off duration (ms) above which SCREEN_ON is treated as a hibernate wake.
          *  60 seconds filters out normal screen timeouts while catching any hibernate/quick boot. */
