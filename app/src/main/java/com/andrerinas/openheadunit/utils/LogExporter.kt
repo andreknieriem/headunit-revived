@@ -166,13 +166,26 @@ object LogExporter {
                 // the read loop ended — logcat process died or was intentionally stopped
                 if (captureProcess === process && captureRestarts < MAX_RESTARTS) {
                     captureRestarts++
-                    AppLog.w("Log capture process exited, restarting (attempt $captureRestarts/$MAX_RESTARTS)")
+                    val err = try { process.errorStream.bufferedReader().readText().trim() } catch (_: Exception) { "" }
+                    if (err.isNotEmpty()) {
+                        AppLog.w("Log capture process exited with error: $err (attempt $captureRestarts/$MAX_RESTARTS)")
+                    } else {
+                        AppLog.w("Log capture process exited, restarting (attempt $captureRestarts/$MAX_RESTARTS)")
+                    }
                     try { Thread.sleep(2000) } catch (_: InterruptedException) { return@Thread }
                     launchLogcatPipe(file, verbosity)
+                } else if (captureProcess === process && file.length() == 0L) {
+                    val err = try { process.errorStream.bufferedReader().readText().trim() } catch (_: Exception) { "" }
+                    AppLog.e("Logcat capture failed to produce output. Consider switching log source to Direct to file (APPLOG_FILE). $err")
+                    file.delete()
+                    captureFile = null
                 }
             }.also { it.isDaemon = true; it.start() }
         } catch (e: IOException) {
             AppLog.e("Failed to start log capture", e)
+            if (file.exists() && file.length() == 0L) {
+                file.delete()
+            }
             captureFile = null
         }
     }
@@ -183,6 +196,11 @@ object LogExporter {
         captureProcess = null
         captureThread?.join(2000)
         captureThread = null
+        val file = captureFile
+        if (file != null && file.exists() && file.length() == 0L) {
+            file.delete()
+            captureFile = null
+        }
     }
 
     /**
@@ -229,7 +247,12 @@ object LogExporter {
                 process.inputStream.copyTo(out)
             }
             process.waitFor()
-            logFile
+            if (logFile.exists() && logFile.length() == 0L) {
+                logFile.delete()
+                null
+            } else {
+                logFile
+            }
         } catch (e: Exception) {
             AppLog.e("Failed to save logs", e)
             null

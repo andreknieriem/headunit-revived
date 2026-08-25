@@ -101,6 +101,9 @@ object AppLog {
                 }
                 try { writer.flush() } catch (_: IOException) {}
                 try { writer.close() } catch (_: IOException) {}
+                if (file.exists() && file.length() == 0L) {
+                    file.delete()
+                }
             }
 
             /**
