@@ -343,6 +343,20 @@ class AapTransport(
                     "used, $focusCyclesSpentThisSession/${KeyframeCycleEscalationPolicy.MAX_CYCLES_PER_DRIVE} " +
                     "spent this drive)"
             )
+            // A refund granted while the clock is armed lands in a session whose check chain has
+            // ended: escalateIfStillUnrepaired() stops re-arming once the budget is spent, and
+            // the armed clock makes this call return before arming a new one. Without its own
+            // check the refunded cycle is unspendable until a keyframe happens to arrive - the
+            // very wait it exists to cut short.
+            if (unrepairedSinceMs != 0L) {
+                sendHandler?.let { handler ->
+                    handler.removeCallbacks(unrepairedCheckRunnable)
+                    handler.postDelayed(
+                        unrepairedCheckRunnable,
+                        KeyframeCycleEscalationPolicy.ESCALATE_AFTER_UNREPAIRED_MS
+                    )
+                }
+            }
         }
 
         // Stamped before the returns below, and deliberately also when this call goes on to arm

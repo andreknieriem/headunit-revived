@@ -661,13 +661,75 @@ class KeyframeCycleEscalationPolicyTest {
     }
 
     @Test
-    fun `nothing comes back while the picture is unrepaired`() {
+    fun `nothing comes back while the picture is unrepaired and a reserve remains`() {
         // A held last cycle stays the last cycle: the reserve's guarantee is being there when the
-        // loss stops, and a refund arriving mid-hold would dilute exactly that.
+        // loss stops, and a refund arriving mid-hold would dilute exactly that. The hold is
+        // scoped to the reserve - see the exhausted-budget test below for the other half.
+        val now = 10_000_000L
+        for (used in 1 until MAX_CYCLES_PER_SESSION) {
+            assertEquals(
+                "a session at $used spends still holds a reserve",
+                0,
+                refund(
+                    now,
+                    cyclesUsedThisSession = used,
+                    cyclesSpentThisSession = used,
+                    lastBudgetChangeMs = 1_000L,
+                    pictureUnrepaired = true,
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `an exhausted budget earns the refund even while the picture is unrepaired`() {
+        // With everything spent there is no reserve for the unrepaired hold to protect. Refusing
+        // the refund there latched the ladder dead: a fault that stamps no wire corruption kept
+        // the quiet clock running from the last spend, the picture stayed broken, and the only
+        // exit left was the phone's own keyframe a GOP away.
+        val start = 1_000L
+        assertEquals(
+            1,
+            refund(
+                start + CYCLE_REFUND_AFTER_QUIET_MS,
+                lastBudgetChangeMs = start,
+                pictureUnrepaired = true,
+            )
+        )
+    }
+
+    @Test
+    fun `an exhausted budget under sustained wire corruption still earns nothing back`() {
+        // The unrepaired gate narrows; the quiet gate does not. A wire still losing frames keeps
+        // its own stamp advancing, and a refund spent into that stream buys a keyframe that
+        // arrives broken too.
         val now = 10_000_000L
         assertEquals(
             0,
-            refund(now, lastBudgetChangeMs = 1_000L, pictureUnrepaired = true)
+            refund(
+                now,
+                lastBudgetChangeMs = now - CYCLE_REFUND_AFTER_QUIET_MS,
+                lastWireCorruptionMs = now - 12_000L,
+                pictureUnrepaired = true,
+            )
+        )
+    }
+
+    @Test
+    fun `the drive ceiling binds through unrepaired-exhausted refunds`() {
+        // The new refund path must not open a way past MAX_CYCLES_PER_DRIVE: a session that has
+        // spent its whole drive allowance earns nothing back no matter how long it stays quiet,
+        // broken or not.
+        val now = 100_000_000L
+        assertEquals(
+            0,
+            refund(
+                now,
+                cyclesUsedThisSession = MAX_CYCLES_PER_SESSION,
+                cyclesSpentThisSession = MAX_CYCLES_PER_DRIVE,
+                lastBudgetChangeMs = 1_000L,
+                pictureUnrepaired = true,
+            )
         )
     }
 

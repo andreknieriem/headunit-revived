@@ -29,6 +29,29 @@ object LogExporter {
     private var captureRestarts = 0
     private const val MAX_RESTARTS = 5
 
+    @Volatile
+    private var cachedLogcatSupported: Boolean? = null
+
+    /**
+     * Checks whether the current process is able to read logcat output.
+     * On older Android versions (e.g. 5.1/7.1) or restricted ROMs without READ_LOGS permission,
+     * logcat exits immediately with 'Permission denied' or empty output.
+     */
+    fun isLogcatSupported(): Boolean {
+        cachedLogcatSupported?.let { return it }
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("logcat", "-d", "-t", "1"))
+            val exitCode = process.waitFor()
+            val hasOutput = process.inputStream.bufferedReader().use { it.readLine() != null }
+            val isSupported = exitCode == 0 && hasOutput
+            cachedLogcatSupported = isSupported
+            isSupported
+        } catch (_: Throwable) {
+            cachedLogcatSupported = false
+            false
+        }
+    }
+
     /**
      * Ceiling for one capture file. Sits under [LogFilesHelper]'s 50 MB budget for the whole
      * directory, so a single runaway capture cannot consume it.
@@ -47,6 +70,17 @@ object LogExporter {
      * bypassing the small shared ring buffer.
      */
     fun startCapture(context: Context, verbosity: LogLevel) {
+        val settings = Settings(context)
+
+        // If LOGCAT is selected but logcat is restricted on this device, automatically switch to APPLOG_FILE
+        if (settings.logSource == Settings.LogSource.LOGCAT && !isLogcatSupported()) {
+            AppLog.w("LogExporter: Logcat is not accessible on this device (permission denied/restricted). Automatically switching log source to Direct to file (APPLOG_FILE).")
+            settings.logSource = Settings.LogSource.APPLOG_FILE
+            settings.exporterCaptureEnabled = true
+            AppLog.init(settings, context.applicationContext)
+            return
+        }
+
         if (AppLog.logSource == Settings.LogSource.APPLOG_FILE) {
             AppLog.w("LogExporter: log source is APPLOG_FILE; logcat capture is disabled")
             stopCapture()
@@ -64,7 +98,6 @@ object LogExporter {
         }
 
         stopCapture()
-        val settings = Settings(context)
         val logDir = LogFilesHelper.resolveLogDirectory(context, settings, allowInternalFallback = false) ?: return
         LogFilesHelper.rotateLogs(logDir)
 
@@ -73,7 +106,7 @@ object LogExporter {
         captureVerbosity = verbosity
         captureRestarts = 0
 
-        launchLogcatPipe(file, verbosity)
+        launchLogcatPipe(file, verbosity, context)
         // After the pipe, not before: logcat is spawned without -T, so it drains the ring buffer and
         // then follows, and a line emitted here lands in the file either way.
         AppLog.w(sessionBanner(context))
@@ -118,7 +151,7 @@ object LogExporter {
      * When the process exits unexpectedly, restarts automatically up to [MAX_RESTARTS] times
      * so a system-killed logcat doesn't silently stop the capture.
      */
-    private fun launchLogcatPipe(file: File, verbosity: LogLevel) {
+    private fun launchLogcatPipe(file: File, verbosity: LogLevel, context: Context) {
         try {
             val process = Runtime.getRuntime().exec(
                 arrayOf("logcat", "-v", "threadtime", verbosity.filter)
@@ -166,13 +199,30 @@ object LogExporter {
                 // the read loop ended — logcat process died or was intentionally stopped
                 if (captureProcess === process && captureRestarts < MAX_RESTARTS) {
                     captureRestarts++
-                    AppLog.w("Log capture process exited, restarting (attempt $captureRestarts/$MAX_RESTARTS)")
+                    val err = try { process.errorStream.bufferedReader().readText().trim() } catch (_: Exception) { "" }
+                    if (err.isNotEmpty()) {
+                        AppLog.w("Log capture process exited with error: $err (attempt $captureRestarts/$MAX_RESTARTS)")
+                    } else {
+                        AppLog.w("Log capture process exited, restarting (attempt $captureRestarts/$MAX_RESTARTS)")
+                    }
                     try { Thread.sleep(2000) } catch (_: InterruptedException) { return@Thread }
-                    launchLogcatPipe(file, verbosity)
+                    launchLogcatPipe(file, verbosity, context)
+                } else if (captureProcess === process && file.length() == 0L) {
+                    val err = try { process.errorStream.bufferedReader().readText().trim() } catch (_: Exception) { "" }
+                    AppLog.w("LogExporter: Logcat capture produced 0 bytes ($err). Automatically switching to Direct to file (APPLOG_FILE).")
+                    file.delete()
+                    captureFile = null
+                    val settings = Settings(context)
+                    settings.logSource = Settings.LogSource.APPLOG_FILE
+                    settings.exporterCaptureEnabled = true
+                    AppLog.init(settings, context.applicationContext)
                 }
             }.also { it.isDaemon = true; it.start() }
         } catch (e: IOException) {
             AppLog.e("Failed to start log capture", e)
+            if (file.exists() && file.length() == 0L) {
+                file.delete()
+            }
             captureFile = null
         }
     }
@@ -183,6 +233,11 @@ object LogExporter {
         captureProcess = null
         captureThread?.join(2000)
         captureThread = null
+        val file = captureFile
+        if (file != null && file.exists() && file.length() == 0L) {
+            file.delete()
+            captureFile = null
+        }
     }
 
     /**
@@ -204,12 +259,18 @@ object LogExporter {
         // unattributable, and it is the case with no other chance to write one.
         AppLog.w(sessionBanner(context))
 
+        val settings = Settings(context)
+
+        if (settings.logSource == Settings.LogSource.LOGCAT && !isLogcatSupported()) {
+            AppLog.w("LogExporter: Logcat is not accessible on this device. Switching log source to Direct to file (APPLOG_FILE).")
+            settings.logSource = Settings.LogSource.APPLOG_FILE
+        }
+
         if (AppLog.logSource == Settings.LogSource.APPLOG_FILE) {
             return (AppLog.currentLogFile ?: AppLog.lastLogFile)
                 ?.takeIf { it.exists() && it.length() > 0 }
         }
 
-        val settings = Settings(context)
         val logDir = LogFilesHelper.resolveLogDirectory(context, settings, allowInternalFallback = false) ?: return null
         LogFilesHelper.ensureDirectory(logDir)
 
@@ -229,7 +290,12 @@ object LogExporter {
                 process.inputStream.copyTo(out)
             }
             process.waitFor()
-            logFile
+            if (logFile.exists() && logFile.length() == 0L) {
+                logFile.delete()
+                null
+            } else {
+                logFile
+            }
         } catch (e: Exception) {
             AppLog.e("Failed to save logs", e)
             null

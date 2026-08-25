@@ -175,8 +175,15 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
         fun bind(setting: SettingItem.ToggleSettingEntry) {
             if (setting.nameOverride != null) settingName.text = setting.nameOverride
             else settingName.setText(setting.nameResId)
-            if (setting.descriptionResId != null) settingDescription.setText(setting.descriptionResId)
-            else settingDescription.visibility = View.GONE
+            // Both branches set the visibility, because the holder is recycled. Hiding the view
+            // without ever showing it again meant that once a toggle with no description had been
+            // bound here, every later toggle reusing this holder rendered without its subtitle.
+            if (setting.descriptionResId != null) {
+                settingDescription.setText(setting.descriptionResId)
+                settingDescription.visibility = View.VISIBLE
+            } else {
+                settingDescription.visibility = View.GONE
+            }
             settingSwitch.setOnCheckedChangeListener(null)
             settingSwitch.isChecked = setting.isChecked
             settingSwitch.isEnabled = setting.isEnabled

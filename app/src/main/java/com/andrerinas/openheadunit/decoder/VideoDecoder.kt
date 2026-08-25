@@ -279,19 +279,31 @@ class VideoDecoder(
     // never sent; high means frames are arriving faster than the codec drains them, which on a
     // healthy link is the signature of a burst after the link went quiet.
     @Volatile private var inputWaitMs = 0L
+    // Milliseconds decode() spent waiting for space in the feed queue, on the transport's read
+    // thread. Non-zero is the backpressure working: the read thread is being paced at the codec's
+    // real drain rate, closing the phone's unacked-message window, instead of frames being shed.
+    // Every wait counts, including one that ran out the budget and shed the frame anyway - the
+    // thread was held either way, and those are the longest waits the path can produce. Read it
+    // beside `dropped`: high here with dropped=0 is pacing, both high is a wedge.
+    // See offerWithBackpressure().
+    @Volatile private var enqueueWaitMs = 0L
     private var lastThroughputLogMs = 0L
     private var lastLoggedFramesFed = 0L
     private var lastLoggedFramesDropped = 0L
     private var lastLoggedFramesRendered = 0L
     private var lastLoggedFramesSkippedAtRender = 0L
     private var lastLoggedInputWaitMs = 0L
+    private var lastLoggedEnqueueWaitMs = 0L
 
     // Encoded frames waiting to be handed to the codec, and the thread that hands them over.
     //
     // This queue exists to keep the wait for a free codec input buffer off the transport's read
     // thread. That thread carries every channel - video, audio, microphone, control - so while it
     // sat inside dequeueInputBuffer nothing else on the link was dispatched and the socket went
-    // undrained, which turned a busy decoder into stalled audio and late keepalives. Frames are
+    // undrained, which turned a busy decoder into stalled audio and late keepalives. The one wait
+    // the read thread still takes is deliberate and different in kind: when this queue is FULL,
+    // offerWithBackpressure() paces that thread by one queue slot - one frame period in steady
+    // state - so the phone's ack window throttles it instead of frames being shed. Frames are
     // copied on the way in because the transport reuses the buffer it hands us.
     private class PendingFrame(var data: ByteArray, var size: Int, var arrivalNanos: Long)
     // Derived once per decoder rather than per session: the queue is allocated here, and fpsLimit
@@ -323,6 +335,10 @@ class VideoDecoder(
      */
     private var lastFeedDropLogMs = 0L
     private var suppressedFeedDropLogs = 0
+    // Same shape as the feed-drop pair above, for the pacing line, but owned by the transport's
+    // read thread - the two threads must not share unsynchronised counters.
+    private var lastFeedPacingLogMs = 0L
+    private var suppressedFeedPacingLogs = 0
     // Volatile and identity-checked by the loop itself: interrupt() does not abort a MediaCodec
     // call, so a feed thread parked in dequeueInputBuffer can outlive the join() below. If it
     // does, stop() goes on to release the codec and a later start() sets running back to true -
@@ -760,6 +776,7 @@ class VideoDecoder(
             framesRendered = 0L
             framesSkippedAtRender = 0L
             inputWaitMs = 0L
+            enqueueWaitMs = 0L
             lastDropKeyframeRequestMs = 0L
             lastThroughputLogMs = 0L
             lastLoggedFramesFed = 0L
@@ -767,6 +784,7 @@ class VideoDecoder(
             lastLoggedFramesRendered = 0L
             lastLoggedFramesSkippedAtRender = 0L
             lastLoggedInputWaitMs = 0L
+            lastLoggedEnqueueWaitMs = 0L
             AppLog.i("Decoder stopped: $reason")
         }
     }
@@ -779,13 +797,15 @@ class VideoDecoder(
     /**
      * Main entry point for decoding a video/control packet.
      *
-     * Reports nothing back to the caller. A frame this cannot place into the codec's input queue
-     * is lost here, and once the picture is live the loss asks the phone for a keyframe - see
-     * [notifyFrameDropped] for the shape of that ask and why it stays silent before the first
-     * rendered frame.
+     * Reports nothing back to the caller, but may pace it: with the feed queue full this blocks
+     * the calling thread for up to [VideoFeedThrottlePolicy.WAIT_BUDGET_MS], which is what
+     * throttles the phone through its ack window - see [offerWithBackpressure]. A frame that
+     * outlasts even that wait is lost here, and once the picture is live the loss asks the phone
+     * for a keyframe - see [notifyFrameDropped] for the shape of that ask and why it stays silent
+     * before the first rendered frame.
      */
     fun decode(buffer: ByteArray, offset: Int, size: Int, forceSoftware: Boolean, codecName: String) {
-        synchronized(this) {
+        val frame = synchronized(this) {
             // Input-side liveness: bytes are arriving from the phone right now.
             lastInputBytesReceivedMs = SystemClock.elapsedRealtime()
 
@@ -926,18 +946,24 @@ class VideoDecoder(
 
             if (codec == null) return
 
-            enqueueForFeed(frameData, frameOffset, size)
-        }
+            prepareFrame(frameData, frameOffset, size)
+        } ?: return
+
+        // Outside the monitor on purpose: stop() synchronizes on this object, and a wait held
+        // inside it would block the teardown for up to the whole budget. Out here stop() clears
+        // running and the wait aborts within one slice.
+        offerWithBackpressure(frame)
     }
 
     /**
-     * Copies a frame onto the feed queue. Returns immediately in every case - the caller is the
-     * transport's read thread and must get back to the socket.
+     * Copies a frame into a pooled buffer while the transport's bytes are still valid - the
+     * caller reuses the buffer it handed us the moment decode() returns, so the copy has to
+     * happen before the monitor is released.
      */
-    private fun enqueueForFeed(frameData: ByteArray, frameOffset: Int, size: Int) {
+    private fun prepareFrame(frameData: ByteArray, frameOffset: Int, size: Int): PendingFrame? {
         // An empty frame reaches the codec as nothing at all, so queueing it would only inflate
         // the fed count that the throughput line uses to say whether frames arrived.
-        if (size <= 0) return
+        if (size <= 0) return null
 
         val frame = borrowFrame(size)
 
@@ -947,18 +973,79 @@ class VideoDecoder(
         // a few milliseconds, so timestamps taken there would give a dozen frames near-identical
         // values and flatten the cadence the codec sees.
         frame.arrivalNanos = System.nanoTime()
+        return frame
+    }
 
-        if (!frameQueue.offer(frame)) {
-            // The codec has not taken a frame for as long as this queue holds. Drop the one that
-            // just arrived rather than something already queued: the older frames are what
-            // everything after them is decoded against, so dropping forward costs one frame while
-            // dropping backward corrupts every frame that referenced it until the next keyframe.
-            // The frame shed here is still a reference for what follows it, though, so ask for
-            // that keyframe rather than waiting out the phone's own cadence - see
-            // notifyFrameDropped().
-            recycleFrame(frame)
-            notifyFrameDropped()
+    /**
+     * Places the frame on the feed queue, pacing the transport's read thread when it is full.
+     *
+     * The bounded stall is the point, not a hazard. While this thread waits, no further messages
+     * are read or acked, so the phone's unacked-message window closes and the phone slows to the
+     * rate the codec actually drains - the protocol's own flow control, doing the throttling that
+     * shedding used to fake. A full queue plus an arriving frame only ever happens when the phone
+     * is outrunning the codec, so in steady state the wait per frame is one frame period, and a
+     * link-stall backlog (phone silent, queue draining) never blocks here at all.
+     *
+     * Every frame shed by the old immediate drop was a reference some later frame predicted from,
+     * so each one cost a washed-out, blocky picture until the phone's own keyframe - and the phone
+     * runs a fixed keyframe period measured at ~69s, beyond anything the focus-cycle ladder can
+     * repair when the drops keep coming.
+     *
+     * Budget expiry still sheds the frame: the feed thread's own give-up frees a slot every
+     * [VideoFeedQueuePolicy.INPUT_DEQUEUE_PATIENCE_MS], so outlasting the budget means the codec
+     * took nothing for the whole wait - a wedge, which belongs to the sync_stall watchdog, with
+     * [notifyFrameDropped]'s keyframe ask covering the picture that frame cost.
+     */
+    private fun offerWithBackpressure(frame: PendingFrame) {
+        if (frameQueue.offer(frame)) return
+
+        val waitStart = SystemClock.elapsedRealtime()
+        var accepted = false
+        var elapsed = 0L
+        while (!accepted && VideoFeedThrottlePolicy.shouldKeepWaiting(elapsed, running)) {
+            accepted = try {
+                frameQueue.offer(frame, VideoFeedThrottlePolicy.OFFER_SLICE_MS, TimeUnit.MILLISECONDS)
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+                break
+            }
+            elapsed = SystemClock.elapsedRealtime() - waitStart
         }
+
+        // Counted on both outcomes. The question this field answers is how long the transport was
+        // paced, and a wait that ran out the budget paced it for the whole budget - counting only
+        // the admitted ones would zero the largest waits there are and make a wedge read as a
+        // session that never waited at all.
+        enqueueWaitMs += SystemClock.elapsedRealtime() - waitStart
+
+        if (accepted) {
+            logFeedPacing()
+        } else {
+            recycleFrame(frame)
+            // A teardown fails the offer the same way a wedge does - stop() clears running and
+            // empties the queue. Say nothing then: the frame is moot and the keyframe ask would
+            // fire on every ordinary stop.
+            if (running) notifyFrameDropped()
+        }
+    }
+
+    /**
+     * Reports that the read thread is being paced, at most once per [FEED_DROP_LOG_INTERVAL_MS].
+     *
+     * Called from the transport's read thread only. The throughput line's `enqueueWait` carries
+     * the magnitude; this line only says it began.
+     */
+    private fun logFeedPacing() {
+        val now = SystemClock.elapsedRealtime()
+        if (lastFeedPacingLogMs != 0L && now - lastFeedPacingLogMs < FEED_DROP_LOG_INTERVAL_MS) {
+            suppressedFeedPacingLogs++
+            return
+        }
+        lastFeedPacingLogMs = now
+        val alsoSuppressed =
+            if (suppressedFeedPacingLogs > 0) " (+$suppressedFeedPacingLogs more since the last line)" else ""
+        suppressedFeedPacingLogs = 0
+        AppLog.i("Feed queue full - pacing the transport thread instead of shedding frames%s", alsoSuppressed)
     }
 
     /** Takes a buffer from the pool, growing it if this frame does not fit, or allocates one. */
@@ -1024,6 +1111,15 @@ class VideoDecoder(
             "Feed thread started (queue holds $frameQueueCapacity frames, " +
                 "${VideoFeedQueuePolicy.heldMsAt(settings.fpsLimit)}ms at ${settings.fpsLimit}fps)"
         )
+        // Read once, not per frame: this thread must not touch SharedPreferences on its hot path,
+        // and a mid-session change taking effect silently is exactly what the loud line prevents.
+        val feedHoldMs = settings.debugVideoFeedHoldMs
+        if (feedHoldMs > 0) {
+            AppLog.w(
+                "Feed thread: DEBUG hold ${feedHoldMs}ms per frame - simulating a decoder slower " +
+                    "than the stream. No real fault looks like this line."
+            )
+        }
         val self = Thread.currentThread()
         while (running && feedThread === self) {
             val frame = try {
@@ -1036,7 +1132,20 @@ class VideoDecoder(
                 if (!running || feedThread !== self || codec == null) continue
                 val buf = ByteBuffer.wrap(frame.data, 0, frame.size)
                 when (feedInputBuffer(buf, frame.arrivalNanos)) {
-                    FeedResult.FED -> framesFed++
+                    FeedResult.FED -> {
+                        framesFed++
+                        // After the feed, not inside the codec wait, so inputWait stays honest:
+                        // the hold reads as a full queue and a paced transport while the codec
+                        // itself keeps decoding and rendering - the shape of a real decoder at
+                        // its ceiling.
+                        if (feedHoldMs > 0) {
+                            try {
+                                Thread.sleep(feedHoldMs.toLong())
+                            } catch (e: InterruptedException) {
+                                Thread.currentThread().interrupt()
+                            }
+                        }
+                    }
                     // Counted and answered where the real buffer capacity is known.
                     FeedResult.DROPPED_TOO_LARGE -> {}
                     FeedResult.ERROR -> {
@@ -1869,6 +1978,7 @@ class VideoDecoder(
         val dropped = framesDropped - lastLoggedFramesDropped
         val skipped = framesSkippedAtRender - lastLoggedFramesSkippedAtRender
         val inputWait = inputWaitMs - lastLoggedInputWaitMs
+        val enqueueWait = enqueueWaitMs - lastLoggedEnqueueWaitMs
         val concealed = framesConcealed - lastLoggedFramesConcealed
         lastLoggedFramesConcealed = framesConcealed
         lastThroughputLogMs = now
@@ -1877,13 +1987,17 @@ class VideoDecoder(
         lastLoggedFramesDropped = framesDropped
         lastLoggedFramesSkippedAtRender = framesSkippedAtRender
         lastLoggedInputWaitMs = inputWaitMs
+        lastLoggedEnqueueWaitMs = enqueueWaitMs
 
         val renderedFps = rendered * 1000 / elapsed
         val fedFps = fed * 1000 / elapsed
+        // enqueueWait is appended after the pre-existing fields, never between them: this line is
+        // read by diagnostics and compared across releases, so existing fields keep name and order.
         AppLog.i(
             "Throughput over ${elapsed}ms: rendered=$rendered (${renderedFps}fps), " +
                 "fed=$fed (${fedFps}fps), dropped=$dropped, skipped=$skipped, " +
-                "concealed=$concealed, inputWait=${inputWait}ms, codec=$currentCodecName"
+                "concealed=$concealed, inputWait=${inputWait}ms, enqueueWait=${enqueueWait}ms, " +
+                "codec=$currentCodecName"
         )
         reportBackpressure(elapsed, inputWait, dropped)
     }
