@@ -58,6 +58,16 @@ object LogFilesHelper {
             ?.sortedBy { it.lastModified() }
             ?.toMutableList() ?: return
 
+        // Clean up any empty 0-byte log files left behind by interrupted or failed captures
+        val iterator = files.iterator()
+        while (iterator.hasNext()) {
+            val file = iterator.next()
+            if (file.length() == 0L) {
+                file.delete()
+                iterator.remove()
+            }
+        }
+
         while (files.size >= maxFiles) {
             files.removeAt(0).delete()
         }
