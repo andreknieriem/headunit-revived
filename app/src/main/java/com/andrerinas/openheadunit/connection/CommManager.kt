@@ -539,6 +539,11 @@ class CommManager(
         }
     }
 
+    suspend fun emitError(msg: String) {
+        _connectionState.emit(ConnectionState.Error(msg))
+        disconnect()
+    }
+
     /**
      * Called by `AapTransport.onQuit` when the transport stops itself (read error, socket
      * timeout, or phone-initiated graceful close).

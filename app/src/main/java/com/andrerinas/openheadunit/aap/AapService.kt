@@ -18,10 +18,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
 import android.os.IBinder
-import android.os.Parcel
-import android.os.Parcelable
 import android.os.PowerManager
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -60,7 +57,7 @@ import android.media.AudioFocusRequest
 import android.view.View
 import android.view.WindowManager
 import android.media.AudioManager
-import com.andrerinas.openheadunit.connection.SelfLauncherManager
+import com.andrerinas.openheadunit.connection.self.SelfLauncherManager
 import com.andrerinas.openheadunit.connection.usb.UsbLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTeardownPolicy
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTrigger
