@@ -183,7 +183,10 @@ class Settings(private val context: Context) {
     }
 
     var logSource: LogSource
-        get() = LogSource.entries.getOrElse(prefs.getInt(KEY_LOG_SOURCE, LogSource.LOGCAT.ordinal)) { LogSource.LOGCAT }
+        get() {
+            val defaultSource = if (LogExporter.isLogcatSupported()) LogSource.LOGCAT else LogSource.APPLOG_FILE
+            return LogSource.entries.getOrElse(prefs.getInt(KEY_LOG_SOURCE, defaultSource.ordinal)) { defaultSource }
+        }
         set(value) { prefs.edit().putInt(KEY_LOG_SOURCE, value.ordinal).apply() }
 
     var logLocation: LogLocation
