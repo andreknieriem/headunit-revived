@@ -229,9 +229,16 @@ object KeyframeCycleEscalationPolicy {
      *
      * Refunds accrue one per [CYCLE_REFUND_AFTER_QUIET_MS] of quiet, measured from whichever is
      * later of the last budget movement and the last wire corruption, so a fault inside a window
-     * restarts that window. Nothing comes back while the picture is unrepaired: a held last cycle
-     * stays the last cycle, and the reserve's guarantee - being there when the loss stops - cannot
-     * be diluted mid-hold.
+     * restarts that window. While the picture is unrepaired, nothing comes back as long as a
+     * reserve remains: a held last cycle stays the last cycle, and the reserve's guarantee - being
+     * there when the loss stops - cannot be diluted mid-hold. A session that has spent everything
+     * holds no reserve, and for it the unrepaired gate had turned "budget exhausted while broken"
+     * into a state only the phone's own keyframe, a GOP away, could exit - even though the last
+     * spend may lie minutes behind. For a fault that stamps no wire corruption (a shed frame
+     * under backpressure) the window runs from the last budget movement, so an exhausted session
+     * under a recurring fault of that kind earns at most one cycle per quiet window and re-spends
+     * it, still inside the drive ceiling; sustained wire corruption keeps its own stamp advancing
+     * and blocks refunds outright, as before.
      *
      * The drive ceiling is enforced as an invariant on *potential*, not a check on spends so far:
      * a refund is capped so that the cycles already spent plus everything the refreshed budget
@@ -253,7 +260,11 @@ object KeyframeCycleEscalationPolicy {
         lastWireCorruptionMs: Long,
         pictureUnrepaired: Boolean,
     ): Int {
-        if (pictureUnrepaired) return 0
+        // The unrepaired hold protects the reserve, and only the reserve. With cycles still
+        // unspent, granting more mid-hold would dilute the guarantee that the last one is there
+        // when the loss stops; with everything spent there is no reserve left to protect, and
+        // refusing the refund is what latched exhausted-while-broken sessions dead.
+        if (pictureUnrepaired && cyclesUsedThisSession < MAX_CYCLES_PER_SESSION) return 0
         if (cyclesUsedThisSession <= 0) return 0
         if (lastBudgetChangeMs == 0L) return 0
         val quietSince = maxOf(lastBudgetChangeMs, lastWireCorruptionMs)
