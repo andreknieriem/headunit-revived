@@ -219,7 +219,7 @@ class MainActivity : BaseActivity() {
         // call beginAutoConnect() directly from their entry points.
         if (savedInstanceState == null &&
             intent?.getStringExtra(EXTRA_LAUNCH_SOURCE) == "USB auto-start") {
-            beginAutoConnect("USB auto-start", ConnectionUiMode.PILL)
+            beginAutoConnect("USB auto-start", ConnectionUiMode.OVERLAY)
         }
 
         // Wire cancel affordances. Pill click and overlay cancel button both

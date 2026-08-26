@@ -154,7 +154,7 @@ class HomeFragment : Fragment() {
                             if (attemptAutoConnect()) {
                                 (requireActivity() as? MainActivity)?.beginAutoConnect(
                                     "auto-connect last session",
-                                    MainActivity.ConnectionUiMode.PILL
+                                    MainActivity.ConnectionUiMode.OVERLAY
                                 )
                             }
                         }
@@ -165,7 +165,7 @@ class HomeFragment : Fragment() {
                             forceSelfModeLaunch = false // Reset once processed
                             (requireActivity() as? MainActivity)?.beginAutoConnect(
                                 "auto-start self mode",
-                                MainActivity.ConnectionUiMode.PILL
+                                MainActivity.ConnectionUiMode.OVERLAY
                             )
                             startSelfMode()
                         }
@@ -176,7 +176,7 @@ class HomeFragment : Fragment() {
                             if (attemptSingleUsbAutoConnect()) {
                                 (requireActivity() as? MainActivity)?.beginAutoConnect(
                                     "auto-connect single USB",
-                                    MainActivity.ConnectionUiMode.PILL
+                                    MainActivity.ConnectionUiMode.OVERLAY
                                 )
                             }
                         }
