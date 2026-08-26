@@ -74,8 +74,8 @@ android {
         applicationId = "com.andrerinas.headunitrevived"
         minSdk = 16
         targetSdk = 36
-        versionCode = 100
-        versionName = "3.3.0-beta1"
+        versionCode = 101
+        versionName = "3.3.0-beta2"
         setProperty("archivesBaseName", "${applicationId}_${versionName}")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
@@ -259,6 +259,5 @@ dependencies {
 
     // Shizuku for root / shell access
     implementation("dev.rikka.shizuku:api:13.1.5")
-    implementation("dev.rikka.shizuku:provider:13.1.5")
     implementation("com.github.topjohnwu.libsu:core:6.0.0")
 }

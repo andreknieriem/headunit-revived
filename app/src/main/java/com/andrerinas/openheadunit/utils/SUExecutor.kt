@@ -15,13 +15,17 @@ import rikka.shizuku.Shizuku
 class SUExecutor {
 
     private val all: Collection<SUImplementation> = buildList {
-        // libsu min sdk
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+        // libsu requires Lollipop (API 21+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             add(RootImpl())
+        } else {
+            add(LegacySuImpl())
+        }
 
-        // Shizuku min sdk
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        // Shizuku requires Marshmallow (API 23+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             add(ShizukuImpl())
+        }
     }
 
     private var registered: Boolean = false
@@ -117,6 +121,38 @@ class SUExecutor {
         fun checkPermission(): Boolean
 
         fun runShell(cmd: String, asRootUser: Boolean): Int
+    }
+
+    private class LegacySuImpl : SUImplementation {
+        override val name = "Root (Legacy)"
+
+        override fun register() {}
+        override fun unregister() {}
+
+        override fun checkPermission(): Boolean {
+            return try {
+                val p = Runtime.getRuntime().exec(arrayOf("su", "-c", "id"))
+                p.waitFor() == 0
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        override fun runShell(cmd: String, asRootUser: Boolean): Int {
+            return try {
+                val shellCmd = if (asRootUser) "su" else "sh"
+                val process = Runtime.getRuntime().exec(arrayOf(shellCmd, "-c", cmd))
+                val exitCode = process.waitFor()
+                if (exitCode != 0) {
+                    val err = process.errorStream.bufferedReader().readText()
+                    Log.e("SUExecutor", "Legacy SU #runShell failed: $err")
+                }
+                exitCode
+            } catch (e: Exception) {
+                Log.e("SUExecutor", "Legacy SU #runShell failed", e)
+                -1
+            }
+        }
     }
 
     private class RootImpl : SUImplementation {
