@@ -1,4 +1,4 @@
-package com.andrerinas.openheadunit.connection
+package com.andrerinas.openheadunit.connection.usb
 
 import android.hardware.usb.UsbDeviceConnection
 import com.andrerinas.openheadunit.utils.AppLog

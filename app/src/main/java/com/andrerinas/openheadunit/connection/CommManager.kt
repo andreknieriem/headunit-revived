@@ -30,12 +30,18 @@ import java.net.Socket
 import android.view.KeyEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.TouchEvent
 import com.andrerinas.openheadunit.aap.protocol.proto.Input.TouchEvent.PointerAction
+import com.andrerinas.openheadunit.connection.projection.AbstractUsbProjectionConnection
+import com.andrerinas.openheadunit.connection.projection.ProjectionConnection
+import com.andrerinas.openheadunit.connection.projection.LibusbProjectionConnection
+import com.andrerinas.openheadunit.connection.projection.SocketProjectionConnection
+import com.andrerinas.openheadunit.connection.projection.StandardUsbProjectionConnection
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.NearbySocket
 
 /**
  * Central connection and transport lifecycle manager.
  *
- * CommManager owns the full lifecycle of both the physical connection ([AccessoryConnection])
+ * CommManager owns the full lifecycle of both the physical connection ([com.andrerinas.openheadunit.connection.projection.ProjectionConnection])
  * and the AAP protocol layer ([AapTransport]). It exposes a single [connectionState] flow as
  * the source of truth; all consumers (AapService, AapProjectionActivity, UI fragments) observe
  * this flow reactively instead of being called imperatively.
@@ -163,7 +169,7 @@ class CommManager(
     /** The endpoint [silentPeerFailures] is counting; a different one starts its own streak. */
     @Volatile private var silentPeerEndpoint: String? = null
     var onUpdateUiConfigReplyReceived: (() -> Unit)? = null
-    @Volatile private var _connection: AccessoryConnection? = null
+    @Volatile private var _connection: ProjectionConnection? = null
 
     /**
      * Tracks the most-recently-launched [doDisconnect] coroutine.
@@ -225,15 +231,14 @@ class CommManager(
      * has to ask the session, not the settings.
      */
     val isWirelessSession: Boolean
-        get() = _connection is SocketAccessoryConnection
+        get() = _connection is SocketProjectionConnection
 
     /**
      * Returns `true` if the current USB connection is to [device].
      * Used by AapService to decide whether a USB detach event should trigger a disconnect.
      */
     fun isConnectedToUsbDevice(device: UsbDevice): Boolean =
-        (_connection as? UsbAccessoryConnection)?.isDeviceRunning(device) == true ||
-        (_connection as? LibusbAccessoryConnection)?.isDeviceRunning(device) == true
+        (_connection as? AbstractUsbProjectionConnection)?.isDeviceRunning(device) == true
 
     // -----------------------------------------------------------------------------------------
     // connect() overloads — one for each transport type
@@ -268,9 +273,9 @@ class CommManager(
             _connectionState.emit(ConnectionState.Connecting)
             _connection?.disconnect()
             _connection = if (settings.useLibusb) {
-                LibusbAccessoryConnection(usbManager, device)
+                LibusbProjectionConnection(usbManager, device)
             } else {
-                UsbAccessoryConnection(usbManager, device)
+                StandardUsbProjectionConnection(usbManager, device)
             }
 
             if (_connection?.connect() ?: false) {
@@ -287,7 +292,7 @@ class CommManager(
 
     /**
      * Wraps an already-connected [Socket] (e.g. accepted by `WirelessServer`) in a
-     * [SocketAccessoryConnection] and advances to [ConnectionState.Connected].
+     * [SocketProjectionConnection] and advances to [ConnectionState.Connected].
      *
      * The socket must already be connected; this overload skips the TCP handshake and only
      * sets up the AAP framing layer.
@@ -318,7 +323,7 @@ class CommManager(
         try {
             _connectionState.emit(ConnectionState.Connecting)
             _connection?.disconnect()
-            _connection = SocketAccessoryConnection(socket, context)
+            _connection = SocketProjectionConnection(socket, context)
 
             if (_connection?.connect() ?: false) {
                 // [FIX] Don't overwrite NEARBY connection type with WIFI + localhost IP (::1)
@@ -352,7 +357,7 @@ class CommManager(
         try {
             _connectionState.emit(ConnectionState.Connecting)
             _connection?.disconnect()
-            _connection = SocketAccessoryConnection(ip, port, context)
+            _connection = SocketProjectionConnection(ip, port, context)
 
             if (_connection?.connect() ?: false) {
                 settings.saveLastConnection(type = Settings.CONNECTION_TYPE_WIFI, ip = ip)
@@ -532,6 +537,11 @@ class CommManager(
             _connectionState.emit(ConnectionState.Error("Start reading failed: ${e.message}"))
             disconnect()
         }
+    }
+
+    suspend fun emitError(msg: String) {
+        _connectionState.emit(ConnectionState.Error(msg))
+        disconnect()
     }
 
     /**

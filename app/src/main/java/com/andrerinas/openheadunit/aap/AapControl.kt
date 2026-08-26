@@ -8,7 +8,6 @@ import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.messages.DrivingStatusEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.LocationUpdateEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.ServiceDiscoveryResponse
-import com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent
 import com.andrerinas.openheadunit.aap.protocol.proto.Common
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.aap.protocol.proto.Input
@@ -19,6 +18,7 @@ import com.andrerinas.openheadunit.decoder.VideoDecoder
 import com.andrerinas.openheadunit.location.LocationHolder
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
+import com.andrerinas.openheadunit.utils.Utils
 
 interface AapControl {
     fun execute(message: AapMessage): Int

@@ -27,7 +27,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapProjectionActivity
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.NearbyManager
-import com.andrerinas.openheadunit.connection.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import android.content.res.Configuration
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.AppPermissions
@@ -38,8 +38,8 @@ import kotlinx.coroutines.launch
 import com.andrerinas.openheadunit.utils.Settings
 import com.andrerinas.openheadunit.utils.VpnControl
 import com.andrerinas.openheadunit.utils.BluetoothHelper
-import com.andrerinas.openheadunit.connection.UsbReceiver
-import com.andrerinas.openheadunit.connection.UsbAccessoryMode
+import com.andrerinas.openheadunit.connection.usb.UsbReceiver
+import com.andrerinas.openheadunit.connection.usb.UsbAccessoryMode
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import kotlinx.coroutines.withContext
@@ -187,7 +187,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun startSelfModeInternal() {
-        AapService.selfMode = true
         val intent = Intent(requireContext(), AapService::class.java)
         intent.action = AapService.ACTION_START_SELF_MODE
         ContextCompat.startForegroundService(requireContext(), intent)
@@ -626,8 +625,15 @@ class HomeFragment : Fragment() {
         updateButtonStyle()
         updateTextColors()
         activity?.let { act ->
-            if (!act.isFinishing && !act.isDestroyed) {
-                RenameNotice.maybeShow(act, App.provide(requireContext()).settings)
+            {
+                val isDestroyed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+                    act.isDestroyed
+                else
+                    true
+
+                if (!act.isFinishing && !isDestroyed) {
+                    RenameNotice.maybeShow(act, App.provide(requireContext()).settings)
+                }
             }
         }
     }

@@ -7,8 +7,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.andrerinas.openheadunit.App
-import com.andrerinas.openheadunit.connection.UsbDeviceCompat
-import com.andrerinas.openheadunit.connection.UsbReceiver
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.usb.UsbReceiver
 import com.andrerinas.openheadunit.utils.Settings
 
 class MainViewModel(application: Application): AndroidViewModel(application), UsbReceiver.Listener {

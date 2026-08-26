@@ -1,28 +1,30 @@
 package com.andrerinas.openheadunit.aap
 
-import com.andrerinas.openheadunit.connection.AccessoryConnection
+import com.andrerinas.openheadunit.connection.projection.ProjectionConnection
+import com.andrerinas.openheadunit.connection.projection.SocketProjectionConnection
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.utils.Utils
 
 internal class AapReadSingleMessage(
-        connection: AccessoryConnection,
-        ssl: AapSsl,
-        handler: AapMessageHandler,
-        onVideoRunHoled: (discardAssembledUnit: Boolean) -> Unit = {},
-        faultInjector: VideoFaultInjector? = null)
+    connection: ProjectionConnection,
+    ssl: AapSsl,
+    handler: AapMessageHandler,
+    onVideoRunHoled: (discardAssembledUnit: Boolean) -> Unit = {},
+    faultInjector: VideoFaultInjector? = null)
     : AapRead.Base(connection, ssl, handler, onVideoRunHoled, faultInjector) {
 
     private val recvHeader = AapMessageIncoming.EncryptedHeader()
     // Increase to 4MB to handle large 1080p/4K/HEVC I-frames
-    private val msgBuffer = ByteArray(4 * 1024 * 1024) 
+    private val msgBuffer = ByteArray(4 * 1024 * 1024)
     private val fragmentSizeBuffer = ByteArray(4)
 
-    override fun doRead(connection: AccessoryConnection): Int {
+    override fun doRead(connection: ProjectionConnection): Int {
         try {
             // Step 1: Read the encrypted header.
             // No timeout limit (0 = infinite) because this waits for the
             // NEXT message — the phone can be idle for minutes and that's normal.
             // TCP keepAlive will detect a truly dead connection.
-            val isSocket = connection is com.andrerinas.openheadunit.connection.SocketAccessoryConnection
+            val isSocket = connection is SocketProjectionConnection
             val timeout = if (isSocket) 15000 else 0
             val headerSize = connection.recvBlocking(recvHeader.buf, recvHeader.buf.size, timeout, true)
             when (AapReadRecoveryPolicy.afterHeaderRead(headerSize, AapMessageIncoming.EncryptedHeader.SIZE, isSocket)) {

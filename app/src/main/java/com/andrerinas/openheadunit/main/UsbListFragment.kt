@@ -26,9 +26,9 @@ import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapProjectionActivity
 import com.andrerinas.openheadunit.aap.AapService
-import com.andrerinas.openheadunit.connection.UsbAccessoryMode
-import com.andrerinas.openheadunit.connection.UsbDeviceCompat
-import com.andrerinas.openheadunit.connection.UsbReceiver
+import com.andrerinas.openheadunit.connection.usb.UsbAccessoryMode
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.usb.UsbReceiver
 import com.andrerinas.openheadunit.utils.Settings
 import com.google.android.material.appbar.MaterialToolbar
 

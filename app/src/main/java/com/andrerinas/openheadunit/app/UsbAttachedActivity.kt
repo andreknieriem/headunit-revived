@@ -14,9 +14,9 @@ import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.CommManager
-import com.andrerinas.openheadunit.connection.UsbAccessoryMode
-import com.andrerinas.openheadunit.connection.UsbDeviceCompat
-import com.andrerinas.openheadunit.connection.UsbReceiver
+import com.andrerinas.openheadunit.connection.usb.UsbAccessoryMode
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.usb.UsbReceiver
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.DeviceIntent
 import com.andrerinas.openheadunit.utils.LocaleHelper
@@ -83,7 +83,7 @@ class UsbAttachedActivity : Activity() {
             return
         }
 
-        val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && 
+        val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                       !(getSystemService(Context.USER_SERVICE) as UserManager).isUserUnlocked
 
         val settings = if (!isLocked) Settings(this) else null
@@ -147,7 +147,7 @@ class UsbAttachedActivity : Activity() {
             finish()
             return
         }
-        
+
         if (isLocked && !autoStartOnUsb) {
             AppLog.w("Device is locked and USB auto-start is disabled. Cannot check allowed devices. Finishing.")
             finish()
@@ -186,7 +186,7 @@ class UsbAttachedActivity : Activity() {
 
         AppLog.i(UsbDeviceCompat.getUniqueName(device))
 
-        val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && 
+        val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                       !(getSystemService(Context.USER_SERVICE) as UserManager).isUserUnlocked
 
         val settings = if (!isLocked) Settings(this) else null

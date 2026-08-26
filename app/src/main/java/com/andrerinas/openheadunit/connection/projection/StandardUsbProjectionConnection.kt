@@ -1,4 +1,4 @@
-package com.andrerinas.openheadunit.connection
+package com.andrerinas.openheadunit.connection.projection
 
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
@@ -6,16 +6,17 @@ import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbInterface
 import android.hardware.usb.UsbManager
-
 import android.os.SystemClock
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import com.andrerinas.openheadunit.utils.AppLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device: UsbDevice) : AccessoryConnection {
+class StandardUsbProjectionConnection(usbMgr: UsbManager, device: UsbDevice) :
+    AbstractUsbProjectionConnection(usbMgr, device) {
+
     // @Volatile so isConnected / isDeviceRunning see the latest value without a lock.
     @Volatile private var usbDeviceConnected: UsbDeviceCompat? = null
-    @Volatile private var usbDeviceConnection: UsbDeviceConnection? = null
     private var usbInterface: UsbInterface? = null
     // @Volatile so sendBlocking / recvBlocking see updates from connect() / resetInterface()
     // without holding sStateLock during the transfer.
@@ -27,12 +28,13 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
     private var internalBufferPos = 0
     private var internalBufferAvailable = 0
 
-    fun isDeviceRunning(device: UsbDevice): Boolean {
-        synchronized(sStateLock) {
-            val connected = usbDeviceConnected ?: return false
-            return UsbDeviceCompat.getUniqueName(device) == connected.uniqueName
-        }
-    }
+    override val type = ProjectionConnection.Type.USB
+
+    override val isConnected: Boolean
+        get() = usbDeviceConnected != null
+
+    override val isSingleMessage: Boolean
+        get() = false
 
     override suspend fun connect() = withContext(Dispatchers.IO) {
         return@withContext try {
@@ -48,7 +50,7 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
         if (usbDeviceConnection != null) {
             disconnect()
         }
-        synchronized(sStateLock) {
+        synchronized(stateLock) {
             try {
                 usbOpen(device)
             } catch (e: UsbOpenException) {
@@ -135,7 +137,7 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
 
     private fun resetInterface() {
         if (usbDeviceConnection == null) return
-        synchronized(sStateLock) {
+        synchronized(stateLock) {
             val connection = usbDeviceConnection ?: return
             val iface = usbInterface ?: return
             AppLog.w("Attempting USB interface soft-reset...")
@@ -162,7 +164,7 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
         // so both sendBlocking and recvBlocking unblock within milliseconds.
         usbDeviceConnection?.close()
 
-        synchronized(sStateLock) {
+        synchronized(stateLock) {
             if (usbDeviceConnected != null) {
                 AppLog.i(usbDeviceConnected!!.toString())
             }
@@ -188,12 +190,6 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
             internalBufferAvailable = 0
         }
     }
-
-    override val isConnected: Boolean
-        get() = usbDeviceConnected != null
-
-    override val isSingleMessage: Boolean
-        get() = false
 
     // Read error tracking — only accessed by the poll thread; no lock needed.
     private var consecutiveReadErrors = 0
@@ -298,11 +294,5 @@ class UsbAccessoryConnection(private val usbMgr: UsbManager, private val device:
     private class UsbOpenException : Exception {
         constructor(message: String) : super(message)
         constructor(tr: Throwable) : super(tr)
-    }
-
-    companion object {
-        // Held only during state mutations (connect / disconnect / reset).
-        // Neither sendBlocking nor recvBlocking holds this lock during bulkTransfer.
-        private val sStateLock = Any()
     }
 }

@@ -1,9 +1,10 @@
-package com.andrerinas.openheadunit.connection
+package com.andrerinas.openheadunit.connection.usb
 
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbInterface
 import android.os.Build
-import com.andrerinas.openheadunit.aap.Utils
+import com.andrerinas.openheadunit.utils.Utils
 import java.util.Locale
 
 class UsbDeviceCompat(val wrappedDevice: UsbDevice) {
@@ -119,7 +120,7 @@ class UsbDeviceCompat(val wrappedDevice: UsbDevice) {
         /**
          * Checks for the presence of a bulk endpoint (needed for data transfer)
          */
-        private fun hasBulkEndpoint(usbInterface: android.hardware.usb.UsbInterface): Boolean {
+        private fun hasBulkEndpoint(usbInterface: UsbInterface): Boolean {
             for (j in 0 until usbInterface.endpointCount) {
                 val endpoint = usbInterface.getEndpoint(j)
                 if (endpoint.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {

@@ -2,7 +2,7 @@ package com.andrerinas.openheadunit.aap
 
 import android.os.SystemClock
 import com.andrerinas.openheadunit.aap.protocol.messages.Messages
-import com.andrerinas.openheadunit.connection.AccessoryConnection
+import com.andrerinas.openheadunit.connection.projection.ProjectionConnection
 import com.andrerinas.openheadunit.ssl.ConscryptInitializer
 import com.andrerinas.openheadunit.ssl.NoCheckTrustManager
 import com.andrerinas.openheadunit.ssl.SingleKeyKeyManager
@@ -17,16 +17,16 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
     private lateinit var sslEngine: SSLEngine
     private lateinit var txBuffer: ByteBuffer
     private lateinit var rxBuffer: ByteBuffer
-    
+
     @Volatile var isUserDisconnect = false
 
-    override fun performHandshake(connection: AccessoryConnection): Boolean {
+    override fun performHandshake(connection: ProjectionConnection): Boolean {
         if (prepare() < 0) return false
 
         // Buffer for unencrypted TLS records extracted from AAP messages.
         // We use a local queue or buffer to keep track of bytes ready for the SSLEngine.
         var pendingTlsData = ByteArray(0)
-        
+
         // Hard cap on the entire SSL phase.
         val deadline = android.os.SystemClock.elapsedRealtime() + SSL_HANDSHAKE_TIMEOUT_MS
 
@@ -91,7 +91,7 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
                 }
             }
         }
-        
+
         val sessionId = sslEngine.session?.id
         if (sessionId != null && sessionId.isNotEmpty()) {
             AppLog.i("SSL handshake complete. Session id: ${android.util.Base64.encodeToString(sessionId, android.util.Base64.NO_WRAP)}")
@@ -105,7 +105,7 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
      * Reads a single complete AAP message from the connection.
      * This ensures that we always respect AAP framing boundaries.
      */
-    private fun readAapMessage(connection: AccessoryConnection): ByteArray? {
+    private fun readAapMessage(connection: ProjectionConnection): ByteArray? {
         val header = ByteArray(6)
         // Read exactly 6 bytes for the AAP header
         if (connection.recvBlocking(header, 6, 2000, true) != 6) {
@@ -114,8 +114,8 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
         }
 
         // AAP Header: [0]=Channel, [1]=Flags, [2..3]=Length (Big Endian), [4..5]=Type
-        // The length in the header includes the 4 bytes of channel/flags/length itself? 
-        // No, in Messages.kt: size + 2 is stored in bytes 2..3. 
+        // The length in the header includes the 4 bytes of channel/flags/length itself?
+        // No, in Messages.kt: size + 2 is stored in bytes 2..3.
         // So payload length = (header[2]*256 + header[3]) - 2.
         val totalLength = ((header[2].toInt() and 0xFF) shl 8) or (header[3].toInt() and 0xFF)
         val payloadLength = totalLength - 2 // Minus the 2 bytes for the type field (bytes 4-5)
@@ -318,7 +318,7 @@ class AapSslContext(keyManager: SingleKeyKeyManager): AapSsl {
                         isUserDisconnect = true
                     }
                 }
-                
+
                 if (!isUserDisconnect) {
                     AppLog.e("SSL Decrypt failed", e)
                 }

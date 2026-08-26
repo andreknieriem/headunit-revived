@@ -1,6 +1,6 @@
 package com.andrerinas.openheadunit.aap.protocol.messages
 
-import com.andrerinas.openheadunit.aap.Utils
+import com.andrerinas.openheadunit.utils.Utils
 
 object Messages {
     const val DEF_BUFFER_LENGTH = 131080

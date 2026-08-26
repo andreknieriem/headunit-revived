@@ -19,8 +19,8 @@ import com.andrerinas.openheadunit.aap.protocol.messages.ScrollWheelEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.SensorEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent
 import com.andrerinas.openheadunit.utils.LegacyOptimizer
-import com.andrerinas.openheadunit.connection.AccessoryConnection
-import com.andrerinas.openheadunit.connection.SocketAccessoryConnection
+import com.andrerinas.openheadunit.connection.projection.ProjectionConnection
+import com.andrerinas.openheadunit.connection.projection.SocketProjectionConnection
 import com.andrerinas.openheadunit.contract.ProjectionActivityRequest
 import com.andrerinas.openheadunit.decoder.AudioDecoder
 import com.andrerinas.openheadunit.decoder.MicRecorder
@@ -29,10 +29,9 @@ import com.andrerinas.openheadunit.main.BackgroundNotification
 import com.andrerinas.openheadunit.ssl.SingleKeyKeyManager
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
-import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.aap.protocol.proto.MediaPlayback
-import javax.net.ssl.SSLEngineResult
+import com.andrerinas.openheadunit.utils.Utils
 
 /**
  * Core AAP message pump.
@@ -83,12 +82,12 @@ class AapTransport(
     private val keyCodes = mutableMapOf<Int, Int>()
     private val modeManager: UiModeManager =
         context.getSystemService(UI_MODE_SERVICE) as UiModeManager
-    private var connection: AccessoryConnection? = null
+    private var connection: ProjectionConnection? = null
     private var aapRead: AapRead? = null
     var isQuittingAllowed: Boolean = false
 
     val isWireless: Boolean
-        get() = connection is com.andrerinas.openheadunit.connection.SocketAccessoryConnection
+        get() = connection is SocketProjectionConnection
     var ignoreNextStopRequest: Boolean = false
     /** Why the last [startHandshake] failed, for callers that report it. */
     enum class HandshakeFailure {
@@ -623,7 +622,7 @@ class AapTransport(
      * Must be followed by [startReading] (called after the projection surface is ready)
      * to actually start the message loop.
      */
-    internal fun startHandshake(connection: AccessoryConnection): Boolean {
+    internal fun startHandshake(connection: ProjectionConnection): Boolean {
         AppLog.i("Start Aap transport handshake for $connection")
         this.connection = connection
         wasUserExit = false
@@ -681,10 +680,10 @@ class AapTransport(
         pollHandler?.sendEmptyMessage(MSG_POLL)
     }
 
-    private fun handshake(connection: AccessoryConnection): Boolean {
+    private fun handshake(connection: ProjectionConnection): Boolean {
         lastHandshakeFailure = HandshakeFailure.OTHER
         try {
-            val isUsb = connection !is SocketAccessoryConnection && !connection.isSingleMessage
+            val isUsb = connection !is SocketProjectionConnection && !connection.isSingleMessage
             // Increased delay for AA 16.4+ stability on USB - skip for Sockets
             if (isUsb) {
                 SystemClock.sleep(500)

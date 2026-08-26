@@ -1,7 +1,10 @@
-package com.andrerinas.openheadunit.connection
+package com.andrerinas.openheadunit.connection.projection
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.NearbySocket
 import com.andrerinas.openheadunit.utils.AppLog
@@ -14,8 +17,15 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
-class SocketAccessoryConnection(private val ip: String, private val port: Int, private val context: Context) : AccessoryConnection {
+class SocketProjectionConnection(
+    private val ip: String,
+    private val port: Int,
+    private val context: Context) :
+    ProjectionConnection {
+
     private var output: OutputStream? = null
     private var input: DataInputStream? = null
     private var transport: Socket
@@ -44,62 +54,30 @@ class SocketAccessoryConnection(private val ip: String, private val port: Int, p
         }
     }
 
-
-    override val isSingleMessage: Boolean
-        get() = singleMessage
-
-    override fun sendBlocking(buf: ByteArray, length: Int, timeout: Int): Int {
-        val out = output ?: return -1
-        return try {
-            out.write(buf, 0, length)
-            out.flush()
-            length
-        } catch (e: IOException) {
-            AppLog.e(e)
-            -1
-        }
-    }
-
-    override fun recvBlocking(buf: ByteArray, length: Int, timeout: Int, readFully: Boolean): Int {
-        val inp = input ?: return -1
-        return try {
-            // Dynamically apply the caller's timeout so handshake (short timeouts)
-            // and streaming (long timeouts) both work correctly on the same socket.
-            try { transport.soTimeout = timeout } catch (_: Exception) {}
-            if (readFully) {
-                inp.readFully(buf, 0, length)
-                length
-            } else {
-                inp.read(buf, 0, length)
-            }
-        } catch (e: SocketTimeoutException) {
-            // With raw DataInputStream (no BufferedInputStream), timeout during
-            // small reads (4-byte header) virtually never causes partial consumption.
-            // Let the caller decide if this is fatal based on context.
-            0
-        } catch (e: IOException) {
-            -1
-        }
-    }
+    override val type = ProjectionConnection.Type.WIFI
 
     override val isConnected: Boolean
         get() = transport.isConnected
 
+    override val isSingleMessage: Boolean
+        get() = singleMessage
+
     override suspend fun connect(): Boolean = withContext(Dispatchers.IO) {
         try {
             if (!transport.isConnected) {
-                val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                val cm =
+                    context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    var netToBind: android.net.Network? = null
+                    var netToBind: Network? = null
                     try {
-                        var wifiNetwork: android.net.Network? = null
+                        var wifiNetwork: Network? = null
 
                         // 1. Try synchronous scan of existing networks first (instant and reliable if connected)
                         val networks = cm.allNetworks
                         for (net in networks) {
                             val caps = cm.getNetworkCapabilities(net)
-                            if (caps != null && caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)) {
+                            if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                                 wifiNetwork = net
                                 AppLog.i("Found active WiFi/P2P network via synchronous scan: $net")
                                 break
@@ -108,23 +86,24 @@ class SocketAccessoryConnection(private val ip: String, private val port: Int, p
 
                         // 2. Fallback to callback if not found synchronously (with increased 1500ms timeout)
                         if (wifiNetwork == null) {
-                            val request = android.net.NetworkRequest.Builder()
-                                .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+                            val request = NetworkRequest.Builder()
+                                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
                                 .build()
-                            val latch = java.util.concurrent.CountDownLatch(1)
+                            val latch = CountDownLatch(1)
                             val callback = object : ConnectivityManager.NetworkCallback() {
-                                override fun onAvailable(network: android.net.Network) {
+                                override fun onAvailable(network: Network) {
                                     wifiNetwork = network
                                     latch.countDown()
                                 }
                             }
                             try {
                                 cm.registerNetworkCallback(request, callback)
-                                latch.await(1500, java.util.concurrent.TimeUnit.MILLISECONDS)
+                                latch.await(1500, TimeUnit.MILLISECONDS)
                             } finally {
                                 try {
                                     cm.unregisterNetworkCallback(callback)
-                                } catch (_: Exception) {}
+                                } catch (_: Exception) {
+                                }
                             }
                         }
 
@@ -135,7 +114,7 @@ class SocketAccessoryConnection(private val ip: String, private val port: Int, p
                             val activeNet = cm.activeNetwork
                             if (activeNet != null) {
                                 val caps = cm.getNetworkCapabilities(activeNet)
-                                if (caps != null && caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
                                     AppLog.i("Active network is cellular. Skipping binding to prevent EHOSTUNREACH.")
                                 } else {
                                     netToBind = activeNet
@@ -165,12 +144,16 @@ class SocketAccessoryConnection(private val ip: String, private val port: Int, p
                             val addr = InetAddress.getByName(ip)
                             val b = addr.address
                             val ipInt = ((b[3].toInt() and 0xFF) shl 24) or
-                                        ((b[2].toInt() and 0xFF) shl 16) or
-                                        ((b[1].toInt() and 0xFF) shl 8) or
-                                        (b[0].toInt() and 0xFF)
+                                ((b[2].toInt() and 0xFF) shl 16) or
+                                ((b[1].toInt() and 0xFF) shl 8) or
+                                (b[0].toInt() and 0xFF)
                             // cm.requestRouteToHost(ConnectivityManager.TYPE_WIFI, ipInt)
                             // Use reflection because requestRouteToHost is removed in newer SDKs
-                            val m = cm.javaClass.getMethod("requestRouteToHost", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+                            val m = cm.javaClass.getMethod(
+                                "requestRouteToHost",
+                                Int::class.javaPrimitiveType,
+                                Int::class.javaPrimitiveType
+                            )
                             m.invoke(cm, ConnectivityManager.TYPE_WIFI, ipInt)
                             AppLog.i("Legacy: Requested route to host $ip")
                         } catch (e: Exception) {
@@ -220,6 +203,40 @@ class SocketAccessoryConnection(private val ip: String, private val port: Int, p
         }
         input = null
         output = null
+    }
+
+    override fun sendBlocking(buf: ByteArray, length: Int, timeout: Int): Int {
+        val out = output ?: return -1
+        return try {
+            out.write(buf, 0, length)
+            out.flush()
+            length
+        } catch (e: IOException) {
+            AppLog.e(e)
+            -1
+        }
+    }
+
+    override fun recvBlocking(buf: ByteArray, length: Int, timeout: Int, readFully: Boolean): Int {
+        val inp = input ?: return -1
+        return try {
+            // Dynamically apply the caller's timeout so handshake (short timeouts)
+            // and streaming (long timeouts) both work correctly on the same socket.
+            try { transport.soTimeout = timeout } catch (_: Exception) {}
+            if (readFully) {
+                inp.readFully(buf, 0, length)
+                length
+            } else {
+                inp.read(buf, 0, length)
+            }
+        } catch (e: SocketTimeoutException) {
+            // With raw DataInputStream (no BufferedInputStream), timeout during
+            // small reads (4-byte header) virtually never causes partial consumption.
+            // Let the caller decide if this is fatal based on context.
+            0
+        } catch (e: IOException) {
+            -1
+        }
     }
 
     private fun applyLowLatencySocketOptions(beforeConnect: Boolean) {
