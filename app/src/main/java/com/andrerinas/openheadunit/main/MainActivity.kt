@@ -191,7 +191,13 @@ class MainActivity : BaseActivity() {
             }
         })
 
-        if (savedInstanceState == null) {
+        val isUsbAutoStart = savedInstanceState == null &&
+            intent?.getStringExtra(EXTRA_LAUNCH_SOURCE) == "USB auto-start"
+
+        if (isUsbAutoStart) {
+            findViewById<View>(R.id.splash_overlay)?.visibility = View.GONE
+            beginAutoConnect("USB auto-start", ConnectionUiMode.OVERLAY)
+        } else if (savedInstanceState == null) {
             val elapsedSinceStart = SystemClock.elapsedRealtime() - App.appStartTime
             val targetTotalDuration = 1200L
             val actualDelay = (targetTotalDuration - elapsedSinceStart).coerceAtLeast(0L)
@@ -213,14 +219,6 @@ class MainActivity : BaseActivity() {
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         isFinishReceiverRegistered = true
-
-        // USB auto-attach is the one auto-connect path that pre-launches MainActivity
-        // before any state transition occurs. HomeFragment-driven auto-connects will
-        // call beginAutoConnect() directly from their entry points.
-        if (savedInstanceState == null &&
-            intent?.getStringExtra(EXTRA_LAUNCH_SOURCE) == "USB auto-start") {
-            beginAutoConnect("USB auto-start", ConnectionUiMode.OVERLAY)
-        }
 
         // Wire cancel affordances. Pill click and overlay cancel button both
         // route through the same cancellation path.
@@ -478,7 +476,7 @@ class MainActivity : BaseActivity() {
             customTextOverlay?.visibility = View.GONE
             customImage?.visibility = View.GONE
             customVideo?.visibility = View.GONE
-            overlay?.setBackgroundColor(Color.parseColor("#CC000000"))
+            overlay?.setBackgroundColor(Color.BLACK)
             return
         }
 
@@ -491,7 +489,7 @@ class MainActivity : BaseActivity() {
             customTextOverlay?.visibility = View.GONE
             customImage?.visibility = View.GONE
             customVideo?.visibility = View.GONE
-            overlay?.setBackgroundColor(Color.parseColor("#CC000000"))
+            overlay?.setBackgroundColor(Color.BLACK)
             return
         }
 
@@ -604,7 +602,7 @@ class MainActivity : BaseActivity() {
                         findViewById<View>(R.id.auto_connect_loading_custom_video)?.visibility = View.GONE
                         customTextOverlay?.visibility = View.GONE
                         defaultContent?.visibility = View.VISIBLE
-                        overlay?.setBackgroundColor(Color.parseColor("#CC000000"))
+                        overlay?.setBackgroundColor(Color.BLACK)
                         true
                     }
                     customVideo?.start()
@@ -616,7 +614,7 @@ class MainActivity : BaseActivity() {
             customVideo?.visibility = View.GONE
             customTextOverlay?.visibility = View.GONE
             defaultContent?.visibility = View.VISIBLE
-            overlay?.setBackgroundColor(Color.parseColor("#CC000000"))
+            overlay?.setBackgroundColor(Color.BLACK)
         }
     }
 
