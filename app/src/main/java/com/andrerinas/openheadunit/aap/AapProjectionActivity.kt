@@ -1241,7 +1241,8 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
         lifecycleScope.launch {
             kotlinx.coroutines.delay(1000)
-            if (!isFinishing && !isDestroyed) {
+            val isDestroyedCompat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed
+            if (!isFinishing && !isDestroyedCompat) {
                 recreate()
             }
         }

@@ -2,6 +2,7 @@ package com.andrerinas.openheadunit.main
 
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.os.Build
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import com.andrerinas.openheadunit.R
@@ -23,7 +24,8 @@ object RenameNotice {
     private var dialog: AlertDialog? = null
 
     fun maybeShow(activity: Activity?, settings: Settings) {
-        if (activity == null || activity.isFinishing || activity.isDestroyed) return
+        if (activity == null || activity.isFinishing) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && activity.isDestroyed) return
         if (settings.renameNoticeShown) return
         if (dialog?.isShowing == true) return
         if (settings.onboardingVersion < OnboardingActivity.CURRENT_ONBOARDING_VERSION) return
