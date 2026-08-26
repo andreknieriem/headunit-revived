@@ -489,7 +489,7 @@ class MainActivity : BaseActivity() {
             customTextOverlay?.visibility = View.GONE
             customImage?.visibility = View.GONE
             customVideo?.visibility = View.GONE
-            overlay?.setBackgroundColor(Color.BLACK)
+            overlay?.setBackgroundColor(Color.parseColor("#CC000000"))
             return
         }
 
