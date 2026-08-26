@@ -1001,4 +1001,6 @@
     <string name="auto_connect_delay_seconds_format">%d s</string>
     <string name="auto_connect_delay_custom">Personnalisé…</string>
     <string name="auto_connect_delay_summary_format">%1$s (%2$ds de délai)</string>
+    <string name="failed_aa_not_system">Échec : Android Auto n\'est pas installé en tant qu\'application système !</string>
+    <string name="failed_aa_not_installed">Échec : Android Auto n\'est pas installé !</string>
 </resources>

@@ -953,4 +953,6 @@
     <string name="auto_connect_delay_seconds_format">%d с</string>
     <string name="auto_connect_delay_custom">Користувацький…</string>
     <string name="auto_connect_delay_summary_format">%1$s (затримка %2$dс)</string>
+    <string name="failed_aa_not_system">Помилка: Android Auto не встановлено як системний додаток!</string>
+    <string name="failed_aa_not_installed">Помилка: Android Auto не встановлено!</string>
 </resources>

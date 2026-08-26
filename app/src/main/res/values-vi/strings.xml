@@ -955,4 +955,6 @@
     <string name="auto_connect_delay_seconds_format">%d giây</string>
     <string name="auto_connect_delay_custom">Tùy chỉnh…</string>
     <string name="auto_connect_delay_summary_format">%1$s (trễ %2$d giây)</string>
+    <string name="failed_aa_not_system">Thất bại: Android Auto không được cài đặt dưới dạng ứng dụng hệ thống!</string>
+    <string name="failed_aa_not_installed">Thất bại: Android Auto chưa được cài đặt!</string>
 </resources>

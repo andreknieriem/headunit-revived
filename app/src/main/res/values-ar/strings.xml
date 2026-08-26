@@ -950,4 +950,6 @@
     <string name="auto_connect_delay_seconds_format">%d ث</string>
     <string name="auto_connect_delay_custom">مخصص…</string>
     <string name="auto_connect_delay_summary_format">%1$s (تأخير %2$dث)</string>
+    <string name="failed_aa_not_system">فشل: أندرويد أوتو غير مثبت كتطبيق نظام!</string>
+    <string name="failed_aa_not_installed">فشل: أندرويد أوتو غير مثبت!</string>
 </resources>

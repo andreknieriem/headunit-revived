@@ -948,4 +948,6 @@
     <string name="auto_connect_delay_seconds_format">%d mp</string>
     <string name="auto_connect_delay_custom">Egyéni…</string>
     <string name="auto_connect_delay_summary_format">%1$s (%2$d mp késleltetés)</string>
+    <string name="failed_aa_not_system">Sikertelen: Az Android Auto nincs rendszeralkalmazásként telepítve!</string>
+    <string name="failed_aa_not_installed">Sikertelen: Az Android Auto nincs telepítve!</string>
 </resources>

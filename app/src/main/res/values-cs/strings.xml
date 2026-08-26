@@ -952,4 +952,6 @@
     <string name="auto_connect_delay_seconds_format">%d s</string>
     <string name="auto_connect_delay_custom">Vlastní…</string>
     <string name="auto_connect_delay_summary_format">%1$s (zpoždění %2$ds)</string>
+    <string name="failed_aa_not_system">Selhalo: Android Auto není nainstalováno jako systémová aplikace!</string>
+    <string name="failed_aa_not_installed">Selhalo: Android Auto není nainstalováno!</string>
 </resources>

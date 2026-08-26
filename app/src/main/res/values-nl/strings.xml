@@ -952,4 +952,6 @@
     <string name="auto_connect_delay_seconds_format">%d s</string>
     <string name="auto_connect_delay_custom">Aangepast…</string>
     <string name="auto_connect_delay_summary_format">%1$s (%2$ds vertraging)</string>
+    <string name="failed_aa_not_system">Mislukt: Android Auto is niet geïnstalleerd als systeem-app!</string>
+    <string name="failed_aa_not_installed">Mislukt: Android Auto is niet geïnstalleerd!</string>
 </resources>

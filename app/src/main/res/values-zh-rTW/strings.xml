@@ -951,4 +951,6 @@
     <string name="auto_connect_delay_seconds_format">%d 秒</string>
     <string name="auto_connect_delay_custom">自訂…</string>
     <string name="auto_connect_delay_summary_format">%1$s（延遲 %2$d 秒）</string>
+    <string name="failed_aa_not_system">失敗：Android Auto 未作為系統應用程式安裝！</string>
+    <string name="failed_aa_not_installed">失敗：未安裝 Android Auto！</string>
 </resources>

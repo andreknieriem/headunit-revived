@@ -933,4 +933,6 @@
     <string name="auto_connect_delay_seconds_format">%d წმ</string>
     <string name="auto_connect_delay_custom">მორგებული…</string>
     <string name="auto_connect_delay_summary_format">%1$s (%2$dწმ დაყოვნება)</string>
+    <string name="failed_aa_not_system">ვერ მოხერხდა: Android Auto არ არის დაინსტალირებული როგორც სისტემური აპი!</string>
+    <string name="failed_aa_not_installed">ვერ მოხერხდა: Android Auto არ არის დაინსტალირებული!</string>
 </resources>

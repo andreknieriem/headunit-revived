@@ -951,4 +951,6 @@
     <string name="auto_connect_delay_seconds_format">%d с</string>
     <string name="auto_connect_delay_custom">Пользовательский…</string>
     <string name="auto_connect_delay_summary_format">%1$s (задержка %2$dс)</string>
+    <string name="failed_aa_not_system">Ошибка: Android Auto не установлен как системное приложение!</string>
+    <string name="failed_aa_not_installed">Ошибка: Android Auto не установлен!</string>
 </resources>

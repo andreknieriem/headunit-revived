@@ -949,4 +949,6 @@
     <string name="auto_connect_delay_seconds_format">%d초</string>
     <string name="auto_connect_delay_custom">사용자 지정…</string>
     <string name="auto_connect_delay_summary_format">%1$s (%2$d초 지연)</string>
+    <string name="failed_aa_not_system">실패: Android Auto가 시스템 앱으로 설치되어 있지 않습니다!</string>
+    <string name="failed_aa_not_installed">실패: Android Auto가 설치되어 있지 않습니다!</string>
 </resources>

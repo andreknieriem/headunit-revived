@@ -625,15 +625,13 @@ class HomeFragment : Fragment() {
         updateButtonStyle()
         updateTextColors()
         activity?.let { act ->
-            {
-                val isDestroyed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
-                    act.isDestroyed
-                else
-                    true
+            val isDestroyed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+                act.isDestroyed
+            else
+                false
 
-                if (!act.isFinishing && !isDestroyed) {
-                    RenameNotice.maybeShow(act, App.provide(requireContext()).settings)
-                }
+            if (!act.isFinishing && !isDestroyed) {
+                RenameNotice.maybeShow(act, App.provide(requireContext()).settings)
             }
         }
     }
