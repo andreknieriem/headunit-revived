@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.andrerinas.openheadunit.BuildConfig
+import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -30,6 +31,12 @@ object LogExporter {
     private var captureProcess: Process? = null
     private var captureThread: Thread? = null
     private var captureFile: File? = null
+
+    /**
+     * The segment written before [captureFile], once a capture has rolled. Kept so an export is the
+     * whole retained tail and not just whatever landed after the most recent roll.
+     */
+    private var capturePreviousFile: File? = null
     private var captureVerbosity: LogLevel = LogLevel.DEBUG
     private var captureRestarts = 0
     private const val MAX_RESTARTS = 5
@@ -38,10 +45,22 @@ object LogExporter {
     private const val RING_BUFFER_TIMEOUT_MS = 10_000L
 
     /**
-     * Ceiling for one capture file. Sits under [LogFilesHelper]'s 50 MB budget for the whole
-     * directory, so a single runaway capture cannot consume it.
+     * Ceiling for one capture, counting every segment it keeps. Sits under [LogFilesHelper]'s 50 MB
+     * budget for the whole directory, so a single runaway capture cannot consume it.
      */
     private const val MAX_CAPTURE_BYTES = 16L * 1024 * 1024
+
+    /**
+     * Bytes per segment. A capture rolls at this bound and keeps the two newest segments, so what
+     * survives is the last 8-16 MB rather than the first 16.
+     *
+     * The capture used to stop dead at [MAX_CAPTURE_BYTES], which at VERBOSE is reached in minutes -
+     * and the fault a reporter is driving to capture is at the end of the drive, not the start. One
+     * reporter hit exactly that ("Verbose not record after 10 minutes"), which is why every log on
+     * two open issues is INFO and why sub-second frame pacing has never been measured on that
+     * hardware.
+     */
+    private const val SEGMENT_BYTES = MAX_CAPTURE_BYTES / 2
 
     val isCapturing: Boolean get() = captureProcess != null
 
@@ -79,6 +98,7 @@ object LogExporter {
 
         val file = LogFilesHelper.createTimestampedLogFile(logDir)
         captureFile = file
+        capturePreviousFile = null
         captureVerbosity = verbosity
         captureRestarts = 0
 
@@ -119,7 +139,31 @@ object LogExporter {
             "view:${settings.viewMode.name} forceSw:${settings.forceSoftwareDecoding} " +
             "swDecoder:${settings.softwareVideoDecoder.name} | " +
             "wifi=mode:${settings.wifiConnectionMode} strategy:${settings.helperConnectionStrategy} | " +
-            "logLevel=${settings.exporterLogLevel.name}"
+            "logLevel=${settings.exporterLogLevel.name} | " +
+            "debug=${debugLevers(settings)}"
+    }
+
+    /**
+     * The settings that make the app behave unlike itself, in the one line every capture opens with.
+     *
+     * Video fault injection deliberately corrupts the stream, and a reporter exploring the debug
+     * screen left it on for a whole drive: the artifacts in that capture were ours, injected, and
+     * the only thing that said so was a disclaimer buried mid-log. The same applies to the feed hold
+     * and the forced memory profile, which imitate hardware the unit does not have. Reads "none"
+     * when nothing is on, so a clean capture says so rather than saying nothing.
+     */
+    private fun debugLevers(settings: Settings): String {
+        val levers = mutableListOf<String>()
+        val injection = settings.debugVideoFaultInjection
+        if (injection != VideoFaultInjector.Mode.OFF) {
+            val budget = settings.debugVideoFaultBudget
+            val cap = if (budget == VideoFaultInjector.UNLIMITED_BUDGET) "no budget" else "budget:$budget"
+            levers += "inject:${injection.name}(1-in-${settings.debugVideoFaultRate}, $cap)"
+        }
+        if (settings.debugVideoFeedHoldMs > 0) levers += "feedHold:${settings.debugVideoFeedHoldMs}ms"
+        settings.debugForceMemoryProfile?.let { levers += "forceMemory:${it.name}" }
+        if (settings.debugVideoLowLatency) levers += "lowLatency:on"
+        return if (levers.isEmpty()) "none" else levers.joinToString(" ")
     }
 
     /**
@@ -134,43 +178,43 @@ object LogExporter {
             )
             captureProcess = process
             captureThread = Thread {
-                var capped = false
                 try {
-                    FileOutputStream(file, true).use { out ->
-                        // Not copyTo(): at VERBOSE the filter is the whole system, and rotateLogs
-                        // only runs when a capture starts, so an unattended capture used to grow
-                        // until the disk did. Count what we write and stop at a bound instead.
-                        var written = file.length()
-                        val buffer = ByteArray(8 * 1024)
+                    // Not copyTo(): at VERBOSE the filter is the whole system, and rotateLogs only
+                    // runs when a capture starts, so an unattended capture would grow until the disk
+                    // did. Count what we write and roll to a new segment at SEGMENT_BYTES, keeping
+                    // the two newest - so the bound is on disk, not on how long a capture lasts.
+                    var segment = file
+                    var out = FileOutputStream(segment, true)
+                    var written = segment.length()
+                    val buffer = ByteArray(8 * 1024)
+                    try {
                         while (true) {
                             val read = process.inputStream.read(buffer)
                             if (read < 0) break
                             out.write(buffer, 0, read)
                             written += read
-                            if (written >= MAX_CAPTURE_BYTES) {
-                                out.write(
-                                    "\n--- capture stopped: reached ${MAX_CAPTURE_BYTES / (1024 * 1024)} MB ---\n"
-                                        .toByteArray()
-                                )
-                                capped = true
-                                break
-                            }
+                            if (written < SEGMENT_BYTES) continue
+
+                            val logDir = segment.parentFile ?: break
+                            out.write("\n--- continues in the next log file ---\n".toByteArray())
+                            out.flush()
+                            out.close()
+
+                            val next = LogFilesHelper.createTimestampedLogFile(logDir)
+                            // Two segments at a time. The one before the previous is older than the
+                            // retained tail and nothing reads it again.
+                            capturePreviousFile?.delete()
+                            capturePreviousFile = segment
+                            captureFile = next
+                            segment = next
+                            out = FileOutputStream(segment, true)
+                            written = 0L
+                            out.write("--- continued from the previous log file ---\n".toByteArray())
                         }
+                    } finally {
+                        try { out.flush(); out.close() } catch (_: IOException) { }
                     }
                 } catch (_: IOException) { }
-
-                if (capped) {
-                    // Clear the process reference before destroying it so the restart below sees the
-                    // capture as intentionally ended. Deliberately not stopCapture(): that joins
-                    // captureThread, which is this thread.
-                    captureProcess = null
-                    process.destroy()
-                    AppLog.w(
-                        "LogExporter: capture stopped at ${MAX_CAPTURE_BYTES / (1024 * 1024)} MB. " +
-                            "Export this log and start a new capture if you still need one."
-                    )
-                    return@Thread
-                }
 
                 // the read loop ended — logcat process died or was intentionally stopped
                 if (captureProcess === process && captureRestarts < MAX_RESTARTS) {
@@ -182,8 +226,10 @@ object LogExporter {
                         AppLog.w("Log capture process exited, restarting (attempt $captureRestarts/$MAX_RESTARTS)")
                     }
                     try { Thread.sleep(2000) } catch (_: InterruptedException) { return@Thread }
-                    launchLogcatPipe(file, verbosity, context)
-                } else if (captureProcess === process && file.length() == 0L) {
+                    // The current segment, not [file]: after a roll that one is the older half of
+                    // the tail, and appending to it would lose the roll.
+                    launchLogcatPipe(captureFile ?: file, verbosity, context)
+                } else if (captureProcess === process && capturePreviousFile == null && file.length() == 0L) {
                     // The only reliable test for a ROM that refuses logcat: the capture the user
                     // asked for ran and produced nothing. Asking beforehand meant spawning logcat
                     // speculatively, which on Android 13+ raises the system consent dialog.
@@ -217,7 +263,11 @@ object LogExporter {
         val file = captureFile
         if (file != null && file.exists() && file.length() == 0L) {
             file.delete()
-            captureFile = null
+            // A stop landing just after a roll empties the newest segment, and dropping the
+            // reference there would strand the retained tail in capturePreviousFile with nothing
+            // reading it. Promote it instead.
+            captureFile = capturePreviousFile
+            capturePreviousFile = null
         }
     }
 
@@ -251,8 +301,27 @@ object LogExporter {
 
         val source = captureFile
         if (source != null && source.exists() && source.length() > 0) {
-            appendBanner(source, context)
-            return@withContext source
+            val earlier = capturePreviousFile?.takeIf { it.exists() && it.length() > 0 }
+            if (earlier == null) {
+                appendBanner(source, context)
+                return@withContext source
+            }
+            // The capture rolled, so neither segment is the whole retained log and a reporter
+            // attaches one file. Join them into a fresh export and leave both segments in place,
+            // so an export cannot cost the capture that is still running.
+            return@withContext try {
+                val joined = LogFilesHelper.createTimestampedLogFile(logDir)
+                FileOutputStream(joined).use { out ->
+                    earlier.inputStream().use { it.copyTo(out) }
+                    source.inputStream().use { it.copyTo(out) }
+                }
+                appendBanner(joined, context)
+                joined
+            } catch (e: Exception) {
+                AppLog.e("LogExporter: could not join the capture segments; exporting the newest one", e)
+                appendBanner(source, context)
+                source
+            }
         }
 
         dumpRingBuffer(logDir, verbosity)?.also { appendBanner(it, context) }
