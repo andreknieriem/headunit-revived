@@ -1329,6 +1329,9 @@ class AapService : Service() {
         if (selfLauncherManager.isActive) {
             AppLog.i("AapService: Self Mode disconnected. Not restarting.")
             selfLauncherManager.isActive = false
+            // Beside isActive, so a disconnect that lands mid-launch cannot leave Self Mode
+            // refusing every later request.
+            selfLauncherManager.clearLaunchInFlight()
             wifiLauncherManager.stop()
             return
         }
