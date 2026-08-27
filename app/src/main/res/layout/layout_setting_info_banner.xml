@@ -14,7 +14,7 @@
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:layout_marginEnd="10dp"
-        android:src="@android:drawable/ic_dialog_info"
+        app:srcCompat="@android:drawable/ic_dialog_info"
         app:tint="?android:attr/textColorSecondary"
         android:importantForAccessibility="no" />
 

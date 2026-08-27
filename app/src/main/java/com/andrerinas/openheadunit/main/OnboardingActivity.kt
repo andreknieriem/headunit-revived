@@ -177,7 +177,10 @@ class OnboardingActivity : BaseActivity() {
             val dot = View(this)
             val h = (5 * resources.displayMetrics.density).toInt()
             val lp = LinearLayout.LayoutParams(h, h)
-            lp.marginEnd = (6 * resources.displayMetrics.density).toInt()
+            androidx.core.view.MarginLayoutParamsCompat.setMarginEnd(
+                lp,
+                (6 * resources.displayMetrics.density).toInt()
+            )
             dot.layoutParams = lp
             stepper.addView(dot)
         }
