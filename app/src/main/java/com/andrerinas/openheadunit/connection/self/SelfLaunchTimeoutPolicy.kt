@@ -1,4 +1,4 @@
-package com.andrerinas.openheadunit.aap
+package com.andrerinas.openheadunit.connection.self
 
 /** Which of Self Mode's two bring-up routes a launch attempt took. */
 enum class SelfLaunchPath {

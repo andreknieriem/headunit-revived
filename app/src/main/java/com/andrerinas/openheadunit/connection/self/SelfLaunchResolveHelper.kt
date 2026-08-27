@@ -16,24 +16,25 @@ class SelfLaunchResolveHelper(private val service: AapService) {
     }
 
     private fun openPermissionsCheck() {
-        PermissionTrampolineActivity.launch(service) { permissionCheckRan ->
-            if (permissionCheckRan) {
-                // AA's own permission screen ran and came back, so permissions are not why Self
-                // Mode timed out. Nothing more specific is knowable from here.
-                AppLog.w("SelfMode: AA's permissions are in order; the launch timed out for another reason.")
+        PermissionTrampolineActivity.launch(service) { hadMissingPermissions ->
+            if (!hadMissingPermissions) {
+                // Duration was below threshold (permissions already granted) or activity could not be started.
+                // Since permissions are not the issue, check for other failure causes (e.g., system app).
+                AppLog.w("SelfMode: AA permissions were already granted or activity failed to start; checking other causes.")
+                onPermissionsCheckFailed()
+            } else {
+                // AA's permission screen ran to request missing permissions.
+                AppLog.i("SelfMode: AA's permission screen was shown for missing permissions.")
                 ToastUtils.showToast(
                     service,
                     service.getString(R.string.failed_start_android_auto),
                     Toast.LENGTH_LONG
                 )
-            } else {
-                AppLog.e("SelfMode: AA's permission activity could not be started.")
-                onPermissionsCheckFailed()
             }
         }
     }
 
-    /** Why AA's own permission screen would not open. Only reachable when it did not run at all. */
+    /** Called when permissions were already granted or activity failed to start, to check other causes. */
     private fun onPermissionsCheckFailed() {
         // is AA even installed?
         if (!isAAInstalled()) {

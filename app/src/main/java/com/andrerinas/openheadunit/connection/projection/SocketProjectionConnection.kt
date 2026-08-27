@@ -16,6 +16,7 @@ import java.io.OutputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -29,6 +30,9 @@ class SocketProjectionConnection(
     private var output: OutputStream? = null
     private var input: DataInputStream? = null
     private var transport: Socket
+    // Socket#isConnected might return true, even if server has closed the connection
+    // Only way to capture it is to check for exceptions, E.g. "SocketException: Broken pipe"
+    private var transportBroken: Boolean = false
     // Only true for genuine Nearby tunnels, where the handshake's AA-16.4+ settle delay
     // and stale-byte drain must be skipped because every byte from the start matters.
     // Regular WirelessServer-accepted sockets (Hotspot/WiFi Direct/Headunit Server) and
@@ -57,7 +61,7 @@ class SocketProjectionConnection(
     override val type = ProjectionConnection.Type.WIFI
 
     override val isConnected: Boolean
-        get() = transport.isConnected
+        get() = transport.isConnected && !transportBroken
 
     override val isSingleMessage: Boolean
         get() = singleMessage
@@ -207,10 +211,14 @@ class SocketProjectionConnection(
 
     override fun sendBlocking(buf: ByteArray, length: Int, timeout: Int): Int {
         val out = output ?: return -1
+
         return try {
             out.write(buf, 0, length)
             out.flush()
             length
+        } catch (e: SocketException) {
+            handleBrokenTransport(e)
+            -1
         } catch (e: IOException) {
             AppLog.e(e)
             -1
@@ -229,13 +237,31 @@ class SocketProjectionConnection(
             } else {
                 inp.read(buf, 0, length)
             }
-        } catch (e: SocketTimeoutException) {
+        } catch (_: SocketTimeoutException) {
             // With raw DataInputStream (no BufferedInputStream), timeout during
             // small reads (4-byte header) virtually never causes partial consumption.
             // Let the caller decide if this is fatal based on context.
             0
-        } catch (e: IOException) {
+        } catch (e: SocketException) {
+            handleBrokenTransport(e)
             -1
+        } catch (_: IOException) {
+            -1
+        }
+    }
+
+    private fun handleBrokenTransport(e: SocketException) {
+        AppLog.e("Socket broken (server disconnected ungracefully?)", e)
+        transportBroken = true
+
+        // Force close the stream/socket so the OS frees the file descriptor
+        // If you don't do this, you will eventually cause a memory/handle leak
+        try {
+            output?.close()
+        } catch (_: IOException) {
+        } finally {
+            input = null
+            output = null
         }
     }
 
