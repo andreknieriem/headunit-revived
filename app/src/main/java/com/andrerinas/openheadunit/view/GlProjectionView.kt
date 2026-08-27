@@ -10,7 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.Surface
-import com.andrerinas.openheadunit.decoder.SoftwareYuvFrameSink
+import com.andrerinas.openheadunit.decoder.video.SoftwareYuvFrameSink
 import com.andrerinas.openheadunit.utils.AppLog
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

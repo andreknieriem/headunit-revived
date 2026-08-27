@@ -1,10 +1,10 @@
 package com.andrerinas.openheadunit.main
 
 import com.andrerinas.openheadunit.aap.NativeTransport
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApBssidPolicy
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApCredentials
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApCredentialsAttempt
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApCredentialsPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBssidPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApCredentials
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApCredentialsAttempt
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApCredentialsPolicy
 import com.andrerinas.openheadunit.utils.ConnectionIssue
 import com.andrerinas.openheadunit.utils.StandingIssue
 import org.junit.Assert.assertEquals

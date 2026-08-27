@@ -1,7 +1,11 @@
 package com.andrerinas.openheadunit.aap
 
 import com.andrerinas.openheadunit.aap.protocol.messages.Messages
-import com.andrerinas.openheadunit.decoder.VideoDecoder
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
+import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
+import com.andrerinas.openheadunit.decoder.video.VideoFaultReporter
+import com.andrerinas.openheadunit.decoder.video.VideoFragmentAssembler
+import com.andrerinas.openheadunit.decoder.video.VideoRecoveryPolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
 import java.nio.ByteBuffer

@@ -5,11 +5,8 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import com.andrerinas.openheadunit.aap.AapSslContext
 import com.andrerinas.openheadunit.aap.AapTransport
-import com.andrerinas.openheadunit.aap.KeyDebouncePolicy
-import com.andrerinas.openheadunit.aap.MediaKeyRoutingPolicy
-import com.andrerinas.openheadunit.aap.PlaybackFocusPolicy
-import com.andrerinas.openheadunit.aap.UnresponsivePeerPolicy
-import com.andrerinas.openheadunit.aap.VideoStarvationPolicy
+import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
+import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.BluetoothHelper
 import com.andrerinas.openheadunit.main.BackgroundNotification
@@ -18,8 +15,8 @@ import com.andrerinas.openheadunit.utils.Settings
 import com.andrerinas.openheadunit.utils.HeadUnitScreenConfig
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import com.andrerinas.openheadunit.decoder.AudioDecoder
-import com.andrerinas.openheadunit.decoder.VideoDecoder
+import com.andrerinas.openheadunit.decoder.audio.AudioDecoder
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import android.media.AudioManager
 import android.os.Build
 import android.os.SystemClock
@@ -156,7 +153,7 @@ class CommManager(
     /**
      * Consecutive handshakes against one endpoint where the peer accepted the connection and then
      * sent nothing at all. Read by the discovery rescheduler to back off — see
-     * [com.andrerinas.openheadunit.aap.UnresponsivePeerPolicy].
+     * [com.andrerinas.openheadunit.connection.UnresponsivePeerPolicy].
      *
      * Counted here rather than from a [ConnectionState.Error] collector because that state is not
      * observable: [connectionState] is a `MutableStateFlow`, so collection is conflated, and
@@ -783,8 +780,8 @@ class CommManager(
      * for - which is what a video-black failure looks like, and has been the decisive line in four
      * rounds of hardware testing.
      *
-     * Two policies decide when this is warranted, and nothing else should: [WarmRelaunchKeyframePolicy]
-     * for a surface that has never shown a frame, and [KeyframeCycleEscalationPolicy] for a picture
+     * Two policies decide when this is warranted, and nothing else should: [com.andrerinas.openheadunit.decoder.video.WarmRelaunchKeyframePolicy]
+     * for a surface that has never shown a frame, and [com.andrerinas.openheadunit.decoder.video.KeyframeCycleEscalationPolicy] for a picture
      * left corrupt by a shed reference frame. The latter sends its own release from [AapTransport]
      * rather than calling here, because it has to pair the release with a regain on the send handler.
      * Releasing focus across a stream that is rendering is a known way to lose one permanently, which

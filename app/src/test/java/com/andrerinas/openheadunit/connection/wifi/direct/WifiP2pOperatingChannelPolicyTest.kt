@@ -1,6 +1,5 @@
 package com.andrerinas.openheadunit.connection.wifi.direct
 
-import com.andrerinas.openheadunit.aap.P2pBandPreference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

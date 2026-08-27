@@ -28,7 +28,7 @@ class SystemOptimizer(private val context: Context) {
     }
 
     fun checkH265HardwareSupport(): Boolean {
-        return com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcSupported()
+        return com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcSupported()
     }
 
     fun calculateOptimalSettings(
@@ -154,6 +154,6 @@ class SystemOptimizer(private val context: Context) {
          * truth) so the recommended label, the wizard and the runtime cap never diverge.
          */
         fun recommendedResolution(realWidthPx: Int, realHeightPx: Int): Settings.Resolution =
-            panelCeiling(realWidthPx, realHeightPx, com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcSupported())
+            panelCeiling(realWidthPx, realHeightPx, com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcSupported())
     }
 }

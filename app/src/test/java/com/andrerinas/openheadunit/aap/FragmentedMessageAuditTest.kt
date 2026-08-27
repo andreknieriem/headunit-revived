@@ -9,7 +9,7 @@ import org.junit.Test
 /**
  * The cross-check that catches the one corruption mode nothing else can see.
  *
- * A missing *middle* fragment leaves the run looking intact to [VideoFragmentAssembler] - first,
+ * A missing *middle* fragment leaves the run looking intact to [com.andrerinas.openheadunit.decoder.video.VideoFragmentAssembler] - first,
  * middles, last, in order - so the frame is assembled with a hole in it and decoded as though it were
  * whole. The total size the first fragment declares is the only thing that disagrees.
  *

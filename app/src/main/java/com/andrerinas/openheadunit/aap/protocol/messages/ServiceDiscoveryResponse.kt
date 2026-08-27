@@ -4,13 +4,13 @@ import android.content.Context
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapMessage
 import com.andrerinas.openheadunit.aap.AapService
-import com.andrerinas.openheadunit.aap.KeyCode
+import com.andrerinas.openheadunit.input.KeyCode
 import com.andrerinas.openheadunit.aap.protocol.AudioConfigs
 import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.aap.protocol.proto.Media
 import com.andrerinas.openheadunit.aap.protocol.proto.Sensors
-import com.andrerinas.openheadunit.decoder.VideoDecoder
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.HeadUnitScreenConfig
 import com.google.protobuf.Message
@@ -51,14 +51,14 @@ class ServiceDiscoveryResponse(private val context: Context)
                                 settings.forceSoftwareDecoding &&
                                 when (settings.softwareVideoDecoder) {
                                     com.andrerinas.openheadunit.utils.Settings.SoftwareVideoDecoder.BUNDLED_FFMPEG ->
-                                        com.andrerinas.openheadunit.decoder.VideoDecoder.isBundledHevcDecoderAvailable()
+                                        com.andrerinas.openheadunit.decoder.video.VideoDecoder.isBundledHevcDecoderAvailable()
                                     com.andrerinas.openheadunit.utils.Settings.SoftwareVideoDecoder.DEVICE_MEDIACODEC ->
-                                        com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcDecoderAvailable(includeSoftware = true)
+                                        com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcDecoderAvailable(includeSoftware = true)
                                 }
                     val hevcAvailableForUserChoice =
-                        com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcSupported() || explicitSoftwareHevc
+                        com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcSupported() || explicitSoftwareHevc
                     val hevcAvailableForHighResolution =
-                        com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcReliable() || explicitSoftwareHevc
+                        com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcReliable() || explicitSoftwareHevc
 
                     val codecToRequest = when (settings.videoCodec) {
                         "H.265" -> if (hevcAvailableForUserChoice) {
@@ -71,7 +71,7 @@ class ServiceDiscoveryResponse(private val context: Context)
                             // otherwise prefer stable H.264
                             val negotiatedResolution = HeadUnitScreenConfig.negotiatedResolutionType
                             if (negotiatedResolution == Control.Service.MediaSinkService.VideoConfiguration.VideoCodecResolutionType._3840x2160 &&
-                                com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcReliable()) {
+                                com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcReliable()) {
                                 Media.MediaCodecType.MEDIA_CODEC_VIDEO_H265
                             } else {
                                 Media.MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP
@@ -296,7 +296,7 @@ class ServiceDiscoveryResponse(private val context: Context)
             val width = HeadUnitScreenConfig.getNegotiatedWidth()
             val height = HeadUnitScreenConfig.getNegotiatedHeight()
             if (width <= 0 || height <= 0) return
-            val capability = com.andrerinas.openheadunit.decoder.DecoderCapabilityReport
+            val capability = com.andrerinas.openheadunit.decoder.video.DecoderCapabilityReport
                 .query(mime, width, height, settings.fpsLimit)
             if (capability == null) {
                 AppLog.i("[ServiceDiscovery] No decoder capability available for $mime at ${width}x$height")

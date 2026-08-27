@@ -1,11 +1,10 @@
 package com.andrerinas.openheadunit.connection.wifi.direct
 
-import com.andrerinas.openheadunit.aap.P2pBandPreference
 
 /**
  * Which operating channel to ask the P2P stack for, on the devices that have no band API.
  *
- * [com.andrerinas.openheadunit.aap.NativeGroupBandPolicy] asks for a *band*, and that request only exists from API 29
+ * [com.andrerinas.openheadunit.connection.wifi.direct.NativeGroupBandPolicy] asks for a *band*, and that request only exists from API 29
  * (`WifiP2pConfig.Builder.setGroupOperatingBand`). Below it the app calls the no-argument
  * `createGroup` and the driver picks unaided, which is what every pre-Android-10 head unit in the
  * reports has been doing: `Standard createGroup SUCCESS!`, then `Freq: 0 MHz (unknown)`, with the
@@ -68,7 +67,7 @@ object WifiP2pOperatingChannelPolicy {
      * True when asking for an operating channel is the only way to influence the band.
      *
      * From API 29 the band request is a supported call with a supported fallback, and it is what
-     * [com.andrerinas.openheadunit.aap.NativeGroupBandPolicy] already drives; reaching for a hidden method there would be trading a
+     * [com.andrerinas.openheadunit.connection.wifi.direct.NativeGroupBandPolicy] already drives; reaching for a hidden method there would be trading a
      * guarantee for a reflection.
      */
     fun appliesTo(sdkInt: Int): Boolean = sdkInt < FIRST_API_WITH_BAND_REQUEST

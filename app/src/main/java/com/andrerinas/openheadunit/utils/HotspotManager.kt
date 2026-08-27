@@ -8,17 +8,17 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.andrerinas.openheadunit.connection.wifi.modes.native.ApBand
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.ApBand
 import com.android.dx.DexMaker
 import com.android.dx.TypeId
 import java.lang.reflect.Method
 import java.net.Inet4Address
 import java.net.NetworkInterface
-import com.andrerinas.openheadunit.connection.wifi.modes.native.ApInterfaceCandidate
-import com.andrerinas.openheadunit.connection.wifi.modes.native.HotspotBandPreference
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApBandPolicy
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApNetworkPolicy
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApState
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.ApInterfaceCandidate
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.HotspotBandPreference
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBandPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApNetworkPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApState
 
 /**
  * Manages WiFi Hotspot (tethering) using reflection + dexmaker.

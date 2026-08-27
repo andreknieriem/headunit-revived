@@ -2,7 +2,7 @@ package com.andrerinas.openheadunit.aap
 
 import android.content.Context
 import com.andrerinas.openheadunit.aap.protocol.Channel
-import com.andrerinas.openheadunit.decoder.MicRecorder
+import com.andrerinas.openheadunit.decoder.audio.MicRecorder
 import com.andrerinas.openheadunit.aap.protocol.proto.MediaPlayback
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings

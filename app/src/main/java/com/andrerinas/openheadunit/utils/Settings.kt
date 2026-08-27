@@ -7,15 +7,15 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Build
-import com.andrerinas.openheadunit.aap.MediaKeyRoutingPolicy
-import com.andrerinas.openheadunit.aap.VideoFaultInjector
-import com.andrerinas.openheadunit.decoder.DeviceMemoryProfile
-import com.andrerinas.openheadunit.aap.PlaybackFocusPolicy
+import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
+import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
+import com.andrerinas.openheadunit.decoder.video.DeviceMemoryProfile
+import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
-import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeStrategy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 
 class Settings(private val context: Context) {
@@ -380,7 +380,7 @@ class Settings(private val context: Context) {
      * nothing, which is harder to diagnose than a group that never forms, so this is for a unit
      * whose fallback lands somewhere that shows no picture. `2` is for a radio that will not host a
      * 5 GHz group owner, and it disarms the band-mismatch retry with it - see
-     * [com.andrerinas.openheadunit.aap.NativeGroupBandPolicy], which is where that coupling lives.
+     * [com.andrerinas.openheadunit.connection.wifi.direct.NativeGroupBandPolicy], which is where that coupling lives.
      *
      * **Below API 29 none of this is a band request.** There is no `WifiP2pConfig.Builder` there, so
      * the app asks for an *operating channel* through hidden reflection instead, walking 5 GHz then
@@ -441,7 +441,7 @@ class Settings(private val context: Context) {
      * false there, so the toggle is never rendered and nothing acts on this value.
      *
      * Only acted on for a Native AA wireless session; see
-     * [com.andrerinas.openheadunit.aap.DummyVpnPolicy.shouldStartForSession], which explains why
+     * [com.andrerinas.openheadunit.utils.DummyVpnPolicy.shouldStartForSession], which explains why
      * the mode has to be re-tested at the point of use rather than trusted from this flag.
      */
     var keepDummyVpnDuringSession: Boolean
@@ -455,7 +455,7 @@ class Settings(private val context: Context) {
      * key - which is this project's standing rule about vendor MediaFormat keys, written after
      * KEY_PRIORITY and KEY_OPERATING_RATE were both measured being rejected outright. The configure
      * ladder is what makes turning it on cheap to try: a rejected key now costs one retry instead of
-     * the session. See [com.andrerinas.openheadunit.decoder.DecoderConfigLadder].
+     * the session. See [com.andrerinas.openheadunit.decoder.video.DecoderConfigLadder].
      */
     var debugVideoLowLatency: Boolean
         get() = prefs.getBoolean("debug-video-low-latency", false)
@@ -1139,10 +1139,10 @@ class Settings(private val context: Context) {
         const val CONNECTION_TYPE_USB = "usb"
         const val CONNECTION_TYPE_NEARBY = "nearby"
 
-        /** SharedPreferences key; also used by [AapService] for change listener. */
+        /** SharedPreferences key; also used by [com.andrerinas.openheadunit.aap.AapService] for change listener. */
         const val KEY_SYNC_MEDIA_SESSION_AA_METADATA = "sync-media-session-aa-metadata"
 
-        /** SharedPreferences key; also used by [AapService] for change listener. */
+        /** SharedPreferences key; also used by [com.andrerinas.openheadunit.aap.AapService] for change listener. */
         const val KEY_LOG_LEVEL = "log-level"
         const val KEY_LOG_SOURCE = "log-source"
         const val KEY_LOG_LOCATION = "log-location"
