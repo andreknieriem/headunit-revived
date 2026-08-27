@@ -87,9 +87,9 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_marginStart="8dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
             app:tint="?android:attr/textColorSecondary"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/connection_issue_banner_dismiss" />
 
     </LinearLayout>
