@@ -269,7 +269,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/ic_chevron_right"
+                        app:srcCompat="@drawable/ic_chevron_right"
                         app:tint="?android:attr/textColorSecondary" />
 
                 </LinearLayout>
@@ -309,7 +309,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/ic_chevron_right"
+                        app:srcCompat="@drawable/ic_chevron_right"
                         app:tint="?android:attr/textColorSecondary" />
 
                 </LinearLayout>
@@ -349,7 +349,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/ic_chevron_right"
+                        app:srcCompat="@drawable/ic_chevron_right"
                         app:tint="?android:attr/textColorSecondary" />
 
                 </LinearLayout>
@@ -389,7 +389,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/ic_chevron_right"
+                        app:srcCompat="@drawable/ic_chevron_right"
                         app:tint="?android:attr/textColorSecondary" />
 
                 </LinearLayout>

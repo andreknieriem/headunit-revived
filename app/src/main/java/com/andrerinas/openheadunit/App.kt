@@ -111,6 +111,10 @@ class App : Application() {
     }
 
     companion object {
+        init {
+            AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
+        }
+
         const val defaultChannel = "headunit_service_v2"
         const val bootStartChannel = "headunit_boot_start"
         val appStartTime = SystemClock.elapsedRealtime()

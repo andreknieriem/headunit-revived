@@ -68,7 +68,7 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_marginEnd="10dp"
-            android:src="@drawable/ic_warning_white"
+            app:srcCompat="@drawable/ic_warning_white"
             app:tint="@color/warning_banner_icon"
             android:importantForAccessibility="no" />
 
