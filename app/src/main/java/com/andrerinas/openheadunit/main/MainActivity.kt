@@ -7,7 +7,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
@@ -41,6 +45,8 @@ import android.os.SystemClock
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.utils.SystemUI
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
@@ -1041,19 +1047,54 @@ class MainActivity : BaseActivity() {
     }
 
     fun applyCustomHomeBackground() {
-        val customBgImageView = findViewById<ImageView>(R.id.custom_home_background) ?: return
+        val customBgImageView = findViewById<ImageView>(R.id.custom_home_background)
         val path = Settings(this).homeBackgroundImagePath
         val file = if (path.isNotEmpty()) File(path) else null
 
         if (file != null && file.exists() && file.length() > 0) {
-            customBgImageView.visibility = View.VISIBLE
-            Glide.with(this)
-                .load(file)
-                .centerCrop()
-                .into(customBgImageView)
+            try {
+                Glide.with(this)
+                    .asBitmap()
+                    .load(file)
+                    .centerCrop()
+                    .into(object : CustomTarget<Bitmap>() {
+                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            if (!isFinishing && !isDestroyed) {
+                                window.setBackgroundDrawable(BitmapDrawable(resources, resource))
+                                customBgImageView?.setImageDrawable(null)
+                                customBgImageView?.visibility = View.GONE
+                            }
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            customBgImageView?.setImageDrawable(null)
+                            customBgImageView?.visibility = View.GONE
+                        }
+                    })
+            } catch (e: Exception) {
+                AppLog.e("Failed to load custom home background: ${e.message}")
+                resetWindowBackgroundToTheme()
+            }
         } else {
-            try { Glide.with(this).clear(customBgImageView) } catch (_: Exception) {}
-            customBgImageView.visibility = View.GONE
+            customBgImageView?.let {
+                try { Glide.with(this).clear(it) } catch (_: Exception) {}
+                it.setImageDrawable(null)
+                it.visibility = View.GONE
+            }
+            resetWindowBackgroundToTheme()
+        }
+    }
+
+    private fun resetWindowBackgroundToTheme() {
+        val mainSettings = Settings(this)
+        val isNightActive = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        if (mainSettings.appTheme == Settings.AppTheme.EXTREME_DARK ||
+            (mainSettings.useExtremeDarkMode && isNightActive)) {
+            window.setBackgroundDrawable(ColorDrawable(ContextCompat.getColor(this, R.color.extreme_dark_background)))
+        } else if (mainSettings.useGradientBackground) {
+            window.setBackgroundDrawable(ContextCompat.getDrawable(this, R.drawable.bg_gradient))
+        } else {
+            window.setBackgroundDrawable(ContextCompat.getDrawable(this, R.drawable.bg))
         }
     }
 
