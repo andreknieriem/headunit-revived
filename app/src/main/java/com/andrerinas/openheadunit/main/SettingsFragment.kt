@@ -1265,31 +1265,6 @@ class SettingsFragment : Fragment() {
             ))
         }
 
-        // --- Dark Mode ---
-        items.add(SettingItem.CategoryHeader("darkMode", R.string.category_dark_mode))
-
-        val appThemeTitles = resources.getStringArray(R.array.app_theme)
-        val nightModeTitles = resources.getStringArray(R.array.night_mode)
-        val darkModeValue = "${getString(R.string.app_theme_short)}: ${appThemeTitles[settings.appTheme.value]} · " +
-                "${getString(R.string.night_mode_short)}: ${nightModeTitles[settings.nightMode.value]}"
-        items.add(SettingItem.SettingEntry(
-            stableId = "darkModeSettings",
-            nameResId = R.string.dark_mode_settings,
-            value = darkModeValue,
-            searchKeywords = kw(
-                R.string.night_mode, R.string.app_theme, R.string.threshold_light_title,
-                R.string.threshold_brightness_title, R.string.monochrome_icons,
-                R.string.use_gradient_background, R.string.use_extreme_dark, R.string.aa_monochrome,
-                R.string.sunrise_location_title, R.string.location_section
-            ),
-            onClick = {
-                try {
-                    findNavController().navigate(R.id.action_settingsFragment_to_darkModeFragment)
-                } catch (e: Exception) {
-                    // Failover
-                }
-            }
-        ))
 
         // --- Automation ---
         items.add(SettingItem.CategoryHeader("automation", R.string.category_automation))
@@ -1615,6 +1590,29 @@ class SettingsFragment : Fragment() {
             value = getString(R.string.customization_description),
             onClick = {
                 findNavController().navigate(R.id.action_settingsFragment_to_customizationFragment)
+            }
+        ))
+
+        val appThemeTitles = resources.getStringArray(R.array.app_theme)
+        val nightModeTitles = resources.getStringArray(R.array.night_mode)
+        val darkModeValue = "${getString(R.string.app_theme_short)}: ${appThemeTitles[settings.appTheme.value]} · " +
+                "${getString(R.string.night_mode_short)}: ${nightModeTitles[settings.nightMode.value]}"
+        items.add(SettingItem.SettingEntry(
+            stableId = "darkModeSettings",
+            nameResId = R.string.dark_mode_settings,
+            value = darkModeValue,
+            searchKeywords = kw(
+                R.string.night_mode, R.string.app_theme, R.string.threshold_light_title,
+                R.string.threshold_brightness_title, R.string.monochrome_icons,
+                R.string.use_gradient_background, R.string.use_extreme_dark, R.string.aa_monochrome,
+                R.string.sunrise_location_title, R.string.location_section
+            ),
+            onClick = {
+                try {
+                    findNavController().navigate(R.id.action_settingsFragment_to_darkModeFragment)
+                } catch (e: Exception) {
+                    // Failover
+                }
             }
         ))
 
