@@ -206,11 +206,26 @@ class AapTransport(
     /** Whether our own writes are draining. See [UplinkStallMonitor]. */
     private val uplinkStallMonitor = UplinkStallMonitor()
 
-    /** Called for every decrypted inbound message, from [AapMessageHandlerType.handle]. */
-    internal fun noteMessageReceived(channel: Int) {
+    /**
+     * How much actually arrives, which the three gap series above cannot say.
+     *
+     * A picture that sags without going quiet leaves every gap monitor silent, and a gap that is
+     * named still does not say whether the link was full or the phone was holding back. See
+     * [InboundRateMonitor].
+     */
+    private val inboundRateMonitor = InboundRateMonitor()
+
+    /**
+     * Called for every decrypted inbound message, from [AapMessageHandlerType.handle].
+     *
+     * [bytes] is the message payload. It is passed rather than derived here because this is a
+     * funnel and the message is not: everything upstream already knows the size.
+     */
+    internal fun noteMessageReceived(channel: Int, bytes: Int) {
         val now = SystemClock.elapsedRealtime()
         lastMessageReceivedMs = now
         linkGapMonitor.onMessage(now)?.let { AppLog.i("AapTransport: %s", it) }
+        inboundRateMonitor.onMessage(channel, bytes, now)?.let { AppLog.i("AapTransport: %s", it) }
         when {
             channel == Channel.ID_VID ->
                 videoGapMonitor.onMessage(now)?.let { AppLog.i("AapTransport: %s", it) }
@@ -638,6 +653,7 @@ class AapTransport(
         videoGapMonitor.reset()
         audioGapMonitor.reset()
         uplinkStallMonitor.reset()
+        inboundRateMonitor.reset()
 
         sendThread = HandlerThread("AapTransport:Handler::Send", Process.THREAD_PRIORITY_AUDIO)
         sendThread!!.start()

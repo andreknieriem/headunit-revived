@@ -29,7 +29,7 @@ internal class AapMessageHandlerType(
         // See AapTransport.lastMessageReceivedMs for why that distinction matters. The channel goes
         // with it so the media channels can be measured apart from the link: this fault stops video
         // and audio while leaving control running, and the three are one series here.
-        transport.noteMessageReceived(message.channel)
+        transport.noteMessageReceived(message.channel, message.size)
 
         val msgType = message.type
         val flags = message.flags
