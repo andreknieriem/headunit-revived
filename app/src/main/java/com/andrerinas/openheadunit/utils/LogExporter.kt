@@ -6,6 +6,11 @@ import android.os.Build
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.andrerinas.openheadunit.BuildConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -28,6 +33,9 @@ object LogExporter {
     private var captureVerbosity: LogLevel = LogLevel.DEBUG
     private var captureRestarts = 0
     private const val MAX_RESTARTS = 5
+
+    /** Long enough for any ROM that answers at all; `logcat -d` normally returns in well under a second. */
+    private const val RING_BUFFER_TIMEOUT_MS = 10_000L
 
     /**
      * Ceiling for one capture file. Sits under [LogFilesHelper]'s 50 MB budget for the whole
@@ -219,55 +227,105 @@ object LogExporter {
      *   copies its content into a fresh export file so the original capture file is preserved.
      * - Otherwise: dumps the current logcat ring buffer.
      */
-    fun saveLogToPublicFile(context: Context, verbosity: LogLevel): File? {
+    suspend fun saveLogToPublicFile(context: Context, verbosity: LogLevel): File? = withContext(Dispatchers.IO) {
         if (verbosity == LogLevel.SILENT) {
             AppLog.w("LogExporter: export requested while SILENT; skipping export")
-            return null
+            return@withContext null
         }
 
-        // Before every path below, so the banner is in the export however it is produced: AppLog's
-        // own file, a running capture that already has one from startCapture, or a ring-buffer dump
-        // that has never seen one. A second copy in a capture file costs a line and is worth it -
-        // the ring-buffer export is the case where a missing banner would leave the whole file
-        // unattributable, and it is the case with no other chance to write one.
+        // Before every path below, because this is the only one that reaches AppLog's own file.
+        // The two logcat paths do not trust it to arrive and append it themselves - see
+        // appendBanner. A second copy in a capture file costs a line and is worth it.
         AppLog.w(sessionBanner(context))
 
         val settings = Settings(context)
 
         if (AppLog.logSource == Settings.LogSource.APPLOG_FILE) {
-            return (AppLog.currentLogFile ?: AppLog.lastLogFile)
+            return@withContext (AppLog.currentLogFile ?: AppLog.lastLogFile)
                 ?.takeIf { it.exists() && it.length() > 0 }
         }
 
-        val logDir = LogFilesHelper.resolveLogDirectory(context, settings, allowInternalFallback = false) ?: return null
+        val logDir = LogFilesHelper.resolveLogDirectory(context, settings, allowInternalFallback = false)
+            ?: return@withContext null
         LogFilesHelper.ensureDirectory(logDir)
 
         val source = captureFile
         if (source != null && source.exists() && source.length() > 0) {
-            return source
+            appendBanner(source, context)
+            return@withContext source
         }
 
-        return try {
-            LogFilesHelper.rotateLogs(logDir)
-            val logFile = LogFilesHelper.createTimestampedLogFile(logDir)
-            // Use stdout piping instead of -f flag; -f is unreliable on Android 4.4.
-            val process = Runtime.getRuntime().exec(
-                arrayOf("logcat", "-d", "-v", "threadtime", verbosity.filter)
-            )
-            FileOutputStream(logFile).use { out ->
-                process.inputStream.copyTo(out)
-            }
-            process.waitFor()
-            if (logFile.exists() && logFile.length() == 0L) {
-                logFile.delete()
-                null
-            } else {
-                logFile
+        dumpRingBuffer(logDir, verbosity)?.also { appendBanner(it, context) }
+    }
+
+    /**
+     * Writes the session banner into an export file directly, rather than trusting it to arrive.
+     *
+     * The [AppLog] call above reaches a capture file only after travelling logd, the logcat process
+     * and the pipe's writer thread, and the export returns first: two reporter captures arrived
+     * with no banner at all, which is what made identifying their build and flavor guesswork. One
+     * small append is atomic against the pipe because both streams are opened `O_APPEND`, so the
+     * line lands at the end of the file whatever the capture is doing.
+     */
+    private fun appendBanner(file: File, context: Context) {
+        try {
+            FileOutputStream(file, true).use {
+                it.write("\n${sessionBanner(context)}\n".toByteArray())
             }
         } catch (e: Exception) {
-            AppLog.e("Failed to save logs", e)
-            null
+            AppLog.w("LogExporter: could not write the session banner into ${file.name}: ${e.message}")
         }
+    }
+
+    /**
+     * Dumps the logcat ring buffer for an export that has no capture file to hand.
+     *
+     * Bounded because `logcat` does not always answer: on a ROM that gates it behind the system
+     * log-access dialog the process sits there until somebody taps, which used to hang the caller
+     * for as long as that took. Only [Process.destroy] ends the read - cancelling the wait cannot,
+     * because `copyTo` blocks somewhere coroutine cancellation does not reach.
+     */
+    private suspend fun dumpRingBuffer(logDir: File, verbosity: LogLevel): File? = coroutineScope {
+        LogFilesHelper.rotateLogs(logDir)
+        val logFile = LogFilesHelper.createTimestampedLogFile(logDir)
+
+        val process = try {
+            // Use stdout piping instead of -f flag; -f is unreliable on Android 4.4.
+            Runtime.getRuntime().exec(
+                arrayOf("logcat", "-d", "-v", "threadtime", verbosity.filter)
+            )
+        } catch (e: Exception) {
+            AppLog.e("Failed to save logs", e)
+            return@coroutineScope null
+        }
+
+        val dump = async(Dispatchers.IO) {
+            try {
+                FileOutputStream(logFile).use { out -> process.inputStream.copyTo(out) }
+                process.waitFor()
+                true
+            } catch (e: Exception) {
+                AppLog.e("Failed to save logs", e)
+                false
+            }
+        }
+
+        val finished = withTimeoutOrNull(RING_BUFFER_TIMEOUT_MS) { dump.await() }
+        if (finished == null) {
+            AppLog.w(
+                "LogExporter: the logcat ring-buffer dump produced nothing in " +
+                    "${RING_BUFFER_TIMEOUT_MS}ms, so the export is being abandoned. A ROM that asks " +
+                    "for log-access consent looks exactly like this while the dialog goes untapped."
+            )
+            process.destroy()
+            dump.join()
+        }
+
+        if (finished != true || logFile.length() == 0L) {
+            logFile.delete()
+            return@coroutineScope null
+        }
+        logFile
     }
 
     fun shareLogFile(context: Context, file: File) {
