@@ -29,29 +29,6 @@ object LogExporter {
     private var captureRestarts = 0
     private const val MAX_RESTARTS = 5
 
-    @Volatile
-    private var cachedLogcatSupported: Boolean? = null
-
-    /**
-     * Checks whether the current process is able to read logcat output.
-     * On older Android versions (e.g. 5.1/7.1) or restricted ROMs without READ_LOGS permission,
-     * logcat exits immediately with 'Permission denied' or empty output.
-     */
-    fun isLogcatSupported(): Boolean {
-        cachedLogcatSupported?.let { return it }
-        return try {
-            val process = Runtime.getRuntime().exec(arrayOf("logcat", "-d", "-t", "1"))
-            val exitCode = process.waitFor()
-            val hasOutput = process.inputStream.bufferedReader().use { it.readLine() != null }
-            val isSupported = exitCode == 0 && hasOutput
-            cachedLogcatSupported = isSupported
-            isSupported
-        } catch (_: Throwable) {
-            cachedLogcatSupported = false
-            false
-        }
-    }
-
     /**
      * Ceiling for one capture file. Sits under [LogFilesHelper]'s 50 MB budget for the whole
      * directory, so a single runaway capture cannot consume it.
@@ -71,15 +48,6 @@ object LogExporter {
      */
     fun startCapture(context: Context, verbosity: LogLevel) {
         val settings = Settings(context)
-
-        // If LOGCAT is selected but logcat is restricted on this device, automatically switch to APPLOG_FILE
-        if (settings.logSource == Settings.LogSource.LOGCAT && !isLogcatSupported()) {
-            AppLog.w("LogExporter: Logcat is not accessible on this device (permission denied/restricted). Automatically switching log source to Direct to file (APPLOG_FILE).")
-            settings.logSource = Settings.LogSource.APPLOG_FILE
-            settings.exporterCaptureEnabled = true
-            AppLog.init(settings, context.applicationContext)
-            return
-        }
 
         if (AppLog.logSource == Settings.LogSource.APPLOG_FILE) {
             AppLog.w("LogExporter: log source is APPLOG_FILE; logcat capture is disabled")
@@ -208,13 +176,18 @@ object LogExporter {
                     try { Thread.sleep(2000) } catch (_: InterruptedException) { return@Thread }
                     launchLogcatPipe(file, verbosity, context)
                 } else if (captureProcess === process && file.length() == 0L) {
+                    // The only reliable test for a ROM that refuses logcat: the capture the user
+                    // asked for ran and produced nothing. Asking beforehand meant spawning logcat
+                    // speculatively, which on Android 13+ raises the system consent dialog.
+                    // exporterCaptureEnabled is deliberately not touched - this branch is only
+                    // reachable from a capture that is already enabled, and the source is the only
+                    // thing being corrected.
                     val err = try { process.errorStream.bufferedReader().readText().trim() } catch (_: Exception) { "" }
                     AppLog.w("LogExporter: Logcat capture produced 0 bytes ($err). Automatically switching to Direct to file (APPLOG_FILE).")
                     file.delete()
                     captureFile = null
                     val settings = Settings(context)
                     settings.logSource = Settings.LogSource.APPLOG_FILE
-                    settings.exporterCaptureEnabled = true
                     AppLog.init(settings, context.applicationContext)
                 }
             }.also { it.isDaemon = true; it.start() }
@@ -260,11 +233,6 @@ object LogExporter {
         AppLog.w(sessionBanner(context))
 
         val settings = Settings(context)
-
-        if (settings.logSource == Settings.LogSource.LOGCAT && !isLogcatSupported()) {
-            AppLog.w("LogExporter: Logcat is not accessible on this device. Switching log source to Direct to file (APPLOG_FILE).")
-            settings.logSource = Settings.LogSource.APPLOG_FILE
-        }
 
         if (AppLog.logSource == Settings.LogSource.APPLOG_FILE) {
             return (AppLog.currentLogFile ?: AppLog.lastLogFile)

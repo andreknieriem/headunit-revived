@@ -7,18 +7,30 @@ import android.os.Bundle
 import android.os.SystemClock
 import com.andrerinas.openheadunit.utils.AppLog
 
-// Display android auto's built-in activity that checks for missing permissions
-// It immediately closes if all needed ones are granted
+/**
+ * Shows Android Auto's own permission check, to find out whether missing permissions are why Self
+ * Mode did not start.
+ *
+ * AA's activity closes immediately when everything is already granted, so a fast return is the
+ * success case, not a failure. It used to be read the other way round - anything under a second
+ * counted as failed - which fired a "Failed to start Android Auto" toast on every healthy start.
+ *
+ * The only failure this can actually observe is not being able to start the activity at all.
+ */
 class PermissionTrampolineActivity : Activity() {
 
     companion object {
         private const val REQUEST_CODE_AA = 1001
-        private const val IMMEDIATE_THRESHOLD_MS = 1000L
 
-        private var onFailCallback: (() -> Unit)? = null
+        private var onResultCallback: ((permissionCheckRan: Boolean) -> Unit)? = null
 
-        fun launch(context: Context, onFail: () -> Unit) {
-            onFailCallback = onFail
+        /**
+         * @param onResult `true` when AA's permission activity ran and returned, whether it closed
+         *   at once or the user worked through it - either way permissions are not the problem.
+         *   `false` when it could not be started, which is the caller's cue to work out why.
+         */
+        fun launch(context: Context, onResult: (permissionCheckRan: Boolean) -> Unit) {
+            onResultCallback = onResult
             val intent = Intent(context, PermissionTrampolineActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
@@ -41,8 +53,9 @@ class PermissionTrampolineActivity : Activity() {
 
         try {
             startActivityForResult(intent, REQUEST_CODE_AA)
-        } catch (_: Exception) {
-            triggerFail()
+        } catch (e: Exception) {
+            AppLog.w("SelfMode: could not start AA's permission activity: ${e.message}")
+            finishWith(permissionCheckRan = false)
         }
     }
 
@@ -50,26 +63,20 @@ class PermissionTrampolineActivity : Activity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_AA) {
             val durationMs = SystemClock.elapsedRealtime() - launchTimestamp
-
             AppLog.i("SelfMode: AA permissions request took $durationMs ms")
-
-            if (durationMs < IMMEDIATE_THRESHOLD_MS) {
-                triggerFail()
-            } else {
-                cleanup()
-                finish()
-            }
+            finishWith(permissionCheckRan = true)
         }
     }
 
-    private fun triggerFail() {
-        onFailCallback?.invoke()
+    private fun finishWith(permissionCheckRan: Boolean) {
+        val callback = onResultCallback
         cleanup()
+        callback?.invoke(permissionCheckRan)
         finish()
     }
 
     private fun cleanup() {
-        onFailCallback = null
+        onResultCallback = null
     }
 
     override fun onDestroy() {

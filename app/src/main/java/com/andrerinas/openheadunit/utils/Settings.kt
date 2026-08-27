@@ -182,11 +182,18 @@ class Settings(private val context: Context) {
         DOWNLOADS
     }
 
+    /**
+     * Where captured logs come from. Read on every [com.andrerinas.openheadunit.utils.AppLog.init],
+     * including the one in `App.onCreate`, so this getter must not do any work.
+     *
+     * It used to resolve its default by spawning `logcat` to see whether the ROM allows it. That ran
+     * on the main thread at every process start, even when the preference below already answered the
+     * question, and on Android 13+ each spawn raises the system log-access consent dialog. A
+     * restricted ROM is now detected from the capture that actually runs, in [LogExporter]'s
+     * zero-byte branch.
+     */
     var logSource: LogSource
-        get() {
-            val defaultSource = if (LogExporter.isLogcatSupported()) LogSource.LOGCAT else LogSource.APPLOG_FILE
-            return LogSource.entries.getOrElse(prefs.getInt(KEY_LOG_SOURCE, defaultSource.ordinal)) { defaultSource }
-        }
+        get() = LogSource.entries.getOrElse(prefs.getInt(KEY_LOG_SOURCE, LogSource.LOGCAT.ordinal)) { LogSource.LOGCAT }
         set(value) { prefs.edit().putInt(KEY_LOG_SOURCE, value.ordinal).apply() }
 
     var logLocation: LogLocation
