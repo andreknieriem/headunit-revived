@@ -6,6 +6,8 @@ import android.net.Uri
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.aap.DummyVpnPolicy
+import com.andrerinas.openheadunit.aap.SelfLaunchPath
+import com.andrerinas.openheadunit.aap.SelfLaunchTimeoutPolicy
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherBTDiscovery
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherBroadcast
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherLegacy
@@ -95,14 +97,18 @@ class SelfLauncherManager(
             val services = SelfLauncherServices(service, wifiLauncherManager)
             val launchers: Array<SelfLauncher>
 
+            val path: SelfLaunchPath
+
             if (isAaVersion174OrHigher()) {
                 AppLog.i("SelfMode: AA 17.4+ detected. Connecting directly to Headunit Server on 127.0.0.1:5277...")
+                path = SelfLaunchPath.HEADUNIT_SERVER
                 launchers = arrayOf(
                     SelfLauncherV17_4(this@SelfLauncherManager, services)
                 )
 
             } else {
                 AppLog.i("SelfMode: AA < 17.4 detected. Starting WirelessServer on 5288 and running legacy triggers...")
+                path = SelfLaunchPath.LEGACY
                 launchers = arrayOf(
                     SelfLauncherLegacy(this@SelfLauncherManager, services),
                     SelfLauncherBroadcast(this@SelfLauncherManager, services), // fallback #1
@@ -134,13 +140,20 @@ class SelfLauncherManager(
                 return@launch
             }
 
-            // run a timer to make sure it actually succeeded
+            // Report a launch that has not connected yet, without taking anything down: the
+            // wireless server and the dummy VPN are what the phone still has to arrive on. See
+            // SelfLaunchTimeoutPolicy.
+            val deadlineMs = SelfLaunchTimeoutPolicy.deadlineMs(path)
             service.serviceScope.launch {
-                delay(2500L)
+                delay(deadlineMs)
 
                 if (!commManager.isConnected && isActive) {
-                    AppLog.e("SelfMode: All launchers failed (timeout)")
-                    commManager.emitError("No launch method succeeded (timeout") // hide "connecting" overlay
+                    AppLog.e("SelfMode: nothing connected within ${deadlineMs}ms of the launch")
+                    if (SelfLaunchTimeoutPolicy.mayDisconnect(path)) {
+                        commManager.emitError("No launch method succeeded (timeout)")
+                    } else {
+                        commManager.reportError("No launch method succeeded (timeout)")
+                    }
 
                     handleNeverConnect()
                 }
