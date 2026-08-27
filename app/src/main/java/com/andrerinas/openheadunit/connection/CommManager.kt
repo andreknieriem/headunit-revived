@@ -551,7 +551,7 @@ class CommManager(
      * For a caller that has run out of patience rather than out of hope: a Self Mode launch that has
      * not reported in yet may still be in flight, and the server it will arrive on, plus the dummy
      * VPN it was handed, both have to stay up for that to happen. See
-     * [com.andrerinas.openheadunit.aap.SelfLaunchTimeoutPolicy.mayDisconnect].
+     * [com.andrerinas.openheadunit.connection.self.SelfLaunchTimeoutPolicy.mayDisconnect].
      */
     suspend fun reportError(msg: String) {
         _connectionState.emit(ConnectionState.Error(msg))

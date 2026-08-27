@@ -6,8 +6,6 @@ import android.net.Uri
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.aap.DummyVpnPolicy
-import com.andrerinas.openheadunit.aap.SelfLaunchPath
-import com.andrerinas.openheadunit.aap.SelfLaunchTimeoutPolicy
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherBTDiscovery
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherBroadcast
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherLegacy

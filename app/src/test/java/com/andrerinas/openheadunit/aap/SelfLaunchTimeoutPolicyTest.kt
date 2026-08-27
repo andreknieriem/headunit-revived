@@ -1,5 +1,7 @@
 package com.andrerinas.openheadunit.aap
 
+import com.andrerinas.openheadunit.connection.self.SelfLaunchPath
+import com.andrerinas.openheadunit.connection.self.SelfLaunchTimeoutPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
