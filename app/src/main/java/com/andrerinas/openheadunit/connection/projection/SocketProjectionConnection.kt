@@ -251,7 +251,7 @@ class SocketProjectionConnection(
     }
 
     private fun handleBrokenTransport(e: SocketException) {
-        AppLog.w("Socket broken (server disconnected ungracefully?)", e)
+        AppLog.e("Socket broken (server disconnected ungracefully?)", e)
         transportBroken = true
 
         // Force close the stream/socket so the OS frees the file descriptor
