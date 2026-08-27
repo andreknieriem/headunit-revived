@@ -469,17 +469,18 @@ class CommManager(
             UnresponsivePeerPolicy.countAfterSilentFailure(silentPeerFailures, silentPeerEndpoint, endpoint)
         silentPeerEndpoint = endpoint
         // Only Android Auto's head unit server — the peer on 5277, so the discovery path and Self
-        // Mode — has something the user can restart. The phone dialling our own server on 5288 and
-        // the Nearby helper can both reach this branch, and sending their users into Android Auto's
-        // developer settings after a switch they never turned on would be worse than saying nothing.
+        // Mode — is something the user can restart. The phone dialling our own server on 5288 and
+        // the Nearby helper can both reach this branch, and sending their users off to force stop
+        // Android Auto after a switch they never turned on would be worse than saying nothing.
         if (UnresponsivePeerPolicy.shouldExplain(silentPeerFailures) && endpoint?.endsWith(":5277") == true) {
             AppLog.e(
                 "CommManager: $endpoint has accepted $silentPeerFailures connections in a row " +
                     "without answering any of them. Slowing discovery to one attempt every " +
-                    "${UnresponsivePeerPolicy.BACKOFF_RESCAN_MS / 1000}s. Android Auto's head unit " +
-                    "server does not recover on its own once this happens — stop and start it again " +
-                    "on the phone, in Android Auto's developer settings, and this will reconnect by " +
-                    "itself."
+                    "${UnresponsivePeerPolicy.BACKOFF_RESCAN_MS / 1000}s. Android Auto hands each " +
+                    "accepted connection to its own car service and waits there with no timeout, so " +
+                    "it does not recover on its own and restarting the server does not clear it. " +
+                    "Force stop Android Auto on the phone, and reboot it if that does not help; this " +
+                    "will reconnect by itself."
             )
         }
     }

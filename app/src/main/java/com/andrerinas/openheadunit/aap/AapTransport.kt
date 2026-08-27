@@ -774,10 +774,11 @@ class AapTransport(
                     lastHandshakeFailure = HandshakeFailure.PEER_SILENT
                     AppLog.e(
                         "Handshake: the peer accepted the connection and then sent nothing at all. " +
-                            "Our link is fine — every read timed out rather than failing. On the WiFi " +
-                            "head unit server path this means Android Auto's server on the phone is " +
-                            "still bound to an earlier connection; it does not recover on its own and " +
-                            "has to be stopped and started again in Android Auto's developer settings."
+                            "Our link is fine: every read timed out rather than failing. On the head " +
+                            "unit server path this is Android Auto's own side. It hands each accepted " +
+                            "connection to its car service and waits there with no timeout, so " +
+                            "restarting the server does not clear it. Force stop Android Auto on the " +
+                            "phone, and reboot it if that does not help."
                     )
                 }
                 return false
