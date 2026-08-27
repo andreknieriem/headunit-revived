@@ -852,6 +852,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
                             // Lock the resolution so that orientation changes don't cause re-negotiation
                             HeadUnitScreenConfig.lockResolution()
+                            applyOrientationSettings()
 
                             // Handshake done. If the surface is already ready (e.g. reconnect
                             // while the activity is in the foreground), start reading immediately.
@@ -1549,10 +1550,26 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         if (HeadUnitScreenConfig.updateSurfaceDimensions(width, height)) {
             AppLog.i("[UI_DEBUG_FIX] Surface mismatch! Expected: ${prevUsableW}x${prevUsableH}, Actual: ${width}x${height}")
 
-            // Cache the real surface size for next session
-            settings.cachedSurfaceWidth = width
-            settings.cachedSurfaceHeight = height
-            settings.cachedSurfaceSettingsHash = HeadUnitScreenConfig.computeSettingsHash(settings)
+            // Cache the real surface size for next session only if orientation matches expected setting
+            val isTargetLandscape = settings.screenOrientation == Settings.ScreenOrientation.LANDSCAPE ||
+                settings.screenOrientation == Settings.ScreenOrientation.LANDSCAPE_REVERSE
+            val isTargetPortrait = settings.screenOrientation == Settings.ScreenOrientation.PORTRAIT ||
+                settings.screenOrientation == Settings.ScreenOrientation.PORTRAIT_REVERSE
+            val surfaceIsLandscape = width >= height
+
+            val shouldCache = when {
+                isTargetLandscape -> surfaceIsLandscape
+                isTargetPortrait -> !surfaceIsLandscape
+                else -> true
+            }
+
+            if (shouldCache) {
+                settings.cachedSurfaceWidth = HeadUnitScreenConfig.getUsableWidth()
+                settings.cachedSurfaceHeight = HeadUnitScreenConfig.getUsableHeight()
+                settings.cachedSurfaceSettingsHash = HeadUnitScreenConfig.computeSettingsHash(settings)
+            } else {
+                AppLog.i("[UI_DEBUG_FIX] Skipping surface dimension cache update due to transient orientation mismatch: ${width}x${height}")
+            }
 
             if (commManager.connectionState.value is CommManager.ConnectionState.TransportStarted) {
                 // AA is already running → send corrected per-side margins dynamically
@@ -1839,17 +1856,21 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             return aapIntent
         }
     }
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        AppLog.i("[AapProjectionActivity] onConfigurationChanged: orientation=${newConfig.orientation}")
+        if (!HeadUnitScreenConfig.isResolutionLocked) {
+            HeadUnitScreenConfig.init(this, resources.displayMetrics, settings)
+        }
+    }
+
     private fun applyOrientationSettings() {
         val screenOrientation = settings.screenOrientation
         if (screenOrientation == Settings.ScreenOrientation.AUTO) {
             applyStickyOrientation()
             if (!HeadUnitScreenConfig.isResolutionLocked) {
-                // Initial start: lock to current orientation at launch
-                if (Build.VERSION.SDK_INT >= 18) {
-                    requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LOCKED
-                } else {
-                    requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_NOSENSOR
-                }
+                // Before resolution is locked, allow sensor to orient the activity
+                requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR
             }
         } else {
             requestedOrientation = screenOrientation.androidOrientation
