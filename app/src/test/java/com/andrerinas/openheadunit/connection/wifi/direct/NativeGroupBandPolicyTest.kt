@@ -24,6 +24,46 @@ class NativeGroupBandPolicyTest {
     }
 
     @Test
+    fun `a radio with no 5GHz band does not get a 5GHz request under AUTO`() {
+        assertEquals(Band.GHZ_2_4, NativeGroupBandPolicy.bandFor(P2pBandPreference.AUTO, supports5Ghz = false))
+    }
+
+    @Test
+    fun `only a no changes AUTO - a yes and an unknown both keep the 5GHz request`() {
+        // is5GHzBandSupported() describes the station side, so a yes is not a promise that a group
+        // owner can be hosted there. AUTO keeps its own fallback rather than trusting it.
+        assertEquals(Band.GHZ_5, NativeGroupBandPolicy.bandFor(P2pBandPreference.AUTO, supports5Ghz = true))
+        assertEquals(Band.GHZ_5, NativeGroupBandPolicy.bandFor(P2pBandPreference.AUTO, supports5Ghz = null))
+    }
+
+    @Test
+    fun `a user who asked for 5GHz still gets the request made on a radio that reports none`() {
+        // The setting exists for a driver that surprises the capability call, so the capability
+        // must not be able to overrule it.
+        assertEquals(Band.GHZ_5, NativeGroupBandPolicy.bandFor(P2pBandPreference.FORCE_5GHZ, supports5Ghz = false))
+    }
+
+    @Test
+    fun `AUTO on a radio with no 5GHz band never remakes the group for a band it cannot have`() {
+        // The two halves have to agree: bandFor answers GHZ_2_4, and shouldRetryFor5Ghz only fires
+        // on GHZ_5, so a group that came up on 2.4 GHz is the one that was asked for.
+        val requested = NativeGroupBandPolicy.bandFor(P2pBandPreference.AUTO, supports5Ghz = false)
+        assertFalse(NativeGroupBandPolicy.shouldRetryFor5Ghz(requested, 2437, retriesSoFar = 0, maxRetries = 2))
+    }
+
+    @Test
+    fun `AUTO says which band it is about to try, so the line cannot contradict the request`() {
+        assertTrue(
+            NativeGroupBandPolicy.describePreference(P2pBandPreference.AUTO, supports5Ghz = false)
+                .contains("2.4 GHz")
+        )
+        assertTrue(
+            NativeGroupBandPolicy.describePreference(P2pBandPreference.AUTO, supports5Ghz = true)
+                .contains("5 GHz")
+        )
+    }
+
+    @Test
     fun `the stored values are the ones the settings screen writes`() {
         // A settings backup carries the number, not the name, so these three are a contract.
         assertEquals(P2pBandPreference.AUTO, P2pBandPreference.fromSetting(0))

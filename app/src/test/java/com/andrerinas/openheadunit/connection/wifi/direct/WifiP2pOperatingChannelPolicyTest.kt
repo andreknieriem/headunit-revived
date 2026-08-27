@@ -88,6 +88,57 @@ class WifiP2pOperatingChannelPolicyTest {
     }
 
     @Test
+    fun `AUTO drops the 5 GHz rung on a radio that reports no 5 GHz band`() {
+        // Spending that rung costs a whole bring-up rather than a band: the request is a
+        // disallowed-frequency list, so the group is not formed on the other band, it is not formed
+        // at all, and the ladder only advances on that failure.
+        assertEquals(
+            listOf(6),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, supports5Ghz = false)
+        )
+        assertEquals(
+            "the upper-band flag belongs to a rung this radio no longer reaches",
+            listOf(6),
+            WifiP2pOperatingChannelPolicy.attemptChannels(
+                api27, P2pBandPreference.AUTO, useUpperBand = true, supports5Ghz = false
+            )
+        )
+    }
+
+    @Test
+    fun `only a no drops a rung - a yes and an unknown both keep the full ladder`() {
+        assertEquals(
+            listOf(36, 6),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, supports5Ghz = true)
+        )
+        assertEquals(
+            listOf(36, 6),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, supports5Ghz = null)
+        )
+    }
+
+    @Test
+    fun `a user who asked for 5 GHz still gets it asked for on a radio that reports none`() {
+        assertEquals(
+            listOf(36),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ, supports5Ghz = false)
+        )
+    }
+
+    @Test
+    fun `the capability changes nothing from the API level that has a real band request`() {
+        for (preference in P2pBandPreference.values()) {
+            for (supports in listOf(true, false, null)) {
+                assertEquals(
+                    "$preference / $supports",
+                    emptyList<Int>(),
+                    WifiP2pOperatingChannelPolicy.attemptChannels(api29, preference, supports5Ghz = supports)
+                )
+            }
+        }
+    }
+
+    @Test
     fun `5 GHz only never names a 2_4 GHz channel, on either range`() {
         assertEquals(listOf(36), WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ))
         assertEquals(

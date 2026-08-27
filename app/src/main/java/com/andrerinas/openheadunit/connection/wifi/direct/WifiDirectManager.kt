@@ -1151,13 +1151,18 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         // a rig, and a group made after the write must be the one the write asked for.
         val appSettings = App.provide(context).settings
         val preference = P2pBandPreference.fromSetting(appSettings.wifiDirectBand)
-        val band = NativeGroupBandPolicy.bandFor(preference)
+        // Read per attempt like the setting above, and for the same reason: this is cheap, and a
+        // value cached at construction would outlive a WiFi service that came up later.
+        val supports5Ghz = WifiBandCapability.supports5Ghz(context)
+        val band = NativeGroupBandPolicy.bandFor(preference, supports5Ghz)
         val bandLabel = NativeGroupBandPolicy.label(band)
 
         AppLog.i("WifiDirectManager: Attempting createGroup for Native AA (Attempt $retryCount)...")
         // Said on every bring-up, including the default one: a line that only appears in the unusual
-        // case is a line whose absence tells a reader nothing.
-        AppLog.i("WifiDirectManager: Band preference is ${NativeGroupBandPolicy.describePreference(preference)}.")
+        // case is a line whose absence tells a reader nothing. Same for the radio's own answer,
+        // which two open issues spent weeks guessing at.
+        AppLog.i("WifiDirectManager: ${WifiBandCapability.describe(supports5Ghz)}.")
+        AppLog.i("WifiDirectManager: Band preference is ${NativeGroupBandPolicy.describePreference(preference, supports5Ghz)}.")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
@@ -1247,6 +1252,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             sdkInt = Build.VERSION.SDK_INT,
             preference = preference,
             useUpperBand = appSettings.p2pLegacyFiveGhzUpperBand,
+            supports5Ghz = supports5Ghz,
         )
         val ladderLabel = ladder.joinToString { channel ->
             "$channel (${WifiP2pOperatingChannelPolicy.frequencyMhzFor(channel)} MHz)"

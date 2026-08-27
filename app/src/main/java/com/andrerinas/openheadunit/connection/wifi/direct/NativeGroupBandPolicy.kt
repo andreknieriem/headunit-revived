@@ -60,9 +60,24 @@ object NativeGroupBandPolicy {
     /** Below this, a P2P group is on 2.4 GHz. The 5 GHz band starts at 5170 MHz. */
     private const val MAX_24GHZ_FREQUENCY_MHZ = 4000
 
-    /** The band to request for [preference]. Only [P2pBandPreference.FORCE_2_4GHZ] asks for 2.4 GHz. */
-    fun bandFor(preference: P2pBandPreference): Band =
-        if (preference == P2pBandPreference.FORCE_2_4GHZ) Band.GHZ_2_4 else Band.GHZ_5
+    /**
+     * The band to request for [preference].
+     *
+     * [P2pBandPreference.FORCE_2_4GHZ] asks for 2.4 GHz, and so does [P2pBandPreference.AUTO] on a
+     * radio that has told us it has no 5 GHz band. Asking anyway costs a bring-up rather than a
+     * band: the request fails, [shouldRetryFor5Ghz] cannot fire because 5 GHz never arrived, and the
+     * user is left finding the 2.4 GHz toggle by hand, which is what a reporter on such a unit did.
+     *
+     * @param supports5Ghz [com.andrerinas.openheadunit.connection.wifi.direct.WifiBandCapability.supports5Ghz],
+     *   where null means the platform would not say. Only `false` changes anything here - a `true`
+     *   describes the station side and is not a promise that a group owner can be hosted there, so
+     *   AUTO keeps its own fallback rather than trusting it.
+     */
+    fun bandFor(preference: P2pBandPreference, supports5Ghz: Boolean? = null): Band = when {
+        preference == P2pBandPreference.FORCE_2_4GHZ -> Band.GHZ_2_4
+        preference == P2pBandPreference.AUTO && supports5Ghz == false -> Band.GHZ_2_4
+        else -> Band.GHZ_5
+    }
 
     /**
      * Whether an exhausted band request may drop to the no-band `createGroup` and let the platform
@@ -108,9 +123,17 @@ object NativeGroupBandPolicy {
      * Logged on every bring-up, including [P2pBandPreference.AUTO]: a line that only appears in the
      * unusual case is a line whose absence tells a reader nothing.
      */
-    fun describePreference(preference: P2pBandPreference): String = when (preference) {
-        P2pBandPreference.AUTO -> "automatic (5 GHz, then whatever this unit will host)"
-        P2pBandPreference.FORCE_5GHZ -> "5 GHz only, set by the user"
-        P2pBandPreference.FORCE_2_4GHZ -> "2.4 GHz only, set by the user"
-    }
+    fun describePreference(preference: P2pBandPreference, supports5Ghz: Boolean? = null): String =
+        when (preference) {
+            // Says what AUTO is actually about to do rather than what it usually does: on a radio
+            // with no 5 GHz band it no longer starts there, and a line claiming otherwise would
+            // contradict the request logged on the next line.
+            P2pBandPreference.AUTO -> if (supports5Ghz == false) {
+                "automatic (2.4 GHz - this radio has no 5 GHz band)"
+            } else {
+                "automatic (5 GHz, then whatever this unit will host)"
+            }
+            P2pBandPreference.FORCE_5GHZ -> "5 GHz only, set by the user"
+            P2pBandPreference.FORCE_2_4GHZ -> "2.4 GHz only, set by the user"
+        }
 }
