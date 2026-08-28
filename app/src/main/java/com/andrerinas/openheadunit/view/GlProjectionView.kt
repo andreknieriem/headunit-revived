@@ -476,6 +476,11 @@ class GlProjectionView(context: Context) : GLSurfaceView(context), IProjectionVi
                 hasYuvFrame = true
                 pendingYuvFrame = false
                 lastYuvFrameSeq = ++frameSequence
+                // The stall watchdog reads lastFrameDrawnMs, and this path clears pendingYuvFrame,
+                // so drawYuvFrame's stamp never runs for a directly uploaded frame. Left unstamped
+                // it stays 0 for the whole session and the watchdog rebuilds the view on a picture
+                // that is rendering fine.
+                markFrameDrawn()
             }
 
             if (!loggedFirstDirectYuvFrame) {
