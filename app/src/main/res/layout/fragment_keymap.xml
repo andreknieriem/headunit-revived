@@ -39,7 +39,6 @@
         android:text="Press any key to test..."
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="?android:attr/textColorSecondary"
-        android:background="?attr/colorSurface" />
+        android:textColor="?android:attr/textColorSecondary" />
 
 </LinearLayout>

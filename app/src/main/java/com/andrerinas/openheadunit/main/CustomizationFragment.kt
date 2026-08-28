@@ -24,6 +24,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
+import com.andrerinas.openheadunit.app.BaseActivity
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.ColorUtils
 import com.andrerinas.openheadunit.utils.PickImageContract
@@ -648,7 +649,7 @@ class CustomizationFragment : Fragment() {
     }
 
     private fun notifyMainActivityBackgroundChanged() {
-        (activity as? MainActivity)?.applyCustomHomeBackground()
+        (activity as? BaseActivity)?.applyWindowBackground()
     }
 
     override fun onDestroyView() {
