@@ -166,7 +166,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             if (!ProjectionWatchdogPolicy.shouldNudgeForFirstFrame(
                     sessionLive = ProjectionWatchdogPolicy.isSessionLive(commManager.connectionState.value),
                     surfaceSet = isSurfaceSet,
-                    renderedSinceSurfaceSet = rendered,
+                    crediblePictureOnSurface = videoDecoder.hasCrediblePicture,
                     warmRelaunchCycleSpent = warmRelaunchCycleSpent,
                 )
             ) return
@@ -189,15 +189,15 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             if (!ProjectionWatchdogPolicy.isSessionLive(commManager.connectionState.value)) {
                 return
             }
+            // Every tick, not only before the first frame: a codec rebuilt with cached parameter
+            // sets renders gray P-frame output, so lastFrameRenderedMs is set while there is still
+            // no picture, and gating this on it left the 850 ms check as the only attempt.
+            maybeRecoverWarmRelaunch()
             val lastFrame = videoDecoder.lastFrameRenderedMs
             if (lastFrame == 0L) {
                 // First frame hasn't arrived yet — handled by the starting overlay. If the phone is
                 // streaming video but nothing draws, offer to switch renderer (issue #767).
                 maybeOfferRendererConfirm()
-                // A relaunch lands here too, and used to get nothing else: the overlay is already
-                // hidden (the previous instance had rendered), so its keyframe watchdog never
-                // re-arms, and maybeRequestVideoFocus below is never reached.
-                maybeRecoverWarmRelaunch()
                 watchdogHandler.postDelayed(this, ProjectionWatchdogPolicy.WATCHDOG_TICK_MS)
                 return
             }
@@ -237,8 +237,14 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
     // Age and escalation state of the surface the decoder currently renders to. Reset together in
     // onSurfaceChanged, so each relaunch gets exactly one focus cycle.
+    /** When a touch of ours last completed, for [VideoFocusReleasePolicy.coverFollowsTouch]. */
+    private var lastProjectionTouchMs = 0L
+
     private var lastSurfaceSetMs = 0L
     private var warmRelaunchCycleSpent = false
+
+    /** One line per surface, not per tick: the gray-P-frame case is worth naming exactly once. */
+    private var loggedKeyframelessPicture = false
 
     /**
      * A relaunch handed the decoder a fresh surface and no picture has followed it.
@@ -256,9 +262,18 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     private fun maybeRecoverWarmRelaunch() {
         if (lastSurfaceSetMs == 0L) return
         val now = SystemClock.elapsedRealtime()
+        if (!loggedKeyframelessPicture &&
+            videoDecoder.lastFrameRenderedMs != 0L && !videoDecoder.hasCrediblePicture
+        ) {
+            loggedKeyframelessPicture = true
+            AppLog.w(
+                "AapProjectionActivity: frames are rendering but no keyframe has decoded since the " +
+                    "codec started - counting this surface as having no picture"
+            )
+        }
         val action = WarmRelaunchKeyframePolicy.decide(
             sessionHasRendered = videoDecoder.hasRenderedThisSession,
-            renderedSinceSurfaceSet = videoDecoder.lastFrameRenderedMs != 0L,
+            crediblePictureOnSurface = videoDecoder.hasCrediblePicture,
             transportStarted = commManager.connectionState.value is CommManager.ConnectionState.TransportStarted,
             msSinceSurfaceSet = now - lastSurfaceSetMs,
             // The link, not the video channel. An idle Android Auto screen sends no video for
@@ -1654,6 +1669,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         settleFocusCycle()
         lastSurfaceSetMs = SystemClock.elapsedRealtime()
         warmRelaunchCycleSpent = false
+        loggedKeyframelessPicture = false
         watchdogHandler.removeCallbacks(warmRelaunchCheckRunnable)
         watchdogHandler.postDelayed(
             warmRelaunchCheckRunnable,
@@ -1754,7 +1770,22 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         }
         AppLog.i("SurfaceCallback: onSurfaceDestroyed. Surface: $surface")
         isSurfaceSet = false
-        commManager.send(VideoFocusEvent(gain = false, unsolicited = false))
+        val nowMs = SystemClock.elapsedRealtime()
+        if (VideoFocusReleasePolicy.shouldReleaseOnSurfaceLost(
+                coverFollowsTouch = VideoFocusReleasePolicy.coverFollowsTouch(lastProjectionTouchMs, nowMs),
+                sessionConnected = commManager.isConnected,
+                activityEnding = isFinishing || isChangingConfigurations,
+                pipActive = App.isPiPActive,
+                focusCycleInFlight = focusCycleGainPending,
+            )
+        ) {
+            commManager.send(VideoFocusEvent(gain = false, unsolicited = false))
+        } else {
+            AppLog.i(
+                "AapProjectionActivity: the surface went away ${nowMs - lastProjectionTouchMs}ms after " +
+                    "a touch - holding video focus so Android Auto keeps its keyboard up"
+            )
+        }
         videoDecoder.stopIfCurrentSurface(surface, DecoderStopPolicy.REASON_SURFACE_DESTROYED)
     }
 
@@ -1874,6 +1905,11 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         }
 
         commManager.send(TouchEvent(ts, action, event.actionIndex, pointerData))
+        // ACTION_UP only: a swipe-up-home or edge-back gesture ends in ACTION_CANCEL, and neither
+        // must look like the text-field tap that opens Android Auto's phone keyboard.
+        if (event.actionMasked == MotionEvent.ACTION_UP) {
+            lastProjectionTouchMs = ts
+        }
     }
 
 

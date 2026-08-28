@@ -133,10 +133,10 @@ class ProjectionWatchdogPolicyTest {
     private fun nudge(
         sessionLive: Boolean = true,
         surfaceSet: Boolean = true,
-        renderedSinceSurfaceSet: Boolean = false,
+        crediblePictureOnSurface: Boolean = false,
         warmRelaunchCycleSpent: Boolean = false,
     ) = ProjectionWatchdogPolicy.shouldNudgeForFirstFrame(
-        sessionLive, surfaceSet, renderedSinceSurfaceSet, warmRelaunchCycleSpent
+        sessionLive, surfaceSet, crediblePictureOnSurface, warmRelaunchCycleSpent
     )
 
     @Test
@@ -146,7 +146,9 @@ class ProjectionWatchdogPolicyTest {
 
     @Test
     fun `a picture on the current surface ends the loop`() {
-        assertFalse(nudge(renderedSinceSurfaceSet = true))
+        assertFalse(nudge(crediblePictureOnSurface = true))
+        // Gray P-frame output after a backend switch is not a picture, so the nudge stays armed.
+        assertTrue(nudge(sessionLive = true, surfaceSet = true, crediblePictureOnSurface = false))
     }
 
     @Test
@@ -181,7 +183,7 @@ class ProjectionWatchdogPolicyTest {
         // compile, which is the point.
         assertTrue(
             "the rule must depend only on session, surface, picture and the escalation's claim",
-            nudge(sessionLive = true, surfaceSet = true, renderedSinceSurfaceSet = false)
+            nudge(sessionLive = true, surfaceSet = true, crediblePictureOnSurface = false)
         )
     }
 

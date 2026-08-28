@@ -18,7 +18,7 @@ class WarmRelaunchKeyframePolicyTest {
     /** A relaunch that has gone 5s without a picture while the phone is on the link: the whole point. */
     private fun warmRelaunch(
         sessionHasRendered: Boolean = true,
-        renderedSinceSurfaceSet: Boolean = false,
+        crediblePictureOnSurface: Boolean = false,
         transportStarted: Boolean = true,
         msSinceSurfaceSet: Long = 5_000,
         msSinceLinkActivity: Long = 100,
@@ -27,7 +27,7 @@ class WarmRelaunchKeyframePolicyTest {
         msSinceLastRequest: Long = 60_000
     ) = WarmRelaunchKeyframePolicy.decide(
         sessionHasRendered = sessionHasRendered,
-        renderedSinceSurfaceSet = renderedSinceSurfaceSet,
+        crediblePictureOnSurface = crediblePictureOnSurface,
         transportStarted = transportStarted,
         msSinceSurfaceSet = msSinceSurfaceSet,
         msSinceLinkActivity = msSinceLinkActivity,
@@ -67,10 +67,24 @@ class WarmRelaunchKeyframePolicyTest {
     @Test
     fun `a picture on screen is never disturbed`() {
         // The regression this exists to avoid: asking again is what costs a working stream.
-        assertEquals(Action.NONE, warmRelaunch(renderedSinceSurfaceSet = true))
+        assertEquals(Action.NONE, warmRelaunch(crediblePictureOnSurface = true))
         assertEquals(
             Action.NONE,
-            warmRelaunch(renderedSinceSurfaceSet = true, cycleAlreadySpent = true)
+            warmRelaunch(crediblePictureOnSurface = true, cycleAlreadySpent = true)
+        )
+    }
+
+    @Test
+    fun `gray output with no keyframe behind it still gets the cycle`() {
+        // The parameter is about a picture, not about a rendered frame. A live view-mode switch
+        // rebuilds the codec from cached parameter sets and it renders P-frames into gray; reading
+        // that as a picture is what left the screen gray for a whole GOP.
+        assertEquals(
+            Action.CYCLE_FOCUS,
+            warmRelaunch(
+                crediblePictureOnSurface = false,
+                msSinceSurfaceSet = WarmRelaunchKeyframePolicy.ESCALATE_AFTER_SURFACE_MS
+            )
         )
     }
 
