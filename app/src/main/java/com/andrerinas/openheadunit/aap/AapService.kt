@@ -756,7 +756,7 @@ class AapService : Service() {
     override fun onCreate() {
         super.onCreate()
         AppLog.i("AapService creating...")
-        instance = this
+        instanceRef = java.lang.ref.WeakReference(this)
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -1869,7 +1869,8 @@ class AapService : Service() {
         try { serviceScope.cancel() } catch (_: Exception) {}
         try { LogExporter.stopCapture() } catch (_: Exception) {}
         super.onDestroy()
-        instance = null
+        instanceRef?.clear()
+        instanceRef = null
         if (killProcessOnDestroy) {
             AppLog.i("AapService: killProcessOnDestroy requested. Finishing app tasks safely.")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -2335,9 +2336,10 @@ class AapService : Service() {
     // -------------------------------------------------------------------------
 
     companion object {
-        @Volatile
-        var instance: AapService? = null
-            private set
+        private var instanceRef: java.lang.ref.WeakReference<AapService>? = null
+
+        val instance: AapService?
+            get() = instanceRef?.get()
 
         /**
          * If set to `true`, the service will call [System.exit] at the very end of [onDestroy].

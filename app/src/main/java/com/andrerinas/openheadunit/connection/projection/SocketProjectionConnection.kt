@@ -197,18 +197,24 @@ class SocketProjectionConnection(
             return@withContext true
         } catch (e: IOException) {
             AppLog.e(e)
+            disconnect()
             return@withContext false
         }
     }
 
     override fun disconnect() {
-        if (transport.isConnected) {
-            try {
+        try {
+            output?.close()
+        } catch (_: Exception) {}
+        try {
+            input?.close()
+        } catch (_: Exception) {}
+        try {
+            if (!transport.isClosed) {
                 transport.close()
-            } catch (e: IOException) {
-                AppLog.e(e)
             }
-
+        } catch (e: IOException) {
+            AppLog.e(e)
         }
         input = null
         output = null

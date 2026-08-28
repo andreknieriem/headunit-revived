@@ -523,6 +523,14 @@ class AudioTrackWrapper(
             }
         }
 
+        // Release Equalizer
+        try {
+            equalizer?.release()
+            equalizer = null
+        } catch (e: Exception) {
+            AppLog.e("Error releasing equalizer", e)
+        }
+
         // 4. Release the AudioTrack
         try {
             audioTrack?.release()
