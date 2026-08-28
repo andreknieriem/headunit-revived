@@ -94,6 +94,10 @@ class ProjectionView @JvmOverloads constructor(
     // A plain SurfaceView is composited directly by SurfaceFlinger, so there is no
     // per-frame draw callback we can observe. Report "unsupported" so the projection
     // watchdog skips display-stall recovery for this backend (issue #650).
+    //
+    // This is also why this backend logs no displayed-frame rate while the other two do: there is
+    // nothing to count. The decoder's `presented=` throughput field is the substitute - it counts
+    // the buffers the surface actually keeps rather than the ones handed to it.
     override fun lastFrameDrawnMs(): Long = -1L
 
     override fun longFrameEvents(): Long = 0L

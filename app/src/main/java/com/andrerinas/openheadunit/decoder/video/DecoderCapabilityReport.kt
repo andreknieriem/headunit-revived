@@ -27,6 +27,11 @@ object DecoderCapabilityReport {
      *
      * [sustains] is deliberately nullable and distinct from [rateSupported]: below API 29 there are
      * no performance points, and "we could not ask" is not "the answer was no".
+     *
+     * [lowLatency] is nullable for the same reason and it was not, which cost a reading. The feature
+     * only exists from API 30, so on everything older the answer was a structural `false` that
+     * printed beside real verdicts and read as "this decoder cannot do low latency" - on a unit
+     * where the vendor spelling of the same feature was in fact being accepted on every configure.
      */
     data class Capability(
         val codecName: String,
@@ -37,7 +42,7 @@ object DecoderCapabilityReport {
         val sizeSupported: Boolean,
         val rateSupported: Boolean,
         val sustains: Boolean?,
-        val lowLatency: Boolean,
+        val lowLatency: Boolean?,
         val adaptivePlayback: Boolean,
         val supportedWidths: String,
         val supportedHeights: String,
@@ -57,7 +62,7 @@ object DecoderCapabilityReport {
                 "sizeSupported=$sizeSupported rateSupported=$rateSupported " +
                 "sustains=${sustains ?: "unknown"} " +
                 "widths=$supportedWidths heights=$supportedHeights " +
-                "featureLowLatency=$lowLatency featureAdaptivePlayback=$adaptivePlayback"
+                "featureLowLatency=${lowLatency ?: "unknown"} featureAdaptivePlayback=$adaptivePlayback"
     }
 
     /** Raw capabilities of [codecName] for [mimeType], or null when they cannot be read. */
@@ -72,9 +77,17 @@ object DecoderCapabilityReport {
         }
     }
 
-    /** Whether the component itself claims Android 11's low-latency feature. */
-    fun advertisesLowLatency(codecName: String, mimeType: String): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
+    /**
+     * Whether the component itself claims Android 11's low-latency feature, or null below the API
+     * that has one.
+     *
+     * Null rather than false: the feature is unaskable before API 30, and a head unit that old is
+     * the common case here. It says nothing about whether the vendor spelling of the same feature
+     * works - see [DecoderConfigLadder.vendorLowLatencyKeys], which is what a component of that age
+     * is offered instead.
+     */
+    fun advertisesLowLatency(codecName: String, mimeType: String): Boolean? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
         return try {
             capabilitiesOf(codecName, mimeType)
                 ?.isFeatureSupported(MediaCodecInfo.CodecCapabilities.FEATURE_LowLatency) == true

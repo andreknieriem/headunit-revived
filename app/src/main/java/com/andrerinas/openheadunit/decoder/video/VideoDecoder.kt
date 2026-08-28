@@ -25,14 +25,18 @@ interface VideoDimensionsListener {
  * Main video decoding engine.
  * Handles H.264/H.265 streams via MediaCodec.
  *
- * [memoryReading] is resolved once at construction and reported with the codec configuration, so
- * that every bug report carries what the device actually has. Nothing is sized from it yet.
+ * [readMemory] is called at every session start rather than once, and its answer is reported with
+ * the codec configuration so that every bug report carries what the device actually has. It is a
+ * function and not a value because this object is built once per process: a reading taken in the
+ * constructor could never see the debug override change.
  */
 class VideoDecoder(
     private val settings: Settings,
-    private val memoryReading: DeviceMemoryReading = DeviceMemoryReading(
-        DeviceMemoryProfile.NORMAL, totalRamMb = 0, heapLimitMb = 0, memoryClassMb = 0, systemLowRamFlag = false
-    ),
+    private val readMemory: () -> DeviceMemoryReading = {
+        DeviceMemoryReading(
+            DeviceMemoryProfile.NORMAL, totalRamMb = 0, heapLimitMb = 0, memoryClassMb = 0, systemLowRamFlag = false
+        )
+    },
 ) {
     companion object {
         private const val TIMEOUT_US = 10000L
@@ -266,6 +270,14 @@ class VideoDecoder(
     @Volatile private var framesFed = 0L
     @Volatile private var framesDropped = 0L
     @Volatile private var framesRendered = 0L
+    // Frames that reached the panel, counted once per output pass rather than once per buffer.
+    //
+    // framesRendered counts every buffer released with render=true, and at a queue depth of two
+    // this path releases both back to back in one pass while the surface latches one. So the two
+    // agree while the queue runs one deep, and `rendered` runs ahead when it does not - about 1.6x,
+    // measured against a TextureView's own displayed-frame line over 619 samples. What was wrong is
+    // that `rendered` has been read as the user-visible rate on two open issues. This is that rate.
+    @Volatile private var framesPresented = 0L
     // Decoded frames discarded unshown to reach a newer one. Distinct from framesDropped, which
     // counts frames that never reached the decoder at all: these cost no picture quality, only
     // the motion they would have shown, and a non-zero count is the link arriving in bursts.
@@ -288,6 +300,7 @@ class VideoDecoder(
     private var lastLoggedFramesFed = 0L
     private var lastLoggedFramesDropped = 0L
     private var lastLoggedFramesRendered = 0L
+    private var lastLoggedFramesPresented = 0L
     private var lastLoggedFramesSkippedAtRender = 0L
     private var lastLoggedInputWaitMs = 0L
     private var lastLoggedEnqueueWaitMs = 0L
@@ -303,16 +316,20 @@ class VideoDecoder(
     // state - so the phone's ack window throttles it instead of frames being shed. Frames are
     // copied on the way in because the transport reuses the buffer it hands us.
     private class PendingFrame(var data: ByteArray, var size: Int, var arrivalNanos: Long)
-    // Derived once per decoder rather than per session: the queue is allocated here, and fpsLimit
-    // only changes when the user changes it, which restarts the service that owns this object.
-    private val frameQueueCapacity = VideoFeedQueuePolicy.capacityFor(settings.fpsLimit)
-    private val frameQueue = ArrayBlockingQueue<PendingFrame>(frameQueueCapacity)
-    private val framePool = ArrayBlockingQueue<PendingFrame>(frameQueueCapacity + 2)
+    // Re-derived per session by refreshPipelineSizing(), not fixed here. This object is built once
+    // in AppComponent and lives for the whole process, so a depth chosen in the constructor
+    // outlasted every settings change: a unit switched to 30fps kept the 60fps queue, and a log
+    // could report "queue holds 15 frames, 500ms at 60fps" - two numbers that cannot both be right.
+    @Volatile private var memoryReading: DeviceMemoryReading = readMemory()
+    @Volatile private var frameQueueCapacity = VideoFeedQueuePolicy.capacityFor(settings.fpsLimit)
+    @Volatile private var frameQueue = ArrayBlockingQueue<PendingFrame>(frameQueueCapacity)
+    @Volatile private var framePool = ArrayBlockingQueue<PendingFrame>(frameQueueCapacity + 2)
 
-    private val constrained = memoryReading.profile == DeviceMemoryProfile.CONSTRAINED
-    private val minPooledFrameBytes =
+    @Volatile private var constrained = memoryReading.profile == DeviceMemoryProfile.CONSTRAINED
+    @Volatile private var minPooledFrameBytes =
         if (constrained) MIN_POOLED_FRAME_BYTES_CONSTRAINED else MIN_POOLED_FRAME_BYTES
-    private val pooledByteBudget = if (constrained) CONSTRAINED_POOL_BUDGET_BYTES else Int.MAX_VALUE
+    @Volatile private var pooledByteBudget =
+        if (constrained) CONSTRAINED_POOL_BUDGET_BYTES else Int.MAX_VALUE
 
     /**
      * Bytes currently held by [framePool]. Atomic because frames are returned from both the feed
@@ -537,6 +554,17 @@ class VideoDecoder(
     /** Diagnostic only - see [ParameterSetTracker]. Feed-thread confined, like the scan that feeds it. */
     private val parameterSetTracker = ParameterSetTracker()
 
+    /**
+     * Reported on the same window as the throughput line, so the two figures are read together: the
+     * point is comparing one drive against another, and a latency without the frame rate beside it
+     * does not support that.
+     *
+     * Sampled and reported from the output thread. [stop] resets it from whichever thread is
+     * stopping, which can only garble the window being torn down - every field it touches stays in
+     * range whatever the interleaving, so a diagnostic is not worth a lock on the render path.
+     */
+    private val decodeLatency = DecodeLatencyMonitor()
+
     /** Config-scanner answers already reported this session, so each is said once. */
     private val loggedContentKinds = HashSet<CodecConfigScanner.Content>()
 
@@ -753,8 +781,10 @@ class VideoDecoder(
             }
             lastFrameRenderedMs = 0L
             // Presentation timestamps restart near zero on the next configure, so a stamp left
-            // pending here would be confirmed by the new codec's very first frame.
+            // pending here would be confirmed by the new codec's very first frame. The same restart
+            // is why the latency samples go: they were measured against the old session clock.
             keyframeRepair.reset()
+            decodeLatency.reset()
             resetConcealment()
             lastKeyframeStarvedAskMs = 0L
             loggedFirstSoftwareFrame = false
@@ -771,6 +801,7 @@ class VideoDecoder(
             framesFed = 0L
             framesDropped = 0L
             framesRendered = 0L
+            framesPresented = 0L
             framesSkippedAtRender = 0L
             inputWaitMs = 0L
             enqueueWaitMs = 0L
@@ -779,6 +810,7 @@ class VideoDecoder(
             lastLoggedFramesFed = 0L
             lastLoggedFramesDropped = 0L
             lastLoggedFramesRendered = 0L
+            lastLoggedFramesPresented = 0L
             lastLoggedFramesSkippedAtRender = 0L
             lastLoggedInputWaitMs = 0L
             lastLoggedEnqueueWaitMs = 0L
@@ -994,14 +1026,17 @@ class VideoDecoder(
      * [notifyFrameDropped]'s keyframe ask covering the picture that frame cost.
      */
     private fun offerWithBackpressure(frame: PendingFrame) {
-        if (frameQueue.offer(frame)) return
+        // Read once: this runs outside the monitor, and a session start on the same thread can
+        // have replaced the queue between two reads of the field.
+        val queue = frameQueue
+        if (queue.offer(frame)) return
 
         val waitStart = SystemClock.elapsedRealtime()
         var accepted = false
         var elapsed = 0L
         while (!accepted && VideoFeedThrottlePolicy.shouldKeepWaiting(elapsed, running)) {
             accepted = try {
-                frameQueue.offer(frame, VideoFeedThrottlePolicy.OFFER_SLICE_MS, TimeUnit.MILLISECONDS)
+                queue.offer(frame, VideoFeedThrottlePolicy.OFFER_SLICE_MS, TimeUnit.MILLISECONDS)
             } catch (e: InterruptedException) {
                 Thread.currentThread().interrupt()
                 break
@@ -1196,6 +1231,32 @@ class VideoDecoder(
         AppLog.w("Input buffer full. Dropping frame.%s%s", detail, alsoSuppressed)
     }
 
+    /**
+     * Re-reads what sizes the pipeline: the user's fps cap and the device's memory.
+     *
+     * Called from both session-start paths, which run under this object's monitor with the feed
+     * thread joined and the queue empty, so swapping the queue here cannot race a producer. A
+     * changed depth throws the pooled buffers away with the old queue, which is why pooledBytes is
+     * reset with it.
+     */
+    private fun refreshPipelineSizing() {
+        memoryReading = readMemory()
+        constrained = memoryReading.profile == DeviceMemoryProfile.CONSTRAINED
+        minPooledFrameBytes = if (constrained) MIN_POOLED_FRAME_BYTES_CONSTRAINED else MIN_POOLED_FRAME_BYTES
+        pooledByteBudget = if (constrained) CONSTRAINED_POOL_BUDGET_BYTES else Int.MAX_VALUE
+
+        val capacity = VideoFeedQueuePolicy.capacityFor(settings.fpsLimit)
+        if (capacity == frameQueueCapacity) return
+        AppLog.i(
+            "VideoDecoder: feed queue resized $frameQueueCapacity -> $capacity frames " +
+                "(${VideoFeedQueuePolicy.heldMsAt(settings.fpsLimit)}ms at ${settings.fpsLimit}fps)"
+        )
+        frameQueueCapacity = capacity
+        frameQueue = ArrayBlockingQueue<PendingFrame>(capacity)
+        framePool = ArrayBlockingQueue<PendingFrame>(capacity + 2)
+        pooledBytes.set(0)
+    }
+
     /** Empties the feed queue back into the pool. Anything still waiting is stale after a stop. */
     private fun clearFrameQueue() {
         while (true) {
@@ -1226,6 +1287,7 @@ class VideoDecoder(
     private fun startBundledHevc(width: Int, height: Int) {
         try {
             val surface = mSurface ?: return
+            refreshPipelineSizing()
             AppLog.i("Configuring bundled FFmpeg HEVC decoder for ${width}x$height")
             val yuvFrameSink = if (settings.viewMode == Settings.ViewMode.GLES) {
                 softwareYuvFrameSink
@@ -1267,8 +1329,11 @@ class VideoDecoder(
         onFirstFrameListener?.let { it(); onFirstFrameListener = null }
 
         frameCount += renderedFrames
-        // The bundled decoder has no output thread, so drive the throughput tick from here.
+        // The bundled decoder has no output thread, so drive the throughput tick from here. It
+        // hands the sink one frame at a time, so nothing is batched and presented equals rendered
+        // on this path.
         framesRendered += renderedFrames
+        framesPresented += renderedFrames
         logThroughput()
         val now = System.currentTimeMillis()
         val elapsed = now - lastFpsLogTime
@@ -1466,17 +1531,12 @@ class VideoDecoder(
     private fun buildFormat(mimeType: String, width: Int, height: Int, bestCodec: String): MediaFormat {
         val format = MediaFormat.createVideoFormat(mimeType, width, height)
 
-        // Deliberately no KEY_PRIORITY / KEY_OPERATING_RATE / KEY_FRAME_RATE / KEY_MAX_B_FRAMES
-        // here. They were added as latency hints and measured to do nothing: the OMX components
-        // on the head units they were meant to help answer with
-        // "codec does not support config priority (err -1010)" and the same for the operating
-        // rate. The frame-rate keys are worse than inert, because the only frame rate this
-        // class knows is settings.fpsLimit - the user's cap, not the rate the phone negotiated
-        // - and KEY_MAX_B_FRAMES is an encoder key. Any replacement needs a log from a device
-        // where the codec actually accepts it.
+        // Deliberately no KEY_FRAME_RATE / KEY_MAX_B_FRAMES here. The frame-rate keys are inert at
+        // best, because the only frame rate this class knows is settings.fpsLimit - the user's cap,
+        // not the rate the phone negotiated - and KEY_MAX_B_FRAMES is an encoder key.
         //
-        // The ladder is how such a replacement gets tried safely: an optional key that the
-        // component rejects now costs one retry instead of the session.
+        // KEY_PRIORITY and KEY_OPERATING_RATE were removed from here for the same reason and it did
+        // not hold; they are on the ladder's optional rungs now. See DecoderConfigLadder.
 
         // Apply Codec Specific Data (CSD) from parsed SPS/PPS/VPS
         if (mimeType == CodecType.H265.mimeType) {
@@ -1586,6 +1646,7 @@ class VideoDecoder(
      */
     private fun start(mimeType: String, forceSoftware: Boolean, width: Int, height: Int) {
         try {
+            refreshPipelineSizing()
             startTime = System.nanoTime()
             val bestCodec = findBestCodec(mimeType, !forceSoftware)
                 ?: throw IllegalStateException("No decoder available for $mimeType")
@@ -1600,9 +1661,14 @@ class VideoDecoder(
                 sdkInt = Build.VERSION.SDK_INT,
                 // From the same report the capability line printed, so the ladder and that line can
                 // no longer disagree about what the component advertises.
-                advertisesLowLatencyFeature = decoderCapability?.lowLatency
-                    ?: DecoderCapabilityReport.advertisesLowLatency(bestCodec, mimeType),
+                // Unknown counts as not advertised, which routes to the vendor rung - the right
+                // answer for every device too old to have the official feature at all.
+                advertisesLowLatencyFeature = (decoderCapability?.lowLatency
+                    ?: DecoderCapabilityReport.advertisesLowLatency(bestCodec, mimeType)) == true,
                 lowLatencyRequested = settings.debugVideoLowLatency,
+                // The same rate the capability line was asked about, so a component that said it
+                // could sustain a rate is then asked to clock itself for it.
+                operatingRate = settings.fpsLimit,
             )
 
             var started = false
@@ -1639,6 +1705,22 @@ class VideoDecoder(
                     break
                 } catch (e: Exception) {
                     lastFailure = e
+                    // A surface torn down mid-configure is not a verdict on the keys. It was logged
+                    // as one, and on a shutdown race that WARN was the only "rejected" line in a
+                    // reporter's whole capture - so the one piece of evidence about a vendor key
+                    // that a reader would find said the opposite of what the other configures said.
+                    // Releasing here because the loop only releases at the top of the next rung, and
+                    // a unit with one hardware decoder instance fails every later create if this
+                    // one leaks.
+                    if (mSurface?.isValid != true) {
+                        try { codec?.release() } catch (ignore: Exception) {}
+                        codec = null
+                        AppLog.w(
+                            "Decoder configure abandoned: the surface went away mid-configure. " +
+                                "This is not a rejection of optionalKeys=${tier.label}."
+                        )
+                        break
+                    }
                     AppLog.w("Decoder rejected optionalKeys=${tier.label}: ${e.message}")
                 }
             }
@@ -1957,6 +2039,12 @@ class VideoDecoder(
      * shapes of a low `rendered`: with `skipped` high the frames arrived in a burst and the older
      * ones were deliberately passed over, with it near zero they never arrived at all.
      *
+     * `presented` is the one of these numbers that is the rate the user sees. `rendered` also counts
+     * the earlier buffers a pass releases, so the two are equal while the pipeline runs one deep and
+     * diverge toward its depth when it does not - about 1.6x measured on a loaded unit. Read
+     * `rendered` against `fed` to judge the codec, and `presented` against nothing else at all when
+     * the complaint is that the picture is not smooth.
+     *
      * Called from the output thread on every loop iteration. That loop turns over at least every
      * 10ms (dequeueOutputBuffer's timeout) whether or not a frame came out, so the tick still
      * fires while nothing is rendering - which is the case most worth reporting.
@@ -1971,6 +2059,7 @@ class VideoDecoder(
         if (elapsed < THROUGHPUT_LOG_INTERVAL_MS) return
 
         val rendered = framesRendered - lastLoggedFramesRendered
+        val presented = framesPresented - lastLoggedFramesPresented
         val fed = framesFed - lastLoggedFramesFed
         val dropped = framesDropped - lastLoggedFramesDropped
         val skipped = framesSkippedAtRender - lastLoggedFramesSkippedAtRender
@@ -1980,6 +2069,7 @@ class VideoDecoder(
         lastLoggedFramesConcealed = framesConcealed
         lastThroughputLogMs = now
         lastLoggedFramesRendered = framesRendered
+        lastLoggedFramesPresented = framesPresented
         lastLoggedFramesFed = framesFed
         lastLoggedFramesDropped = framesDropped
         lastLoggedFramesSkippedAtRender = framesSkippedAtRender
@@ -1988,13 +2078,16 @@ class VideoDecoder(
 
         val renderedFps = rendered * 1000 / elapsed
         val fedFps = fed * 1000 / elapsed
-        // enqueueWait is appended after the pre-existing fields, never between them: this line is
+        val presentedFps = presented * 1000 / elapsed
+        val latency = decodeLatency.report()
+        // New fields are appended after the pre-existing ones, never between them: this line is
         // read by diagnostics and compared across releases, so existing fields keep name and order.
         AppLog.i(
             "Throughput over ${elapsed}ms: rendered=$rendered (${renderedFps}fps), " +
                 "fed=$fed (${fedFps}fps), dropped=$dropped, skipped=$skipped, " +
                 "concealed=$concealed, inputWait=${inputWait}ms, enqueueWait=${enqueueWait}ms, " +
-                "codec=$currentCodecName"
+                "codec=$currentCodecName, presented=$presented (${presentedFps}fps)" +
+                (if (latency == null) "" else ", $latency")
         )
         reportBackpressure(elapsed, inputWait, dropped)
     }
@@ -2030,6 +2123,26 @@ class VideoDecoder(
     }
 
     /**
+     * Asks the exception what it is, where the platform can answer.
+     *
+     * `CodecException` arrived in Lollipop, so the type reference itself is guarded rather than only
+     * the calls on it: below that the class is not present to cast against. Everything unclassified
+     * takes the path that was already shipping.
+     */
+    private fun classifyOutputException(e: Exception): DecoderExceptionPolicy.Response {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return DecoderExceptionPolicy.Response.COUNT_STRIKE
+        }
+        val codecException = e as? MediaCodec.CodecException
+            ?: return DecoderExceptionPolicy.Response.COUNT_STRIKE
+        return DecoderExceptionPolicy.responseTo(
+            isCodecException = true,
+            isTransient = codecException.isTransient,
+            isRecoverable = codecException.isRecoverable,
+        )
+    }
+
+    /**
      * Dedicated thread to pull decoded frames and render them to the surface.
      */
     private fun outputThreadLoop() {
@@ -2055,6 +2168,12 @@ class VideoDecoder(
                     // read as a codec that stopped decoding. lastFrameRenderedMs stays the display
                     // watchdogs' instrument and is stamped only when a frame reaches the surface.
                     lastOutputMs = SystemClock.elapsedRealtime()
+                    // The frame's input stamp is its arrival time on the same session clock, so the
+                    // difference is what the component held it for. Sampled on the first dequeue of
+                    // the pass because the catch-up drain below reuses bufferInfo.
+                    decodeLatency.onFrameDecoded(
+                        (System.nanoTime() - startTime) / 1000 - bufferInfo.presentationTimeUs
+                    )
                     // Catch up to the newest ready frame instead of replaying the backlog. A link
                     // that goes quiet for a few hundred milliseconds delivers what it owed in one
                     // burst; showing every frame of it walks the picture forward in slow motion and
@@ -2171,6 +2290,8 @@ class VideoDecoder(
 
                         frameCount++
                         framesRendered++
+                        // Once per pass, on the last buffer only - the one the surface keeps.
+                        framesPresented++
 
                         val now = System.currentTimeMillis()
                         val elapsed = now - lastFpsLogTime
@@ -2287,12 +2408,29 @@ class VideoDecoder(
                 }
             } catch (e: Exception) {
                 if (running) {
-                    consecutiveErrors++
-                    AppLog.w("Codec exception in output thread (attempt $consecutiveErrors): ${e.message}")
-                    if (consecutiveErrors >= 3) {
-                        AppLog.e("Too many consecutive exceptions in output thread. Forcing restart.")
-                        scheduleRestart("sync_consecutive_errors")
-                        break
+                    // MediaCodec has classified its own failures since API 21 and this read them all
+                    // as the same thing: a component saying it was busy spent a strike, and one
+                    // saying it was gone waited out two more strikes and 100ms before the restart it
+                    // was always going to need.
+                    val response = classifyOutputException(e)
+                    AppLog.w(
+                        "Codec exception in output thread - ${DecoderExceptionPolicy.describe(response)}: " +
+                            "${e.message}"
+                    )
+                    when (response) {
+                        DecoderExceptionPolicy.Response.CONTINUE -> {}
+                        DecoderExceptionPolicy.Response.RESTART_NOW -> {
+                            scheduleRestart("codec_unrecoverable")
+                            break
+                        }
+                        DecoderExceptionPolicy.Response.COUNT_STRIKE -> {
+                            consecutiveErrors++
+                            if (consecutiveErrors >= 3) {
+                                AppLog.e("Too many consecutive exceptions in output thread. Forcing restart.")
+                                scheduleRestart("sync_consecutive_errors")
+                                break
+                            }
+                        }
                     }
                     try { Thread.sleep(50) } catch (ignore: Exception) {}
                 }

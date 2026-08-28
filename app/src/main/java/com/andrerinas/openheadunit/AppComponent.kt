@@ -14,7 +14,11 @@ import com.andrerinas.openheadunit.utils.Settings
 class AppComponent(private val app: App) {
 
     val settings = Settings(app)
-    val videoDecoder = VideoDecoder(settings, DeviceMemoryProfile.readWithOverride(app, settings.debugForceMemoryProfile))
+    // A function, not a reading: this decoder is a process singleton, so anything resolved here
+    // once would outlive every settings change the user makes.
+    val videoDecoder = VideoDecoder(settings) {
+        DeviceMemoryProfile.readWithOverride(app, settings.debugForceMemoryProfile)
+    }
     val audioDecoder = AudioDecoder()
 
     val notificationManager: NotificationManager

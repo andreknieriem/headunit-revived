@@ -1702,6 +1702,21 @@ class SettingsFragment : Fragment() {
             }
         ))
 
+        // Applied immediately rather than on confirm, unlike the rows above it: the configure
+        // ladder falls back on its own if the decoder rejects the key, so there is nothing to
+        // weigh up before trying it.
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "debugVideoLowLatency",
+            nameResId = R.string.debug_video_low_latency,
+            descriptionResId = R.string.debug_video_low_latency_description,
+            isChecked = settings.debugVideoLowLatency,
+            searchKeywords = "low latency vendor key decoder mediatek amlogic qualcomm exynos",
+            onCheckedChanged = { isChecked ->
+                settings.debugVideoLowLatency = isChecked
+                updateSettingsList()
+            }
+        ))
+
         // --- Input Settings ---
         items.add(SettingItem.CategoryHeader("input", R.string.category_input))
 
@@ -2044,20 +2059,6 @@ class SettingsFragment : Fragment() {
             onCheckedChanged = { isChecked ->
                 pendingShowFpsCounter = isChecked
                 checkChanges()
-                updateSettingsList()
-            }
-        ))
-
-        // Applied immediately, like the two below it: the configure ladder falls back on its own if
-        // the decoder rejects the key, so there is nothing to confirm before trying it.
-        items.add(SettingItem.ToggleSettingEntry(
-            stableId = "debugVideoLowLatency",
-            nameResId = R.string.debug_video_low_latency,
-            descriptionResId = R.string.debug_video_low_latency_description,
-            isChecked = settings.debugVideoLowLatency,
-            searchKeywords = "low latency vendor key decoder mediatek amlogic qualcomm exynos",
-            onCheckedChanged = { isChecked ->
-                settings.debugVideoLowLatency = isChecked
                 updateSettingsList()
             }
         ))

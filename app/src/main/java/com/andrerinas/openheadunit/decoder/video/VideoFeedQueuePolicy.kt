@@ -26,8 +26,10 @@ package com.andrerinas.openheadunit.decoder.video
  * nothing rather than by having the phone send less.
  *
  * The exception is a decoder persistently slower than the stream, where nothing ever drains and the
- * depth is real latency. That is the forced software-decoding path, which is already a deliberate
- * choice by someone whose hardware decoder does not work.
+ * depth is real latency. Forced software decoding is one way to get there and a deliberate one, but
+ * it is not the only way: a hardware decoder asked for more pixels than it can manage does the same
+ * thing, measured on a unit negotiating 1920x1080 for a 1920x720 panel. The catch-up discard cannot
+ * help either case, because it sits on the codec's output side and the backlog is on its input side.
  */
 object VideoFeedQueuePolicy {
 

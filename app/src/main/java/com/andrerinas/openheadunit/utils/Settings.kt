@@ -451,11 +451,11 @@ class Settings(private val context: Context) {
     /**
      * Asks the decoder for low-latency mode, through whichever key its vendor understands.
      *
-     * Off by default, and it stays off until a log from a real device shows a component accepting the
-     * key - which is this project's standing rule about vendor MediaFormat keys, written after
-     * KEY_PRIORITY and KEY_OPERATING_RATE were both measured being rejected outright. The configure
-     * ladder is what makes turning it on cheap to try: a rejected key now costs one retry instead of
-     * the session. See [com.andrerinas.openheadunit.decoder.video.DecoderConfigLadder].
+     * Off by default, and it stays off until a log from a real device shows the key changing the
+     * decode latency on the throughput line - not merely being accepted, which a component can do
+     * while ignoring it. The configure ladder is what makes turning it on cheap to try: a rejected
+     * key costs one retry instead of the session. See
+     * [com.andrerinas.openheadunit.decoder.video.DecoderConfigLadder].
      */
     var debugVideoLowLatency: Boolean
         get() = prefs.getBoolean("debug-video-low-latency", false)

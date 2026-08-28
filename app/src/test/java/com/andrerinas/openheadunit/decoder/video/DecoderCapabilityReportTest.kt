@@ -15,6 +15,7 @@ class DecoderCapabilityReportTest {
         sizeSupported: Boolean = true,
         rateSupported: Boolean = true,
         sustains: Boolean? = true,
+        lowLatency: Boolean? = true,
     ) = DecoderCapabilityReport.Capability(
         codecName = "c2.qti.hevc.decoder",
         mimeType = "video/hevc",
@@ -24,7 +25,7 @@ class DecoderCapabilityReportTest {
         sizeSupported = sizeSupported,
         rateSupported = rateSupported,
         sustains = sustains,
-        lowLatency = true,
+        lowLatency = lowLatency,
         adaptivePlayback = true,
         supportedWidths = "[64, 4096]",
         supportedHeights = "[64, 4096]",
@@ -72,6 +73,16 @@ class DecoderCapabilityReportTest {
     @Test
     fun `an unknown performance point prints as unknown, not null`() {
         assertTrue(capability(sustains = null).toString().contains("sustains=unknown"))
+    }
+
+    @Test
+    fun `an unaskable low-latency feature prints unknown rather than false`() {
+        // The feature only exists from API 30, so below it the answer is a structural false that
+        // reads beside real verdicts as "this decoder cannot do low latency". It says nothing of
+        // the kind, and on at least one reporter's unit the vendor spelling of the same feature was
+        // being accepted on every configure while this line said false.
+        assertTrue(capability(lowLatency = null).toString().contains("featureLowLatency=unknown"))
+        assertTrue(capability(lowLatency = false).toString().contains("featureLowLatency=false"))
     }
 
     @Test

@@ -194,7 +194,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                 )
                 showReconnectingOverlay()
             } else if (overlayState == OverlayState.RECONNECTING && gap < 2000) {
-                hideReconnectingOverlay()
+                hideReconnectingOverlay("frames resumed")
             } else {
                 if (!pictureStopped) {
                     lastIdleReportMs = 0L
@@ -381,7 +381,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     private val exitRunnable = Runnable {
         if (commManager.connectionState.value is CommManager.ConnectionState.Disconnected) {
             AppLog.i("AapProjectionActivity: Reconnect timed out (20s). Finishing activity.")
-            hideReconnectingOverlay()
+            hideReconnectingOverlay("reconnect timed out")
             finish()
         }
     }
@@ -826,7 +826,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                             // Only finish immediately if the user explicitly exited, it was a clean close, or killOnDisconnect is enabled.
                             if (state.isUserExit || state.isClean || settings.killOnDisconnect) {
                                 AppLog.i("AapProjectionActivity: Finishing because state isUserExit=${state.isUserExit}, isClean=${state.isClean}, killOnDisconnect=${settings.killOnDisconnect}")
-                                hideReconnectingOverlay()
+                                hideReconnectingOverlay("the session ended")
                                 finish()
                             } else {
                                 // For unexpected disconnects (especially Wireless), show the reconnecting overlay immediately
@@ -838,7 +838,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                                 // Re-initialize the first frame listener to hide the reconnecting overlay when video starts flowing
                                 videoDecoder.onFirstFrameListener = {
                                     runOnUiThread {
-                                        hideReconnectingOverlay()
+                                        hideReconnectingOverlay("frames resumed")
                                     }
                                 }
 
@@ -1060,8 +1060,13 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         button?.visibility = View.VISIBLE
     }
 
-    private fun hideReconnectingOverlay() {
-        AppLog.i("Hiding reconnecting overlay — frames resumed")
+    /**
+     * [reason] is the caller's, not this method's. Two of the four callers are teardown paths, and
+     * with the reason hard-coded both of them logged that frames had resumed on a session that was
+     * ending - which is exactly the kind of line these logs get read literally for.
+     */
+    private fun hideReconnectingOverlay(reason: String) {
+        AppLog.i("Hiding reconnecting overlay - $reason")
         overlayState = OverlayState.HIDDEN
         val overlay = findViewById<View>(R.id.loading_overlay) ?: return
         val detail = findViewById<TextView>(R.id.overlay_detail)

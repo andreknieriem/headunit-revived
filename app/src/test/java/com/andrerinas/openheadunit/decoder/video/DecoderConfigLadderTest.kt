@@ -1,6 +1,7 @@
 package com.andrerinas.openheadunit.decoder.video
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -19,20 +20,33 @@ class DecoderConfigLadderTest {
     private val hisi = "OMX.hisi.video.decoder.avc"
     private val unknown = "OMX.rk.video_decoder.avc"
 
+    private val lowLatencySpellings = setOf(
+        DecoderConfigLadder.KEY_LOW_LATENCY,
+        DecoderConfigLadder.MTK_LOW_LATENCY,
+        DecoderConfigLadder.QUALCOMM_LOW_LATENCY,
+        DecoderConfigLadder.EXYNOS_LOW_LATENCY,
+        DecoderConfigLadder.AMLOGIC_LOW_LATENCY,
+        DecoderConfigLadder.HISILICON_LOW_LATENCY_REQ,
+        DecoderConfigLadder.HISILICON_LOW_LATENCY_RDY,
+    )
+
     @Test
     fun `the last rung is always empty, whatever else is offered`() {
         val cases = listOf(mtk, qcom, exynos, amlogic, hisi, unknown, "")
         for (name in cases) {
-            for (sdk in listOf(16, 21, 27, 29, 30, 34)) {
+            for (sdk in listOf(16, 21, 23, 27, 29, 30, 34)) {
                 for (feature in listOf(true, false)) {
                     for (requested in listOf(true, false)) {
-                        val tiers = DecoderConfigLadder.tiers(name, sdk, feature, requested)
-                        assertTrue("$name/$sdk: no rungs at all", tiers.isNotEmpty())
-                        assertEquals(
-                            "$name/$sdk/feature=$feature/requested=$requested must end with no optional keys",
-                            DecoderConfigLadder.NO_OPTIONAL_KEYS,
-                            tiers.last()
-                        )
+                        for (rate in listOf(0, 30, 60)) {
+                            val tiers = DecoderConfigLadder.tiers(name, sdk, feature, requested, rate)
+                            assertTrue("$name/$sdk: no rungs at all", tiers.isNotEmpty())
+                            assertEquals(
+                                "$name/$sdk/feature=$feature/requested=$requested/rate=$rate " +
+                                    "must end with no optional keys",
+                                DecoderConfigLadder.NO_OPTIONAL_KEYS,
+                                tiers.last()
+                            )
+                        }
                     }
                 }
             }
@@ -41,7 +55,9 @@ class DecoderConfigLadderTest {
 
     @Test
     fun `not asking for low latency is exactly the shipped behaviour`() {
-        val tiers = DecoderConfigLadder.tiers(mtk, 34, advertisesLowLatencyFeature = true, lowLatencyRequested = false)
+        val tiers = DecoderConfigLadder.tiers(
+            mtk, 34, advertisesLowLatencyFeature = true, lowLatencyRequested = false, operatingRate = 60
+        )
         assertEquals(listOf(DecoderConfigLadder.NO_OPTIONAL_KEYS), tiers)
     }
 
@@ -49,17 +65,18 @@ class DecoderConfigLadderTest {
     fun `the official key is preferred where the component advertises it`() {
         val tiers = DecoderConfigLadder.tiers(qcom, 34, advertisesLowLatencyFeature = true, lowLatencyRequested = true)
         assertEquals(2, tiers.size)
-        assertEquals(mapOf(DecoderConfigLadder.KEY_LOW_LATENCY to 1), tiers[0].integerKeys)
+        assertTrue(tiers[0].integerKeys.containsKey(DecoderConfigLadder.KEY_LOW_LATENCY))
+        assertFalse(tiers[0].integerKeys.containsKey(DecoderConfigLadder.QUALCOMM_LOW_LATENCY))
     }
 
     @Test
     fun `the official key is not used below the API that has it, even if the feature is claimed`() {
         val tiers = DecoderConfigLadder.tiers(qcom, 29, advertisesLowLatencyFeature = true, lowLatencyRequested = true)
-        assertEquals(
+        assertTrue(
             "should fall back to the vendor spelling",
-            mapOf(DecoderConfigLadder.QUALCOMM_LOW_LATENCY to 1),
-            tiers[0].integerKeys
+            tiers[0].integerKeys.containsKey(DecoderConfigLadder.QUALCOMM_LOW_LATENCY)
         )
+        assertFalse(tiers[0].integerKeys.containsKey(DecoderConfigLadder.KEY_LOW_LATENCY))
     }
 
     @Test
@@ -67,8 +84,8 @@ class DecoderConfigLadderTest {
         // The case that matters for #839: a MediaTek component on API 27, where the official key does
         // not exist at all.
         val tiers = DecoderConfigLadder.tiers(mtk, 27, advertisesLowLatencyFeature = false, lowLatencyRequested = true)
-        assertEquals(2, tiers.size)
-        assertEquals(mapOf(DecoderConfigLadder.MTK_LOW_LATENCY to 1), tiers[0].integerKeys)
+        assertTrue(tiers.all { it.integerKeys.containsKey(DecoderConfigLadder.MTK_LOW_LATENCY) || it.integerKeys.isEmpty() })
+        assertTrue(tiers.first().integerKeys.containsKey(DecoderConfigLadder.MTK_LOW_LATENCY))
     }
 
     @Test
@@ -76,23 +93,95 @@ class DecoderConfigLadderTest {
         for (name in listOf(mtk, qcom, exynos, amlogic, hisi)) {
             for (sdk in listOf(27, 30, 34)) {
                 for (feature in listOf(true, false)) {
-                    val rich = DecoderConfigLadder.tiers(name, sdk, feature, lowLatencyRequested = true).first()
-                    assertTrue(
-                        "$name/$sdk/feature=$feature set both spellings: ${rich.integerKeys.keys}",
-                        !(rich.integerKeys.containsKey(DecoderConfigLadder.KEY_LOW_LATENCY) &&
-                            rich.integerKeys.keys.any { it != DecoderConfigLadder.KEY_LOW_LATENCY })
-                    )
+                    val tiers = DecoderConfigLadder.tiers(name, sdk, feature, lowLatencyRequested = true, operatingRate = 60)
+                    for (tier in tiers) {
+                        val spellings = tier.integerKeys.keys.filter { it in lowLatencySpellings }
+                        val official = spellings.contains(DecoderConfigLadder.KEY_LOW_LATENCY)
+                        assertFalse(
+                            "$name/$sdk/feature=$feature set both spellings: $spellings",
+                            official && spellings.size > 1
+                        )
+                    }
                 }
             }
         }
     }
 
     @Test
-    fun `an unknown vendor gets nothing rather than a guess`() {
-        val tiers = DecoderConfigLadder.tiers(unknown, 27, advertisesLowLatencyFeature = false, lowLatencyRequested = true)
-        assertEquals(listOf(DecoderConfigLadder.NO_OPTIONAL_KEYS), tiers)
+    fun `MediaTek gets the reorder keys above the rung that is known to work`() {
+        // vdec-lowlatency is the only MediaTek key with a log behind it. The reorder pair goes on its
+        // own rung so a component that dislikes it lands back on the measured one rather than on
+        // nothing at all.
+        val tiers = DecoderConfigLadder.tiers(mtk, 28, advertisesLowLatencyFeature = false, lowLatencyRequested = true)
+        assertEquals(3, tiers.size)
+        assertEquals(1, tiers[0].integerKeys[DecoderConfigLadder.MTK_NO_REORDER])
+        assertEquals(0, tiers[0].integerKeys[DecoderConfigLadder.MTK_CLEAR_MOTION])
+        assertEquals(1, tiers[0].integerKeys[DecoderConfigLadder.MTK_LOW_LATENCY])
+
+        assertFalse(tiers[1].integerKeys.containsKey(DecoderConfigLadder.MTK_NO_REORDER))
+        assertFalse(tiers[1].integerKeys.containsKey(DecoderConfigLadder.MTK_CLEAR_MOTION))
+        assertEquals(1, tiers[1].integerKeys[DecoderConfigLadder.MTK_LOW_LATENCY])
+    }
+
+    @Test
+    fun `no other vendor gets the MediaTek reorder keys`() {
+        for (name in listOf(qcom, exynos, amlogic, hisi, unknown)) {
+            val tiers = DecoderConfigLadder.tiers(name, 28, advertisesLowLatencyFeature = false, lowLatencyRequested = true)
+            for (tier in tiers) {
+                assertFalse(name, tier.integerKeys.containsKey(DecoderConfigLadder.MTK_NO_REORDER))
+                assertFalse(name, tier.integerKeys.containsKey(DecoderConfigLadder.MTK_CLEAR_MOTION))
+            }
+        }
+    }
+
+    @Test
+    fun `an unknown vendor is still never guessed at`() {
         assertTrue(DecoderConfigLadder.vendorLowLatencyKeys(unknown).isEmpty())
         assertTrue(DecoderConfigLadder.vendorLowLatencyKeys("").isEmpty())
+        val tiers = DecoderConfigLadder.tiers(unknown, 27, advertisesLowLatencyFeature = false, lowLatencyRequested = true)
+        for (tier in tiers) {
+            assertTrue(
+                "guessed a vendor spelling for an unknown component: ${tier.integerKeys.keys}",
+                tier.integerKeys.keys.none { it in lowLatencySpellings }
+            )
+        }
+    }
+
+    @Test
+    fun `an unknown vendor still gets the hints, which belong to no vendor`() {
+        val tiers = DecoderConfigLadder.tiers(
+            unknown, 27, advertisesLowLatencyFeature = false, lowLatencyRequested = true, operatingRate = 30
+        )
+        assertEquals(2, tiers.size)
+        assertEquals("realtime", tiers[0].label)
+        assertEquals(0, tiers[0].integerKeys[DecoderConfigLadder.KEY_PRIORITY])
+        assertEquals(30, tiers[0].integerKeys[DecoderConfigLadder.KEY_OPERATING_RATE])
+    }
+
+    @Test
+    fun `below the API that has the hints, an unknown vendor is offered nothing`() {
+        val tiers = DecoderConfigLadder.tiers(
+            unknown, 21, advertisesLowLatencyFeature = false, lowLatencyRequested = true, operatingRate = 30
+        )
+        assertEquals(listOf(DecoderConfigLadder.NO_OPTIONAL_KEYS), tiers)
+    }
+
+    @Test
+    fun `the hints ride on every offered rung rather than costing one of their own`() {
+        for (name in listOf(mtk, qcom, exynos, amlogic, hisi)) {
+            val tiers = DecoderConfigLadder.tiers(name, 28, advertisesLowLatencyFeature = false, lowLatencyRequested = true, operatingRate = 60)
+            for (tier in tiers.dropLast(1)) {
+                assertEquals("$name/${tier.label}", 0, tier.integerKeys[DecoderConfigLadder.KEY_PRIORITY])
+                assertEquals("$name/${tier.label}", 60, tier.integerKeys[DecoderConfigLadder.KEY_OPERATING_RATE])
+            }
+        }
+    }
+
+    @Test
+    fun `priority is asked for even without a rate to name, and the rate is not`() {
+        val hints = DecoderConfigLadder.realtimeHints(28, 0)
+        assertEquals(mapOf(DecoderConfigLadder.KEY_PRIORITY to 0), hints)
+        assertTrue(DecoderConfigLadder.realtimeHints(22, 60).isEmpty())
     }
 
     @Test

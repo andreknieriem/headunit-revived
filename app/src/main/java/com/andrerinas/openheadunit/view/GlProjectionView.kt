@@ -225,6 +225,15 @@ class GlProjectionView(context: Context) : GLSurfaceView(context), IProjectionVi
         private var prevDrawMs: Long = 0L
         private val longFrameThresholdMs = 1200L
 
+        // Displayed-frame telemetry, on the same 5s cadence and in the same words as
+        // TextureProjectionView. VideoDecoder reports what it hands the surface; only what the
+        // consumer actually drew says whether the picture kept up, and until now this backend
+        // counted every draw and reported none of them - so the reporters who ran GLES had no
+        // displayed rate at all and the two backends could not be compared.
+        private var drawnSinceLog: Long = 0L
+        private var lastDrawLogMs: Long = 0L
+        private val drawLogIntervalMs = 5000L
+
         private fun markFrameDrawn() {
             val now = SystemClock.elapsedRealtime()
             val prev = prevDrawMs
@@ -233,6 +242,18 @@ class GlProjectionView(context: Context) : GLSurfaceView(context), IProjectionVi
             }
             prevDrawMs = now
             lastFrameDrawnMs = now
+
+            drawnSinceLog++
+            if (lastDrawLogMs == 0L) {
+                lastDrawLogMs = now
+                return
+            }
+            val elapsed = now - lastDrawLogMs
+            if (elapsed < drawLogIntervalMs) return
+            val fps = drawnSinceLog * 1000 / elapsed
+            AppLog.i("GlProjectionView: displayed $drawnSinceLog frames in ${elapsed}ms (${fps}fps), longFrames=$longFrameEvents")
+            drawnSinceLog = 0L
+            lastDrawLogMs = now
         }
 
         fun setDesaturation(value: Float) {
