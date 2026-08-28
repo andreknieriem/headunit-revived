@@ -177,6 +177,7 @@ class SettingsFragment : Fragment() {
     private var pendingUseMeasuredTouchSurface: Boolean? = null
 
     private var pendingKillOnDisconnect: Boolean? = null
+    private var pendingRaiseProjectionDuringCall: Boolean? = null
 
     // Custom Insets
     private var pendingInsetLeft: Int? = null
@@ -306,6 +307,7 @@ class SettingsFragment : Fragment() {
         pendingUseMeasuredTouchSurface = settings.useMeasuredTouchSurface
 
         pendingKillOnDisconnect = settings.killOnDisconnect
+        pendingRaiseProjectionDuringCall = settings.raiseProjectionDuringCall
         pendingAutoEnableHotspot = settings.autoEnableHotspot
         pendingFakeSpeed = settings.fakeSpeed
         pendingUseLibusb = settings.useLibusb
@@ -421,6 +423,7 @@ class SettingsFragment : Fragment() {
         pendingHudMirroring = settings.hudMirroring
         pendingUseMeasuredTouchSurface = settings.useMeasuredTouchSurface
         pendingKillOnDisconnect = settings.killOnDisconnect
+        pendingRaiseProjectionDuringCall = settings.raiseProjectionDuringCall
         pendingAutoEnableHotspot = settings.autoEnableHotspot
         pendingFakeSpeed = settings.fakeSpeed
         pendingUseLibusb = settings.useLibusb
@@ -566,6 +569,7 @@ class SettingsFragment : Fragment() {
         pendingUseMeasuredTouchSurface?.let { settings.useMeasuredTouchSurface = it }
 
         pendingKillOnDisconnect?.let { settings.killOnDisconnect = it }
+        pendingRaiseProjectionDuringCall?.let { settings.raiseProjectionDuringCall = it }
         pendingAutoEnableHotspot?.let { settings.autoEnableHotspot = it }
         pendingFakeSpeed?.let { settings.fakeSpeed = it }
         pendingUseLibusb?.let { settings.useLibusb = it }
@@ -687,6 +691,7 @@ class SettingsFragment : Fragment() {
                         pendingAssistantVolumeOffset != settings.assistantVolumeOffset ||
                         pendingNavigationVolumeOffset != settings.navigationVolumeOffset ||
                         pendingKillOnDisconnect != settings.killOnDisconnect ||
+                        pendingRaiseProjectionDuringCall != settings.raiseProjectionDuringCall ||
                         pendingAutoEnableHotspot != settings.autoEnableHotspot ||
                         pendingFakeSpeed != settings.fakeSpeed ||
                         pendingWifiConnectionMode != settings.wifiConnectionMode ||
@@ -1330,6 +1335,22 @@ class SettingsFragment : Fragment() {
                 }
             }
         ))
+
+        // Self Mode is the only mode where the phone's call screen and the projection share a
+        // screen, so it is the only mode this can do anything in.
+        if (settings.showsSelf()) {
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "raiseProjectionDuringCall",
+                nameResId = R.string.raise_projection_during_call,
+                descriptionResId = R.string.raise_projection_during_call_description,
+                isChecked = pendingRaiseProjectionDuringCall!!,
+                onCheckedChanged = { isChecked ->
+                    pendingRaiseProjectionDuringCall = isChecked
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+        }
 
         // --- Navigation Settings ---
         items.add(SettingItem.CategoryHeader("navigation", R.string.category_navigation))

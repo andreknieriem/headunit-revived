@@ -953,4 +953,6 @@
     <string name="auto_connect_delay_summary_format">%1$s（延遲 %2$d 秒）</string>
     <string name="failed_aa_not_system">失敗：Android Auto 未作為系統應用程式安裝！</string>
     <string name="failed_aa_not_installed">失敗：未安裝 Android Auto！</string>
+    <string name="raise_projection_during_call">通話期間停留在 Android Auto</string>
+    <string name="raise_projection_during_call_description">僅限自我模式。將投影帶回手機通話畫面之上,以便在 Android Auto 介面中接聽及結束通話</string>
 </resources>

@@ -951,4 +951,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$d초 지연)</string>
     <string name="failed_aa_not_system">실패: Android Auto가 시스템 앱으로 설치되어 있지 않습니다!</string>
     <string name="failed_aa_not_installed">실패: Android Auto가 설치되어 있지 않습니다!</string>
+    <string name="raise_projection_during_call">통화 중에도 Android Auto에 머무르기</string>
+    <string name="raise_projection_during_call_description">단독 모드 전용. 전화의 통화 화면 위로 프로젝션을 다시 가져와 Android Auto 화면에서 통화를 받고 끊을 수 있게 합니다</string>
 </resources>

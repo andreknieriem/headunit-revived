@@ -958,4 +958,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$d秒の遅延)</string>
     <string name="failed_aa_not_system">失敗: Android Auto がシステムアプリとしてインストールされていません！</string>
     <string name="failed_aa_not_installed">失敗: Android Auto がインストールされていません！</string>
+    <string name="raise_projection_during_call">通話中もAndroid Autoに留まる</string>
+    <string name="raise_projection_during_call_description">セルフモードのみ。電話の通話画面の上に投影を戻し、Android Autoの画面で通話の応答と終了ができるようにします</string>
 </resources>

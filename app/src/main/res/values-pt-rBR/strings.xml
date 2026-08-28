@@ -955,4 +955,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$ds de atraso)</string>
     <string name="failed_aa_not_system">Falha: O Android Auto não está instalado como aplicativo do sistema!</string>
     <string name="failed_aa_not_installed">Falha: O Android Auto não está instalado!</string>
+    <string name="raise_projection_during_call">Permanecer no Android Auto durante chamadas</string>
+    <string name="raise_projection_during_call_description">Somente Self Mode. Traz a projeção de volta sobre a tela de chamada do telefone, para atender e encerrar as chamadas na interface do Android Auto</string>
 </resources>

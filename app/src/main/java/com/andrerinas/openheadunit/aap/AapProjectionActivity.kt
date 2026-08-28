@@ -35,11 +35,14 @@ import com.andrerinas.openheadunit.decoder.video.WarmRelaunchKeyframePolicy
 import com.andrerinas.openheadunit.input.ProjectionKeyPolicy
 import com.andrerinas.openheadunit.input.TouchCoordinateMapper
 import kotlinx.coroutines.launch
+import com.andrerinas.openheadunit.decoder.audio.MicRecorder
 import com.andrerinas.openheadunit.decoder.video.DecoderStopPolicy
 import com.andrerinas.openheadunit.decoder.video.SoftwareYuvFrameSink
 import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import com.andrerinas.openheadunit.decoder.video.VideoDimensionsListener
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy
+import com.andrerinas.openheadunit.decoder.audio.CallState
 import com.andrerinas.openheadunit.utils.IntentFilters
 import com.andrerinas.openheadunit.view.IProjectionView
 import com.andrerinas.openheadunit.view.GlProjectionView
@@ -78,6 +81,22 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     private var isSurfaceSet = false
     private var overlayState = OverlayState.STARTING
     private val watchdogHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /**
+     * True when the user themselves left the projection (Home, Recents), which fires
+     * onUserLeaveHint just before onPause. An activity launching over us does not, and that is
+     * what separates a call screen covering the projection from the user walking away from it.
+     */
+    private var userLeftDeliberately = false
+
+    /** The open call-raise episode, or null when the projection is not covered by a call. */
+    private var callRaiseEpisode: SelfModeCallRaisePolicy.Episode? = null
+
+    /** What the last episode spent, so a call screen that relaunches cannot keep buying more. */
+    private var lastCallRaiseAttempts = 0
+    private var lastCallRaiseAtMs = 0L
+
+    private val callRaiseTick = Runnable { tickCallRaise() }
 
     /**
      * Ken Burns scale animation applied to a static image loading screen.
@@ -980,11 +999,15 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             LocalBroadcastManager.getInstance(this).unregisterReceiver(settingsReceiver)
             isSettingsReceiverRegistered = false
         }
+        // After the removeCallbacks above, never before: the tick posts on the same handler.
+        maybeOpenCallRaiseEpisode()
     }
 
     override fun onResume() {
         super.onResume()
         isForeground = true
+        userLeftDeliberately = false
+        closeCallRaiseEpisode("the projection is back in front")
         AppLog.i("AapProjectionActivity: onResume")
         // Show the one-time rename notice even here, on top of an active projection.
         RenameNotice.maybeShow(this, App.provide(this).settings)
@@ -1476,10 +1499,98 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         }
     }
 
+    /**
+     * Opens a call-raise episode when something covered the projection during a call, in Self Mode.
+     *
+     * Self Mode is the only place this can happen: everywhere else the call screen lands on the
+     * phone and the projection is on the head unit.
+     */
+    private fun maybeOpenCallRaiseEpisode() {
+        closeCallRaiseEpisode("covered again")
+        if (userLeftDeliberately || AapService.instance?.isSelfModeActive() != true || App.isPiPActive) return
+        if (!settings.raiseProjectionDuringCall) return
+
+        val audioMode = audioModeOrNormal()
+        val callActive = CallState.isCallActive(audioMode, MicRecorder.holdsCommunicationMode)
+        if (!callActive && !CallState.isCallStarting(audioMode)) return
+
+        val nowMs = SystemClock.elapsedRealtime()
+        val carried = SelfModeCallRaisePolicy.carriedAttempts(lastCallRaiseAttempts, lastCallRaiseAtMs, nowMs)
+        AppLog.i("AapProjectionActivity: covered during a call, will raise the projection ($carried attempts already spent)")
+        callRaiseEpisode = SelfModeCallRaisePolicy.Episode(
+            startedAtMs = nowMs,
+            sawCallActive = callActive,
+            attempts = carried,
+            lastAttemptAtMs = if (carried > 0) lastCallRaiseAtMs else 0L,
+        )
+        watchdogHandler.postDelayed(callRaiseTick, SelfModeCallRaisePolicy.TICK_MS)
+    }
+
+    /**
+     * Ends an open episode. The reason is logged only when there was one, because a successful raise
+     * ends the episode from onResume before the tick that would otherwise have reported it can run.
+     */
+    private fun closeCallRaiseEpisode(reason: String) {
+        if (callRaiseEpisode != null) {
+            AppLog.i("AapProjectionActivity: call raise finished - $reason")
+        }
+        callRaiseEpisode = null
+        watchdogHandler.removeCallbacks(callRaiseTick)
+    }
+
+    private fun tickCallRaise() {
+        val episode = callRaiseEpisode ?: return
+        val nowMs = SystemClock.elapsedRealtime()
+        val callActive = CallState.isCallActive(audioModeOrNormal(), MicRecorder.holdsCommunicationMode)
+        val observed = SelfModeCallRaisePolicy.observe(episode, nowMs, callActive)
+        val action = SelfModeCallRaisePolicy.decide(
+            nowMs = nowMs,
+            episode = observed,
+            callActive = callActive,
+            isForeground = isForeground,
+            pipActive = App.isPiPActive,
+        )
+        val reason = SelfModeCallRaisePolicy.describe(action, observed, callActive, isForeground)
+
+        val next = when (action) {
+            SelfModeCallRaisePolicy.Action.DONE -> {
+                AppLog.i("AapProjectionActivity: call raise finished - $reason")
+                callRaiseEpisode = null
+                return
+            }
+            SelfModeCallRaisePolicy.Action.RAISE -> {
+                AppLog.i("AapProjectionActivity: raising the projection - $reason")
+                requestProjectionRaise()
+                SelfModeCallRaisePolicy.onRaised(observed, nowMs, callActive).also {
+                    lastCallRaiseAttempts = it.attempts
+                    lastCallRaiseAtMs = nowMs
+                }
+            }
+            SelfModeCallRaisePolicy.Action.WAIT -> observed
+        }
+        callRaiseEpisode = next
+        watchdogHandler.postDelayed(callRaiseTick, SelfModeCallRaisePolicy.nextTickDelayMs(next))
+    }
+
+    /** The service owns the overlay trampoline, and a paused activity cannot start itself. */
+    private fun requestProjectionRaise() {
+        sendBroadcast(Intent(AapService.ACTION_RAISE_PROJECTION).apply { setPackage(packageName) })
+    }
+
+    private fun audioModeOrNormal(): Int = try {
+        (getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager).mode
+    } catch (e: Exception) {
+        AppLog.w("AapProjectionActivity: Could not read the audio mode: ${e.message}")
+        android.media.AudioManager.MODE_NORMAL
+    }
+
     override fun onUserLeaveHint() {
         // Optional: Auto-enter PiP if user presses home
 
         // For now, we only enter via dialog as requested.
+        // Also the one signal that the next onPause is the user's own doing, so the call raise
+        // below never argues with someone who chose to leave.
+        userLeftDeliberately = true
         super.onUserLeaveHint()
     }
 
@@ -1814,6 +1925,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
     override fun onDestroy() {
         super.onDestroy()
+        closeCallRaiseEpisode("the projection is going away")
         if (isFinishReceiverRegistered) {
             unregisterReceiver(finishReceiver)
             isFinishReceiverRegistered = false

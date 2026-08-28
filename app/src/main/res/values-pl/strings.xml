@@ -953,4 +953,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$ds opóźnienia)</string>
     <string name="failed_aa_not_system">Błąd: Android Auto nie jest zainstalowany jako aplikacja systemowa!</string>
     <string name="failed_aa_not_installed">Błąd: Android Auto nie jest zainstalowane!</string>
+    <string name="raise_projection_during_call">Pozostań w Android Auto podczas połączeń</string>
+    <string name="raise_projection_during_call_description">Tylko Tryb samodzielny. Przywraca projekcję nad ekran połączenia telefonu, dzięki czemu połączenia odbiera się i kończy w interfejsie Android Auto</string>
 </resources>

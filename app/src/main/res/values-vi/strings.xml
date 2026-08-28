@@ -957,4 +957,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (trễ %2$d giây)</string>
     <string name="failed_aa_not_system">Thất bại: Android Auto không được cài đặt dưới dạng ứng dụng hệ thống!</string>
     <string name="failed_aa_not_installed">Thất bại: Android Auto chưa được cài đặt!</string>
+    <string name="raise_projection_during_call">Ở lại Android Auto trong khi gọi điện</string>
+    <string name="raise_projection_during_call_description">Chỉ Chế độ độc lập. Đưa màn hình chiếu trở lại phía trên màn hình cuộc gọi của điện thoại, để trả lời và kết thúc cuộc gọi trong giao diện Android Auto</string>
 </resources>

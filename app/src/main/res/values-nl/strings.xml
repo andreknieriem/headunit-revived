@@ -954,4 +954,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$ds vertraging)</string>
     <string name="failed_aa_not_system">Mislukt: Android Auto is niet geïnstalleerd als systeem-app!</string>
     <string name="failed_aa_not_installed">Mislukt: Android Auto is niet geïnstalleerd!</string>
+    <string name="raise_projection_during_call">In Android Auto blijven tijdens gesprekken</string>
+    <string name="raise_projection_during_call_description">Alleen Self Mode. Haalt de projectie terug over het belscherm van de telefoon, zodat gesprekken in de Android Auto-interface worden aangenomen en beëindigd</string>
 </resources>

@@ -131,6 +131,19 @@ class Settings(private val context: Context) {
             prefs.edit().putBoolean(KEY_SYNC_MEDIA_SESSION_AA_METADATA, value).apply()
         }
 
+    /**
+     * In Self Mode, put the projection back on top when a call covers it.
+     *
+     * Android Auto's own call UI is already on the projected surface, so the phone's call screen
+     * only hides it. Self Mode only: anywhere else the call screen is on the phone, not on the
+     * head unit.
+     */
+    var raiseProjectionDuringCall: Boolean
+        get() = prefs.getBoolean("raise-projection-during-call", true)
+        set(value) {
+            prefs.edit().putBoolean("raise-projection-during-call", value).apply()
+        }
+
     var nightMode: NightMode
         get() {
             val value = prefs.getInt("night-mode", 0)
@@ -643,6 +656,9 @@ class Settings(private val context: Context) {
     fun showsWifi(): Boolean = connectionModes.isEmpty() || ConnectionMode.WIFI in connectionModes
     /** The external-GPS choice only applies when a phone is connected; false only for Self-only. */
     fun showsExternalGps(): Boolean = showsUsb() || showsWifi()
+
+    /** Whether Self Mode settings should be shown (empty selection shows everything). */
+    fun showsSelf(): Boolean = connectionModes.isEmpty() || ConnectionMode.SELF in connectionModes
 
     var autoConnectLastSession: Boolean
         get() = prefs.getBoolean("auto-connect-last-session", false)

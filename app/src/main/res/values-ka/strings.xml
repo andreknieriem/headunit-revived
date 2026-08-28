@@ -935,4 +935,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$dწმ დაყოვნება)</string>
     <string name="failed_aa_not_system">ვერ მოხერხდა: Android Auto არ არის დაინსტალირებული როგორც სისტემური აპი!</string>
     <string name="failed_aa_not_installed">ვერ მოხერხდა: Android Auto არ არის დაინსტალირებული!</string>
+    <string name="raise_projection_during_call">ზარების დროს Android Auto-ში დარჩენა</string>
+    <string name="raise_projection_during_call_description">მხოლოდ ავტონომიური რეჟიმი. აბრუნებს პროექციას ტელეფონის ზარის ეკრანის ზემოთ, ასე რომ ზარებზე პასუხი და დასრულება Android Auto-ს ინტერფეისში ხდება</string>
 </resources>

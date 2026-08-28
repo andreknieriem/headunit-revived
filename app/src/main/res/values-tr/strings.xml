@@ -949,4 +949,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$d sn gecikme)</string>
     <string name="failed_aa_not_system">Başarısız: Android Auto bir sistem uygulaması olarak yüklü değil!</string>
     <string name="failed_aa_not_installed">Başarısız: Android Auto yüklü değil!</string>
+    <string name="raise_projection_during_call">Aramalar sırasında Android Auto\'da kal</string>
+    <string name="raise_projection_during_call_description">Yalnızca Dahili Mod. Yansıtmayı telefonun arama ekranının üzerine geri getirir, böylece aramalar Android Auto arayüzünden yanıtlanır ve sonlandırılır</string>
 </resources>
