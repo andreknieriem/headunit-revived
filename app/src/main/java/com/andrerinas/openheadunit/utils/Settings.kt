@@ -685,14 +685,22 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("static-audio-focus", value).apply() }
 
     // Whether AA playback takes system audio focus, so another local player (typically the car
-    // radio) pauses while it runs. AUTO skips it when a Bluetooth media link is up, because the
-    // A2DP sink answers our focus grab by pausing the phone that is feeding us. See
+    // radio) pauses while it runs. AUTO takes it until the phone is seen cutting its own audio in
+    // response, which is what happens when this head unit is its Bluetooth A2DP sink. See
     // PlaybackFocusPolicy for the whole story; ALWAYS and NEVER are the manual overrides.
     var playbackFocusMode: PlaybackFocusPolicy.Mode
         get() = PlaybackFocusPolicy.Mode.fromInt(
             prefs.getInt("playback-focus-mode", PlaybackFocusPolicy.Mode.AUTO.value)
         )
         set(value) { prefs.edit().putInt("playback-focus-mode", value.value).apply() }
+
+    // What AUTO learned: taking system audio focus stops the phone's own playback on this head
+    // unit, so stop asking for it. Remembered because the trial that finds it out costs the user a
+    // couple of interrupted tracks, and there is no reason to pay that at every connect. Re-picking
+    // the focus mode clears it, which is the way back from a false positive.
+    var playbackFocusSelfDefeating: Boolean
+        get() = prefs.getBoolean("playback-focus-self-defeating", false)
+        set(value) { prefs.edit().putBoolean("playback-focus-self-defeating", value).apply() }
 
     // Whether the physical media buttons reach Android Auto, or are left to the Bluetooth side that
     // may already act on the same press — two consumers of one button skip two tracks. See

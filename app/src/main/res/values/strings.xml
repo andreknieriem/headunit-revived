@@ -487,7 +487,7 @@
     <string name="playback_focus_mode_auto">Automatic</string>
     <string name="playback_focus_mode_always">Always</string>
     <string name="playback_focus_mode_never">Never</string>
-    <string name="playback_focus_mode_auto_hint">Pauses another player on the headunit (for example the radio) while Android Auto audio plays, but not while a Bluetooth audio link is connected — that link is usually the same phone, and pausing it would stop Android Auto\'s own sound.</string>
+    <string name="playback_focus_mode_auto_hint">Pauses another player on the headunit (for example the radio) while Android Auto audio plays. If that turns out to stop your phone\'s own playback instead, which happens when the headunit is the phone\'s Bluetooth speaker, it stops doing it and remembers. Choose this mode again to let it try once more.</string>
     <string name="playback_focus_mode_always_hint">Always pauses other audio while Android Auto plays. If your music stops after a second or two whenever Bluetooth is on, switch back to Automatic.</string>
     <string name="playback_focus_mode_never_hint">Never touches system audio focus. Other audio on the headunit may keep playing over Android Auto.</string>
     <string name="playback_focus_mode_static_hint">With Static Audio Focus on, this applies from the moment the phone connects and lasts the whole session, rather than only while audio is playing.</string>

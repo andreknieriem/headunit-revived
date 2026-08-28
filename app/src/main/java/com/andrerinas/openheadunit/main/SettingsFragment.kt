@@ -532,7 +532,12 @@ class SettingsFragment : Fragment() {
         pendingBluetoothAddress?.let { settings.bluetoothAddress = it }
         pendingEnableAudioSink?.let { settings.enableAudioSink = it }
         pendingStaticAudioFocus?.let { settings.staticAudioFocus = it }
+        // Re-picking the focus mode is the way back from a wrong verdict: AUTO learns that taking
+        // system audio focus stops the phone's own playback and then stops asking for it, and two
+        // tracks that happened to end quickly can teach it that wrongly.
+        val focusModeChanged = pendingPlaybackFocusMode != null && pendingPlaybackFocusMode != settings.playbackFocusMode
         pendingPlaybackFocusMode?.let { settings.playbackFocusMode = it }
+        if (focusModeChanged) settings.playbackFocusSelfDefeating = false
         pendingSeparateAudioStreams?.let { settings.separateAudioStreams = it }
         pendingUseAacAudio?.let { settings.useAacAudio = it }
         pendingAttachHwDspEqualizer?.let { settings.attachHwDspEqualizer = it }
