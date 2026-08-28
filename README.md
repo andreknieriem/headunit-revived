@@ -68,7 +68,7 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 - more customization options for the UI and the app itself
 
 ## Changelog
-### v.3.3.0-beta2
+### v.3.3.0-beta3
 - Begin for theming of the App.
 - Refactor WiFi-Code from AapService into their own classes for better maintenance, thanks to @MrEAlderson
 - Refactor Self-Mode and USB-Mode from AapService into their own classes for better maintenance, thanks to @MrEAlderson
