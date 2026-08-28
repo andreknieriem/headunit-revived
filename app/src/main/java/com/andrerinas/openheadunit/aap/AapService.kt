@@ -1871,8 +1871,15 @@ class AapService : Service() {
         super.onDestroy()
         instance = null
         if (killProcessOnDestroy) {
-            AppLog.i("AapService: killProcessOnDestroy is true. Triggering System.exit(0).")
-            System.exit(0)
+            AppLog.i("AapService: killProcessOnDestroy requested. Finishing app tasks safely.")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                try {
+                    val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+                    activityManager.appTasks.forEach { it.finishAndRemoveTask() }
+                } catch (e: Exception) {
+                    AppLog.w("AapService: Error finishing tasks on destroy: ${e.message}")
+                }
+            }
         }
     }
 
