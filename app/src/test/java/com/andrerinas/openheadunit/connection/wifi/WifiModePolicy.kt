@@ -1,12 +1,12 @@
 package com.andrerinas.openheadunit.connection.wifi
 
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
-import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeStrategy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 
 /**
  * Whether a given WiFi mode/strategy combination uses [com.andrerinas.openheadunit.connection.WifiDirectManager]
- * to run a WiFi Direct P2P group. Shared between [AapService.initWifiMode] (stop it on a
- * *settings change*) and [AapService.onDisconnected] (stop it on a *user disconnect*) so the
+ * to run a WiFi Direct P2P group. Shared between [com.andrerinas.openheadunit.aap.AapService.initWifiMode] (stop it on a
+ * *settings change*) and [com.andrerinas.openheadunit.aap.AapService.onDisconnected] (stop it on a *user disconnect*) so the
  * two call sites can't drift out of sync.
  */
 object WifiModePolicy {

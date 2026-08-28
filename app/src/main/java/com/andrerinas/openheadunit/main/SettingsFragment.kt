@@ -25,16 +25,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
-import com.andrerinas.openheadunit.aap.CredentialField
-import com.andrerinas.openheadunit.aap.MediaKeyRoutingPolicy
-import com.andrerinas.openheadunit.aap.NativeCredentialsPreflightPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialField
+import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeCredentialsPreflightPolicy
 import com.andrerinas.openheadunit.aap.NativeTransport
-import com.andrerinas.openheadunit.aap.P2pBandPreference
-import com.andrerinas.openheadunit.aap.PreflightReport
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApBssidPolicy
-import com.andrerinas.openheadunit.aap.PlaybackFocusPolicy
-import com.andrerinas.openheadunit.aap.VideoFaultInjector
-import com.andrerinas.openheadunit.decoder.DeviceMemoryProfile
+import com.andrerinas.openheadunit.connection.wifi.direct.P2pBandPreference
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.PreflightReport
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBssidPolicy
+import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
+import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
+import com.andrerinas.openheadunit.decoder.video.DeviceMemoryProfile
 import com.andrerinas.openheadunit.main.settings.SettingItem
 import com.andrerinas.openheadunit.main.settings.SettingsAdapter
 import com.andrerinas.openheadunit.utils.AppLog
@@ -52,12 +52,12 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.pm.PackageManager
-import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeAaHandshakeManager
-import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeCredentialsPreflight
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeAaHandshakeManager
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeCredentialsPreflight
 import com.andrerinas.openheadunit.utils.BluetoothHelper
 import androidx.lifecycle.lifecycleScope
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
-import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeStrategy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import java.io.File
 import kotlinx.coroutines.CancellationException
@@ -1702,6 +1702,21 @@ class SettingsFragment : Fragment() {
             }
         ))
 
+        // Applied immediately rather than on confirm, unlike the rows above it: the configure
+        // ladder falls back on its own if the decoder rejects the key, so there is nothing to
+        // weigh up before trying it.
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "debugVideoLowLatency",
+            nameResId = R.string.debug_video_low_latency,
+            descriptionResId = R.string.debug_video_low_latency_description,
+            isChecked = settings.debugVideoLowLatency,
+            searchKeywords = "low latency vendor key decoder mediatek amlogic qualcomm exynos",
+            onCheckedChanged = { isChecked ->
+                settings.debugVideoLowLatency = isChecked
+                updateSettingsList()
+            }
+        ))
+
         // --- Input Settings ---
         items.add(SettingItem.CategoryHeader("input", R.string.category_input))
 
@@ -2048,20 +2063,6 @@ class SettingsFragment : Fragment() {
             }
         ))
 
-        // Applied immediately, like the two below it: the configure ladder falls back on its own if
-        // the decoder rejects the key, so there is nothing to confirm before trying it.
-        items.add(SettingItem.ToggleSettingEntry(
-            stableId = "debugVideoLowLatency",
-            nameResId = R.string.debug_video_low_latency,
-            descriptionResId = R.string.debug_video_low_latency_description,
-            isChecked = settings.debugVideoLowLatency,
-            searchKeywords = "low latency vendor key decoder mediatek amlogic qualcomm exynos",
-            onCheckedChanged = { isChecked ->
-                settings.debugVideoLowLatency = isChecked
-                updateSettingsList()
-            }
-        ))
-
         // Lets a well-provisioned rig run the constrained video pipeline, which is otherwise only
         // reachable on 1GB hardware we do not have. Applies on the next connection; the configure
         // line reports the profile and marks it FORCED.
@@ -2335,22 +2336,26 @@ class SettingsFragment : Fragment() {
                 } else if (LogExporter.isCapturing) {
                     LogExporter.stopCapture()
                 }
-                val logFile = LogExporter.saveLogToPublicFile(context, exporterLevel)
-                updateSettingsList()
+                // The export reads the logcat ring buffer, which on some ROMs waits on a consent
+                // dialog. Off the main thread so that wait cannot take the UI down with it.
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val logFile = LogExporter.saveLogToPublicFile(context, exporterLevel)
+                    updateSettingsList()
 
-                if (logFile != null) {
-                    MaterialAlertDialogBuilder(context, R.style.DarkAlertDialog)
-                        .setTitle(R.string.logs_exported)
-                        .setMessage(getString(R.string.log_saved_to, logFile.absolutePath))
-                        .setPositiveButton(R.string.share) { _, _ ->
-                            LogExporter.shareLogFile(context, logFile)
-                        }
-                        .setNegativeButton(R.string.close) { dialog, _ ->
-                            dialog.dismiss()
-                        }
-                        .show()
-                } else {
-                    Toast.makeText(context, getString(R.string.failed_export_logs), Toast.LENGTH_SHORT).show()
+                    if (logFile != null) {
+                        MaterialAlertDialogBuilder(context, R.style.DarkAlertDialog)
+                            .setTitle(R.string.logs_exported)
+                            .setMessage(getString(R.string.log_saved_to, logFile.absolutePath))
+                            .setPositiveButton(R.string.share) { _, _ ->
+                                LogExporter.shareLogFile(context, logFile)
+                            }
+                            .setNegativeButton(R.string.close) { dialog, _ ->
+                                dialog.dismiss()
+                            }
+                            .show()
+                    } else {
+                        Toast.makeText(context, getString(R.string.failed_export_logs), Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         ))

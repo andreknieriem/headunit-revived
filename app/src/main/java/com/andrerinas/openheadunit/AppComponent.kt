@@ -5,16 +5,20 @@ import android.content.Context
 import android.net.wifi.WifiManager
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.connection.carkey.CarKeysManager
-import com.andrerinas.openheadunit.decoder.AudioDecoder
-import com.andrerinas.openheadunit.decoder.DeviceMemoryProfile
-import com.andrerinas.openheadunit.decoder.VideoDecoder
+import com.andrerinas.openheadunit.decoder.audio.AudioDecoder
+import com.andrerinas.openheadunit.decoder.video.DeviceMemoryProfile
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import com.andrerinas.openheadunit.utils.SUExecutor
 import com.andrerinas.openheadunit.utils.Settings
 
 class AppComponent(private val app: App) {
 
     val settings = Settings(app)
-    val videoDecoder = VideoDecoder(settings, DeviceMemoryProfile.readWithOverride(app, settings.debugForceMemoryProfile))
+    // A function, not a reading: this decoder is a process singleton, so anything resolved here
+    // once would outlive every settings change the user makes.
+    val videoDecoder = VideoDecoder(settings) {
+        DeviceMemoryProfile.readWithOverride(app, settings.debugForceMemoryProfile)
+    }
     val audioDecoder = AudioDecoder()
 
     val notificationManager: NotificationManager

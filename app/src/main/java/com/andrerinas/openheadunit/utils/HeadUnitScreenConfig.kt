@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.util.DisplayMetrics
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
-import com.andrerinas.openheadunit.decoder.VideoDecoder
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import kotlin.math.roundToInt
 
 object HeadUnitScreenConfig {

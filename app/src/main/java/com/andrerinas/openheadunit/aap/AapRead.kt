@@ -4,10 +4,13 @@ import android.content.Context
 import android.os.SystemClock
 import com.andrerinas.openheadunit.connection.projection.ProjectionConnection
 import com.andrerinas.openheadunit.connection.projection.SocketProjectionConnection
-import com.andrerinas.openheadunit.decoder.MicRecorder
+import com.andrerinas.openheadunit.decoder.audio.MicRecorder
+import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
+import com.andrerinas.openheadunit.decoder.video.VideoFaultReporter
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.proto.MediaPlayback
+import com.andrerinas.openheadunit.utils.AuditReportPolicy
 import com.andrerinas.openheadunit.utils.Settings
 
 internal interface AapRead {

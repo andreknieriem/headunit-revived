@@ -4,13 +4,15 @@ import android.content.Context
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapMessage
 import com.andrerinas.openheadunit.aap.AapService
-import com.andrerinas.openheadunit.aap.KeyCode
+import com.andrerinas.openheadunit.aap.NarrowBandProfilePolicy
+import com.andrerinas.openheadunit.input.KeyCode
 import com.andrerinas.openheadunit.aap.protocol.AudioConfigs
 import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.aap.protocol.proto.Media
 import com.andrerinas.openheadunit.aap.protocol.proto.Sensors
-import com.andrerinas.openheadunit.decoder.VideoDecoder
+import com.andrerinas.openheadunit.connection.wifi.direct.WifiBandCapability
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.HeadUnitScreenConfig
 import com.google.protobuf.Message
@@ -51,14 +53,14 @@ class ServiceDiscoveryResponse(private val context: Context)
                                 settings.forceSoftwareDecoding &&
                                 when (settings.softwareVideoDecoder) {
                                     com.andrerinas.openheadunit.utils.Settings.SoftwareVideoDecoder.BUNDLED_FFMPEG ->
-                                        com.andrerinas.openheadunit.decoder.VideoDecoder.isBundledHevcDecoderAvailable()
+                                        com.andrerinas.openheadunit.decoder.video.VideoDecoder.isBundledHevcDecoderAvailable()
                                     com.andrerinas.openheadunit.utils.Settings.SoftwareVideoDecoder.DEVICE_MEDIACODEC ->
-                                        com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcDecoderAvailable(includeSoftware = true)
+                                        com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcDecoderAvailable(includeSoftware = true)
                                 }
                     val hevcAvailableForUserChoice =
-                        com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcSupported() || explicitSoftwareHevc
+                        com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcSupported() || explicitSoftwareHevc
                     val hevcAvailableForHighResolution =
-                        com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcReliable() || explicitSoftwareHevc
+                        com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcReliable() || explicitSoftwareHevc
 
                     val codecToRequest = when (settings.videoCodec) {
                         "H.265" -> if (hevcAvailableForUserChoice) {
@@ -71,7 +73,7 @@ class ServiceDiscoveryResponse(private val context: Context)
                             // otherwise prefer stable H.264
                             val negotiatedResolution = HeadUnitScreenConfig.negotiatedResolutionType
                             if (negotiatedResolution == Control.Service.MediaSinkService.VideoConfiguration.VideoCodecResolutionType._3840x2160 &&
-                                com.andrerinas.openheadunit.decoder.VideoDecoder.isHevcReliable()) {
+                                com.andrerinas.openheadunit.decoder.video.VideoDecoder.isHevcReliable()) {
                                 Media.MediaCodecType.MEDIA_CODEC_VIDEO_H265
                             } else {
                                 Media.MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP
@@ -102,6 +104,7 @@ class ServiceDiscoveryResponse(private val context: Context)
 
                     AppLog.i("[ServiceDiscovery] NegotiatedResolution is: ${HeadUnitScreenConfig.getNegotiatedWidth()}x${HeadUnitScreenConfig.getNegotiatedHeight()}")
                     logNegotiatedCodecCapability(effectiveCodec, settings)
+                    logNarrowBandProfile(context, settings)
                     AppLog.i("[ServiceDiscovery] Margins are: ${phoneWidthMargin}x${phoneHeightMargin}")
 
                     mediaSinkServiceBuilder.addVideoConfigs(Control.Service.MediaSinkService.VideoConfiguration.newBuilder().apply {
@@ -296,7 +299,7 @@ class ServiceDiscoveryResponse(private val context: Context)
             val width = HeadUnitScreenConfig.getNegotiatedWidth()
             val height = HeadUnitScreenConfig.getNegotiatedHeight()
             if (width <= 0 || height <= 0) return
-            val capability = com.andrerinas.openheadunit.decoder.DecoderCapabilityReport
+            val capability = com.andrerinas.openheadunit.decoder.video.DecoderCapabilityReport
                 .query(mime, width, height, settings.fpsLimit)
             if (capability == null) {
                 AppLog.i("[ServiceDiscovery] No decoder capability available for $mime at ${width}x$height")
@@ -310,6 +313,29 @@ class ServiceDiscoveryResponse(private val context: Context)
                         "Frames shed under load and the artifacts that follow are the expected consequence."
                 )
             }
+        }
+
+        /**
+         * Names the one case where the band and the frame rate we are about to ask for are known to
+         * be a bad pair. Says nothing on every other unit, and changes nothing on this one.
+         *
+         * Here rather than in `WifiDirectManager` because this is where the frame rate is decided,
+         * and the two halves of the advice have to be read together to mean anything.
+         */
+        private fun logNarrowBandProfile(context: Context, settings: com.andrerinas.openheadunit.utils.Settings) {
+            val advice = try {
+                NarrowBandProfilePolicy.advice(
+                    supports5Ghz = WifiBandCapability.supports5Ghz(context),
+                    fpsLimit = settings.fpsLimit,
+                    wirelessSession = App.provide(context).commManager.isWirelessSession,
+                )
+            } catch (e: Exception) {
+                // Service discovery must not fail over a diagnostic. A missing line is a missing
+                // line; a thrown one costs the session.
+                AppLog.d("[ServiceDiscovery] could not evaluate the band advice: ${e.message}")
+                null
+            }
+            advice?.let { AppLog.w("[ServiceDiscovery] $it") }
         }
 
         private fun makeSensorType(type: Sensors.SensorType): Control.Service.SensorSourceService.Sensor {

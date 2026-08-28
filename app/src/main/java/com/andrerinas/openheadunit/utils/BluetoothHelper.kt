@@ -8,7 +8,6 @@ import android.content.Context
 import android.os.Build
 import android.os.IBinder
 import com.andrerinas.openheadunit.App
-import com.andrerinas.openheadunit.aap.ExternalBtPolicy
 import java.lang.reflect.Constructor
 
 object BluetoothHelper {

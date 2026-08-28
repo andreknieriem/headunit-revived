@@ -4,7 +4,7 @@ import android.os.SystemClock
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.aap.AapService.Companion.scanningState
-import com.andrerinas.openheadunit.aap.UnresponsivePeerPolicy
+import com.andrerinas.openheadunit.connection.UnresponsivePeerPolicy
 import com.andrerinas.openheadunit.connection.wifi.direct.WifiDirectManager
 import com.andrerinas.openheadunit.connection.wifi.server.WirelessServer
 import com.andrerinas.openheadunit.connection.wifi.server.WirelessServerHistory

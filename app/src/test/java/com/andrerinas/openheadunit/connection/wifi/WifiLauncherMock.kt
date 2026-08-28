@@ -3,7 +3,7 @@ package com.andrerinas.openheadunit.connection.wifi
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherHelper
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherNative
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
-import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeStrategy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import org.mockito.kotlin.mock
 
 object WifiLauncherMock {

@@ -70,8 +70,19 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!--
+        Only requested up to API 32. From API 33 (Android 13) a granted READ_LOGS makes the app a
+        privileged logd reader, which routes every `logcat` spawn through LogcatManagerService: the
+        system log-access consent dialog when the app is foreground, a silent downgrade to own-UID
+        logs when it is a background service. Nothing (pm grant, a property, a setting) suppresses
+        that. Without the permission the app is an ordinary reader and logd serves its own UID's
+        lines - Java and native - immediately and with no dialog, which is what LogExporter needs.
+        Pre-13 there is no LogcatManagerService, so there the permission still buys system-wide
+        logs for free.
+    -->
     <uses-permission
         android:name="android.permission.READ_LOGS"
+        android:maxSdkVersion="32"
         tools:ignore="ProtectedPermissions" />
 
     <application

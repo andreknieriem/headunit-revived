@@ -2,7 +2,6 @@ package com.andrerinas.openheadunit.connection.wifi
 
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapService
-import com.andrerinas.openheadunit.aap.UsbSessionQuiescePolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
 

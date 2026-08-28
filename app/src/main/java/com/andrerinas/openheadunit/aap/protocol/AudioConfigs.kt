@@ -4,7 +4,7 @@ import android.media.AudioManager
 import android.util.SparseArray
 import com.andrerinas.openheadunit.aap.protocol.proto.Media
 
-import com.andrerinas.openheadunit.decoder.AudioDecoder
+import com.andrerinas.openheadunit.decoder.audio.AudioDecoder
 
 object AudioConfigs {
     private val audioTracks = SparseArray<Media.AudioConfiguration>(3)
