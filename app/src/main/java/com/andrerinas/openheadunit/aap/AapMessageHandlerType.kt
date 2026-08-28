@@ -2,7 +2,7 @@ package com.andrerinas.openheadunit.aap
 
 import android.content.Context
 import com.andrerinas.openheadunit.aap.protocol.Channel
-import com.andrerinas.openheadunit.decoder.MicRecorder
+import com.andrerinas.openheadunit.decoder.audio.MicRecorder
 import com.andrerinas.openheadunit.aap.protocol.proto.MediaPlayback
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
@@ -29,7 +29,7 @@ internal class AapMessageHandlerType(
         // See AapTransport.lastMessageReceivedMs for why that distinction matters. The channel goes
         // with it so the media channels can be measured apart from the link: this fault stops video
         // and audio while leaving control running, and the three are one series here.
-        transport.noteMessageReceived(message.channel)
+        transport.noteMessageReceived(message.channel, message.size)
 
         val msgType = message.type
         val flags = message.flags

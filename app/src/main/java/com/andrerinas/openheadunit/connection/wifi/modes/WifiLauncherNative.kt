@@ -3,9 +3,9 @@ package com.andrerinas.openheadunit.connection.wifi.modes
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.connection.wifi.direct.WifiDirectManager
-import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeAaHandshakeManager
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApCredentialsProvider
-import com.andrerinas.openheadunit.connection.wifi.modes.native.NativeStrategy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeAaHandshakeManager
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApCredentialsProvider
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncher
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode

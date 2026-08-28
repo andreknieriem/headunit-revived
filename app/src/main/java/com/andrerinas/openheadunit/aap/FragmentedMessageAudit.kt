@@ -7,7 +7,7 @@ package com.andrerinas.openheadunit.aap
  * readers have always read and thrown away - one into a field called `fragmentSizeBuffer`, the other
  * into one called `skipBuffer`. That number is the only cross-check the protocol offers, and without
  * it one corruption mode is completely invisible: a *middle* fragment that never arrives leaves the
- * run looking intact to [VideoFragmentAssembler] - a first, some middles, a last, in order - so the
+ * run looking intact to [com.andrerinas.openheadunit.decoder.video.VideoFragmentAssembler] - a first, some middles, a last, in order - so the
  * frame is assembled with a hole in it and handed to the decoder as though it were whole. There is
  * no log, no keyframe request, and nothing to see afterwards except a smeared picture.
  *
@@ -46,7 +46,7 @@ package com.andrerinas.openheadunit.aap
  * one channel says nothing about a run on another.
  *
  * Pure: no clock, no logging, no allocation on the healthy path. How often a report may be *printed*
- * is [AuditReportPolicy]'s decision, not this class's.
+ * is [com.andrerinas.openheadunit.utils.AuditReportPolicy]'s decision, not this class's.
  */
 class FragmentedMessageAudit(channelCount: Int = DEFAULT_CHANNEL_COUNT) {
 

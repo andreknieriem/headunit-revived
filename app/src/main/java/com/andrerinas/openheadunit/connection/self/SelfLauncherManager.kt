@@ -5,7 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapService
-import com.andrerinas.openheadunit.aap.DummyVpnPolicy
+import com.andrerinas.openheadunit.utils.DummyVpnPolicy
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherBTDiscovery
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherBroadcast
 import com.andrerinas.openheadunit.connection.self.launchers.SelfLauncherLegacy
@@ -24,6 +24,16 @@ class SelfLauncherManager(
 ) {
 
     var isActive: Boolean = false
+
+    /**
+     * True from the moment a launch is accepted until its launchers have finished running.
+     *
+     * Cleared by [clearLaunchInFlight] as well as by the launch itself, because this manager is a
+     * long-lived singleton that gets stopped and re-armed within one process, and a flag set in one
+     * direction only would strand Self Mode after any stop that landed mid-launch.
+     */
+    @Volatile
+    private var launchInFlight: Boolean = false
 
     /**
      * Takes down a Self Mode VPN whose phone never arrived.
@@ -87,7 +97,19 @@ class SelfLauncherManager(
     fun start() {
         val commManager = App.provide(service).commManager
 
+        // auto-start-self-mode and an explicit ACTION_START_SELF_MODE both land here, and running
+        // two launches at once costs a session rather than a retry. See SelfLaunchCoalescePolicy.
+        if (!SelfLaunchCoalescePolicy.shouldStart(launchInFlight, commManager.isConnected)) {
+            AppLog.i(
+                "SelfMode: a launch is already " +
+                    (if (commManager.isConnected) "connected" else "in flight") +
+                    "; ignoring this request rather than starting a second one"
+            )
+            return
+        }
+
         isActive = true
+        launchInFlight = true
         adoptDummyVpn()
 
         service.serviceScope.launch(Dispatchers.Main) {
@@ -95,14 +117,18 @@ class SelfLauncherManager(
             val services = SelfLauncherServices(service, wifiLauncherManager)
             val launchers: Array<SelfLauncher>
 
+            val path: SelfLaunchPath
+
             if (isAaVersion174OrHigher()) {
                 AppLog.i("SelfMode: AA 17.4+ detected. Connecting directly to Headunit Server on 127.0.0.1:5277...")
+                path = SelfLaunchPath.HEADUNIT_SERVER
                 launchers = arrayOf(
                     SelfLauncherV17_4(this@SelfLauncherManager, services)
                 )
 
             } else {
                 AppLog.i("SelfMode: AA < 17.4 detected. Starting WirelessServer on 5288 and running legacy triggers...")
+                path = SelfLaunchPath.LEGACY
                 launchers = arrayOf(
                     SelfLauncherLegacy(this@SelfLauncherManager, services),
                     SelfLauncherBroadcast(this@SelfLauncherManager, services), // fallback #1
@@ -113,34 +139,54 @@ class SelfLauncherManager(
             // run them
             var anySucceeded = false
 
-            for (launcher in launchers) {
-                try {
-                    if (!launcher.run())
-                        AppLog.w("SelfMode: Launch of '${launcher.name}' failed")
-                    else {
-                        AppLog.w("SelfMode: Launch of '${launcher.name}' had no issues")
-                        anySucceeded = true
-                        break
+            try {
+                for (launcher in launchers) {
+                    try {
+                        if (!launcher.run())
+                            AppLog.w("SelfMode: Launch of '${launcher.name}' failed")
+                        else {
+                            AppLog.w("SelfMode: Launch of '${launcher.name}' had no issues")
+                            anySucceeded = true
+                            break
+                        }
+                    } catch (e: Exception) {
+                        AppLog.w("SelfMode: Launch of '${launcher.name}' had caused an error", e)
                     }
-                } catch (e: Exception) {
-                    AppLog.w("SelfMode: Launch of '${launcher.name}' had caused an error", e)
                 }
+            } finally {
+                // The launchers have had their turn; what follows is waiting for the phone, which
+                // another request is entitled to retry.
+                launchInFlight = false
             }
 
             // all failed :(
             if (!anySucceeded) {
                 AppLog.e("SelfMode: All launchers failed")
-                commManager.emitError("No launch method succeeded") // hide "connecting" overlay
+                if (SelfLaunchCoalescePolicy.mayReportAllLaunchersFailed(commManager.isConnected)) {
+                    commManager.emitError("No launch method succeeded") // hide "connecting" overlay
+                } else {
+                    // emitError disconnects, and the session that is up is not this attempt's to
+                    // end. Measured on the 17.4+ route, where a duplicate launch's failure killed
+                    // the socket the other one had just connected.
+                    AppLog.w("SelfMode: launchers failed but a session is connected; leaving it alone")
+                }
                 return@launch
             }
 
-            // run a timer to make sure it actually succeeded
+            // Report a launch that has not connected yet, without taking anything down: the
+            // wireless server and the dummy VPN are what the phone still has to arrive on. See
+            // SelfLaunchTimeoutPolicy.
+            val deadlineMs = SelfLaunchTimeoutPolicy.deadlineMs(path)
             service.serviceScope.launch {
-                delay(2500L)
+                delay(deadlineMs)
 
                 if (!commManager.isConnected && isActive) {
-                    AppLog.e("SelfMode: All launchers failed (timeout)")
-                    commManager.emitError("No launch method succeeded (timeout") // hide "connecting" overlay
+                    AppLog.e("SelfMode: nothing connected within ${deadlineMs}ms of the launch")
+                    if (SelfLaunchTimeoutPolicy.mayDisconnect(path)) {
+                        commManager.emitError("No launch method succeeded (timeout)")
+                    } else {
+                        commManager.reportError("No launch method succeeded (timeout)")
+                    }
 
                     handleNeverConnect()
                 }
@@ -170,6 +216,14 @@ class SelfLauncherManager(
                 service.stopDummyVpn(DummyVpnPolicy.Reason.SELF_MODE_NEVER_CONNECTED)
             }
         }
+    }
+
+    /**
+     * Lets go of a launch this manager will never finish, so a later request is not refused by a
+     * flag left set by a stop that landed mid-launch.
+     */
+    fun clearLaunchInFlight() {
+        launchInFlight = false
     }
 
     fun stopDummyVpnWatchdog() {

@@ -18,13 +18,18 @@ import com.andrerinas.openheadunit.aap.protocol.messages.Messages
 import com.andrerinas.openheadunit.aap.protocol.messages.ScrollWheelEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.SensorEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent
+import com.andrerinas.openheadunit.decoder.video.FocusCycleLever
+import com.andrerinas.openheadunit.decoder.video.KeyframeCycleEscalationPolicy
+import com.andrerinas.openheadunit.decoder.video.WarmRelaunchKeyframePolicy
+import com.andrerinas.openheadunit.input.KeyCode
+import com.andrerinas.openheadunit.utils.AuditReportPolicy
 import com.andrerinas.openheadunit.utils.LegacyOptimizer
 import com.andrerinas.openheadunit.connection.projection.ProjectionConnection
 import com.andrerinas.openheadunit.connection.projection.SocketProjectionConnection
 import com.andrerinas.openheadunit.contract.ProjectionActivityRequest
-import com.andrerinas.openheadunit.decoder.AudioDecoder
-import com.andrerinas.openheadunit.decoder.MicRecorder
-import com.andrerinas.openheadunit.decoder.VideoDecoder
+import com.andrerinas.openheadunit.decoder.audio.AudioDecoder
+import com.andrerinas.openheadunit.decoder.audio.MicRecorder
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import com.andrerinas.openheadunit.main.BackgroundNotification
 import com.andrerinas.openheadunit.ssl.SingleKeyKeyManager
 import com.andrerinas.openheadunit.utils.AppLog
@@ -201,11 +206,26 @@ class AapTransport(
     /** Whether our own writes are draining. See [UplinkStallMonitor]. */
     private val uplinkStallMonitor = UplinkStallMonitor()
 
-    /** Called for every decrypted inbound message, from [AapMessageHandlerType.handle]. */
-    internal fun noteMessageReceived(channel: Int) {
+    /**
+     * How much actually arrives, which the three gap series above cannot say.
+     *
+     * A picture that sags without going quiet leaves every gap monitor silent, and a gap that is
+     * named still does not say whether the link was full or the phone was holding back. See
+     * [InboundRateMonitor].
+     */
+    private val inboundRateMonitor = InboundRateMonitor()
+
+    /**
+     * Called for every decrypted inbound message, from [AapMessageHandlerType.handle].
+     *
+     * [bytes] is the message payload. It is passed rather than derived here because this is a
+     * funnel and the message is not: everything upstream already knows the size.
+     */
+    internal fun noteMessageReceived(channel: Int, bytes: Int) {
         val now = SystemClock.elapsedRealtime()
         lastMessageReceivedMs = now
         linkGapMonitor.onMessage(now)?.let { AppLog.i("AapTransport: %s", it) }
+        inboundRateMonitor.onMessage(channel, bytes, now)?.let { AppLog.i("AapTransport: %s", it) }
         when {
             channel == Channel.ID_VID ->
                 videoGapMonitor.onMessage(now)?.let { AppLog.i("AapTransport: %s", it) }
@@ -633,6 +653,7 @@ class AapTransport(
         videoGapMonitor.reset()
         audioGapMonitor.reset()
         uplinkStallMonitor.reset()
+        inboundRateMonitor.reset()
 
         sendThread = HandlerThread("AapTransport:Handler::Send", Process.THREAD_PRIORITY_AUDIO)
         sendThread!!.start()
@@ -774,10 +795,11 @@ class AapTransport(
                     lastHandshakeFailure = HandshakeFailure.PEER_SILENT
                     AppLog.e(
                         "Handshake: the peer accepted the connection and then sent nothing at all. " +
-                            "Our link is fine — every read timed out rather than failing. On the WiFi " +
-                            "head unit server path this means Android Auto's server on the phone is " +
-                            "still bound to an earlier connection; it does not recover on its own and " +
-                            "has to be stopped and started again in Android Auto's developer settings."
+                            "Our link is fine: every read timed out rather than failing. On the head " +
+                            "unit server path this is Android Auto's own side. It hands each accepted " +
+                            "connection to its car service and waits there with no timeout, so " +
+                            "restarting the server does not clear it. Force stop Android Auto on the " +
+                            "phone, and reboot it if that does not help."
                     )
                 }
                 return false

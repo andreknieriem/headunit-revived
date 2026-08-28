@@ -14,7 +14,7 @@ import com.andrerinas.openheadunit.aap.protocol.Channel
  * ### Why only DELTA_CHANGED
  *
  * A run whose fragment count cannot explain its own byte delta is missing a fragment, and a *middle*
- * fragment going missing is invisible everywhere else: [VideoFragmentAssembler] still sees a first,
+ * fragment going missing is invisible everywhere else: [com.andrerinas.openheadunit.decoder.video.VideoFragmentAssembler] still sees a first,
  * some middles and a last in order, so it assembles the frame and hands the decoder a hole. This is
  * the only outcome with no second reporter.
  *
@@ -22,10 +22,10 @@ import com.andrerinas.openheadunit.aap.protocol.Channel
  *
  * - [FragmentedMessageAudit.Outcome.TRUNCATED_RUN] and
  *   [FragmentedMessageAudit.Outcome.ORPHANED_FRAGMENT] are already seen downstream as
- *   [VideoFragmentAssembler.Anomaly.TRUNCATED_PREVIOUS] and
- *   [VideoFragmentAssembler.Anomaly.ORPHANED_FRAGMENT], which already ask. Asking here too would
+ *   [com.andrerinas.openheadunit.decoder.video.VideoFragmentAssembler.Anomaly.TRUNCATED_PREVIOUS] and
+ *   [com.andrerinas.openheadunit.decoder.video.VideoFragmentAssembler.Anomaly.ORPHANED_FRAGMENT], which already ask. Asking here too would
  *   double-ask for one fault - and, since the ask is also what stamps the corruption clock
- *   [KeyframeCycleEscalationPolicy] reads, would make one lost fragment look like a wire that is
+ *   [com.andrerinas.openheadunit.decoder.video.KeyframeCycleEscalationPolicy] reads, would make one lost fragment look like a wire that is
  *   still breaking.
  * - [FragmentedMessageAudit.Outcome.FIRST_OBSERVATION] is the baseline the channel's convention is
  *   learned from. It is not a fault and fires once per channel per session.
@@ -35,7 +35,7 @@ import com.andrerinas.openheadunit.aap.protocol.Channel
  * The audit runs per channel, and a holed run on `MUSIC_PLAYBACK` is real but a video keyframe
  * cannot repair it. There is no equivalent ask for audio in the protocol.
  *
- * Pure: no clock, no logging. Throttling the ask stays with [VideoRecoveryPolicy], which every other
+ * Pure: no clock, no logging. Throttling the ask stays with [com.andrerinas.openheadunit.decoder.video.VideoRecoveryPolicy], which every other
  * keyframe request in the app is already held to.
  */
 object AuditRecoveryPolicy {

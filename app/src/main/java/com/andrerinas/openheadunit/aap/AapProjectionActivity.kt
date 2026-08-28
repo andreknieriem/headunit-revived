@@ -31,11 +31,14 @@ import com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent
 import com.andrerinas.openheadunit.app.SurfaceActivity
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.contract.KeyIntent
+import com.andrerinas.openheadunit.decoder.video.WarmRelaunchKeyframePolicy
+import com.andrerinas.openheadunit.input.ProjectionKeyPolicy
+import com.andrerinas.openheadunit.input.TouchCoordinateMapper
 import kotlinx.coroutines.launch
-import com.andrerinas.openheadunit.decoder.DecoderStopPolicy
-import com.andrerinas.openheadunit.decoder.SoftwareYuvFrameSink
-import com.andrerinas.openheadunit.decoder.VideoDecoder
-import com.andrerinas.openheadunit.decoder.VideoDimensionsListener
+import com.andrerinas.openheadunit.decoder.video.DecoderStopPolicy
+import com.andrerinas.openheadunit.decoder.video.SoftwareYuvFrameSink
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
+import com.andrerinas.openheadunit.decoder.video.VideoDimensionsListener
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.IntentFilters
 import com.andrerinas.openheadunit.view.IProjectionView
@@ -191,7 +194,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                 )
                 showReconnectingOverlay()
             } else if (overlayState == OverlayState.RECONNECTING && gap < 2000) {
-                hideReconnectingOverlay()
+                hideReconnectingOverlay("frames resumed")
             } else {
                 if (!pictureStopped) {
                     lastIdleReportMs = 0L
@@ -378,7 +381,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     private val exitRunnable = Runnable {
         if (commManager.connectionState.value is CommManager.ConnectionState.Disconnected) {
             AppLog.i("AapProjectionActivity: Reconnect timed out (20s). Finishing activity.")
-            hideReconnectingOverlay()
+            hideReconnectingOverlay("reconnect timed out")
             finish()
         }
     }
@@ -823,7 +826,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                             // Only finish immediately if the user explicitly exited, it was a clean close, or killOnDisconnect is enabled.
                             if (state.isUserExit || state.isClean || settings.killOnDisconnect) {
                                 AppLog.i("AapProjectionActivity: Finishing because state isUserExit=${state.isUserExit}, isClean=${state.isClean}, killOnDisconnect=${settings.killOnDisconnect}")
-                                hideReconnectingOverlay()
+                                hideReconnectingOverlay("the session ended")
                                 finish()
                             } else {
                                 // For unexpected disconnects (especially Wireless), show the reconnecting overlay immediately
@@ -835,7 +838,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
                                 // Re-initialize the first frame listener to hide the reconnecting overlay when video starts flowing
                                 videoDecoder.onFirstFrameListener = {
                                     runOnUiThread {
-                                        hideReconnectingOverlay()
+                                        hideReconnectingOverlay("frames resumed")
                                     }
                                 }
 
@@ -852,6 +855,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
                             // Lock the resolution so that orientation changes don't cause re-negotiation
                             HeadUnitScreenConfig.lockResolution()
+                            applyOrientationSettings()
 
                             // Handshake done. If the surface is already ready (e.g. reconnect
                             // while the activity is in the foreground), start reading immediately.
@@ -1056,8 +1060,13 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         button?.visibility = View.VISIBLE
     }
 
-    private fun hideReconnectingOverlay() {
-        AppLog.i("Hiding reconnecting overlay — frames resumed")
+    /**
+     * [reason] is the caller's, not this method's. Two of the four callers are teardown paths, and
+     * with the reason hard-coded both of them logged that frames had resumed on a session that was
+     * ending - which is exactly the kind of line these logs get read literally for.
+     */
+    private fun hideReconnectingOverlay(reason: String) {
+        AppLog.i("Hiding reconnecting overlay - $reason")
         overlayState = OverlayState.HIDDEN
         val overlay = findViewById<View>(R.id.loading_overlay) ?: return
         val detail = findViewById<TextView>(R.id.overlay_detail)
@@ -1549,10 +1558,26 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         if (HeadUnitScreenConfig.updateSurfaceDimensions(width, height)) {
             AppLog.i("[UI_DEBUG_FIX] Surface mismatch! Expected: ${prevUsableW}x${prevUsableH}, Actual: ${width}x${height}")
 
-            // Cache the real surface size for next session
-            settings.cachedSurfaceWidth = width
-            settings.cachedSurfaceHeight = height
-            settings.cachedSurfaceSettingsHash = HeadUnitScreenConfig.computeSettingsHash(settings)
+            // Cache the real surface size for next session only if orientation matches expected setting
+            val isTargetLandscape = settings.screenOrientation == Settings.ScreenOrientation.LANDSCAPE ||
+                settings.screenOrientation == Settings.ScreenOrientation.LANDSCAPE_REVERSE
+            val isTargetPortrait = settings.screenOrientation == Settings.ScreenOrientation.PORTRAIT ||
+                settings.screenOrientation == Settings.ScreenOrientation.PORTRAIT_REVERSE
+            val surfaceIsLandscape = width >= height
+
+            val shouldCache = when {
+                isTargetLandscape -> surfaceIsLandscape
+                isTargetPortrait -> !surfaceIsLandscape
+                else -> true
+            }
+
+            if (shouldCache) {
+                settings.cachedSurfaceWidth = HeadUnitScreenConfig.getUsableWidth()
+                settings.cachedSurfaceHeight = HeadUnitScreenConfig.getUsableHeight()
+                settings.cachedSurfaceSettingsHash = HeadUnitScreenConfig.computeSettingsHash(settings)
+            } else {
+                AppLog.i("[UI_DEBUG_FIX] Skipping surface dimension cache update due to transient orientation mismatch: ${width}x${height}")
+            }
 
             if (commManager.connectionState.value is CommManager.ConnectionState.TransportStarted) {
                 // AA is already running → send corrected per-side margins dynamically
@@ -1839,17 +1864,21 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             return aapIntent
         }
     }
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        AppLog.i("[AapProjectionActivity] onConfigurationChanged: orientation=${newConfig.orientation}")
+        if (!HeadUnitScreenConfig.isResolutionLocked) {
+            HeadUnitScreenConfig.init(this, resources.displayMetrics, settings)
+        }
+    }
+
     private fun applyOrientationSettings() {
         val screenOrientation = settings.screenOrientation
         if (screenOrientation == Settings.ScreenOrientation.AUTO) {
             applyStickyOrientation()
             if (!HeadUnitScreenConfig.isResolutionLocked) {
-                // Initial start: lock to current orientation at launch
-                if (Build.VERSION.SDK_INT >= 18) {
-                    requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LOCKED
-                } else {
-                    requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_NOSENSOR
-                }
+                // Before resolution is locked, allow sensor to orient the activity
+                requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR
             }
         } else {
             requestedOrientation = screenOrientation.androidOrientation

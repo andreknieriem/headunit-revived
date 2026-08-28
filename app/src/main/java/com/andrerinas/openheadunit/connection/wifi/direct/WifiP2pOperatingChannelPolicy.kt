@@ -1,11 +1,10 @@
 package com.andrerinas.openheadunit.connection.wifi.direct
 
-import com.andrerinas.openheadunit.aap.P2pBandPreference
 
 /**
  * Which operating channel to ask the P2P stack for, on the devices that have no band API.
  *
- * [com.andrerinas.openheadunit.aap.NativeGroupBandPolicy] asks for a *band*, and that request only exists from API 29
+ * [com.andrerinas.openheadunit.connection.wifi.direct.NativeGroupBandPolicy] asks for a *band*, and that request only exists from API 29
  * (`WifiP2pConfig.Builder.setGroupOperatingBand`). Below it the app calls the no-argument
  * `createGroup` and the driver picks unaided, which is what every pre-Android-10 head unit in the
  * reports has been doing: `Standard createGroup SUCCESS!`, then `Freq: 0 MHz (unknown)`, with the
@@ -68,7 +67,7 @@ object WifiP2pOperatingChannelPolicy {
      * True when asking for an operating channel is the only way to influence the band.
      *
      * From API 29 the band request is a supported call with a supported fallback, and it is what
-     * [com.andrerinas.openheadunit.aap.NativeGroupBandPolicy] already drives; reaching for a hidden method there would be trading a
+     * [com.andrerinas.openheadunit.connection.wifi.direct.NativeGroupBandPolicy] already drives; reaching for a hidden method there would be trading a
      * guarantee for a reflection.
      */
     fun appliesTo(sdkInt: Int): Boolean = sdkInt < FIRST_API_WITH_BAND_REQUEST
@@ -92,16 +91,26 @@ object WifiP2pOperatingChannelPolicy {
      *   a guarantee for a reflection.
      * @param preference the user's band choice.
      * @param useUpperBand ask for UNII-3 instead of UNII-1 on the 5 GHz rung.
+     * @param supports5Ghz [WifiBandCapability.supports5Ghz], where null means the platform would not
+     *   say. Only `false` drops a rung, and only under [P2pBandPreference.AUTO]: a `true` describes
+     *   the station side and does not promise a group owner can be hosted there, so the ladder keeps
+     *   its own fallback rather than trusting it. A user who asked for 5 GHz still gets the request
+     *   made - the setting exists for a driver that surprises this call.
      */
     fun attemptChannels(
         sdkInt: Int,
         preference: P2pBandPreference,
-        useUpperBand: Boolean = false
+        useUpperBand: Boolean = false,
+        supports5Ghz: Boolean? = null
     ): List<Int> {
         if (!appliesTo(sdkInt)) return emptyList()
         val fiveGhz = if (useUpperBand) CHANNEL_UPPER else CHANNEL_LOWER
         return when (preference) {
-            P2pBandPreference.AUTO -> listOf(fiveGhz, CHANNEL_24_GHZ)
+            // Spending the 5 GHz rung on a radio with no 5 GHz band costs a whole bring-up: the
+            // request is a disallowed-frequency list, so the group is not formed on the other band,
+            // it is not formed at all, and the ladder only advances on that failure.
+            P2pBandPreference.AUTO ->
+                if (supports5Ghz == false) listOf(CHANNEL_24_GHZ) else listOf(fiveGhz, CHANNEL_24_GHZ)
             P2pBandPreference.FORCE_5GHZ -> listOf(fiveGhz)
             P2pBandPreference.FORCE_2_4GHZ -> listOf(CHANNEL_24_GHZ)
         }

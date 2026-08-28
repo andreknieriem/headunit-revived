@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.util.DisplayMetrics
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
-import com.andrerinas.openheadunit.decoder.VideoDecoder
+import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import kotlin.math.roundToInt
 
 object HeadUnitScreenConfig {
@@ -87,14 +87,20 @@ object HeadUnitScreenConfig {
         val finalUsableH: Int
 
         val screenOrientation = settings.screenOrientation
+        val configOrientation = context.resources.configuration.orientation
+        val isConfigLandscape = configOrientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+        val isConfigPortrait = configOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+
         if (screenOrientation == Settings.ScreenOrientation.LANDSCAPE || 
-            screenOrientation == Settings.ScreenOrientation.LANDSCAPE_REVERSE) {
+            screenOrientation == Settings.ScreenOrientation.LANDSCAPE_REVERSE ||
+            ((screenOrientation == Settings.ScreenOrientation.AUTO || screenOrientation == Settings.ScreenOrientation.SYSTEM) && isConfigLandscape)) {
             finalRealW = Math.max(realW, realH)
             finalRealH = Math.min(realW, realH)
             finalUsableW = Math.max(usableW, usableH)
             finalUsableH = Math.min(usableW, usableH)
         } else if (screenOrientation == Settings.ScreenOrientation.PORTRAIT || 
-                   screenOrientation == Settings.ScreenOrientation.PORTRAIT_REVERSE) {
+                   screenOrientation == Settings.ScreenOrientation.PORTRAIT_REVERSE ||
+                   ((screenOrientation == Settings.ScreenOrientation.AUTO || screenOrientation == Settings.ScreenOrientation.SYSTEM) && isConfigPortrait)) {
             finalRealW = Math.min(realW, realH)
             finalRealH = Math.max(realW, realH)
             finalUsableW = Math.min(usableW, usableH)
@@ -106,7 +112,7 @@ object HeadUnitScreenConfig {
             finalUsableH = usableH
         }
 
-        AppLog.i("[UI_DEBUG] HeadUnitScreenConfig: Raw size: ${realW}x${realH}, usable: ${usableW}x${usableH}, orientation setting: $screenOrientation")
+        AppLog.i("[UI_DEBUG] HeadUnitScreenConfig: Raw size: ${realW}x${realH}, usable: ${usableW}x${usableH}, orientation setting: $screenOrientation, configOrientation: $configOrientation")
         AppLog.i("[UI_DEBUG] HeadUnitScreenConfig: Final normalized size: ${finalRealW}x${finalRealH}, usable: ${finalUsableW}x${finalUsableH}")
 
         // Only update if dimensions or settings changed
@@ -153,10 +159,27 @@ object HeadUnitScreenConfig {
         val cachedHash = settings.cachedSurfaceSettingsHash
 
         if (cachedW > 0 && cachedH > 0 && cachedHash == currentHash) {
+            val normalizedCachedW: Int
+            val normalizedCachedH: Int
+            if (screenOrientation == Settings.ScreenOrientation.LANDSCAPE ||
+                screenOrientation == Settings.ScreenOrientation.LANDSCAPE_REVERSE ||
+                ((screenOrientation == Settings.ScreenOrientation.AUTO || screenOrientation == Settings.ScreenOrientation.SYSTEM) && isConfigLandscape)) {
+                normalizedCachedW = Math.max(cachedW, cachedH)
+                normalizedCachedH = Math.min(cachedW, cachedH)
+            } else if (screenOrientation == Settings.ScreenOrientation.PORTRAIT ||
+                       screenOrientation == Settings.ScreenOrientation.PORTRAIT_REVERSE ||
+                       ((screenOrientation == Settings.ScreenOrientation.AUTO || screenOrientation == Settings.ScreenOrientation.SYSTEM) && isConfigPortrait)) {
+                normalizedCachedW = Math.min(cachedW, cachedH)
+                normalizedCachedH = Math.max(cachedW, cachedH)
+            } else {
+                normalizedCachedW = cachedW
+                normalizedCachedH = cachedH
+            }
+
             // Cached surface dimensions are the usable area. The anchor includes insets.
-            realScreenWidthPx = cachedW + systemInsetLeft + systemInsetRight
-            realScreenHeightPx = cachedH + systemInsetTop + systemInsetBottom
-            AppLog.i("[UI_DEBUG_FIX] HeadUnitScreenConfig: Using cached surface dimensions: ${cachedW}x${cachedH} (anchor: ${realScreenWidthPx}x${realScreenHeightPx})")
+            realScreenWidthPx = normalizedCachedW + systemInsetLeft + systemInsetRight
+            realScreenHeightPx = normalizedCachedH + systemInsetTop + systemInsetBottom
+            AppLog.i("[UI_DEBUG_FIX] HeadUnitScreenConfig: Using cached surface dimensions: ${normalizedCachedW}x${normalizedCachedH} (raw: ${cachedW}x${cachedH}, anchor: ${realScreenWidthPx}x${realScreenHeightPx})")
         } else {
             realScreenWidthPx = defaultAnchorW
             realScreenHeightPx = defaultAnchorH

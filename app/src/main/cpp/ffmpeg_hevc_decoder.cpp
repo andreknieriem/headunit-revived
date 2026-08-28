@@ -437,7 +437,7 @@ private:
 } // namespace
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_andrerinas_openheadunit_decoder_FfmpegHevcDecoder_00024Companion_nativeIsAvailable(
+Java_com_andrerinas_openheadunit_decoder_video_FfmpegHevcDecoder_00024Companion_nativeIsAvailable(
     JNIEnv*, jobject) {
 #if HUR_HAVE_FFMPEG
     return avcodec_find_decoder_by_name("hevc") != nullptr ||
@@ -448,7 +448,7 @@ Java_com_andrerinas_openheadunit_decoder_FfmpegHevcDecoder_00024Companion_native
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_andrerinas_openheadunit_decoder_FfmpegHevcDecoder_00024Companion_nativeCreate(
+Java_com_andrerinas_openheadunit_decoder_video_FfmpegHevcDecoder_00024Companion_nativeCreate(
     JNIEnv* env, jobject, jobject surface, jobject callback, jboolean useYuvCallback, jint width, jint height, jint threadCount) {
 #if HUR_HAVE_FFMPEG
     ANativeWindow* window = nullptr;
@@ -484,7 +484,7 @@ Java_com_andrerinas_openheadunit_decoder_FfmpegHevcDecoder_00024Companion_native
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_andrerinas_openheadunit_decoder_FfmpegHevcDecoder_00024Companion_nativeDecode(
+Java_com_andrerinas_openheadunit_decoder_video_FfmpegHevcDecoder_00024Companion_nativeDecode(
     JNIEnv* env, jobject, jlong handle, jbyteArray buffer, jint offset, jint size, jlong presentationTimeUs) {
 #if HUR_HAVE_FFMPEG
     auto* decoder = reinterpret_cast<HevcDecoder*>(handle);
@@ -502,7 +502,7 @@ Java_com_andrerinas_openheadunit_decoder_FfmpegHevcDecoder_00024Companion_native
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_andrerinas_openheadunit_decoder_FfmpegHevcDecoder_00024Companion_nativeRelease(
+Java_com_andrerinas_openheadunit_decoder_video_FfmpegHevcDecoder_00024Companion_nativeRelease(
     JNIEnv* env, jobject, jlong handle) {
 #if HUR_HAVE_FFMPEG
     auto* decoder = reinterpret_cast<HevcDecoder*>(handle);

@@ -16,6 +16,7 @@ import java.io.OutputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -29,6 +30,9 @@ class SocketProjectionConnection(
     private var output: OutputStream? = null
     private var input: DataInputStream? = null
     private var transport: Socket
+    // Socket#isConnected might return true, even if server has closed the connection
+    // Only way to capture it is to check for exceptions, E.g. "SocketException: Broken pipe"
+    private var transportBroken: Boolean = false
     // Only true for genuine Nearby tunnels, where the handshake's AA-16.4+ settle delay
     // and stale-byte drain must be skipped because every byte from the start matters.
     // Regular WirelessServer-accepted sockets (Hotspot/WiFi Direct/Headunit Server) and
@@ -57,7 +61,7 @@ class SocketProjectionConnection(
     override val type = ProjectionConnection.Type.WIFI
 
     override val isConnected: Boolean
-        get() = transport.isConnected
+        get() = transport.isConnected && !transportBroken
 
     override val isSingleMessage: Boolean
         get() = singleMessage
@@ -65,99 +69,104 @@ class SocketProjectionConnection(
     override suspend fun connect(): Boolean = withContext(Dispatchers.IO) {
         try {
             if (!transport.isConnected) {
-                val cm =
-                    context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                // Loopback never leaves the device, so there is no interface to choose for it,
+                // and the search below is not free: with no WiFi present it waits out its full
+                // timeout on every attempt. See LoopbackBindPolicy.
+                if (LoopbackBindPolicy.needsNetworkBinding(ip)) {
+                    val cm =
+                        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    var netToBind: Network? = null
-                    try {
-                        var wifiNetwork: Network? = null
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        var netToBind: Network? = null
+                        try {
+                            var wifiNetwork: Network? = null
 
-                        // 1. Try synchronous scan of existing networks first (instant and reliable if connected)
-                        val networks = cm.allNetworks
-                        for (net in networks) {
-                            val caps = cm.getNetworkCapabilities(net)
-                            if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                                wifiNetwork = net
-                                AppLog.i("Found active WiFi/P2P network via synchronous scan: $net")
-                                break
-                            }
-                        }
-
-                        // 2. Fallback to callback if not found synchronously (with increased 1500ms timeout)
-                        if (wifiNetwork == null) {
-                            val request = NetworkRequest.Builder()
-                                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                                .build()
-                            val latch = CountDownLatch(1)
-                            val callback = object : ConnectivityManager.NetworkCallback() {
-                                override fun onAvailable(network: Network) {
-                                    wifiNetwork = network
-                                    latch.countDown()
+                            // 1. Try synchronous scan of existing networks first (instant and reliable if connected)
+                            val networks = cm.allNetworks
+                            for (net in networks) {
+                                val caps = cm.getNetworkCapabilities(net)
+                                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                                    wifiNetwork = net
+                                    AppLog.i("Found active WiFi/P2P network via synchronous scan: $net")
+                                    break
                                 }
                             }
-                            try {
-                                cm.registerNetworkCallback(request, callback)
-                                latch.await(1500, TimeUnit.MILLISECONDS)
-                            } finally {
+
+                            // 2. Fallback to callback if not found synchronously (with increased 1500ms timeout)
+                            if (wifiNetwork == null) {
+                                val request = NetworkRequest.Builder()
+                                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                                    .build()
+                                val latch = CountDownLatch(1)
+                                val callback = object : ConnectivityManager.NetworkCallback() {
+                                    override fun onAvailable(network: Network) {
+                                        wifiNetwork = network
+                                        latch.countDown()
+                                    }
+                                }
                                 try {
-                                    cm.unregisterNetworkCallback(callback)
-                                } catch (_: Exception) {
+                                    cm.registerNetworkCallback(request, callback)
+                                    latch.await(1500, TimeUnit.MILLISECONDS)
+                                } finally {
+                                    try {
+                                        cm.unregisterNetworkCallback(callback)
+                                    } catch (_: Exception) {
+                                    }
                                 }
                             }
-                        }
 
-                        if (wifiNetwork != null) {
-                            netToBind = wifiNetwork
-                            AppLog.i("Found active WiFi/P2P network for binding: $wifiNetwork")
-                        } else {
-                            val activeNet = cm.activeNetwork
-                            if (activeNet != null) {
-                                val caps = cm.getNetworkCapabilities(activeNet)
-                                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                                    AppLog.i("Active network is cellular. Skipping binding to prevent EHOSTUNREACH.")
-                                } else {
-                                    netToBind = activeNet
-                                    AppLog.i("Active network is not cellular: $activeNet. Using for binding.")
+                            if (wifiNetwork != null) {
+                                netToBind = wifiNetwork
+                                AppLog.i("Found active WiFi/P2P network for binding: $wifiNetwork")
+                            } else {
+                                val activeNet = cm.activeNetwork
+                                if (activeNet != null) {
+                                    val caps = cm.getNetworkCapabilities(activeNet)
+                                    if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                                        AppLog.i("Active network is cellular. Skipping binding to prevent EHOSTUNREACH.")
+                                    } else {
+                                        netToBind = activeNet
+                                        AppLog.i("Active network is not cellular: $activeNet. Using for binding.")
+                                    }
                                 }
                             }
+                        } catch (e: Exception) {
+                            AppLog.w("Error scanning networks for binding", e)
+                            // Fallback to active network on failure
+                            netToBind = cm.activeNetwork
                         }
-                    } catch (e: Exception) {
-                        AppLog.w("Error scanning networks for binding", e)
-                        // Fallback to active network on failure
-                        netToBind = cm.activeNetwork
-                    }
 
-                    if (netToBind != null) {
-                        try {
-                            netToBind.bindSocket(transport)
-                            AppLog.i("Bound socket to network: $netToBind")
-                        } catch (e: Exception) {
-                            AppLog.w("Failed to bind socket to network $netToBind", e)
+                        if (netToBind != null) {
+                            try {
+                                netToBind.bindSocket(transport)
+                                AppLog.i("Bound socket to network: $netToBind")
+                            } catch (e: Exception) {
+                                AppLog.w("Failed to bind socket to network $netToBind", e)
+                            }
                         }
-                    }
-                } else {
-                    // Legacy API < 23 (Lollipop & KitKat & JB)
-                    @Suppress("DEPRECATION")
-                    if (cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)?.isConnected == true) {
-                        try {
-                            val addr = InetAddress.getByName(ip)
-                            val b = addr.address
-                            val ipInt = ((b[3].toInt() and 0xFF) shl 24) or
-                                ((b[2].toInt() and 0xFF) shl 16) or
-                                ((b[1].toInt() and 0xFF) shl 8) or
-                                (b[0].toInt() and 0xFF)
-                            // cm.requestRouteToHost(ConnectivityManager.TYPE_WIFI, ipInt)
-                            // Use reflection because requestRouteToHost is removed in newer SDKs
-                            val m = cm.javaClass.getMethod(
-                                "requestRouteToHost",
-                                Int::class.javaPrimitiveType,
-                                Int::class.javaPrimitiveType
-                            )
-                            m.invoke(cm, ConnectivityManager.TYPE_WIFI, ipInt)
-                            AppLog.i("Legacy: Requested route to host $ip")
-                        } catch (e: Exception) {
-                            AppLog.w("Legacy: Failed requestRouteToHost", e)
+                    } else {
+                        // Legacy API < 23 (Lollipop & KitKat & JB)
+                        @Suppress("DEPRECATION")
+                        if (cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI)?.isConnected == true) {
+                            try {
+                                val addr = InetAddress.getByName(ip)
+                                val b = addr.address
+                                val ipInt = ((b[3].toInt() and 0xFF) shl 24) or
+                                    ((b[2].toInt() and 0xFF) shl 16) or
+                                    ((b[1].toInt() and 0xFF) shl 8) or
+                                    (b[0].toInt() and 0xFF)
+                                // cm.requestRouteToHost(ConnectivityManager.TYPE_WIFI, ipInt)
+                                // Use reflection because requestRouteToHost is removed in newer SDKs
+                                val m = cm.javaClass.getMethod(
+                                    "requestRouteToHost",
+                                    Int::class.javaPrimitiveType,
+                                    Int::class.javaPrimitiveType
+                                )
+                                m.invoke(cm, ConnectivityManager.TYPE_WIFI, ipInt)
+                                AppLog.i("Legacy: Requested route to host $ip")
+                            } catch (e: Exception) {
+                                AppLog.w("Legacy: Failed requestRouteToHost", e)
+                            }
                         }
                     }
                 }
@@ -207,10 +216,14 @@ class SocketProjectionConnection(
 
     override fun sendBlocking(buf: ByteArray, length: Int, timeout: Int): Int {
         val out = output ?: return -1
+
         return try {
             out.write(buf, 0, length)
             out.flush()
             length
+        } catch (e: SocketException) {
+            handleBrokenTransport(e)
+            -1
         } catch (e: IOException) {
             AppLog.e(e)
             -1
@@ -229,13 +242,31 @@ class SocketProjectionConnection(
             } else {
                 inp.read(buf, 0, length)
             }
-        } catch (e: SocketTimeoutException) {
+        } catch (_: SocketTimeoutException) {
             // With raw DataInputStream (no BufferedInputStream), timeout during
             // small reads (4-byte header) virtually never causes partial consumption.
             // Let the caller decide if this is fatal based on context.
             0
-        } catch (e: IOException) {
+        } catch (e: SocketException) {
+            handleBrokenTransport(e)
             -1
+        } catch (_: IOException) {
+            -1
+        }
+    }
+
+    private fun handleBrokenTransport(e: SocketException) {
+        AppLog.e("Socket broken (server disconnected ungracefully?)", e)
+        transportBroken = true
+
+        // Force close the stream/socket so the OS frees the file descriptor
+        // If you don't do this, you will eventually cause a memory/handle leak
+        try {
+            output?.close()
+        } catch (_: IOException) {
+        } finally {
+            input = null
+            output = null
         }
     }
 

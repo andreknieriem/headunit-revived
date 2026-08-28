@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,6 +21,7 @@ import android.widget.Toast
 import com.andrerinas.openheadunit.utils.LogExporter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.launch
 
 class QuickSettingsFragment : DialogFragment() {
 
@@ -411,22 +413,26 @@ class QuickSettingsFragment : DialogFragment() {
             LogExporter.stopCapture()
         }
         
-        val logFile = LogExporter.saveLogToPublicFile(context, exporterLevel)
-        updateSettingsList()
+        // The export reads the logcat ring buffer, which on some ROMs waits on a consent dialog.
+        // Off the main thread so that wait cannot take the UI down with it.
+        viewLifecycleOwner.lifecycleScope.launch {
+            val logFile = LogExporter.saveLogToPublicFile(context, exporterLevel)
+            updateSettingsList()
 
-        if (logFile != null) {
-            MaterialAlertDialogBuilder(context, R.style.DarkAlertDialog)
-                .setTitle(R.string.logs_exported)
-                .setMessage(getString(R.string.log_saved_to, logFile.absolutePath))
-                .setPositiveButton(R.string.share) { _, _ ->
-                    LogExporter.shareLogFile(context, logFile)
-                }
-                .setNegativeButton(R.string.close) { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .show()
-        } else {
-            Toast.makeText(context, getString(R.string.failed_export_logs), Toast.LENGTH_SHORT).show()
+            if (logFile != null) {
+                MaterialAlertDialogBuilder(context, R.style.DarkAlertDialog)
+                    .setTitle(R.string.logs_exported)
+                    .setMessage(getString(R.string.log_saved_to, logFile.absolutePath))
+                    .setPositiveButton(R.string.share) { _, _ ->
+                        LogExporter.shareLogFile(context, logFile)
+                    }
+                    .setNegativeButton(R.string.close) { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    .show()
+            } else {
+                Toast.makeText(context, getString(R.string.failed_export_logs), Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

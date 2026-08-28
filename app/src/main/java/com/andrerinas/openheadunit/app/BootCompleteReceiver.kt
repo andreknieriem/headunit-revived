@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.andrerinas.openheadunit.aap.AapService
-import com.andrerinas.openheadunit.aap.BootLoopPolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
 import android.os.UserManager

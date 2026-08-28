@@ -1,6 +1,7 @@
 package com.andrerinas.openheadunit.aap
 
 import com.andrerinas.openheadunit.connection.CommManager
+import com.andrerinas.openheadunit.decoder.video.VideoRecoveryPolicy
 
 /**
  * Decides when the projection activity's recovery watchdog keeps running, when a stopped picture is
@@ -192,7 +193,7 @@ object ProjectionWatchdogPolicy {
      * [warmRelaunchCycleSpent] is the bound. The overlay used to supply one incidentally, being up
      * only before a session's first frame; without it this would nudge every window forever on a
      * screen that simply has nothing to draw. Once the escalation has spent its cycle,
-     * [WarmRelaunchKeyframePolicy]'s own throttled nudge takes over and this steps back.
+     * [com.andrerinas.openheadunit.decoder.video.WarmRelaunchKeyframePolicy]'s own throttled nudge takes over and this steps back.
      *
      * @param sessionLive see [isSessionLive].
      * @param surfaceSet whether the decoder has been handed a surface at all yet.

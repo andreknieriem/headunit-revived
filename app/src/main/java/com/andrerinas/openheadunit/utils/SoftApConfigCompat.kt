@@ -3,8 +3,8 @@ package com.andrerinas.openheadunit.utils
 import android.content.Context
 import android.net.wifi.WifiManager
 import android.os.Build
-import com.andrerinas.openheadunit.connection.wifi.modes.native.ApBand
-import com.andrerinas.openheadunit.connection.wifi.modes.native.SoftApBandPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.ApBand
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBandPolicy
 
 /**
  * Compatibility helper for Android 11+ (API 30) hotspot configuration using
