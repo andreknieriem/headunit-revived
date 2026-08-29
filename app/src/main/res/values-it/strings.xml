@@ -957,4 +957,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (ritardo di %2$ds)</string>
     <string name="failed_aa_not_system">Operazione non riuscita: Android Auto non è installato come app di sistema!</string>
     <string name="failed_aa_not_installed">Operazione non riuscita: Android Auto non è installato!</string>
+    <string name="raise_projection_during_call">Resta in Android Auto durante le chiamate</string>
+    <string name="raise_projection_during_call_description">Solo Modalità Self. Riporta la proiezione sopra la schermata di chiamata del telefono, così le chiamate si rispondono e si chiudono nell\'interfaccia di Android Auto</string>
 </resources>

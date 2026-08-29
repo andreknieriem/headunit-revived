@@ -473,6 +473,16 @@ class AapService : Service() {
         }
     }
 
+    // Receives ACTION_RAISE_PROJECTION, sent by the projection activity when a call screen has
+    // covered it in Self Mode. The activity is paused at that point, so the launch has to come from
+    // here, where the overlay trampoline lives.
+    private val raiseProjectionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != ACTION_RAISE_PROJECTION) return
+            launchAapProjectionActivity(allowNotificationFallback = false)
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Wake detection for hibernate/quick boot head units
     // -------------------------------------------------------------------------
@@ -1041,7 +1051,12 @@ class AapService : Service() {
         serviceScope.launch { commManager.startHandshake() }
     }
 
-    private fun launchAapProjectionActivity() {
+    /**
+     * @param allowNotificationFallback whether a full-screen-intent notification may stand in when
+     *   there is no overlay permission. False on the call path, where it would compete with the
+     *   call screen's own full-screen intent.
+     */
+    private fun launchAapProjectionActivity(allowNotificationFallback: Boolean = true) {
         if (App.isPiPActive) {
             AppLog.i("AapService: Skipping projection launch because PiP is active")
             return
@@ -1065,7 +1080,9 @@ class AapService : Service() {
                     catch (e: Exception) { AppLog.e("Projection direct fallback failed: ${e.message}") }
                 }
             }
-            ActivityLaunchPolicy.LaunchStrategy.NOTIFICATION -> launchProjectionViaNotification(intent)
+            ActivityLaunchPolicy.LaunchStrategy.NOTIFICATION ->
+                if (allowNotificationFallback) launchProjectionViaNotification(intent)
+                else AppLog.w("AapService: No overlay permission, not raising the projection")
         }
     }
 
@@ -1411,6 +1428,11 @@ class AapService : Service() {
         ContextCompat.registerReceiver(
             this, sensorRefreshReceiver,
             IntentFilter(ACTION_REFRESH_SENSORS).apply { addAction(ACTION_RESTART_AUDIO) },
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        ContextCompat.registerReceiver(
+            this, raiseProjectionReceiver,
+            IntentFilter(ACTION_RAISE_PROJECTION),
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         // Runtime-registered MEDIA_BUTTON receiver.
@@ -1808,6 +1830,8 @@ class AapService : Service() {
     override fun onDestroy() {
         AppLog.i("AapService destroying... (wakeLock held=${bootWakeLock?.isHeld == true})")
         isDestroying = true
+        // Nothing else clears it here, and the manager outlives the service instance.
+        selfLauncherManager.isActive = false
         mediaMetadataDecodeJob?.cancel()
         cachedAaAlbumArtBitmap = null
         mediaNotification.cancel()
@@ -1853,6 +1877,7 @@ class AapService : Service() {
         try {
             unregisterReceiver(nightModeUpdateReceiver)
             unregisterReceiver(sensorRefreshReceiver)
+            unregisterReceiver(raiseProjectionReceiver)
         } catch (_: Exception) {}
         usbLauncherManager.unregister()
         try { unregisterReceiver(mediaButtonReceiver) } catch (_: Exception) {}
@@ -2376,6 +2401,7 @@ class AapService : Service() {
         const val ACTION_ORIENTATION_CHANGED     = "com.andrerinas.openheadunit.ACTION_ORIENTATION_CHANGED"
         const val ACTION_REFRESH_SENSORS         = "com.andrerinas.openheadunit.aap.action.REFRESH_SENSORS"
         const val ACTION_RESTART_AUDIO           = "com.andrerinas.openheadunit.aap.action.RESTART_AUDIO"
+        const val ACTION_RAISE_PROJECTION        = "com.andrerinas.openheadunit.aap.action.RAISE_PROJECTION"
         /**
          * Sent after the caller has already invoked [CommManager.connect(socket)].
          * The [observeConnectionState] flow observer handles the result — [onStartCommand]

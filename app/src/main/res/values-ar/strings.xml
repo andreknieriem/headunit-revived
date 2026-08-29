@@ -952,4 +952,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (تأخير %2$dث)</string>
     <string name="failed_aa_not_system">فشل: أندرويد أوتو غير مثبت كتطبيق نظام!</string>
     <string name="failed_aa_not_installed">فشل: أندرويد أوتو غير مثبت!</string>
+    <string name="raise_projection_during_call">البقاء في Android Auto أثناء المكالمات</string>
+    <string name="raise_projection_during_call_description">الوضع الذاتي فقط. يُعيد العرض فوق شاشة اتصال الهاتف بحيث يتم الرد على المكالمات وإنهاؤها من واجهة Android Auto</string>
 </resources>
