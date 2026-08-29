@@ -1654,6 +1654,11 @@ class Settings(private val context: Context) {
         get() = prefs.getLong("connection-issue-hotspot-config", 0L)
         set(value) = prefs.edit().putLong("connection-issue-hotspot-config", value).apply()
 
+    /** No access point was up at all, so there was no network to send the phone to. */
+    var connectionIssueHotspotOffAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-hotspot-off", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-hotspot-off", value).apply()
+
     /**
      * When the user last dismissed the failure banner.
      *

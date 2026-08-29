@@ -896,6 +896,7 @@
     <!-- The failure banner on the main screen. One per condition, shown after a failed attempt. -->
     <string name="connection_issue_banner_bt_silent">Your phone connected over Bluetooth, but nothing this unit sent ever reached it. This is a fault in the head unit\'s Bluetooth that this app cannot work around. Tap to switch to USB, Wireless Helper or Auto, which do not need the Bluetooth handshake.</string>
     <string name="connection_issue_banner_bssid">This unit could not read its own WiFi MAC address (BSSID), so your phone was never told which network to join. Tap to turn on Location, or to enter the address by hand.</string>
+    <string name="connection_issue_banner_hotspot_off">This unit\'s hotspot is off, so there was no network to send your phone to. Turn the hotspot on before connecting, or tap to let the app switch it on for you.</string>
     <string name="connection_issue_banner_hotspot_config">This unit will not tell the app its hotspot name and password, so your phone had nothing to join. Tap to enter them by hand.</string>
     <string name="connection_issue_banner_dismiss">Dismiss</string>
     <!-- What the hotspot banner types into the settings search. Both override rows carry it
