@@ -446,6 +446,11 @@
     <string name="vehicle_year_label">年份</string>
     <string name="vehicle_year_description">車輛年份</string>
     <string name="vehicle_id_label">車輛 ID</string>
+    <string name="vehicle_type_label">車輛類型</string>
+    <string name="vehicle_type_car">汽車</string>
+    <string name="vehicle_type_truck">卡車</string>
+    <string name="vehicle_type_motorcycle">機車</string>
+    <string name="vehicle_type_forced_by_microphone">主機麥克風已關閉，因此無論在此選擇什麼，系統都會告訴 Android Auto 這是機車。這正是讓手機自行錄音的原因。</string>
     <string name="vehicle_id_description">僅為內部識別碼。更改此項將導致您的手機將此視為不同的車輛，重置此車的 Android Auto 偏好設定。</string>
     <string name="head_unit_make_label">製造商</string>
     <string name="head_unit_make_description">車機製造商</string>
@@ -533,7 +538,11 @@
     <string name="loading_screen_tap_fullscreen_hint">點擊預覽以全螢幕顯示</string>
     <string name="loading_screen_loop_video">循環播放短動畫</string>
     <string name="microphone_settings">麥克風設定</string>
+    <string name="use_head_unit_microphone">主機麥克風</string>
+    <string name="use_head_unit_microphone_description">開啟：Android Auto 會使用本裝置的麥克風。關閉：本裝置不會錄音，改由手機使用自己的麥克風，或與手機配對的耳機或對講機，語音助理仍可正常運作。手機需為 Android 11 以上。</string>
+    <string name="head_unit_microphone_off_info">主機麥克風已關閉，因此以下設定皆不適用。系統會告訴 Android Auto 本裝置無法錄音且為機車，這正是讓手機自行錄音的原因。在 Android 10 以下，手機會在工作階段之間忘記這項資訊，可能因此無法連線。</string>
     <string name="microphone_settings_description">設定麥克風輸入和音訊處理。</string>
+    <string name="mic_wire_format_info">Android Auto 一律以 16000 Hz、16 位元、單聲道接收麥克風。其他格式一概拒絕，因此這些設定改變的是硬體的行為，而非傳送給手機的內容。</string>
     <string name="mic_echo_canceler">回音消除 (AEC)</string>
     <string name="mic_echo_canceler_description">嘗試消除麥克風回音。若遇到無聲或音訊失真，請停用此功能。</string>
     <string name="mic_noise_suppressor">雜音抑制 (NS)</string>

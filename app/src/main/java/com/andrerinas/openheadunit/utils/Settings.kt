@@ -11,6 +11,7 @@ import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
 import com.andrerinas.openheadunit.decoder.video.DeviceMemoryProfile
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
+import com.andrerinas.openheadunit.aap.VehicleTypePolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
@@ -555,6 +556,10 @@ class Settings(private val context: Context) {
     var vehicleId: String
         get() = prefs.getString("vehicle-id", "headlessunit-001")!!
         set(value) { prefs.edit().putString("vehicle-id", value).apply() }
+
+    var vehicleType: Int
+        get() = VehicleTypePolicy.sanitised(prefs.getInt("vehicle-type", VehicleTypePolicy.CAR))
+        set(value) { prefs.edit().putInt("vehicle-type", value).apply() }
 
     var headUnitMake: String
         get() = prefs.getString("head-unit-make", "Google")!!

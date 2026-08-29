@@ -183,7 +183,8 @@ internal class AapControlMedia(
                     // assistant reads as a setting rather than as a fault.
                     AppLog.i("Mic request: the head unit microphone is off in Settings. Declining " +
                         "and sending nothing, so a Bluetooth headset keeps this microphone. The " +
-                        "phone does not switch to its own, so the assistant will not answer")
+                        "service is not announced either, so a request arriving here means the " +
+                        "phone kept an older record of this head unit")
                     Common.MessageStatus.STATUS_INTERNAL_ERROR_VALUE
                 }
                 MicrophonePolicy.Decline.NO_MICROPHONE -> {

@@ -3,15 +3,14 @@ package com.andrerinas.openheadunit.decoder.audio
 /**
  * Whether this head unit records when the phone asks, and what to say when it will not.
  *
- * The announcement is not part of the decision, deliberately. Android Auto's required-service check
- * refuses a head unit that declares no microphone service - its own list reads "No audio/mic" and
- * the teardown reason is a missing microphone - so the service is announced unconditionally and the
- * only thing a user or a broken device can change is whether any PCM follows it.
+ * The announcement follows the same setting, so a phone that is never offered a microphone service
+ * does not ask. This decides what to say when one asks anyway, which a phone still can.
  *
- * The two motorcycle requests get half of what they asked for. The physical microphone stays free
- * for a Bluetooth helmet intercom, but the phone does not take over: Android Auto picks its recorder
- * once at session start, and picks its own only for a head unit that declared itself a motorcycle,
- * which needs a vehicle type nothing here sends. Declining therefore leaves the assistant deaf.
+ * Declining on its own leaves the assistant deaf, and that is the whole reason the setting drives
+ * the announcement and the vehicle type too: the phone chooses its recorder once at session start,
+ * and takes its own only for a motorcycle that offers it no microphone. Those two go together, and
+ * on the newer of the phone's two car services withholding the service under any other type also
+ * ends connection setup.
  *
  * Pure: no Android, no logging.
  */

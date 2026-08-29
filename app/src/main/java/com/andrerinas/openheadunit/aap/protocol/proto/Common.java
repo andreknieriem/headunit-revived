@@ -386,123 +386,123 @@ public final class Common {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string head_unit_make = 1;</code>
-     * @return Whether the headUnitMake field is set.
-     */
-    boolean hasHeadUnitMake();
-    /**
-     * <code>optional string head_unit_make = 1;</code>
-     * @return The headUnitMake.
-     */
-    java.lang.String getHeadUnitMake();
-    /**
-     * <code>optional string head_unit_make = 1;</code>
-     * @return The bytes for headUnitMake.
-     */
-    com.google.protobuf.ByteString
-        getHeadUnitMakeBytes();
-
-    /**
-     * <code>optional string head_unit_model = 2;</code>
-     * @return Whether the headUnitModel field is set.
-     */
-    boolean hasHeadUnitModel();
-    /**
-     * <code>optional string head_unit_model = 2;</code>
-     * @return The headUnitModel.
-     */
-    java.lang.String getHeadUnitModel();
-    /**
-     * <code>optional string head_unit_model = 2;</code>
-     * @return The bytes for headUnitModel.
-     */
-    com.google.protobuf.ByteString
-        getHeadUnitModelBytes();
-
-    /**
-     * <code>optional string make = 3;</code>
+     * <code>optional string make = 1;</code>
      * @return Whether the make field is set.
      */
     boolean hasMake();
     /**
-     * <code>optional string make = 3;</code>
+     * <code>optional string make = 1;</code>
      * @return The make.
      */
     java.lang.String getMake();
     /**
-     * <code>optional string make = 3;</code>
+     * <code>optional string make = 1;</code>
      * @return The bytes for make.
      */
     com.google.protobuf.ByteString
         getMakeBytes();
 
     /**
-     * <code>optional string model = 4;</code>
+     * <code>optional string model = 2;</code>
      * @return Whether the model field is set.
      */
     boolean hasModel();
     /**
-     * <code>optional string model = 4;</code>
+     * <code>optional string model = 2;</code>
      * @return The model.
      */
     java.lang.String getModel();
     /**
-     * <code>optional string model = 4;</code>
+     * <code>optional string model = 2;</code>
      * @return The bytes for model.
      */
     com.google.protobuf.ByteString
         getModelBytes();
 
     /**
-     * <code>optional string year = 5;</code>
+     * <code>optional string year = 3;</code>
      * @return Whether the year field is set.
      */
     boolean hasYear();
     /**
-     * <code>optional string year = 5;</code>
+     * <code>optional string year = 3;</code>
      * @return The year.
      */
     java.lang.String getYear();
     /**
-     * <code>optional string year = 5;</code>
+     * <code>optional string year = 3;</code>
      * @return The bytes for year.
      */
     com.google.protobuf.ByteString
         getYearBytes();
 
     /**
-     * <code>optional string head_unit_software_build = 6;</code>
-     * @return Whether the headUnitSoftwareBuild field is set.
-     */
-    boolean hasHeadUnitSoftwareBuild();
-    /**
-     * <code>optional string head_unit_software_build = 6;</code>
-     * @return The headUnitSoftwareBuild.
-     */
-    java.lang.String getHeadUnitSoftwareBuild();
-    /**
-     * <code>optional string head_unit_software_build = 6;</code>
-     * @return The bytes for headUnitSoftwareBuild.
-     */
-    com.google.protobuf.ByteString
-        getHeadUnitSoftwareBuildBytes();
-
-    /**
-     * <code>optional string vehicle_id = 7;</code>
+     * <code>optional string vehicle_id = 4;</code>
      * @return Whether the vehicleId field is set.
      */
     boolean hasVehicleId();
     /**
-     * <code>optional string vehicle_id = 7;</code>
+     * <code>optional string vehicle_id = 4;</code>
      * @return The vehicleId.
      */
     java.lang.String getVehicleId();
     /**
-     * <code>optional string vehicle_id = 7;</code>
+     * <code>optional string vehicle_id = 4;</code>
      * @return The bytes for vehicleId.
      */
     com.google.protobuf.ByteString
         getVehicleIdBytes();
+
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return Whether the headUnitMake field is set.
+     */
+    boolean hasHeadUnitMake();
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return The headUnitMake.
+     */
+    java.lang.String getHeadUnitMake();
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return The bytes for headUnitMake.
+     */
+    com.google.protobuf.ByteString
+        getHeadUnitMakeBytes();
+
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return Whether the headUnitModel field is set.
+     */
+    boolean hasHeadUnitModel();
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return The headUnitModel.
+     */
+    java.lang.String getHeadUnitModel();
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return The bytes for headUnitModel.
+     */
+    com.google.protobuf.ByteString
+        getHeadUnitModelBytes();
+
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return Whether the headUnitSoftwareBuild field is set.
+     */
+    boolean hasHeadUnitSoftwareBuild();
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return The headUnitSoftwareBuild.
+     */
+    java.lang.String getHeadUnitSoftwareBuild();
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return The bytes for headUnitSoftwareBuild.
+     */
+    com.google.protobuf.ByteString
+        getHeadUnitSoftwareBuildBytes();
 
     /**
      * <code>optional string head_unit_software_version = 8;</code>
@@ -520,8 +520,36 @@ public final class Common {
      */
     com.google.protobuf.ByteString
         getHeadUnitSoftwareVersionBytes();
+
+    /**
+     * <pre>
+     * Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. Unset reads
+     * as unspecified, and only a motorcycle makes the phone record with its own microphone.
+     * </pre>
+     *
+     * <code>optional int32 vehicle_type = 9;</code>
+     * @return Whether the vehicleType field is set.
+     */
+    boolean hasVehicleType();
+    /**
+     * <pre>
+     * Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. Unset reads
+     * as unspecified, and only a motorcycle makes the phone record with its own microphone.
+     * </pre>
+     *
+     * <code>optional int32 vehicle_type = 9;</code>
+     * @return The vehicleType.
+     */
+    int getVehicleType();
   }
   /**
+   * <pre>
+   * Numbers taken from Android Auto's own copy of this message, which is the only reader.
+   * The previous order put head_unit_make first, so every value arrived under the wrong name:
+   * the phone keys its per-head-unit records on make/model/year/vehicle_id and matches vendor
+   * workarounds against them.
+   * </pre>
+   *
    * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.HeadUnitInfo}
    */
   public static final class HeadUnitInfo extends
@@ -534,13 +562,13 @@ public final class Common {
       super(builder);
     }
     private HeadUnitInfo() {
-      headUnitMake_ = "";
-      headUnitModel_ = "";
       make_ = "";
       model_ = "";
       year_ = "";
-      headUnitSoftwareBuild_ = "";
       vehicleId_ = "";
+      headUnitMake_ = "";
+      headUnitModel_ = "";
+      headUnitSoftwareBuild_ = "";
       headUnitSoftwareVersion_ = "";
     }
 
@@ -565,117 +593,19 @@ public final class Common {
     }
 
     private int bitField0_;
-    public static final int HEAD_UNIT_MAKE_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object headUnitMake_ = "";
-    /**
-     * <code>optional string head_unit_make = 1;</code>
-     * @return Whether the headUnitMake field is set.
-     */
-    @java.lang.Override
-    public boolean hasHeadUnitMake() {
-      return ((bitField0_ & 0x00000001) != 0);
-    }
-    /**
-     * <code>optional string head_unit_make = 1;</code>
-     * @return The headUnitMake.
-     */
-    @java.lang.Override
-    public java.lang.String getHeadUnitMake() {
-      java.lang.Object ref = headUnitMake_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          headUnitMake_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string head_unit_make = 1;</code>
-     * @return The bytes for headUnitMake.
-     */
-    @java.lang.Override
-    public com.google.protobuf.ByteString
-        getHeadUnitMakeBytes() {
-      java.lang.Object ref = headUnitMake_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        headUnitMake_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int HEAD_UNIT_MODEL_FIELD_NUMBER = 2;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object headUnitModel_ = "";
-    /**
-     * <code>optional string head_unit_model = 2;</code>
-     * @return Whether the headUnitModel field is set.
-     */
-    @java.lang.Override
-    public boolean hasHeadUnitModel() {
-      return ((bitField0_ & 0x00000002) != 0);
-    }
-    /**
-     * <code>optional string head_unit_model = 2;</code>
-     * @return The headUnitModel.
-     */
-    @java.lang.Override
-    public java.lang.String getHeadUnitModel() {
-      java.lang.Object ref = headUnitModel_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          headUnitModel_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string head_unit_model = 2;</code>
-     * @return The bytes for headUnitModel.
-     */
-    @java.lang.Override
-    public com.google.protobuf.ByteString
-        getHeadUnitModelBytes() {
-      java.lang.Object ref = headUnitModel_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        headUnitModel_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int MAKE_FIELD_NUMBER = 3;
+    public static final int MAKE_FIELD_NUMBER = 1;
     @SuppressWarnings("serial")
     private volatile java.lang.Object make_ = "";
     /**
-     * <code>optional string make = 3;</code>
+     * <code>optional string make = 1;</code>
      * @return Whether the make field is set.
      */
     @java.lang.Override
     public boolean hasMake() {
-      return ((bitField0_ & 0x00000004) != 0);
+      return ((bitField0_ & 0x00000001) != 0);
     }
     /**
-     * <code>optional string make = 3;</code>
+     * <code>optional string make = 1;</code>
      * @return The make.
      */
     @java.lang.Override
@@ -694,7 +624,7 @@ public final class Common {
       }
     }
     /**
-     * <code>optional string make = 3;</code>
+     * <code>optional string make = 1;</code>
      * @return The bytes for make.
      */
     @java.lang.Override
@@ -712,19 +642,19 @@ public final class Common {
       }
     }
 
-    public static final int MODEL_FIELD_NUMBER = 4;
+    public static final int MODEL_FIELD_NUMBER = 2;
     @SuppressWarnings("serial")
     private volatile java.lang.Object model_ = "";
     /**
-     * <code>optional string model = 4;</code>
+     * <code>optional string model = 2;</code>
      * @return Whether the model field is set.
      */
     @java.lang.Override
     public boolean hasModel() {
-      return ((bitField0_ & 0x00000008) != 0);
+      return ((bitField0_ & 0x00000002) != 0);
     }
     /**
-     * <code>optional string model = 4;</code>
+     * <code>optional string model = 2;</code>
      * @return The model.
      */
     @java.lang.Override
@@ -743,7 +673,7 @@ public final class Common {
       }
     }
     /**
-     * <code>optional string model = 4;</code>
+     * <code>optional string model = 2;</code>
      * @return The bytes for model.
      */
     @java.lang.Override
@@ -761,19 +691,19 @@ public final class Common {
       }
     }
 
-    public static final int YEAR_FIELD_NUMBER = 5;
+    public static final int YEAR_FIELD_NUMBER = 3;
     @SuppressWarnings("serial")
     private volatile java.lang.Object year_ = "";
     /**
-     * <code>optional string year = 5;</code>
+     * <code>optional string year = 3;</code>
      * @return Whether the year field is set.
      */
     @java.lang.Override
     public boolean hasYear() {
-      return ((bitField0_ & 0x00000010) != 0);
+      return ((bitField0_ & 0x00000004) != 0);
     }
     /**
-     * <code>optional string year = 5;</code>
+     * <code>optional string year = 3;</code>
      * @return The year.
      */
     @java.lang.Override
@@ -792,7 +722,7 @@ public final class Common {
       }
     }
     /**
-     * <code>optional string year = 5;</code>
+     * <code>optional string year = 3;</code>
      * @return The bytes for year.
      */
     @java.lang.Override
@@ -810,68 +740,19 @@ public final class Common {
       }
     }
 
-    public static final int HEAD_UNIT_SOFTWARE_BUILD_FIELD_NUMBER = 6;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object headUnitSoftwareBuild_ = "";
-    /**
-     * <code>optional string head_unit_software_build = 6;</code>
-     * @return Whether the headUnitSoftwareBuild field is set.
-     */
-    @java.lang.Override
-    public boolean hasHeadUnitSoftwareBuild() {
-      return ((bitField0_ & 0x00000020) != 0);
-    }
-    /**
-     * <code>optional string head_unit_software_build = 6;</code>
-     * @return The headUnitSoftwareBuild.
-     */
-    @java.lang.Override
-    public java.lang.String getHeadUnitSoftwareBuild() {
-      java.lang.Object ref = headUnitSoftwareBuild_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          headUnitSoftwareBuild_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string head_unit_software_build = 6;</code>
-     * @return The bytes for headUnitSoftwareBuild.
-     */
-    @java.lang.Override
-    public com.google.protobuf.ByteString
-        getHeadUnitSoftwareBuildBytes() {
-      java.lang.Object ref = headUnitSoftwareBuild_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        headUnitSoftwareBuild_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int VEHICLE_ID_FIELD_NUMBER = 7;
+    public static final int VEHICLE_ID_FIELD_NUMBER = 4;
     @SuppressWarnings("serial")
     private volatile java.lang.Object vehicleId_ = "";
     /**
-     * <code>optional string vehicle_id = 7;</code>
+     * <code>optional string vehicle_id = 4;</code>
      * @return Whether the vehicleId field is set.
      */
     @java.lang.Override
     public boolean hasVehicleId() {
-      return ((bitField0_ & 0x00000040) != 0);
+      return ((bitField0_ & 0x00000008) != 0);
     }
     /**
-     * <code>optional string vehicle_id = 7;</code>
+     * <code>optional string vehicle_id = 4;</code>
      * @return The vehicleId.
      */
     @java.lang.Override
@@ -890,7 +771,7 @@ public final class Common {
       }
     }
     /**
-     * <code>optional string vehicle_id = 7;</code>
+     * <code>optional string vehicle_id = 4;</code>
      * @return The bytes for vehicleId.
      */
     @java.lang.Override
@@ -902,6 +783,153 @@ public final class Common {
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         vehicleId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int HEAD_UNIT_MAKE_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object headUnitMake_ = "";
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return Whether the headUnitMake field is set.
+     */
+    @java.lang.Override
+    public boolean hasHeadUnitMake() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return The headUnitMake.
+     */
+    @java.lang.Override
+    public java.lang.String getHeadUnitMake() {
+      java.lang.Object ref = headUnitMake_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          headUnitMake_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return The bytes for headUnitMake.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getHeadUnitMakeBytes() {
+      java.lang.Object ref = headUnitMake_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        headUnitMake_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int HEAD_UNIT_MODEL_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object headUnitModel_ = "";
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return Whether the headUnitModel field is set.
+     */
+    @java.lang.Override
+    public boolean hasHeadUnitModel() {
+      return ((bitField0_ & 0x00000020) != 0);
+    }
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return The headUnitModel.
+     */
+    @java.lang.Override
+    public java.lang.String getHeadUnitModel() {
+      java.lang.Object ref = headUnitModel_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          headUnitModel_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return The bytes for headUnitModel.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getHeadUnitModelBytes() {
+      java.lang.Object ref = headUnitModel_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        headUnitModel_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int HEAD_UNIT_SOFTWARE_BUILD_FIELD_NUMBER = 7;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object headUnitSoftwareBuild_ = "";
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return Whether the headUnitSoftwareBuild field is set.
+     */
+    @java.lang.Override
+    public boolean hasHeadUnitSoftwareBuild() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return The headUnitSoftwareBuild.
+     */
+    @java.lang.Override
+    public java.lang.String getHeadUnitSoftwareBuild() {
+      java.lang.Object ref = headUnitSoftwareBuild_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          headUnitSoftwareBuild_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return The bytes for headUnitSoftwareBuild.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getHeadUnitSoftwareBuildBytes() {
+      java.lang.Object ref = headUnitSoftwareBuild_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        headUnitSoftwareBuild_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -957,6 +985,35 @@ public final class Common {
       }
     }
 
+    public static final int VEHICLE_TYPE_FIELD_NUMBER = 9;
+    private int vehicleType_ = 0;
+    /**
+     * <pre>
+     * Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. Unset reads
+     * as unspecified, and only a motorcycle makes the phone record with its own microphone.
+     * </pre>
+     *
+     * <code>optional int32 vehicle_type = 9;</code>
+     * @return Whether the vehicleType field is set.
+     */
+    @java.lang.Override
+    public boolean hasVehicleType() {
+      return ((bitField0_ & 0x00000100) != 0);
+    }
+    /**
+     * <pre>
+     * Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. Unset reads
+     * as unspecified, and only a motorcycle makes the phone record with its own microphone.
+     * </pre>
+     *
+     * <code>optional int32 vehicle_type = 9;</code>
+     * @return The vehicleType.
+     */
+    @java.lang.Override
+    public int getVehicleType() {
+      return vehicleType_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -972,28 +1029,31 @@ public final class Common {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) != 0)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, headUnitMake_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, make_);
       }
       if (((bitField0_ & 0x00000002) != 0)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, headUnitModel_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, model_);
       }
       if (((bitField0_ & 0x00000004) != 0)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, make_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, year_);
       }
       if (((bitField0_ & 0x00000008) != 0)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, model_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, vehicleId_);
       }
       if (((bitField0_ & 0x00000010) != 0)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, year_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, headUnitMake_);
       }
       if (((bitField0_ & 0x00000020) != 0)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, headUnitSoftwareBuild_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, headUnitModel_);
       }
       if (((bitField0_ & 0x00000040) != 0)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, vehicleId_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, headUnitSoftwareBuild_);
       }
       if (((bitField0_ & 0x00000080) != 0)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 8, headUnitSoftwareVersion_);
+      }
+      if (((bitField0_ & 0x00000100) != 0)) {
+        output.writeInt32(9, vehicleType_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -1005,28 +1065,32 @@ public final class Common {
 
       size = 0;
       if (((bitField0_ & 0x00000001) != 0)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, headUnitMake_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, make_);
       }
       if (((bitField0_ & 0x00000002) != 0)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, headUnitModel_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, model_);
       }
       if (((bitField0_ & 0x00000004) != 0)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, make_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, year_);
       }
       if (((bitField0_ & 0x00000008) != 0)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, model_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, vehicleId_);
       }
       if (((bitField0_ & 0x00000010) != 0)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, year_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, headUnitMake_);
       }
       if (((bitField0_ & 0x00000020) != 0)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, headUnitSoftwareBuild_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, headUnitModel_);
       }
       if (((bitField0_ & 0x00000040) != 0)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, vehicleId_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, headUnitSoftwareBuild_);
       }
       if (((bitField0_ & 0x00000080) != 0)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, headUnitSoftwareVersion_);
+      }
+      if (((bitField0_ & 0x00000100) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(9, vehicleType_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -1043,16 +1107,6 @@ public final class Common {
       }
       com.andrerinas.openheadunit.aap.protocol.proto.Common.HeadUnitInfo other = (com.andrerinas.openheadunit.aap.protocol.proto.Common.HeadUnitInfo) obj;
 
-      if (hasHeadUnitMake() != other.hasHeadUnitMake()) return false;
-      if (hasHeadUnitMake()) {
-        if (!getHeadUnitMake()
-            .equals(other.getHeadUnitMake())) return false;
-      }
-      if (hasHeadUnitModel() != other.hasHeadUnitModel()) return false;
-      if (hasHeadUnitModel()) {
-        if (!getHeadUnitModel()
-            .equals(other.getHeadUnitModel())) return false;
-      }
       if (hasMake() != other.hasMake()) return false;
       if (hasMake()) {
         if (!getMake()
@@ -1068,20 +1122,35 @@ public final class Common {
         if (!getYear()
             .equals(other.getYear())) return false;
       }
-      if (hasHeadUnitSoftwareBuild() != other.hasHeadUnitSoftwareBuild()) return false;
-      if (hasHeadUnitSoftwareBuild()) {
-        if (!getHeadUnitSoftwareBuild()
-            .equals(other.getHeadUnitSoftwareBuild())) return false;
-      }
       if (hasVehicleId() != other.hasVehicleId()) return false;
       if (hasVehicleId()) {
         if (!getVehicleId()
             .equals(other.getVehicleId())) return false;
       }
+      if (hasHeadUnitMake() != other.hasHeadUnitMake()) return false;
+      if (hasHeadUnitMake()) {
+        if (!getHeadUnitMake()
+            .equals(other.getHeadUnitMake())) return false;
+      }
+      if (hasHeadUnitModel() != other.hasHeadUnitModel()) return false;
+      if (hasHeadUnitModel()) {
+        if (!getHeadUnitModel()
+            .equals(other.getHeadUnitModel())) return false;
+      }
+      if (hasHeadUnitSoftwareBuild() != other.hasHeadUnitSoftwareBuild()) return false;
+      if (hasHeadUnitSoftwareBuild()) {
+        if (!getHeadUnitSoftwareBuild()
+            .equals(other.getHeadUnitSoftwareBuild())) return false;
+      }
       if (hasHeadUnitSoftwareVersion() != other.hasHeadUnitSoftwareVersion()) return false;
       if (hasHeadUnitSoftwareVersion()) {
         if (!getHeadUnitSoftwareVersion()
             .equals(other.getHeadUnitSoftwareVersion())) return false;
+      }
+      if (hasVehicleType() != other.hasVehicleType()) return false;
+      if (hasVehicleType()) {
+        if (getVehicleType()
+            != other.getVehicleType()) return false;
       }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
@@ -1094,14 +1163,6 @@ public final class Common {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      if (hasHeadUnitMake()) {
-        hash = (37 * hash) + HEAD_UNIT_MAKE_FIELD_NUMBER;
-        hash = (53 * hash) + getHeadUnitMake().hashCode();
-      }
-      if (hasHeadUnitModel()) {
-        hash = (37 * hash) + HEAD_UNIT_MODEL_FIELD_NUMBER;
-        hash = (53 * hash) + getHeadUnitModel().hashCode();
-      }
       if (hasMake()) {
         hash = (37 * hash) + MAKE_FIELD_NUMBER;
         hash = (53 * hash) + getMake().hashCode();
@@ -1114,17 +1175,29 @@ public final class Common {
         hash = (37 * hash) + YEAR_FIELD_NUMBER;
         hash = (53 * hash) + getYear().hashCode();
       }
-      if (hasHeadUnitSoftwareBuild()) {
-        hash = (37 * hash) + HEAD_UNIT_SOFTWARE_BUILD_FIELD_NUMBER;
-        hash = (53 * hash) + getHeadUnitSoftwareBuild().hashCode();
-      }
       if (hasVehicleId()) {
         hash = (37 * hash) + VEHICLE_ID_FIELD_NUMBER;
         hash = (53 * hash) + getVehicleId().hashCode();
       }
+      if (hasHeadUnitMake()) {
+        hash = (37 * hash) + HEAD_UNIT_MAKE_FIELD_NUMBER;
+        hash = (53 * hash) + getHeadUnitMake().hashCode();
+      }
+      if (hasHeadUnitModel()) {
+        hash = (37 * hash) + HEAD_UNIT_MODEL_FIELD_NUMBER;
+        hash = (53 * hash) + getHeadUnitModel().hashCode();
+      }
+      if (hasHeadUnitSoftwareBuild()) {
+        hash = (37 * hash) + HEAD_UNIT_SOFTWARE_BUILD_FIELD_NUMBER;
+        hash = (53 * hash) + getHeadUnitSoftwareBuild().hashCode();
+      }
       if (hasHeadUnitSoftwareVersion()) {
         hash = (37 * hash) + HEAD_UNIT_SOFTWARE_VERSION_FIELD_NUMBER;
         hash = (53 * hash) + getHeadUnitSoftwareVersion().hashCode();
+      }
+      if (hasVehicleType()) {
+        hash = (37 * hash) + VEHICLE_TYPE_FIELD_NUMBER;
+        hash = (53 * hash) + getVehicleType();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -1224,6 +1297,13 @@ public final class Common {
       return builder;
     }
     /**
+     * <pre>
+     * Numbers taken from Android Auto's own copy of this message, which is the only reader.
+     * The previous order put head_unit_make first, so every value arrived under the wrong name:
+     * the phone keys its per-head-unit records on make/model/year/vehicle_id and matches vendor
+     * workarounds against them.
+     * </pre>
+     *
      * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.HeadUnitInfo}
      */
     public static final class Builder extends
@@ -1257,14 +1337,15 @@ public final class Common {
       public Builder clear() {
         super.clear();
         bitField0_ = 0;
-        headUnitMake_ = "";
-        headUnitModel_ = "";
         make_ = "";
         model_ = "";
         year_ = "";
-        headUnitSoftwareBuild_ = "";
         vehicleId_ = "";
+        headUnitMake_ = "";
+        headUnitModel_ = "";
+        headUnitSoftwareBuild_ = "";
         headUnitSoftwareVersion_ = "";
+        vehicleType_ = 0;
         return this;
       }
 
@@ -1300,36 +1381,40 @@ public final class Common {
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) != 0)) {
-          result.headUnitMake_ = headUnitMake_;
+          result.make_ = make_;
           to_bitField0_ |= 0x00000001;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.headUnitModel_ = headUnitModel_;
+          result.model_ = model_;
           to_bitField0_ |= 0x00000002;
         }
         if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.make_ = make_;
+          result.year_ = year_;
           to_bitField0_ |= 0x00000004;
         }
         if (((from_bitField0_ & 0x00000008) != 0)) {
-          result.model_ = model_;
+          result.vehicleId_ = vehicleId_;
           to_bitField0_ |= 0x00000008;
         }
         if (((from_bitField0_ & 0x00000010) != 0)) {
-          result.year_ = year_;
+          result.headUnitMake_ = headUnitMake_;
           to_bitField0_ |= 0x00000010;
         }
         if (((from_bitField0_ & 0x00000020) != 0)) {
-          result.headUnitSoftwareBuild_ = headUnitSoftwareBuild_;
+          result.headUnitModel_ = headUnitModel_;
           to_bitField0_ |= 0x00000020;
         }
         if (((from_bitField0_ & 0x00000040) != 0)) {
-          result.vehicleId_ = vehicleId_;
+          result.headUnitSoftwareBuild_ = headUnitSoftwareBuild_;
           to_bitField0_ |= 0x00000040;
         }
         if (((from_bitField0_ & 0x00000080) != 0)) {
           result.headUnitSoftwareVersion_ = headUnitSoftwareVersion_;
           to_bitField0_ |= 0x00000080;
+        }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
+          result.vehicleType_ = vehicleType_;
+          to_bitField0_ |= 0x00000100;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -1378,38 +1463,38 @@ public final class Common {
 
       public Builder mergeFrom(com.andrerinas.openheadunit.aap.protocol.proto.Common.HeadUnitInfo other) {
         if (other == com.andrerinas.openheadunit.aap.protocol.proto.Common.HeadUnitInfo.getDefaultInstance()) return this;
-        if (other.hasHeadUnitMake()) {
-          headUnitMake_ = other.headUnitMake_;
-          bitField0_ |= 0x00000001;
-          onChanged();
-        }
-        if (other.hasHeadUnitModel()) {
-          headUnitModel_ = other.headUnitModel_;
-          bitField0_ |= 0x00000002;
-          onChanged();
-        }
         if (other.hasMake()) {
           make_ = other.make_;
-          bitField0_ |= 0x00000004;
+          bitField0_ |= 0x00000001;
           onChanged();
         }
         if (other.hasModel()) {
           model_ = other.model_;
-          bitField0_ |= 0x00000008;
+          bitField0_ |= 0x00000002;
           onChanged();
         }
         if (other.hasYear()) {
           year_ = other.year_;
-          bitField0_ |= 0x00000010;
-          onChanged();
-        }
-        if (other.hasHeadUnitSoftwareBuild()) {
-          headUnitSoftwareBuild_ = other.headUnitSoftwareBuild_;
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000004;
           onChanged();
         }
         if (other.hasVehicleId()) {
           vehicleId_ = other.vehicleId_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (other.hasHeadUnitMake()) {
+          headUnitMake_ = other.headUnitMake_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (other.hasHeadUnitModel()) {
+          headUnitModel_ = other.headUnitModel_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (other.hasHeadUnitSoftwareBuild()) {
+          headUnitSoftwareBuild_ = other.headUnitSoftwareBuild_;
           bitField0_ |= 0x00000040;
           onChanged();
         }
@@ -1417,6 +1502,9 @@ public final class Common {
           headUnitSoftwareVersion_ = other.headUnitSoftwareVersion_;
           bitField0_ |= 0x00000080;
           onChanged();
+        }
+        if (other.hasVehicleType()) {
+          setVehicleType(other.getVehicleType());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -1445,37 +1533,37 @@ public final class Common {
                 done = true;
                 break;
               case 10: {
-                headUnitMake_ = input.readBytes();
+                make_ = input.readBytes();
                 bitField0_ |= 0x00000001;
                 break;
               } // case 10
               case 18: {
-                headUnitModel_ = input.readBytes();
+                model_ = input.readBytes();
                 bitField0_ |= 0x00000002;
                 break;
               } // case 18
               case 26: {
-                make_ = input.readBytes();
+                year_ = input.readBytes();
                 bitField0_ |= 0x00000004;
                 break;
               } // case 26
               case 34: {
-                model_ = input.readBytes();
+                vehicleId_ = input.readBytes();
                 bitField0_ |= 0x00000008;
                 break;
               } // case 34
               case 42: {
-                year_ = input.readBytes();
+                headUnitMake_ = input.readBytes();
                 bitField0_ |= 0x00000010;
                 break;
               } // case 42
               case 50: {
-                headUnitSoftwareBuild_ = input.readBytes();
+                headUnitModel_ = input.readBytes();
                 bitField0_ |= 0x00000020;
                 break;
               } // case 50
               case 58: {
-                vehicleId_ = input.readBytes();
+                headUnitSoftwareBuild_ = input.readBytes();
                 bitField0_ |= 0x00000040;
                 break;
               } // case 58
@@ -1484,6 +1572,11 @@ public final class Common {
                 bitField0_ |= 0x00000080;
                 break;
               } // case 66
+              case 72: {
+                vehicleType_ = input.readInt32();
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 72
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -1501,176 +1594,16 @@ public final class Common {
       }
       private int bitField0_;
 
-      private java.lang.Object headUnitMake_ = "";
-      /**
-       * <code>optional string head_unit_make = 1;</code>
-       * @return Whether the headUnitMake field is set.
-       */
-      public boolean hasHeadUnitMake() {
-        return ((bitField0_ & 0x00000001) != 0);
-      }
-      /**
-       * <code>optional string head_unit_make = 1;</code>
-       * @return The headUnitMake.
-       */
-      public java.lang.String getHeadUnitMake() {
-        java.lang.Object ref = headUnitMake_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            headUnitMake_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string head_unit_make = 1;</code>
-       * @return The bytes for headUnitMake.
-       */
-      public com.google.protobuf.ByteString
-          getHeadUnitMakeBytes() {
-        java.lang.Object ref = headUnitMake_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          headUnitMake_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string head_unit_make = 1;</code>
-       * @param value The headUnitMake to set.
-       * @return This builder for chaining.
-       */
-      public Builder setHeadUnitMake(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        headUnitMake_ = value;
-        bitField0_ |= 0x00000001;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string head_unit_make = 1;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearHeadUnitMake() {
-        headUnitMake_ = getDefaultInstance().getHeadUnitMake();
-        bitField0_ = (bitField0_ & ~0x00000001);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string head_unit_make = 1;</code>
-       * @param value The bytes for headUnitMake to set.
-       * @return This builder for chaining.
-       */
-      public Builder setHeadUnitMakeBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        headUnitMake_ = value;
-        bitField0_ |= 0x00000001;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object headUnitModel_ = "";
-      /**
-       * <code>optional string head_unit_model = 2;</code>
-       * @return Whether the headUnitModel field is set.
-       */
-      public boolean hasHeadUnitModel() {
-        return ((bitField0_ & 0x00000002) != 0);
-      }
-      /**
-       * <code>optional string head_unit_model = 2;</code>
-       * @return The headUnitModel.
-       */
-      public java.lang.String getHeadUnitModel() {
-        java.lang.Object ref = headUnitModel_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            headUnitModel_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string head_unit_model = 2;</code>
-       * @return The bytes for headUnitModel.
-       */
-      public com.google.protobuf.ByteString
-          getHeadUnitModelBytes() {
-        java.lang.Object ref = headUnitModel_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          headUnitModel_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string head_unit_model = 2;</code>
-       * @param value The headUnitModel to set.
-       * @return This builder for chaining.
-       */
-      public Builder setHeadUnitModel(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        headUnitModel_ = value;
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string head_unit_model = 2;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearHeadUnitModel() {
-        headUnitModel_ = getDefaultInstance().getHeadUnitModel();
-        bitField0_ = (bitField0_ & ~0x00000002);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string head_unit_model = 2;</code>
-       * @param value The bytes for headUnitModel to set.
-       * @return This builder for chaining.
-       */
-      public Builder setHeadUnitModelBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        headUnitModel_ = value;
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return this;
-      }
-
       private java.lang.Object make_ = "";
       /**
-       * <code>optional string make = 3;</code>
+       * <code>optional string make = 1;</code>
        * @return Whether the make field is set.
        */
       public boolean hasMake() {
-        return ((bitField0_ & 0x00000004) != 0);
+        return ((bitField0_ & 0x00000001) != 0);
       }
       /**
-       * <code>optional string make = 3;</code>
+       * <code>optional string make = 1;</code>
        * @return The make.
        */
       public java.lang.String getMake() {
@@ -1688,7 +1621,7 @@ public final class Common {
         }
       }
       /**
-       * <code>optional string make = 3;</code>
+       * <code>optional string make = 1;</code>
        * @return The bytes for make.
        */
       public com.google.protobuf.ByteString
@@ -1705,7 +1638,7 @@ public final class Common {
         }
       }
       /**
-       * <code>optional string make = 3;</code>
+       * <code>optional string make = 1;</code>
        * @param value The make to set.
        * @return This builder for chaining.
        */
@@ -1713,22 +1646,22 @@ public final class Common {
           java.lang.String value) {
         if (value == null) { throw new NullPointerException(); }
         make_ = value;
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000001;
         onChanged();
         return this;
       }
       /**
-       * <code>optional string make = 3;</code>
+       * <code>optional string make = 1;</code>
        * @return This builder for chaining.
        */
       public Builder clearMake() {
         make_ = getDefaultInstance().getMake();
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000001);
         onChanged();
         return this;
       }
       /**
-       * <code>optional string make = 3;</code>
+       * <code>optional string make = 1;</code>
        * @param value The bytes for make to set.
        * @return This builder for chaining.
        */
@@ -1736,21 +1669,21 @@ public final class Common {
           com.google.protobuf.ByteString value) {
         if (value == null) { throw new NullPointerException(); }
         make_ = value;
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000001;
         onChanged();
         return this;
       }
 
       private java.lang.Object model_ = "";
       /**
-       * <code>optional string model = 4;</code>
+       * <code>optional string model = 2;</code>
        * @return Whether the model field is set.
        */
       public boolean hasModel() {
-        return ((bitField0_ & 0x00000008) != 0);
+        return ((bitField0_ & 0x00000002) != 0);
       }
       /**
-       * <code>optional string model = 4;</code>
+       * <code>optional string model = 2;</code>
        * @return The model.
        */
       public java.lang.String getModel() {
@@ -1768,7 +1701,7 @@ public final class Common {
         }
       }
       /**
-       * <code>optional string model = 4;</code>
+       * <code>optional string model = 2;</code>
        * @return The bytes for model.
        */
       public com.google.protobuf.ByteString
@@ -1785,7 +1718,7 @@ public final class Common {
         }
       }
       /**
-       * <code>optional string model = 4;</code>
+       * <code>optional string model = 2;</code>
        * @param value The model to set.
        * @return This builder for chaining.
        */
@@ -1793,22 +1726,22 @@ public final class Common {
           java.lang.String value) {
         if (value == null) { throw new NullPointerException(); }
         model_ = value;
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
       /**
-       * <code>optional string model = 4;</code>
+       * <code>optional string model = 2;</code>
        * @return This builder for chaining.
        */
       public Builder clearModel() {
         model_ = getDefaultInstance().getModel();
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
       }
       /**
-       * <code>optional string model = 4;</code>
+       * <code>optional string model = 2;</code>
        * @param value The bytes for model to set.
        * @return This builder for chaining.
        */
@@ -1816,21 +1749,21 @@ public final class Common {
           com.google.protobuf.ByteString value) {
         if (value == null) { throw new NullPointerException(); }
         model_ = value;
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
 
       private java.lang.Object year_ = "";
       /**
-       * <code>optional string year = 5;</code>
+       * <code>optional string year = 3;</code>
        * @return Whether the year field is set.
        */
       public boolean hasYear() {
-        return ((bitField0_ & 0x00000010) != 0);
+        return ((bitField0_ & 0x00000004) != 0);
       }
       /**
-       * <code>optional string year = 5;</code>
+       * <code>optional string year = 3;</code>
        * @return The year.
        */
       public java.lang.String getYear() {
@@ -1848,7 +1781,7 @@ public final class Common {
         }
       }
       /**
-       * <code>optional string year = 5;</code>
+       * <code>optional string year = 3;</code>
        * @return The bytes for year.
        */
       public com.google.protobuf.ByteString
@@ -1865,7 +1798,7 @@ public final class Common {
         }
       }
       /**
-       * <code>optional string year = 5;</code>
+       * <code>optional string year = 3;</code>
        * @param value The year to set.
        * @return This builder for chaining.
        */
@@ -1873,22 +1806,22 @@ public final class Common {
           java.lang.String value) {
         if (value == null) { throw new NullPointerException(); }
         year_ = value;
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
       /**
-       * <code>optional string year = 5;</code>
+       * <code>optional string year = 3;</code>
        * @return This builder for chaining.
        */
       public Builder clearYear() {
         year_ = getDefaultInstance().getYear();
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;
       }
       /**
-       * <code>optional string year = 5;</code>
+       * <code>optional string year = 3;</code>
        * @param value The bytes for year to set.
        * @return This builder for chaining.
        */
@@ -1896,101 +1829,21 @@ public final class Common {
           com.google.protobuf.ByteString value) {
         if (value == null) { throw new NullPointerException(); }
         year_ = value;
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object headUnitSoftwareBuild_ = "";
-      /**
-       * <code>optional string head_unit_software_build = 6;</code>
-       * @return Whether the headUnitSoftwareBuild field is set.
-       */
-      public boolean hasHeadUnitSoftwareBuild() {
-        return ((bitField0_ & 0x00000020) != 0);
-      }
-      /**
-       * <code>optional string head_unit_software_build = 6;</code>
-       * @return The headUnitSoftwareBuild.
-       */
-      public java.lang.String getHeadUnitSoftwareBuild() {
-        java.lang.Object ref = headUnitSoftwareBuild_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            headUnitSoftwareBuild_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string head_unit_software_build = 6;</code>
-       * @return The bytes for headUnitSoftwareBuild.
-       */
-      public com.google.protobuf.ByteString
-          getHeadUnitSoftwareBuildBytes() {
-        java.lang.Object ref = headUnitSoftwareBuild_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          headUnitSoftwareBuild_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string head_unit_software_build = 6;</code>
-       * @param value The headUnitSoftwareBuild to set.
-       * @return This builder for chaining.
-       */
-      public Builder setHeadUnitSoftwareBuild(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        headUnitSoftwareBuild_ = value;
-        bitField0_ |= 0x00000020;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string head_unit_software_build = 6;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearHeadUnitSoftwareBuild() {
-        headUnitSoftwareBuild_ = getDefaultInstance().getHeadUnitSoftwareBuild();
-        bitField0_ = (bitField0_ & ~0x00000020);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string head_unit_software_build = 6;</code>
-       * @param value The bytes for headUnitSoftwareBuild to set.
-       * @return This builder for chaining.
-       */
-      public Builder setHeadUnitSoftwareBuildBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        headUnitSoftwareBuild_ = value;
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
 
       private java.lang.Object vehicleId_ = "";
       /**
-       * <code>optional string vehicle_id = 7;</code>
+       * <code>optional string vehicle_id = 4;</code>
        * @return Whether the vehicleId field is set.
        */
       public boolean hasVehicleId() {
-        return ((bitField0_ & 0x00000040) != 0);
+        return ((bitField0_ & 0x00000008) != 0);
       }
       /**
-       * <code>optional string vehicle_id = 7;</code>
+       * <code>optional string vehicle_id = 4;</code>
        * @return The vehicleId.
        */
       public java.lang.String getVehicleId() {
@@ -2008,7 +1861,7 @@ public final class Common {
         }
       }
       /**
-       * <code>optional string vehicle_id = 7;</code>
+       * <code>optional string vehicle_id = 4;</code>
        * @return The bytes for vehicleId.
        */
       public com.google.protobuf.ByteString
@@ -2025,7 +1878,7 @@ public final class Common {
         }
       }
       /**
-       * <code>optional string vehicle_id = 7;</code>
+       * <code>optional string vehicle_id = 4;</code>
        * @param value The vehicleId to set.
        * @return This builder for chaining.
        */
@@ -2033,22 +1886,22 @@ public final class Common {
           java.lang.String value) {
         if (value == null) { throw new NullPointerException(); }
         vehicleId_ = value;
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000008;
         onChanged();
         return this;
       }
       /**
-       * <code>optional string vehicle_id = 7;</code>
+       * <code>optional string vehicle_id = 4;</code>
        * @return This builder for chaining.
        */
       public Builder clearVehicleId() {
         vehicleId_ = getDefaultInstance().getVehicleId();
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000008);
         onChanged();
         return this;
       }
       /**
-       * <code>optional string vehicle_id = 7;</code>
+       * <code>optional string vehicle_id = 4;</code>
        * @param value The bytes for vehicleId to set.
        * @return This builder for chaining.
        */
@@ -2056,6 +1909,246 @@ public final class Common {
           com.google.protobuf.ByteString value) {
         if (value == null) { throw new NullPointerException(); }
         vehicleId_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object headUnitMake_ = "";
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @return Whether the headUnitMake field is set.
+       */
+      public boolean hasHeadUnitMake() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @return The headUnitMake.
+       */
+      public java.lang.String getHeadUnitMake() {
+        java.lang.Object ref = headUnitMake_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            headUnitMake_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @return The bytes for headUnitMake.
+       */
+      public com.google.protobuf.ByteString
+          getHeadUnitMakeBytes() {
+        java.lang.Object ref = headUnitMake_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          headUnitMake_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @param value The headUnitMake to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitMake(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitMake_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeadUnitMake() {
+        headUnitMake_ = getDefaultInstance().getHeadUnitMake();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @param value The bytes for headUnitMake to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitMakeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitMake_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object headUnitModel_ = "";
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @return Whether the headUnitModel field is set.
+       */
+      public boolean hasHeadUnitModel() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @return The headUnitModel.
+       */
+      public java.lang.String getHeadUnitModel() {
+        java.lang.Object ref = headUnitModel_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            headUnitModel_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @return The bytes for headUnitModel.
+       */
+      public com.google.protobuf.ByteString
+          getHeadUnitModelBytes() {
+        java.lang.Object ref = headUnitModel_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          headUnitModel_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @param value The headUnitModel to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitModel(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitModel_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeadUnitModel() {
+        headUnitModel_ = getDefaultInstance().getHeadUnitModel();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @param value The bytes for headUnitModel to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitModelBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitModel_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object headUnitSoftwareBuild_ = "";
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @return Whether the headUnitSoftwareBuild field is set.
+       */
+      public boolean hasHeadUnitSoftwareBuild() {
+        return ((bitField0_ & 0x00000040) != 0);
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @return The headUnitSoftwareBuild.
+       */
+      public java.lang.String getHeadUnitSoftwareBuild() {
+        java.lang.Object ref = headUnitSoftwareBuild_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            headUnitSoftwareBuild_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @return The bytes for headUnitSoftwareBuild.
+       */
+      public com.google.protobuf.ByteString
+          getHeadUnitSoftwareBuildBytes() {
+        java.lang.Object ref = headUnitSoftwareBuild_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          headUnitSoftwareBuild_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @param value The headUnitSoftwareBuild to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitSoftwareBuild(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitSoftwareBuild_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeadUnitSoftwareBuild() {
+        headUnitSoftwareBuild_ = getDefaultInstance().getHeadUnitSoftwareBuild();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @param value The bytes for headUnitSoftwareBuild to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitSoftwareBuildBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitSoftwareBuild_ = value;
         bitField0_ |= 0x00000040;
         onChanged();
         return this;
@@ -2140,6 +2233,66 @@ public final class Common {
         onChanged();
         return this;
       }
+
+      private int vehicleType_ ;
+      /**
+       * <pre>
+       * Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. Unset reads
+       * as unspecified, and only a motorcycle makes the phone record with its own microphone.
+       * </pre>
+       *
+       * <code>optional int32 vehicle_type = 9;</code>
+       * @return Whether the vehicleType field is set.
+       */
+      @java.lang.Override
+      public boolean hasVehicleType() {
+        return ((bitField0_ & 0x00000100) != 0);
+      }
+      /**
+       * <pre>
+       * Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. Unset reads
+       * as unspecified, and only a motorcycle makes the phone record with its own microphone.
+       * </pre>
+       *
+       * <code>optional int32 vehicle_type = 9;</code>
+       * @return The vehicleType.
+       */
+      @java.lang.Override
+      public int getVehicleType() {
+        return vehicleType_;
+      }
+      /**
+       * <pre>
+       * Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. Unset reads
+       * as unspecified, and only a motorcycle makes the phone record with its own microphone.
+       * </pre>
+       *
+       * <code>optional int32 vehicle_type = 9;</code>
+       * @param value The vehicleType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVehicleType(int value) {
+
+        vehicleType_ = value;
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. Unset reads
+       * as unspecified, and only a motorcycle makes the phone record with its own microphone.
+       * </pre>
+       *
+       * <code>optional int32 vehicle_type = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVehicleType() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        vehicleType_ = 0;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -2218,47 +2371,48 @@ public final class Common {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\012\014common.proto\022.com.andrerinas.openheadu" +
-      "nit.aap.protocol.proto\"\304\001\012\014HeadUnitInfo\022" +
-      "\026\012\016head_unit_make\030\001 \001(\011\022\027\012\017head_unit_mod" +
-      "el\030\002 \001(\011\022\014\012\004make\030\003 \001(\011\022\015\012\005model\030\004 \001(\011\022\014\012" +
-      "\004year\030\005 \001(\011\022 \012\030head_unit_software_build\030" +
-      "\006 \001(\011\022\022\012\012vehicle_id\030\007 \001(\011\022\"\012\032head_unit_s" +
-      "oftware_version\030\010 \001(\011*\323\012\012\015MessageStatus\022" +
-      "\022\012\016STATUS_SUCCESS\020\000\022\036\012\032STATUS_UNSOLICITE" +
-      "D_MESSAGE\020\001\022)\012\034STATUS_NO_COMPATIBLE_VERS" +
-      "ION\020\377\377\377\377\377\377\377\377\377\001\022%\012\030STATUS_CERTIFICATE_ERR" +
-      "OR\020\376\377\377\377\377\377\377\377\377\001\022*\012\035STATUS_AUTHENTICATION_F" +
-      "AILURE\020\375\377\377\377\377\377\377\377\377\001\022#\012\026STATUS_INVALID_SERV" +
-      "ICE\020\374\377\377\377\377\377\377\377\377\001\022#\012\026STATUS_INVALID_CHANNEL" +
-      "\020\373\377\377\377\377\377\377\377\377\001\022$\012\027STATUS_INVALID_PRIORITY\020\372" +
-      "\377\377\377\377\377\377\377\377\001\022\"\012\025STATUS_INTERNAL_ERROR\020\371\377\377\377\377" +
-      "\377\377\377\377\001\022)\012\034STATUS_MEDIA_CONFIG_MISMATCH\020\370\377" +
-      "\377\377\377\377\377\377\377\001\022\"\012\025STATUS_INVALID_SENSOR\020\367\377\377\377\377\377" +
-      "\377\377\377\001\022-\012 STATUS_BLUETOOTH_PAIRING_DELAYED" +
-      "\020\366\377\377\377\377\377\377\377\377\001\022)\012\034STATUS_BLUETOOTH_UNAVAILA" +
-      "BLE\020\365\377\377\377\377\377\377\377\377\001\022-\012 STATUS_BLUETOOTH_INVAL" +
-      "ID_ADDRESS\020\364\377\377\377\377\377\377\377\377\001\0224\012'STATUS_BLUETOOT" +
-      "H_INVALID_PAIRING_METHOD\020\363\377\377\377\377\377\377\377\377\001\022/\012\"S" +
-      "TATUS_BLUETOOTH_INVALID_AUTH_DATA\020\362\377\377\377\377\377" +
-      "\377\377\377\001\0220\012#STATUS_BLUETOOTH_AUTH_DATA_MISMA" +
-      "TCH\020\361\377\377\377\377\377\377\377\377\001\0224\012'STATUS_BLUETOOTH_HFP_A" +
-      "NOTHER_CONNECTION\020\360\377\377\377\377\377\377\377\377\001\0224\012'STATUS_B" +
-      "LUETOOTH_HFP_CONNECTION_FAILURE\020\357\377\377\377\377\377\377\377" +
-      "\377\001\022%\012\030STATUS_KEYCODE_NOT_BOUND\020\356\377\377\377\377\377\377\377\377" +
-      "\001\022)\012\034STATUS_RADIO_INVALID_STATION\020\355\377\377\377\377\377" +
-      "\377\377\377\001\022!\012\024STATUS_INVALID_INPUT\020\354\377\377\377\377\377\377\377\377\001\022" +
-      "7\012*STATUS_RADIO_STATION_PRESETS_NOT_SUPP" +
-      "ORTED\020\353\377\377\377\377\377\377\377\377\001\022$\012\027STATUS_RADIO_COMM_ER" +
-      "ROR\020\352\377\377\377\377\377\377\377\377\001\022=\0120STATUS_AUTHENTICATION_" +
-      "FAILURE_CERT_NOT_YET_VALID\020\351\377\377\377\377\377\377\377\377\001\0227\012" +
-      "*STATUS_AUTHENTICATION_FAILURE_CERT_EXPI" +
-      "RED\020\350\377\377\377\377\377\377\377\377\001\022 \012\023STATUS_PING_TIMEOUT\020\347\377" +
-      "\377\377\377\377\377\377\377\001\022)\012\034STATUS_COMMAND_NOT_SUPPORTED" +
-      "\020\206\376\377\377\377\377\377\377\377\001\022!\012\024STATUS_FRAMING_ERROR\020\205\376\377\377" +
-      "\377\377\377\377\377\001\022&\012\031STATUS_UNEXPECTED_MESSAGE\020\203\376\377\377" +
-      "\377\377\377\377\377\001\022\030\012\013STATUS_BUSY\020\202\376\377\377\377\377\377\377\377\001\022!\012\024STAT" +
-      "US_OUT_OF_MEMORY\020\201\376\377\377\377\377\377\377\377\001"
+      "\n\014common.proto\022.com.andrerinas.openheadu" +
+      "nit.aap.protocol.proto\"\332\001\n\014HeadUnitInfo\022" +
+      "\014\n\004make\030\001 \001(\t\022\r\n\005model\030\002 \001(\t\022\014\n\004year\030\003 \001" +
+      "(\t\022\022\n\nvehicle_id\030\004 \001(\t\022\026\n\016head_unit_make" +
+      "\030\005 \001(\t\022\027\n\017head_unit_model\030\006 \001(\t\022 \n\030head_" +
+      "unit_software_build\030\007 \001(\t\022\"\n\032head_unit_s" +
+      "oftware_version\030\010 \001(\t\022\024\n\014vehicle_type\030\t " +
+      "\001(\005*\323\n\n\rMessageStatus\022\022\n\016STATUS_SUCCESS\020" +
+      "\000\022\036\n\032STATUS_UNSOLICITED_MESSAGE\020\001\022)\n\034STA" +
+      "TUS_NO_COMPATIBLE_VERSION\020\377\377\377\377\377\377\377\377\377\001\022%\n\030" +
+      "STATUS_CERTIFICATE_ERROR\020\376\377\377\377\377\377\377\377\377\001\022*\n\035S" +
+      "TATUS_AUTHENTICATION_FAILURE\020\375\377\377\377\377\377\377\377\377\001\022" +
+      "#\n\026STATUS_INVALID_SERVICE\020\374\377\377\377\377\377\377\377\377\001\022#\n\026" +
+      "STATUS_INVALID_CHANNEL\020\373\377\377\377\377\377\377\377\377\001\022$\n\027STA" +
+      "TUS_INVALID_PRIORITY\020\372\377\377\377\377\377\377\377\377\001\022\"\n\025STATU" +
+      "S_INTERNAL_ERROR\020\371\377\377\377\377\377\377\377\377\001\022)\n\034STATUS_ME" +
+      "DIA_CONFIG_MISMATCH\020\370\377\377\377\377\377\377\377\377\001\022\"\n\025STATUS" +
+      "_INVALID_SENSOR\020\367\377\377\377\377\377\377\377\377\001\022-\n STATUS_BLU" +
+      "ETOOTH_PAIRING_DELAYED\020\366\377\377\377\377\377\377\377\377\001\022)\n\034STA" +
+      "TUS_BLUETOOTH_UNAVAILABLE\020\365\377\377\377\377\377\377\377\377\001\022-\n " +
+      "STATUS_BLUETOOTH_INVALID_ADDRESS\020\364\377\377\377\377\377\377" +
+      "\377\377\001\0224\n\'STATUS_BLUETOOTH_INVALID_PAIRING_" +
+      "METHOD\020\363\377\377\377\377\377\377\377\377\001\022/\n\"STATUS_BLUETOOTH_IN" +
+      "VALID_AUTH_DATA\020\362\377\377\377\377\377\377\377\377\001\0220\n#STATUS_BLU" +
+      "ETOOTH_AUTH_DATA_MISMATCH\020\361\377\377\377\377\377\377\377\377\001\0224\n\'" +
+      "STATUS_BLUETOOTH_HFP_ANOTHER_CONNECTION\020" +
+      "\360\377\377\377\377\377\377\377\377\001\0224\n\'STATUS_BLUETOOTH_HFP_CONNE" +
+      "CTION_FAILURE\020\357\377\377\377\377\377\377\377\377\001\022%\n\030STATUS_KEYCO" +
+      "DE_NOT_BOUND\020\356\377\377\377\377\377\377\377\377\001\022)\n\034STATUS_RADIO_" +
+      "INVALID_STATION\020\355\377\377\377\377\377\377\377\377\001\022!\n\024STATUS_INV" +
+      "ALID_INPUT\020\354\377\377\377\377\377\377\377\377\001\0227\n*STATUS_RADIO_ST" +
+      "ATION_PRESETS_NOT_SUPPORTED\020\353\377\377\377\377\377\377\377\377\001\022$" +
+      "\n\027STATUS_RADIO_COMM_ERROR\020\352\377\377\377\377\377\377\377\377\001\022=\n0" +
+      "STATUS_AUTHENTICATION_FAILURE_CERT_NOT_Y" +
+      "ET_VALID\020\351\377\377\377\377\377\377\377\377\001\0227\n*STATUS_AUTHENTICA" +
+      "TION_FAILURE_CERT_EXPIRED\020\350\377\377\377\377\377\377\377\377\001\022 \n\023" +
+      "STATUS_PING_TIMEOUT\020\347\377\377\377\377\377\377\377\377\001\022)\n\034STATUS" +
+      "_COMMAND_NOT_SUPPORTED\020\206\376\377\377\377\377\377\377\377\001\022!\n\024STA" +
+      "TUS_FRAMING_ERROR\020\205\376\377\377\377\377\377\377\377\001\022&\n\031STATUS_U" +
+      "NEXPECTED_MESSAGE\020\203\376\377\377\377\377\377\377\377\001\022\030\n\013STATUS_B" +
+      "USY\020\202\376\377\377\377\377\377\377\377\001\022!\n\024STATUS_OUT_OF_MEMORY\020\201" +
+      "\376\377\377\377\377\377\377\377\001"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -2269,7 +2423,7 @@ public final class Common {
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_HeadUnitInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_HeadUnitInfo_descriptor,
-        new java.lang.String[] { "HeadUnitMake", "HeadUnitModel", "Make", "Model", "Year", "HeadUnitSoftwareBuild", "VehicleId", "HeadUnitSoftwareVersion", });
+        new java.lang.String[] { "Make", "Model", "Year", "VehicleId", "HeadUnitMake", "HeadUnitModel", "HeadUnitSoftwareBuild", "HeadUnitSoftwareVersion", "VehicleType", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

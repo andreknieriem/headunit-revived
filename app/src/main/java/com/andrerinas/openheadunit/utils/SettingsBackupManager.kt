@@ -92,6 +92,7 @@ object SettingsBackupManager {
         "vehicle-model" to ValueType.STRING,
         "vehicle-year" to ValueType.STRING,
         "vehicle-id" to ValueType.STRING,
+        "vehicle-type" to ValueType.INT,
         "head-unit-make" to ValueType.STRING,
         "head-unit-model" to ValueType.STRING,
         "wifi-connection-mode" to ValueType.INT,
