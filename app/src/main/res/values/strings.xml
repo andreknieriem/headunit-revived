@@ -1010,4 +1010,7 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$ds delay)</string>
     <string name="failed_aa_not_system">Failed: Android Auto isn\'t installed as a system app!</string>
     <string name="failed_aa_not_installed">Failed: Android Auto is not installed!</string>
+    <string name="copy_to_clipboard">Copy to Clipboard</string>
+    <string name="logs_copied_to_clipboard">Logs copied to clipboard</string>
+    <string name="failed_copy_logs">Failed to copy logs to clipboard</string>
 </resources>

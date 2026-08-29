@@ -426,6 +426,13 @@ class QuickSettingsFragment : DialogFragment() {
                     .setPositiveButton(R.string.share) { _, _ ->
                         LogExporter.shareLogFile(context, logFile)
                     }
+                    .setNeutralButton(R.string.copy_to_clipboard) { _, _ ->
+                        if (LogExporter.copyLogToClipboard(context, logFile)) {
+                            Toast.makeText(context, R.string.logs_copied_to_clipboard, Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, R.string.failed_copy_logs, Toast.LENGTH_SHORT).show()
+                        }
+                    }
                     .setNegativeButton(R.string.close) { dialog, _ ->
                         dialog.dismiss()
                     }

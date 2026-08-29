@@ -1,5 +1,8 @@
 package com.andrerinas.openheadunit.utils
 
+import android.content.ClipData
+import android.content.ClipboardManager
+
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -409,5 +412,18 @@ object LogExporter {
         val chooser = Intent.createChooser(shareIntent, "Share Log File")
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
+    }
+
+    fun copyLogToClipboard(context: Context, file: File): Boolean {
+        return try {
+            val text = file.readText()
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Open Headunit Log", text)
+            clipboard.setPrimaryClip(clip)
+            true
+        } catch (e: Exception) {
+            AppLog.e("LogExporter: failed to copy log to clipboard", e)
+            false
+        }
     }
 }
