@@ -950,4 +950,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$d mp késleltetés)</string>
     <string name="failed_aa_not_system">Sikertelen: Az Android Auto nincs rendszeralkalmazásként telepítve!</string>
     <string name="failed_aa_not_installed">Sikertelen: Az Android Auto nincs telepítve!</string>
+    <string name="raise_projection_during_call">Maradás az Android Autóban hívások alatt</string>
+    <string name="raise_projection_during_call_description">Csak Önálló mód. Visszahozza a kivetítést a telefon hívásképernyője fölé, így a hívások az Android Auto felületén fogadhatók és fejezhetők be</string>
 </resources>

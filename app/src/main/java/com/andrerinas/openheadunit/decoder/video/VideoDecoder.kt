@@ -427,6 +427,10 @@ class VideoDecoder(
     // it is fed like any other and decodes to nothing. See [KeyframeRepairTracker].
     private val keyframeRepair = KeyframeRepairTracker()
 
+    /** When the newest keyframe was queued, for the grace in [PictureCredibilityPolicy]. */
+    @Volatile
+    private var lastKeyframeFedMs = 0L
+
     // --- Corruption concealment - see CorruptionConcealmentPolicy for the design and its bounds.
 
     /**
@@ -578,6 +582,24 @@ class VideoDecoder(
      */
     val hasRenderedThisSession: Boolean get() = renderedThisSession
 
+    /**
+     * Whether what is on the surface is a picture a keyframe accounts for, rather than output
+     * decoded from P-frames alone. See [PictureCredibilityPolicy].
+     */
+    val hasCrediblePicture: Boolean
+        get() = PictureCredibilityPolicy.hasCrediblePicture(
+            renderedSinceCodecStart = lastFrameRenderedMs != 0L,
+            keyframeAccountingAvailable = !usingBundledSoftwareHevc,
+            keyframeDecodedSinceCodecStart = keyframeRepair.keyframeDecoded,
+            msSincePendingKeyframeFed = pendingKeyframeAgeMs(),
+        )
+
+    private fun pendingKeyframeAgeMs(): Long {
+        val fedAtMs = lastKeyframeFedMs
+        if (!keyframeRepair.awaitingOutput || fedAtMs == 0L) return Long.MAX_VALUE
+        return SystemClock.elapsedRealtime() - fedAtMs
+    }
+
     enum class CodecType(val mimeType: String, val displayName: String, val settingsValue: String) {
         H264("video/avc", "H.264/AVC", "H.264"),
         H265("video/hevc", "H.265/HEVC", "H.265")
@@ -660,6 +682,7 @@ class VideoDecoder(
             mSurface = surface
             lastFrameRenderedMs = 0L
             keyframeRepair.reset()
+            lastKeyframeFedMs = 0L
             resetConcealment()
         }
     }
@@ -784,6 +807,7 @@ class VideoDecoder(
             // pending here would be confirmed by the new codec's very first frame. The same restart
             // is why the latency samples go: they were measured against the old session clock.
             keyframeRepair.reset()
+            lastKeyframeFedMs = 0L
             decodeLatency.reset()
             resetConcealment()
             lastKeyframeStarvedAskMs = 0L
@@ -2000,6 +2024,7 @@ class VideoDecoder(
                 // Fed, not yet repaired. The picture counts as repaired at the output side, where
                 // a keyframe that arrived holed is told apart from one that decodes.
                 keyframeRepair.onKeyframeFed(pts)
+                lastKeyframeFedMs = SystemClock.elapsedRealtime()
                 AppLog.i("VideoDecoder: keyframe reached the codec (${inputBuffer.limit()} bytes)")
             }
             return FeedResult.FED
@@ -2284,7 +2309,14 @@ class VideoDecoder(
                         // worth timing are exactly the ones where it might not be.
                         if (!loggedFirstHardwareFrame) {
                             loggedFirstHardwareFrame = true
-                            AppLog.i("First frame rendered (hardware decode)")
+                            // The flag resets per codec instance, so on a warm rebuild this first
+                            // frame can be gray output decoded from a P-frame rather than a picture.
+                            // Say which, keeping the prefix that marks the landmark.
+                            AppLog.i(
+                                if (keyframeRepair.keyframeDecoded) "First frame rendered (hardware decode)"
+                                else "First frame rendered (hardware decode) - no keyframe has decoded " +
+                                    "yet, so this is output, not a picture"
+                            )
                         }
                         onFirstFrameListener?.let { it(); onFirstFrameListener = null }
 

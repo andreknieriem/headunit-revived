@@ -112,7 +112,10 @@ object WarmRelaunchKeyframePolicy {
      * @param sessionHasRendered whether any frame of this session ever reached the screen. False on
      *   a cold start, where the phone is already running sink setup of its own accord and a focus
      *   cycle would interrupt it.
-     * @param renderedSinceSurfaceSet whether the current surface has shown a frame yet.
+     * @param crediblePictureOnSurface whether the current surface is showing a picture a keyframe
+     *   accounts for. Not merely whether a frame rendered: a codec rebuilt with cached parameter
+     *   sets emits gray output from P-frames, and reading that as a picture is what left a live
+     *   view-mode switch gray for a whole GOP. See [PictureCredibilityPolicy].
      * @param transportStarted whether the AAP session is in its steady state. Nothing can be sent
      *   otherwise, and a handshake in progress will produce sink setup on its own.
      * @param msSinceSurfaceSet age of the current surface.
@@ -124,7 +127,7 @@ object WarmRelaunchKeyframePolicy {
      */
     fun decide(
         sessionHasRendered: Boolean,
-        renderedSinceSurfaceSet: Boolean,
+        crediblePictureOnSurface: Boolean,
         transportStarted: Boolean,
         msSinceSurfaceSet: Long,
         msSinceLinkActivity: Long,
@@ -134,7 +137,7 @@ object WarmRelaunchKeyframePolicy {
     ): Action {
         if (!transportStarted) return Action.NONE
         // A picture is on screen. Nothing to ask for, and asking is what costs a stream.
-        if (renderedSinceSurfaceSet) return Action.NONE
+        if (crediblePictureOnSurface) return Action.NONE
         // A cold start has never rendered, so there is no "was working a moment ago" to restore.
         if (!sessionHasRendered) return Action.NONE
         // The phone is gone. Nothing to ask, and the reconnecting overlay owns that case.

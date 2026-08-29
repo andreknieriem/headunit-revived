@@ -520,7 +520,7 @@ class AapTransport(
 
     init {
         micRecorder.listener = this
-        aapAudio = AapAudio(audioDecoder, audioManager, settings, context)
+        aapAudio = AapAudio(audioDecoder, audioManager, settings)
         // A corrupt access unit is the one fault the phone cannot heal for us inside a GOP, and
         // hasRenderedThisSession is the gate that keeps this clear of the warm-up window
         // [WarmRelaunchKeyframePolicy] owns - the same gate VideoDecoder.notifyFrameDropped uses.

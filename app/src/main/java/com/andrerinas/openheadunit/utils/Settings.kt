@@ -131,6 +131,19 @@ class Settings(private val context: Context) {
             prefs.edit().putBoolean(KEY_SYNC_MEDIA_SESSION_AA_METADATA, value).apply()
         }
 
+    /**
+     * In Self Mode, put the projection back on top when a call covers it.
+     *
+     * Android Auto's own call UI is already on the projected surface, so the phone's call screen
+     * only hides it. Self Mode only: anywhere else the call screen is on the phone, not on the
+     * head unit.
+     */
+    var raiseProjectionDuringCall: Boolean
+        get() = prefs.getBoolean("raise-projection-during-call", true)
+        set(value) {
+            prefs.edit().putBoolean("raise-projection-during-call", value).apply()
+        }
+
     var nightMode: NightMode
         get() {
             val value = prefs.getInt("night-mode", 0)
@@ -644,6 +657,9 @@ class Settings(private val context: Context) {
     /** The external-GPS choice only applies when a phone is connected; false only for Self-only. */
     fun showsExternalGps(): Boolean = showsUsb() || showsWifi()
 
+    /** Whether Self Mode settings should be shown (empty selection shows everything). */
+    fun showsSelf(): Boolean = connectionModes.isEmpty() || ConnectionMode.SELF in connectionModes
+
     var autoConnectLastSession: Boolean
         get() = prefs.getBoolean("auto-connect-last-session", false)
         set(value) { prefs.edit().putBoolean("auto-connect-last-session", value).apply() }
@@ -685,14 +701,22 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("static-audio-focus", value).apply() }
 
     // Whether AA playback takes system audio focus, so another local player (typically the car
-    // radio) pauses while it runs. AUTO skips it when a Bluetooth media link is up, because the
-    // A2DP sink answers our focus grab by pausing the phone that is feeding us. See
+    // radio) pauses while it runs. AUTO takes it until the phone is seen cutting its own audio in
+    // response, which is what happens when this head unit is its Bluetooth A2DP sink. See
     // PlaybackFocusPolicy for the whole story; ALWAYS and NEVER are the manual overrides.
     var playbackFocusMode: PlaybackFocusPolicy.Mode
         get() = PlaybackFocusPolicy.Mode.fromInt(
             prefs.getInt("playback-focus-mode", PlaybackFocusPolicy.Mode.AUTO.value)
         )
         set(value) { prefs.edit().putInt("playback-focus-mode", value.value).apply() }
+
+    // What AUTO learned: taking system audio focus stops the phone's own playback on this head
+    // unit, so stop asking for it. Remembered because the trial that finds it out costs the user a
+    // couple of interrupted tracks, and there is no reason to pay that at every connect. Re-picking
+    // the focus mode clears it, which is the way back from a false positive.
+    var playbackFocusSelfDefeating: Boolean
+        get() = prefs.getBoolean("playback-focus-self-defeating", false)
+        set(value) { prefs.edit().putBoolean("playback-focus-self-defeating", value).apply() }
 
     // Whether the physical media buttons reach Android Auto, or are left to the Bluetooth side that
     // may already act on the same press — two consumers of one button skip two tracks. See

@@ -954,4 +954,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (zpoždění %2$ds)</string>
     <string name="failed_aa_not_system">Selhalo: Android Auto není nainstalováno jako systémová aplikace!</string>
     <string name="failed_aa_not_installed">Selhalo: Android Auto není nainstalováno!</string>
+    <string name="raise_projection_during_call">Zůstat v Android Auto během hovorů</string>
+    <string name="raise_projection_during_call_description">Pouze Self Mode. Vrátí projekci nad obrazovku hovoru telefonu, takže se hovory přijímají a ukončují v rozhraní Android Auto</string>
 </resources>

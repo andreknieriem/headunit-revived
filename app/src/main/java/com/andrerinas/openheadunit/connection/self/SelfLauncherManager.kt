@@ -188,6 +188,10 @@ class SelfLauncherManager(
                         commManager.reportError("No launch method succeeded (timeout)")
                     }
 
+                    // The report is deliberately not a disconnect, so no Disconnected transition
+                    // arrives to clear this. Left true, it poisons the next session in this
+                    // process: ServiceDiscoveryResponse drops the media and speech audio sinks.
+                    isActive = false
                     handleNeverConnect()
                 }
             }

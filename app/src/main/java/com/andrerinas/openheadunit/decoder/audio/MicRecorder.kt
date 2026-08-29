@@ -59,6 +59,16 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
     companion object {
         // Sentinel value stored in settings to indicate Bluetooth SCO mode
         const val SOURCE_BLUETOOTH_SCO = 100
+
+        /**
+         * True while the uplink is the one holding MODE_IN_COMMUNICATION for SCO routing.
+         *
+         * Read by anything that infers a phone call from the audio mode, so our own microphone
+         * does not look like one.
+         */
+        @Volatile
+        var holdsCommunicationMode = false
+            private set
     }
 
     interface Listener {
@@ -96,6 +106,7 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
         if (bluetoothScoStarted) {
             cleanupSco()
         }
+        holdsCommunicationMode = false
     }
 
     private fun cleanupSco() {
@@ -189,6 +200,7 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
         // Set audio mode to MODE_IN_COMMUNICATION to force SCO routing
         try {
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            holdsCommunicationMode = true
         } catch (e: Exception) {
             AppLog.e("MicRecorder: Failed to set audio mode to MODE_IN_COMMUNICATION", e)
         }

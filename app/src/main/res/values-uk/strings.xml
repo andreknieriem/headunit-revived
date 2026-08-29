@@ -955,4 +955,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (затримка %2$dс)</string>
     <string name="failed_aa_not_system">Помилка: Android Auto не встановлено як системний додаток!</string>
     <string name="failed_aa_not_installed">Помилка: Android Auto не встановлено!</string>
+    <string name="raise_projection_during_call">Залишатися в Android Auto під час дзвінків</string>
+    <string name="raise_projection_during_call_description">Лише Самостійний режим. Повертає проєкцію поверх екрана виклику телефону, щоб відповідати на дзвінки та завершувати їх в інтерфейсі Android Auto</string>
 </resources>
