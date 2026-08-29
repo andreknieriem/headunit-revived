@@ -7,6 +7,7 @@ import com.andrerinas.openheadunit.aap.protocol.AudioConfigs
 import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.messages.DrivingStatusEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.LocationUpdateEvent
+import com.andrerinas.openheadunit.aap.protocol.messages.MicrophoneResponse
 import com.andrerinas.openheadunit.aap.protocol.messages.ServiceDiscoveryResponse
 import com.andrerinas.openheadunit.aap.protocol.proto.Common
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
@@ -64,7 +65,12 @@ internal class AapControlMedia(
                 aapTransport.onUpdateUiConfigReplyReceived?.invoke()
                 return 0
             }
-            Media.MsgType.MEDIA_MESSAGE_ACK_VALUE -> return 0
+            Media.MsgType.MEDIA_MESSAGE_ACK_VALUE -> {
+                // The phone flow-controls this stream and nothing here has ever counted its acks,
+                // so a window we ran past would have looked like silence. Counted, not acted on.
+                if (message.channel == Channel.ID_MIC) aapTransport.onMicAck()
+                return 0
+            }
             else -> AppLog.e("Unsupported Media message type: ${message.type}")
         }
         return 0
@@ -140,6 +146,13 @@ internal class AapControlMedia(
             // Before the sink goes: this silence is one the phone asked for.
             aapTransport.noteAudioSinkStopped(channel)
             aapAudio.stopAudio(channel)
+        } else if (channel == Channel.ID_MIC) {
+            // The mic is a source, so Channel.isAudio deliberately excludes it - widening that
+            // predicate would make this head unit claim audio focus and precreate an AudioTrack for
+            // a microphone. A stop here is still the phone saying it wants no more PCM, and until
+            // now the recorder kept running and kept sending.
+            micRecorder.stop()
+            aapTransport.onMicSessionEnded()
         } else if (channel == Channel.ID_VID) {
             if (aapTransport.ignoreNextStopRequest) {
                 AppLog.i("Video Sink Stopped -> Ignored (Forced Keyframe Request)")
@@ -151,14 +164,34 @@ internal class AapControlMedia(
         return 0
     }
 
+    /**
+     * Open or close the microphone, and say so.
+     *
+     * At INFO because the request's own toString is the only place anyone will ever see what
+     * Android Auto asks for - anc_enabled, ec_enabled and the flow-control window - none of which
+     * this head unit has ever recorded, let alone honoured.
+     */
     private fun micRequest(micRequest: Media.MicrophoneRequest): Int {
-        AppLog.d("Mic request: %s", micRequest)
+        AppLog.i("Mic request: %s", micRequest)
 
-        if (micRequest.open) {
-            micRecorder.start()
+        val status = if (micRequest.open) {
+            val result = micRecorder.start()
+            if (result != 0) {
+                AppLog.w("Mic request: capture did not start (code $result); telling the phone so " +
+                    "rather than leaving it waiting on a stream that will never arrive")
+                Common.MessageStatus.STATUS_INTERNAL_ERROR_VALUE
+            } else {
+                Common.MessageStatus.STATUS_SUCCESS_VALUE
+            }
         } else {
             micRecorder.stop()
+            // The session boundary the uplink report is measured over. Without it the line only
+            // appears at disconnect, long after the assistant session it describes.
+            aapTransport.onMicSessionEnded()
+            Common.MessageStatus.STATUS_SUCCESS_VALUE
         }
+
+        aapTransport.send(MicrophoneResponse(status, aapTransport.getSessionId(Channel.ID_MIC)))
         return 0
     }
 

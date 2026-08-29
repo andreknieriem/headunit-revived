@@ -8,6 +8,7 @@ import com.andrerinas.openheadunit.aap.NarrowBandProfilePolicy
 import com.andrerinas.openheadunit.input.KeyCode
 import com.andrerinas.openheadunit.aap.protocol.AudioConfigs
 import com.andrerinas.openheadunit.aap.protocol.Channel
+import com.andrerinas.openheadunit.aap.protocol.MicCaptureFormat
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.aap.protocol.proto.Media
 import com.andrerinas.openheadunit.aap.protocol.proto.Sensors
@@ -195,15 +196,19 @@ class ServiceDiscoveryResponse(private val context: Context)
                         "channels - the phone will not send audio and this is not a fault")
             }
 
-            // Microphone Service (Channel 7) - Always required for AA connection (Assistant)
+            // Microphone Service (Channel 7). Announced unconditionally: a head unit that omits it
+            // does not connect - Android Auto's own required-service check fails with "No audio/mic".
+            // The format comes from MicCaptureFormat so the announcement and the capture cannot
+            // drift again, and it is never anything but 16 kHz: the phone validates this config and
+            // rejects everything outside {16000, 48000} Hz, 16 bits, 1 or 2 channels.
             val mic = Control.Service.newBuilder().also { service ->
                 service.id = Channel.ID_MIC
                 service.mediaSourceService = Control.Service.MediaSourceService.newBuilder().also {
                     it.type = Media.MediaCodecType.MEDIA_CODEC_AUDIO_PCM
                     it.audioConfig = Media.AudioConfiguration.newBuilder().apply {
-                        sampleRate = 16000
-                        numberOfBits = 16
-                        numberOfChannels = 1
+                        sampleRate = MicCaptureFormat.SAMPLE_RATE_HZ
+                        numberOfBits = MicCaptureFormat.BITS
+                        numberOfChannels = MicCaptureFormat.CHANNELS
                     }.build()
                 }.build()
             }.build()

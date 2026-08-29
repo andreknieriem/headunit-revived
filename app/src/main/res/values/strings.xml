@@ -195,7 +195,7 @@
     <string name="wifi">WiFi</string>
     <string name="dpi">Pixel density (DPI)</string>
     <string name="pixel_aspect_ratio">Pixel aspect ratio</string>
-    <string name="mic_sample_rate">Mic sample rate</string>
+    <string name="mic_sample_rate">Mic capture rate</string>
     <string name="keymap">Keymap</string>
     <string name="night_mode">Dark Mode (Android Auto)</string>
     <string name="night_mode_threshold">Night Mode Threshold</string>
@@ -503,6 +503,7 @@
     <string name="navigation_volume_offset">Navigation Volume Offset</string>
     <string name="microphone_settings">Microphone Settings</string>
     <string name="microphone_settings_description">Configure microphone input and audio processing.</string>
+    <string name="mic_wire_format_info">Android Auto always receives the microphone at 16000 Hz, 16-bit, mono. It rejects anything else, so these settings change what the hardware does, not what the phone is sent.</string>
     <string name="mic_input_source">Microphone Input Source</string>
     <string name="mic_input_source_description">Choose the audio source for the microphone.</string>
     <string-array name="mic_input_sources">
@@ -515,9 +516,9 @@
     <string name="mic_echo_canceler">Echo cancellation (AEC)</string>
     <string name="mic_echo_canceler_description">Attempts to remove echo from the microphone. Disable if you experience silence or distortion.</string>
     <string name="mic_noise_suppressor">Noise suppression (NS)</string>
-    <string name="mic_noise_suppressor_description">Attempts to reduce background noise. Disable if your voice sounds muffled.</string>
+    <string name="mic_noise_suppressor_description">Attempts to reduce background noise. Android Auto expects this off on a single microphone and does its own processing. Disable if your voice sounds muffled.</string>
     <string name="mic_auto_gain_control">Automatic gain control (AGC)</string>
-    <string name="mic_auto_gain_control_description">Automatically adjusts microphone volume. Disable if the volume is unstable.</string>
+    <string name="mic_auto_gain_control_description">Automatically adjusts microphone volume. Android Auto expects this off and applies its own gain control; the two together usually sound worse. Disable if the volume is unstable.</string>
     <string name="mic_feature_unsupported">This feature is not supported on your device.</string>
 
     <!-- Info Settings -->

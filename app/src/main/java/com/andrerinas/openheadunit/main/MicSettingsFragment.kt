@@ -155,8 +155,10 @@ class MicSettingsFragment : Fragment() {
         val items = mutableListOf<SettingItem>()
 
         items.add(SettingItem.CategoryHeader("micSettings", R.string.microphone_settings))
+        items.add(SettingItem.InfoBanner("micWireFormat", R.string.mic_wire_format_info))
 
-        // Mic Sample Rate
+        // Mic capture rate. A compatibility control, not a quality one: reporters raised it hoping
+        // for better audio and got a stream the phone could not understand.
         items.add(SettingItem.SettingEntry(
             stableId = "micSampleRate",
             nameResId = R.string.mic_sample_rate,
