@@ -11,13 +11,12 @@ permissions:
 jobs:
   review:
     runs-on: ubuntu-latest
+    if: ${{ secrets.GEMINI_API_KEY != '' }}
     steps:
       - name: "Run AI Code Review"
         uses: petarzarkov/gemini-code-review-action@latest
         with:
-          model: gemini-3.5-flash-lite
-          skip_draft_prs: false
-          language: English
+          model: gemini-2.5-flash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
