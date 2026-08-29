@@ -203,6 +203,20 @@ class AapTransport(
         LinkGapMonitor.MAX_DEAD_PERCENT_MEDIA
     )
 
+    /**
+     * Which audio channels the phone currently has started.
+     *
+     * Android Auto stops the media sink for every assistant session and every pause, and the audio
+     * gap series counted those deliberate silences as outages - one window read 36% dead when all
+     * of it was an assistant session.
+     *
+     * Skipping the gap when the first sink comes back puts that silence outside the window while
+     * keeping what the window has already measured. A gate on the feed would instead have hidden
+     * any stream that arrives without a start request; a reset would have restarted the 30 s window
+     * on every cycle. The set keeps one channel closing from discarding another's window.
+     */
+    private val startedAudioChannels = HashSet<Int>()
+
     /** Whether our own writes are draining. See [UplinkStallMonitor]. */
     private val uplinkStallMonitor = UplinkStallMonitor()
 
@@ -232,6 +246,28 @@ class AapTransport(
             Channel.isAudio(channel) ->
                 audioGapMonitor.onMessage(now)?.let { AppLog.i("AapTransport: %s", it) }
         }
+    }
+
+    /**
+     * The phone started an audio sink. Called from [AapControlMedia.mediaStartRequest].
+     *
+     * The lock guards the set. The monitor itself needs none: this, [noteAudioSinkStopped] and
+     * [noteMessageReceived] all reach here from the transport's poll thread.
+     */
+    internal fun noteAudioSinkStarted(channel: Int) {
+        if (!Channel.isAudio(channel)) return
+        val firstSink = synchronized(startedAudioChannels) {
+            val wasEmpty = startedAudioChannels.isEmpty()
+            startedAudioChannels.add(channel)
+            wasEmpty
+        }
+        if (firstSink) audioGapMonitor.skipExpectedGap(SystemClock.elapsedRealtime())
+    }
+
+    /** The phone stopped an audio sink. Called from [AapControlMedia.mediaSinkStopRequest]. */
+    internal fun noteAudioSinkStopped(channel: Int) {
+        if (!Channel.isAudio(channel)) return
+        synchronized(startedAudioChannels) { startedAudioChannels.remove(channel) }
     }
 
     // Escalation state for KeyframeCycleEscalationPolicy - see triggerFocusCycleRecovery().
@@ -652,6 +688,7 @@ class AapTransport(
         linkGapMonitor.reset()
         videoGapMonitor.reset()
         audioGapMonitor.reset()
+        synchronized(startedAudioChannels) { startedAudioChannels.clear() }
         uplinkStallMonitor.reset()
         inboundRateMonitor.reset()
 

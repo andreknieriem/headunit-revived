@@ -14,6 +14,8 @@ import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.AutomaticGainControl
 import android.media.audiofx.NoiseSuppressor
 import android.os.Build
+import android.os.Process
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.andrerinas.openheadunit.utils.AppLog
@@ -48,9 +50,20 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
         }
     }
 
-    private var threadMicAudioActive = false
+    // Volatile: written from stop() on another thread and spun on by the capture loop, which now
+    // runs at urgent audio priority.
+    @Volatile private var threadMicAudioActive = false
     private var threadMicAudio: Thread? = null
     var listener: Listener? = null
+
+    // What the capture produced, summarised on stop(). A microphone delivering pure silence used
+    // to log exactly like a working one: read() returns a full buffer either way and no error path
+    // fires, so an assistant that could not hear the user left nothing to read.
+    @Volatile private var captureSource = -1
+    @Volatile private var captureStartedMs = 0L
+    @Volatile private var captureBytes = 0L
+    @Volatile private var captureEmptyReads = 0
+    @Volatile private var capturePeak = 0
 
     // Tracks whether this instance started Bluetooth SCO so we can clean it up
     private var bluetoothScoStarted = false
@@ -77,10 +90,13 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
 
     fun stop() {
         AppLog.i("MicRecorder: Stopping. Active: $threadMicAudioActive")
-        
+
         threadMicAudioActive = false
         threadMicAudio?.interrupt()
         threadMicAudio = null
+
+        // After the thread is told to stop, so the counters are the whole capture.
+        if (captureStartedMs != 0L) logCaptureSummary()
 
         audioRecord?.apply {
             try {
@@ -107,6 +123,25 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
             cleanupSco()
         }
         holdsCommunicationMode = false
+    }
+
+    /**
+     * One line saying what the capture produced, so a failing assistant session reads differently
+     * from a working one.
+     *
+     * `peak=0` over a real run means the input is routed nowhere and [Settings.micInputSource] is
+     * the next thing to change. Bytes far below the expected rate mean starved reads instead.
+     */
+    private fun logCaptureSummary() {
+        val elapsedMs = SystemClock.elapsedRealtime() - captureStartedMs
+        val expectedBytes = micSampleRate.toLong() * 2L * elapsedMs / 1000L
+        val percentOfExpected = if (expectedBytes > 0) captureBytes * 100L / expectedBytes else -1L
+        AppLog.i(
+            "MicRecorder: capture summary | source=${getAudioSourceName(captureSource)} ($captureSource) " +
+                "rate=$micSampleRate elapsed=${elapsedMs}ms bytes=$captureBytes " +
+                "($percentOfExpected% of expected) emptyReads=$captureEmptyReads peak=$capturePeak/32767"
+        )
+        captureStartedMs = 0L
     }
 
     private fun cleanupSco() {
@@ -144,14 +179,37 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
         
         val len = currentAudioRecord.read(aud_buf, 0, max_len)
         if (len <= 0) {
+            captureEmptyReads++
             if (len == AudioRecord.ERROR_INVALID_OPERATION && threadMicAudioActive) {
                 AppLog.e("MicRecorder: Unexpected interruption error: $len")
             }
             return len
         }
 
+        captureBytes += len
+        capturePeak = maxOf(capturePeak, peakAmplitude(aud_buf, len))
+
         currentListener.onMicDataAvailable(aud_buf, len)
         return len
+    }
+
+    /**
+     * Loudest sample in this read, as a 16-bit magnitude.
+     *
+     * What separates a microphone routed nowhere from a working one: both deliver bytes at the
+     * expected rate, but a dead input delivers zeros. Scanned every fourth frame, since this runs
+     * on the capture thread and a peak survives that.
+     */
+    private fun peakAmplitude(buf: ByteArray, len: Int): Int {
+        var peak = 0
+        var i = 0
+        while (i + 1 < len) {
+            val sample = ((buf[i + 1].toInt() shl 8) or (buf[i].toInt() and 0xFF)).toShort().toInt()
+            val magnitude = if (sample == Short.MIN_VALUE.toInt()) Short.MAX_VALUE.toInt() else kotlin.math.abs(sample)
+            if (magnitude > peak) peak = magnitude
+            i += 8
+        }
+        return peak
     }
 
     private fun getAudioSource(index: Int): Int {
@@ -300,9 +358,18 @@ class MicRecorder(private val micSampleRate: Int, private val context: Context) 
             }
             
             audioRecord?.startRecording()
-            
+
+            captureSource = source
+            captureStartedMs = SystemClock.elapsedRealtime()
+            captureBytes = 0L
+            captureEmptyReads = 0
+            capturePeak = 0
+
             threadMicAudioActive = true
             threadMicAudio = Thread({
+                // The only audio thread still at default priority, where a blocking read() on a
+                // loaded head unit becomes a gap in what the phone hears.
+                Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
                 while (threadMicAudioActive) {
                     micAudioRead(micAudioBuf, micBufferSize)
                 }

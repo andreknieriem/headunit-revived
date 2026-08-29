@@ -74,6 +74,7 @@ internal class AapControlMedia(
         AppLog.i("Media Start Request %s: session=%d, config_index=%d", Channel.name(channel), request.sessionId, request.configurationIndex)
 
         aapTransport.setSessionId(channel, request.sessionId)
+        aapTransport.noteAudioSinkStarted(channel)
         return 0
     }
 
@@ -136,6 +137,8 @@ internal class AapControlMedia(
     private fun mediaSinkStopRequest(channel: Int): Int {
         AppLog.i("Media Sink Stop Request: " + Channel.name(channel))
         if (Channel.isAudio(channel)) {
+            // Before the sink goes: this silence is one the phone asked for.
+            aapTransport.noteAudioSinkStopped(channel)
             aapAudio.stopAudio(channel)
         } else if (channel == Channel.ID_VID) {
             if (aapTransport.ignoreNextStopRequest) {
