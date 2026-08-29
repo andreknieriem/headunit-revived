@@ -108,6 +108,7 @@ object SettingsBackupManager {
         // ALWAYS for anything out of range.
         "media-key-routing" to ValueType.INT,
         "separate-audio-streams" to ValueType.BOOLEAN,
+        "use-head-unit-microphone" to ValueType.BOOLEAN,
         "mic-input-source" to ValueType.INT,
         "audio-latency-multiplier" to ValueType.INT,
         "audio-queue-capacity" to ValueType.INT,
@@ -192,6 +193,7 @@ object SettingsBackupManager {
         "software-video-decoder",
         "enable-rotary",
         "enable-audio-sink",
+        "use-head-unit-microphone",
         "static-audio-focus",
         "playback-focus-mode",
         "separate-audio-streams",

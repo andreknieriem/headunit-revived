@@ -15,6 +15,7 @@ import com.andrerinas.openheadunit.aap.protocol.proto.Input
 import com.andrerinas.openheadunit.aap.protocol.proto.Media
 import com.andrerinas.openheadunit.aap.protocol.proto.Sensors
 import com.andrerinas.openheadunit.decoder.audio.MicRecorder
+import com.andrerinas.openheadunit.decoder.audio.MicrophonePolicy
 import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import com.andrerinas.openheadunit.location.LocationHolder
 import com.andrerinas.openheadunit.utils.AppLog
@@ -175,13 +176,30 @@ internal class AapControlMedia(
         AppLog.i("Mic request: %s", micRequest)
 
         val status = if (micRequest.open) {
-            val result = micRecorder.start()
-            if (result != 0) {
-                AppLog.w("Mic request: capture did not start (code $result); telling the phone so " +
-                    "rather than leaving it waiting on a stream that will never arrive")
-                Common.MessageStatus.STATUS_INTERNAL_ERROR_VALUE
-            } else {
-                Common.MessageStatus.STATUS_SUCCESS_VALUE
+            when (MicrophonePolicy.declineReason(
+                    aapTransport.settings.useHeadUnitMicrophone, micRecorder.isAvailable)) {
+                MicrophonePolicy.Decline.USER_SETTING -> {
+                    // Named in the user's terms, the same way the audio-sink skip is, so a silent
+                    // assistant reads as a setting rather than as a fault.
+                    AppLog.i("Mic request: the head unit microphone is off in Settings. Declining " +
+                        "and sending nothing, so a Bluetooth headset keeps this microphone. The " +
+                        "phone does not switch to its own, so the assistant will not answer")
+                    Common.MessageStatus.STATUS_INTERNAL_ERROR_VALUE
+                }
+                MicrophonePolicy.Decline.NO_MICROPHONE -> {
+                    AppLog.w("Mic request: this device has no usable microphone capture; declining")
+                    Common.MessageStatus.STATUS_INTERNAL_ERROR_VALUE
+                }
+                MicrophonePolicy.Decline.NONE -> {
+                    val result = micRecorder.start()
+                    if (result != 0) {
+                        AppLog.w("Mic request: capture did not start (code $result); telling the " +
+                            "phone so rather than leaving it waiting on a stream that will never arrive")
+                        Common.MessageStatus.STATUS_INTERNAL_ERROR_VALUE
+                    } else {
+                        Common.MessageStatus.STATUS_SUCCESS_VALUE
+                    }
+                }
             }
         } else {
             micRecorder.stop()

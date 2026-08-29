@@ -502,6 +502,9 @@
     <string name="assistant_volume_offset">Assistant Volume Offset</string>
     <string name="navigation_volume_offset">Navigation Volume Offset</string>
     <string name="microphone_settings">Microphone Settings</string>
+    <string name="use_head_unit_microphone">Head unit microphone</string>
+    <string name="use_head_unit_microphone_description">On: Android Auto hears this device\'s microphone. Off: this device never records, so a Bluetooth headset or intercom keeps the microphone, but Android Auto\'s voice assistant and calls will not hear you at all.</string>
+    <string name="head_unit_microphone_off_info">The head unit microphone is off, so nothing below applies. Android Auto is still told a microphone exists, because it refuses to connect otherwise, but no audio is sent, so the voice assistant will not answer and callers will not hear you.</string>
     <string name="microphone_settings_description">Configure microphone input and audio processing.</string>
     <string name="mic_wire_format_info">Android Auto always receives the microphone at 16000 Hz, 16-bit, mono. It rejects anything else, so these settings change what the hardware does, not what the phone is sent.</string>
     <string name="mic_input_source">Microphone Input Source</string>

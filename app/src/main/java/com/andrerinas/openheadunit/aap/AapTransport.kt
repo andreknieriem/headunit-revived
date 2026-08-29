@@ -20,6 +20,7 @@ import com.andrerinas.openheadunit.aap.protocol.messages.ScrollWheelEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.SensorEvent
 import com.andrerinas.openheadunit.aap.protocol.messages.VideoFocusEvent
 import com.andrerinas.openheadunit.decoder.audio.MicChunkAccumulator
+import com.andrerinas.openheadunit.decoder.audio.MicrophonePolicy
 import com.andrerinas.openheadunit.decoder.video.FocusCycleLever
 import com.andrerinas.openheadunit.decoder.video.KeyframeCycleEscalationPolicy
 import com.andrerinas.openheadunit.decoder.video.WarmRelaunchKeyframePolicy
@@ -564,7 +565,15 @@ class AapTransport(
     }
 
     init {
-        micRecorder.listener = this
+        // Nothing is wired when the microphone is the phone's, so AudioRecord is never constructed
+        // and a Bluetooth intercom keeps the physical microphone.
+        if (MicrophonePolicy.shouldCapture(settings.useHeadUnitMicrophone, micRecorder.isAvailable)) {
+            micRecorder.listener = this
+        } else {
+            AppLog.i("AapTransport: not taking the microphone (setting " +
+                "useHeadUnitMicrophone=${settings.useHeadUnitMicrophone}, " +
+                "available=${micRecorder.isAvailable})")
+        }
         aapAudio = AapAudio(audioDecoder, audioManager, settings)
         // A corrupt access unit is the one fault the phone cannot heal for us inside a GOP, and
         // hasRenderedThisSession is the gate that keeps this clear of the warm-up window

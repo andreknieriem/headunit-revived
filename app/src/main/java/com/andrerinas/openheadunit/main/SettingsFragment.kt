@@ -1939,7 +1939,7 @@ class SettingsFragment : Fragment() {
             stableId = "micSettings",
             nameResId = R.string.microphone_settings,
             value = getString(R.string.microphone_settings_description),
-            searchKeywords = kw(R.string.mic_sample_rate),
+            searchKeywords = kw(R.string.mic_sample_rate, R.string.use_head_unit_microphone),
             onClick = { _ ->
                 findNavController().navigate(R.id.action_settingsFragment_to_micSettingsFragment)
             }
