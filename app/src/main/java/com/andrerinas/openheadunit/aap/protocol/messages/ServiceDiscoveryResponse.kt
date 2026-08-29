@@ -200,7 +200,9 @@ class ServiceDiscoveryResponse(private val context: Context)
             // does not connect - Android Auto's own required-service check fails with "No audio/mic".
             // The format comes from MicCaptureFormat so the announcement and the capture cannot
             // drift again, and it is never anything but 16 kHz: the phone validates this config and
-            // rejects everything outside {16000, 48000} Hz, 16 bits, 1 or 2 channels.
+            // rejects everything outside {16000, 48000} Hz, 16 bits, 1 or 2 channels. 48 kHz is in
+            // that set for the media channel, not for this one - AudioConfiguration is shared by
+            // every audio service and the validator accepts the union.
             val mic = Control.Service.newBuilder().also { service ->
                 service.id = Channel.ID_MIC
                 service.mediaSourceService = Control.Service.MediaSourceService.newBuilder().also {
@@ -228,7 +230,12 @@ class ServiceDiscoveryResponse(private val context: Context)
                 }.build()
                 services.add(bluetooth)
             } else {
-                AppLog.i("BT MAC Address is empty. Skip bluetooth service")
+                // What the omission costs, in the user's terms. Android Auto keeps telephony
+                // disabled until a hands-free link is up, and this is the message that tells the
+                // phone where to connect one - so a blank field is why calls stay on the phone.
+                AppLog.i("BT MAC Address is empty, so no Bluetooth service is announced. The phone " +
+                    "is not told where to connect hands-free, and Android Auto keeps phone calls " +
+                    "on the phone until it is")
             }
 
             val mediaPlaybackStatus = Control.Service.newBuilder().also { service ->

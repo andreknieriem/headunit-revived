@@ -128,6 +128,31 @@ class MicRecorder(private val context: Context) {
 
         /** AudioRecord would not initialise or start. */
         const val ERROR_RECORDER_FAILED = -5
+
+        /** The foreground service could not claim the microphone type, so capture must not open. */
+        const val ERROR_NO_FOREGROUND_TYPE = -6
+
+        /**
+         * How capture asks for the microphone foreground-service type, which Android 14 will not
+         * grant at service start.
+         *
+         * Held here rather than passed in because the service is a singleton and a [MicRecorder]
+         * is not: transports come and go within one service. Null outside a running service, where
+         * there is nothing to claim and capture proceeds as it always did.
+         */
+        @Volatile
+        @JvmStatic
+        var foregroundClaim: ForegroundMicrophoneClaim? = null
+    }
+
+    /** Implemented by the foreground service, which is the only thing that can call startForeground. */
+    interface ForegroundMicrophoneClaim {
+
+        /** Adds the microphone type. False means it was refused and capture must not open. */
+        fun claim(): Boolean
+
+        /** Drops it again, so it is held only while capture is running. */
+        fun release()
     }
 
     interface Listener {
@@ -174,6 +199,8 @@ class MicRecorder(private val context: Context) {
             cleanupSco()
         }
         holdsCommunicationMode = false
+
+        foregroundClaim?.release()
     }
 
     /**
@@ -305,6 +332,12 @@ class MicRecorder(private val context: Context) {
             }
             return ERROR_NO_PERMISSION
         }
+
+        // Android 14 refuses the microphone foreground-service type to a service started in the
+        // background, so it is claimed here instead, where the projection is on screen. Declining
+        // the phone's request is the right answer to a refusal; capturing without the type is not.
+        val claim = foregroundClaim
+        if (claim != null && !claim.claim()) return ERROR_NO_FOREGROUND_TYPE
 
         val configuredSource = getAudioSource(settings.micInputSource)
 

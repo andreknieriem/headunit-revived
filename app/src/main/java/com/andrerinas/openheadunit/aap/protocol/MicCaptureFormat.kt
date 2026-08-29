@@ -8,6 +8,10 @@ package com.andrerinas.openheadunit.aap.protocol
  * rejected, and the teardown reasons include a bad microphone config. The announcement and the
  * capture used to be two separate literals, which is how a head unit came to declare 16 kHz and
  * send 48.
+ *
+ * That 48000 is not an option here. `AudioConfiguration` is one message shared by every audio
+ * service, so the validator accepts the union across all of them, and 48 kHz is in it for the media
+ * channel's stereo stream. For the microphone the guide names one rate.
  */
 object MicCaptureFormat {
 
