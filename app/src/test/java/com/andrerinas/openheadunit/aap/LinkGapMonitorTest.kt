@@ -430,4 +430,41 @@ class LinkGapMonitorTest {
         assertTrue("a link this quiet must still print, got $reports", reports.isNotEmpty())
         assertTrue(reports.any { it.deadPercent > LinkGapMonitor.MAX_DEAD_PERCENT_MEDIA })
     }
+
+    @Test
+    fun `an expected silence is excluded without discarding the window`() {
+        // Android Auto stops the media sink for every assistant session and every pause. Counting
+        // those as outages read one measured window at 36% dead when all of it was a deliberate
+        // stop; resetting instead would restart the window on every cycle and report nothing.
+        val monitor = LinkGapMonitor(
+            LinkGapMonitor.SUBJECT_AUDIO,
+            LinkGapMonitor.MIN_GAPS_MEDIA,
+            LinkGapMonitor.MAX_DEAD_PERCENT_MEDIA
+        )
+        var now = 0L
+        monitor.onMessage(now)
+
+        // Two real gaps, measured.
+        now += 2_000; assertNull(monitor.onMessage(now))
+        now += 100; assertNull(monitor.onMessage(now))
+        now += 2_000; assertNull(monitor.onMessage(now))
+
+        // A fourteen-second sink stop, skipped.
+        now += 14_000
+        monitor.skipExpectedGap(now)
+
+        // The window still closes, and on live time rather than wall clock.
+        now += 100
+        var report: LinkGapMonitor.Report? = null
+        while (report == null && now < 120_000) {
+            now += 1_000
+            report = monitor.onMessage(now)
+        }
+        assertNotNull(report)
+        // The two real gaps survived the skip; the deliberate one was not counted.
+        assertEquals(2, report!!.gaps)
+        assertEquals(4_000L, report.deadMs)
+        // And the window is live time, so the skipped fourteen seconds are not diluting it.
+        assertTrue(report.windowMs < 30_000 + 14_000)
+    }
 }

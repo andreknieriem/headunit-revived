@@ -13,6 +13,13 @@ package com.andrerinas.openheadunit.decoder.audio
  * resumes, and the whole thing repeats every few seconds. Nothing in the focus API distinguishes
  * the two cases, so this decides it from context instead.
  *
+ * The dynamic path decides it by trying. A connected A2DP link used to veto the grab outright, but
+ * plenty of units have one connected and idle while AA audio arrives over USB, and a factory head
+ * unit that routes its amplifier from audio focus then plays nothing at all. So [shouldAcquire]
+ * takes focus and lets the self-defeating detector — the thing that observes the harm instead of
+ * guessing at it — stop us after two cycles. The veto stays on the static path, which has no
+ * detector.
+ *
  * The two entry points are exact complements on the `staticAudioFocus` axis: whichever route is
  * live, the other declines, so they can never both hold focus. A test asserts it.
  *
@@ -22,10 +29,10 @@ object PlaybackFocusPolicy {
 
     /** User override for the automatic behaviour. Stored as an ordinal in settings. */
     enum class Mode(val value: Int) {
-        /** Take focus only when nothing suggests it will silence the phone we are projecting. */
+        /** Take focus until we observe it silencing the phone we are projecting. */
         AUTO(0),
 
-        /** Always take focus. For units where the Bluetooth probe answers wrongly. */
+        /** Always take focus. For units where the automatic answer comes out wrong. */
         ALWAYS(1),
 
         /** Never take focus. */
@@ -41,19 +48,14 @@ object PlaybackFocusPolicy {
      * @param isAudioChannel   the channel is one of AUDIO / AUDIO1 / AUDIO2.
      * @param staticAudioFocus static mode holds focus permanently and manages it elsewhere, so the
      *                         dynamic path must keep its hands off entirely.
-     * @param btMediaLinkActive a Bluetooth media (A2DP) link to this head unit is up, so the
-     *                          "other player" we would silence is very likely the phone itself.
-     *                          Callers that cannot tell should pass `true`: a car radio playing over
-     *                          AA is an annoyance, silence is a broken app.
      * @param selfDefeatingLatched we already observed the phone cut its own audio right after we
-     *                          took focus, more than once this session.
+     *                          took focus, more than once. This is the answer that decides AUTO.
      */
     fun shouldAcquire(
         mode: Mode,
         staticAudioFocus: Boolean,
         audioSinkEnabled: Boolean,
         isAudioChannel: Boolean,
-        btMediaLinkActive: Boolean,
         selfDefeatingLatched: Boolean
     ): Boolean {
         // Pre-existing gates, unchanged: these decide whether the dynamic path runs at all.
@@ -62,7 +64,7 @@ object PlaybackFocusPolicy {
         return when (mode) {
             Mode.NEVER -> false
             Mode.ALWAYS -> true
-            Mode.AUTO -> !btMediaLinkActive && !selfDefeatingLatched
+            Mode.AUTO -> !selfDefeatingLatched
         }
     }
 
@@ -71,15 +73,15 @@ object PlaybackFocusPolicy {
      * `AUDIOFOCUS_GAIN` that static mode holds for a whole session, grabbed at connect time before
      * any audio exists.
      *
-     * Same trigger as the dynamic path — an A2DP sink answers our focus loss by pausing the phone we
+     * Same harm as the dynamic path — an A2DP sink answers our focus loss by pausing the phone we
      * project — but a permanent `AUDIOFOCUS_LOSS` is not a `LOSS_TRANSIENT`: the sink pauses once and
      * does not resume when we abandon focus, so the failure is a session that starts silent rather
      * than one that cycles.
      *
-     * There is no latch parameter because there is nothing here for the latch to observe. It counts
-     * media channels closing shortly after a grab, and static mode grabs once, outside any channel's
-     * lifetime. The Bluetooth probe is the only signal available on this path, which is why a unit
-     * whose probe reads nothing needs [Mode.NEVER] set by hand.
+     * That is why this path still refuses on a connected Bluetooth media link where the dynamic path
+     * now tries: there is nothing here for the latch to observe. It counts media channels closing
+     * shortly after a grab, and static mode grabs once, outside any channel's lifetime. A unit whose
+     * probe reads nothing therefore needs [Mode.NEVER] set by hand.
      */
     fun shouldAcquirePermanent(
         mode: Mode,
@@ -109,7 +111,8 @@ object PlaybackFocusPolicy {
     fun countsAsSelfDefeating(isMediaChannel: Boolean, msSinceAcquire: Long): Boolean =
         isMediaChannel && msSinceAcquire in 0L until SELF_DEFEATING_WINDOW_MS
 
-    /** Consecutive self-defeating stops before we stop taking focus for the rest of the session. */
+    /** Consecutive self-defeating stops before we stop taking focus. Remembered across sessions, so
+     *  a unit that behaves this way pays for the trial once rather than at every connect. */
     const val SELF_DEFEATING_LIMIT = 2
 
     const val SELF_DEFEATING_WINDOW_MS = 5_000L

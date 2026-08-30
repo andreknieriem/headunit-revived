@@ -290,7 +290,11 @@
     <string name="assistant_volume_offset">어시스턴트 볼륨 보정</string>
     <string name="navigation_volume_offset">내비게이션 볼륨 보정</string>
     <string name="microphone_settings">마이크 설정</string>
+    <string name="use_head_unit_microphone">헤드유닛 마이크</string>
+    <string name="use_head_unit_microphone_description">켜짐: Android Auto가 이 기기의 마이크를 사용합니다. 꺼짐: 이 기기는 녹음하지 않으며 휴대전화가 자체 마이크나 휴대전화에 페어링된 헤드셋 또는 인터콤을 사용하므로 음성 어시스턴트는 계속 작동합니다. 휴대전화에 Android 11 이상이 필요합니다.</string>
+    <string name="head_unit_microphone_off_info">헤드유닛 마이크가 꺼져 있어 아래 항목은 적용되지 않습니다. Android Auto에는 이 기기가 녹음할 수 없으며 오토바이라고 전달되고, 바로 이것이 휴대전화가 스스로 녹음하게 만듭니다. Android 10 이하에서는 휴대전화가 세션 사이에 이를 잊어버려 연결이 중단될 수 있습니다.</string>
     <string name="microphone_settings_description">마이크 입력 및 오디오 처리를 설정합니다.</string>
+    <string name="mic_wire_format_info">Android Auto는 항상 16000 Hz, 16비트, 모노로 마이크를 받습니다. 그 외에는 모두 거부하므로 이 설정은 하드웨어의 동작을 바꿀 뿐 휴대전화로 전송되는 내용을 바꾸지 않습니다.</string>
     <string name="mic_input_source">마이크 입력 소스</string>
     <string name="mic_input_source_description">마이크 입력에 사용할 오디오 소스를 선택합니다.</string>
     <string-array name="mic_input_sources">
@@ -507,6 +511,11 @@
     <string name="vehicle_year_label">연식</string>
     <string name="vehicle_year_description">차량 연식</string>
     <string name="vehicle_id_label">차량 ID</string>
+    <string name="vehicle_type_label">차량 유형</string>
+    <string name="vehicle_type_car">승용차</string>
+    <string name="vehicle_type_truck">트럭</string>
+    <string name="vehicle_type_motorcycle">오토바이</string>
+    <string name="vehicle_type_forced_by_microphone">헤드유닛 마이크가 꺼져 있어 여기서 무엇을 선택하든 Android Auto에는 오토바이라고 전달됩니다. 바로 이것이 휴대전화가 스스로 녹음하게 만듭니다.</string>
     <string name="vehicle_id_description">내부 식별자로만 사용됩니다. 이 값을 변경하면 휴대폰이 다른 차량으로 인식하여 이 차량의 Android Auto 설정이 초기화됩니다.</string>
     <string name="head_unit_make_label">제조사</string>
     <string name="head_unit_make_description">헤드유닛 제조사</string>
@@ -951,4 +960,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$d초 지연)</string>
     <string name="failed_aa_not_system">실패: Android Auto가 시스템 앱으로 설치되어 있지 않습니다!</string>
     <string name="failed_aa_not_installed">실패: Android Auto가 설치되어 있지 않습니다!</string>
+    <string name="raise_projection_during_call">통화 중에도 Android Auto에 머무르기</string>
+    <string name="raise_projection_during_call_description">단독 모드 전용. 전화의 통화 화면 위로 프로젝션을 다시 가져와 Android Auto 화면에서 통화를 받고 끊을 수 있게 합니다</string>
 </resources>

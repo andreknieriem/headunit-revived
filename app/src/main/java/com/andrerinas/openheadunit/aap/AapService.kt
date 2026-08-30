@@ -1,5 +1,6 @@
 package com.andrerinas.openheadunit.aap
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.PendingIntent
@@ -10,6 +11,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ServiceInfo
 import android.content.SharedPreferences
 import android.net.wifi.WifiManager
 import android.net.ConnectivityManager
@@ -22,11 +24,13 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
+import androidx.core.content.PermissionChecker
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.app.ActivityLaunchPolicy
 import com.andrerinas.openheadunit.app.BootCompleteReceiver
 import com.andrerinas.openheadunit.app.BootLoopPolicy
 import com.andrerinas.openheadunit.app.BtAutoStartRearmPolicy
+import com.andrerinas.openheadunit.app.ForegroundServiceTypePolicy
 import com.andrerinas.openheadunit.app.WifiAutoStartReceiver
 import com.andrerinas.openheadunit.connection.wifi.HotspotExitAction
 import com.andrerinas.openheadunit.connection.wifi.UsbSessionQuiescePolicy
@@ -36,11 +40,13 @@ import com.andrerinas.openheadunit.main.MainActivity
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.AppPermissions
+import com.andrerinas.openheadunit.utils.BluetoothAddressSeedPolicy
 import com.andrerinas.openheadunit.utils.BluetoothHelper
 import com.andrerinas.openheadunit.utils.DummyVpnPolicy
 import com.andrerinas.openheadunit.utils.ToastUtils
 import com.andrerinas.openheadunit.aap.protocol.messages.NightModeEvent
 import com.andrerinas.openheadunit.aap.protocol.proto.MediaPlayback
+import com.andrerinas.openheadunit.decoder.audio.MicRecorder
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.connection.wifi.NetworkDiscovery
 import android.support.v4.media.session.MediaSessionCompat
@@ -58,7 +64,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.SystemClock
 import android.app.NotificationManager
-import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
@@ -473,6 +478,16 @@ class AapService : Service() {
         }
     }
 
+    // Receives ACTION_RAISE_PROJECTION, sent by the projection activity when a call screen has
+    // covered it in Self Mode. The activity is paused at that point, so the launch has to come from
+    // here, where the overlay trampoline lives.
+    private val raiseProjectionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != ACTION_RAISE_PROJECTION) return
+            launchAapProjectionActivity(allowNotificationFallback = false)
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Wake detection for hibernate/quick boot head units
     // -------------------------------------------------------------------------
@@ -753,6 +768,85 @@ class AapService : Service() {
     // Lifecycle
     // -------------------------------------------------------------------------
 
+    /**
+     * Put the head unit's own Bluetooth address in Settings the first time, if it can be read.
+     *
+     * The service discovery response omits the Bluetooth service entirely when this is blank, so
+     * the phone is never told where to connect hands-free - and Android Auto keeps phone calls on
+     * the phone until that link exists. The field was typed by hand, so most installs announce
+     * nothing, while BluetoothHelper has been able to resolve the real address all along and used
+     * it only for description strings.
+     *
+     * Never overwrites what the user typed: a hand-entered address is usually there because the
+     * detected one was wrong.
+     */
+    private fun fillBluetoothAddressIfUnset() {
+        val detected = try {
+            BluetoothHelper.getBluetoothMacAddress(this)
+        } catch (e: Exception) {
+            AppLog.w("AapService: could not read this device's Bluetooth address: ${e.message}")
+            null
+        }
+        val seeded = BluetoothAddressSeedPolicy.seed(settings.bluetoothAddress, detected)
+        if (seeded.isNotEmpty() && seeded != settings.bluetoothAddress) {
+            settings.bluetoothAddress = seeded
+            AppLog.i("AapService: filled in this device's Bluetooth address ($seeded) so the " +
+                "Bluetooth service can be announced; phone calls need it")
+        }
+    }
+
+    /**
+     * Re-claims the foreground types with the microphone added, for as long as capture is open.
+     *
+     * The microphone type is while-in-use, so it cannot be claimed at service start: a background
+     * start is refused even with RECORD_AUDIO granted. Here the projection is on screen and the app
+     * is eligible. Returns whether the claim succeeded, so a refusal declines the phone's request
+     * rather than losing the service.
+     */
+    private fun promoteForMicrophone(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+
+        val mask = ForegroundServiceTypePolicy.withMicrophone(
+            sdkInt = Build.VERSION.SDK_INT,
+            recordAudioGranted = PermissionChecker.checkSelfPermission(
+                this, Manifest.permission.RECORD_AUDIO) == PermissionChecker.PERMISSION_GRANTED,
+            headUnitMicEnabled = settings.useHeadUnitMicrophone)
+
+        // The mask can come back without the microphone type when the permission or the setting
+        // says no. Capture has already checked both by this point, so say which happened rather
+        // than claiming something that did not.
+        val claimed = mask and ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE != 0
+
+        return try {
+            startForeground(1, createNotification(), mask)
+            if (claimed) {
+                AppLog.i("AapService: claimed the microphone foreground-service type for this capture")
+            } else {
+                AppLog.i("AapService: the microphone foreground-service type was not asked for; " +
+                    "the permission or the setting says no")
+            }
+            true
+        } catch (e: Exception) {
+            AppLog.e("AapService: could not claim the microphone foreground-service type " +
+                "(${e.message}); declining the phone's request rather than capturing without it", e)
+            false
+        }
+    }
+
+    /** Drops the microphone type again once capture is closed, so it is held only while it is true. */
+    private fun demoteAfterMicrophone() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+
+        try {
+            startForeground(1, createNotification(),
+                ForegroundServiceTypePolicy.baseTypeMask(Build.VERSION.SDK_INT))
+        } catch (e: Exception) {
+            // Nothing to do about it and nothing depends on it: the service stays foreground with
+            // the wider mask, which is the state it was already in a moment ago.
+            AppLog.w("AapService: could not drop the microphone foreground-service type: ${e.message}")
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         AppLog.i("AapService creating...")
@@ -761,7 +855,7 @@ class AapService : Service() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(1, createNotification(),
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+                    ForegroundServiceTypePolicy.baseTypeMask(Build.VERSION.SDK_INT))
             } else {
                 startForeground(1, createNotification())
             }
@@ -770,10 +864,16 @@ class AapService : Service() {
             stopSelf()
             return
         }
+        fillBluetoothAddressIfUnset()
         setupCarMode()
         setupNightMode()
         observeConnectionState()
         registerReceivers()
+
+        MicRecorder.foregroundClaim = object : MicRecorder.ForegroundMicrophoneClaim {
+            override fun claim() = promoteForMicrophone()
+            override fun release() = demoteAfterMicrophone()
+        }
 
         // Handle immediate WiFi auto-start check (e.g. if already connected on boot/wake)
         WifiAutoStartReceiver.checkAndStart(this)
@@ -1041,7 +1141,12 @@ class AapService : Service() {
         serviceScope.launch { commManager.startHandshake() }
     }
 
-    private fun launchAapProjectionActivity() {
+    /**
+     * @param allowNotificationFallback whether a full-screen-intent notification may stand in when
+     *   there is no overlay permission. False on the call path, where it would compete with the
+     *   call screen's own full-screen intent.
+     */
+    private fun launchAapProjectionActivity(allowNotificationFallback: Boolean = true) {
         if (App.isPiPActive) {
             AppLog.i("AapService: Skipping projection launch because PiP is active")
             return
@@ -1065,7 +1170,9 @@ class AapService : Service() {
                     catch (e: Exception) { AppLog.e("Projection direct fallback failed: ${e.message}") }
                 }
             }
-            ActivityLaunchPolicy.LaunchStrategy.NOTIFICATION -> launchProjectionViaNotification(intent)
+            ActivityLaunchPolicy.LaunchStrategy.NOTIFICATION ->
+                if (allowNotificationFallback) launchProjectionViaNotification(intent)
+                else AppLog.w("AapService: No overlay permission, not raising the projection")
         }
     }
 
@@ -1411,6 +1518,11 @@ class AapService : Service() {
         ContextCompat.registerReceiver(
             this, sensorRefreshReceiver,
             IntentFilter(ACTION_REFRESH_SENSORS).apply { addAction(ACTION_RESTART_AUDIO) },
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        ContextCompat.registerReceiver(
+            this, raiseProjectionReceiver,
+            IntentFilter(ACTION_RAISE_PROJECTION),
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         // Runtime-registered MEDIA_BUTTON receiver.
@@ -1808,6 +1920,8 @@ class AapService : Service() {
     override fun onDestroy() {
         AppLog.i("AapService destroying... (wakeLock held=${bootWakeLock?.isHeld == true})")
         isDestroying = true
+        // Nothing else clears it here, and the manager outlives the service instance.
+        selfLauncherManager.isActive = false
         mediaMetadataDecodeJob?.cancel()
         cachedAaAlbumArtBitmap = null
         mediaNotification.cancel()
@@ -1847,12 +1961,15 @@ class AapService : Service() {
             AppLog.e("Error releasing MediaSession: ${e.message}")
         }
         mediaSession = null
+        // The claim outlives no service: a stale one would call startForeground on a dead instance.
+        MicRecorder.foregroundClaim = null
         commManager.destroy()
         nightModeManager?.stop()
         stopService(GpsLocationService.intent(this))
         try {
             unregisterReceiver(nightModeUpdateReceiver)
             unregisterReceiver(sensorRefreshReceiver)
+            unregisterReceiver(raiseProjectionReceiver)
         } catch (_: Exception) {}
         usbLauncherManager.unregister()
         try { unregisterReceiver(mediaButtonReceiver) } catch (_: Exception) {}
@@ -1880,7 +1997,7 @@ class AapService : Service() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(1, createNotification(),
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+                    ForegroundServiceTypePolicy.baseTypeMask(Build.VERSION.SDK_INT))
             } else {
                 startForeground(1, createNotification())
             }
@@ -2367,6 +2484,7 @@ class AapService : Service() {
         const val ACTION_ORIENTATION_CHANGED     = "com.andrerinas.openheadunit.ACTION_ORIENTATION_CHANGED"
         const val ACTION_REFRESH_SENSORS         = "com.andrerinas.openheadunit.aap.action.REFRESH_SENSORS"
         const val ACTION_RESTART_AUDIO           = "com.andrerinas.openheadunit.aap.action.RESTART_AUDIO"
+        const val ACTION_RAISE_PROJECTION        = "com.andrerinas.openheadunit.aap.action.RAISE_PROJECTION"
         /**
          * Sent after the caller has already invoked [CommManager.connect(socket)].
          * The [observeConnectionState] flow observer handles the result — [onStartCommand]

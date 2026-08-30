@@ -35,11 +35,14 @@ import com.andrerinas.openheadunit.decoder.video.WarmRelaunchKeyframePolicy
 import com.andrerinas.openheadunit.input.ProjectionKeyPolicy
 import com.andrerinas.openheadunit.input.TouchCoordinateMapper
 import kotlinx.coroutines.launch
+import com.andrerinas.openheadunit.decoder.audio.MicRecorder
 import com.andrerinas.openheadunit.decoder.video.DecoderStopPolicy
 import com.andrerinas.openheadunit.decoder.video.SoftwareYuvFrameSink
 import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import com.andrerinas.openheadunit.decoder.video.VideoDimensionsListener
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy
+import com.andrerinas.openheadunit.decoder.audio.CallState
 import com.andrerinas.openheadunit.utils.IntentFilters
 import com.andrerinas.openheadunit.view.IProjectionView
 import com.andrerinas.openheadunit.view.GlProjectionView
@@ -78,6 +81,22 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     private var isSurfaceSet = false
     private var overlayState = OverlayState.STARTING
     private val watchdogHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /**
+     * True when the user themselves left the projection (Home, Recents), which fires
+     * onUserLeaveHint just before onPause. An activity launching over us does not, and that is
+     * what separates a call screen covering the projection from the user walking away from it.
+     */
+    private var userLeftDeliberately = false
+
+    /** The open call-raise episode, or null when the projection is not covered by a call. */
+    private var callRaiseEpisode: SelfModeCallRaisePolicy.Episode? = null
+
+    /** What the last episode spent, so a call screen that relaunches cannot keep buying more. */
+    private var lastCallRaiseAttempts = 0
+    private var lastCallRaiseAtMs = 0L
+
+    private val callRaiseTick = Runnable { tickCallRaise() }
 
     /**
      * Ken Burns scale animation applied to a static image loading screen.
@@ -147,7 +166,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             if (!ProjectionWatchdogPolicy.shouldNudgeForFirstFrame(
                     sessionLive = ProjectionWatchdogPolicy.isSessionLive(commManager.connectionState.value),
                     surfaceSet = isSurfaceSet,
-                    renderedSinceSurfaceSet = rendered,
+                    crediblePictureOnSurface = videoDecoder.hasCrediblePicture,
                     warmRelaunchCycleSpent = warmRelaunchCycleSpent,
                 )
             ) return
@@ -170,15 +189,15 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             if (!ProjectionWatchdogPolicy.isSessionLive(commManager.connectionState.value)) {
                 return
             }
+            // Every tick, not only before the first frame: a codec rebuilt with cached parameter
+            // sets renders gray P-frame output, so lastFrameRenderedMs is set while there is still
+            // no picture, and gating this on it left the 850 ms check as the only attempt.
+            maybeRecoverWarmRelaunch()
             val lastFrame = videoDecoder.lastFrameRenderedMs
             if (lastFrame == 0L) {
                 // First frame hasn't arrived yet — handled by the starting overlay. If the phone is
                 // streaming video but nothing draws, offer to switch renderer (issue #767).
                 maybeOfferRendererConfirm()
-                // A relaunch lands here too, and used to get nothing else: the overlay is already
-                // hidden (the previous instance had rendered), so its keyframe watchdog never
-                // re-arms, and maybeRequestVideoFocus below is never reached.
-                maybeRecoverWarmRelaunch()
                 watchdogHandler.postDelayed(this, ProjectionWatchdogPolicy.WATCHDOG_TICK_MS)
                 return
             }
@@ -218,8 +237,14 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
     // Age and escalation state of the surface the decoder currently renders to. Reset together in
     // onSurfaceChanged, so each relaunch gets exactly one focus cycle.
+    /** When a touch of ours last completed, for [VideoFocusReleasePolicy.coverFollowsTouch]. */
+    private var lastProjectionTouchMs = 0L
+
     private var lastSurfaceSetMs = 0L
     private var warmRelaunchCycleSpent = false
+
+    /** One line per surface, not per tick: the gray-P-frame case is worth naming exactly once. */
+    private var loggedKeyframelessPicture = false
 
     /**
      * A relaunch handed the decoder a fresh surface and no picture has followed it.
@@ -237,9 +262,18 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     private fun maybeRecoverWarmRelaunch() {
         if (lastSurfaceSetMs == 0L) return
         val now = SystemClock.elapsedRealtime()
+        if (!loggedKeyframelessPicture &&
+            videoDecoder.lastFrameRenderedMs != 0L && !videoDecoder.hasCrediblePicture
+        ) {
+            loggedKeyframelessPicture = true
+            AppLog.w(
+                "AapProjectionActivity: frames are rendering but no keyframe has decoded since the " +
+                    "codec started - counting this surface as having no picture"
+            )
+        }
         val action = WarmRelaunchKeyframePolicy.decide(
             sessionHasRendered = videoDecoder.hasRenderedThisSession,
-            renderedSinceSurfaceSet = videoDecoder.lastFrameRenderedMs != 0L,
+            crediblePictureOnSurface = videoDecoder.hasCrediblePicture,
             transportStarted = commManager.connectionState.value is CommManager.ConnectionState.TransportStarted,
             msSinceSurfaceSet = now - lastSurfaceSetMs,
             // The link, not the video channel. An idle Android Auto screen sends no video for
@@ -980,11 +1014,15 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             LocalBroadcastManager.getInstance(this).unregisterReceiver(settingsReceiver)
             isSettingsReceiverRegistered = false
         }
+        // After the removeCallbacks above, never before: the tick posts on the same handler.
+        maybeOpenCallRaiseEpisode()
     }
 
     override fun onResume() {
         super.onResume()
         isForeground = true
+        userLeftDeliberately = false
+        closeCallRaiseEpisode("the projection is back in front")
         AppLog.i("AapProjectionActivity: onResume")
         // Show the one-time rename notice even here, on top of an active projection.
         RenameNotice.maybeShow(this, App.provide(this).settings)
@@ -1476,10 +1514,98 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         }
     }
 
+    /**
+     * Opens a call-raise episode when something covered the projection during a call, in Self Mode.
+     *
+     * Self Mode is the only place this can happen: everywhere else the call screen lands on the
+     * phone and the projection is on the head unit.
+     */
+    private fun maybeOpenCallRaiseEpisode() {
+        closeCallRaiseEpisode("covered again")
+        if (userLeftDeliberately || AapService.instance?.isSelfModeActive() != true || App.isPiPActive) return
+        if (!settings.raiseProjectionDuringCall) return
+
+        val audioMode = audioModeOrNormal()
+        val callActive = CallState.isCallActive(audioMode, MicRecorder.holdsCommunicationMode)
+        if (!callActive && !CallState.isCallStarting(audioMode)) return
+
+        val nowMs = SystemClock.elapsedRealtime()
+        val carried = SelfModeCallRaisePolicy.carriedAttempts(lastCallRaiseAttempts, lastCallRaiseAtMs, nowMs)
+        AppLog.i("AapProjectionActivity: covered during a call, will raise the projection ($carried attempts already spent)")
+        callRaiseEpisode = SelfModeCallRaisePolicy.Episode(
+            startedAtMs = nowMs,
+            sawCallActive = callActive,
+            attempts = carried,
+            lastAttemptAtMs = if (carried > 0) lastCallRaiseAtMs else 0L,
+        )
+        watchdogHandler.postDelayed(callRaiseTick, SelfModeCallRaisePolicy.TICK_MS)
+    }
+
+    /**
+     * Ends an open episode. The reason is logged only when there was one, because a successful raise
+     * ends the episode from onResume before the tick that would otherwise have reported it can run.
+     */
+    private fun closeCallRaiseEpisode(reason: String) {
+        if (callRaiseEpisode != null) {
+            AppLog.i("AapProjectionActivity: call raise finished - $reason")
+        }
+        callRaiseEpisode = null
+        watchdogHandler.removeCallbacks(callRaiseTick)
+    }
+
+    private fun tickCallRaise() {
+        val episode = callRaiseEpisode ?: return
+        val nowMs = SystemClock.elapsedRealtime()
+        val callActive = CallState.isCallActive(audioModeOrNormal(), MicRecorder.holdsCommunicationMode)
+        val observed = SelfModeCallRaisePolicy.observe(episode, nowMs, callActive)
+        val action = SelfModeCallRaisePolicy.decide(
+            nowMs = nowMs,
+            episode = observed,
+            callActive = callActive,
+            isForeground = isForeground,
+            pipActive = App.isPiPActive,
+        )
+        val reason = SelfModeCallRaisePolicy.describe(action, observed, callActive, isForeground)
+
+        val next = when (action) {
+            SelfModeCallRaisePolicy.Action.DONE -> {
+                AppLog.i("AapProjectionActivity: call raise finished - $reason")
+                callRaiseEpisode = null
+                return
+            }
+            SelfModeCallRaisePolicy.Action.RAISE -> {
+                AppLog.i("AapProjectionActivity: raising the projection - $reason")
+                requestProjectionRaise()
+                SelfModeCallRaisePolicy.onRaised(observed, nowMs, callActive).also {
+                    lastCallRaiseAttempts = it.attempts
+                    lastCallRaiseAtMs = nowMs
+                }
+            }
+            SelfModeCallRaisePolicy.Action.WAIT -> observed
+        }
+        callRaiseEpisode = next
+        watchdogHandler.postDelayed(callRaiseTick, SelfModeCallRaisePolicy.nextTickDelayMs(next))
+    }
+
+    /** The service owns the overlay trampoline, and a paused activity cannot start itself. */
+    private fun requestProjectionRaise() {
+        sendBroadcast(Intent(AapService.ACTION_RAISE_PROJECTION).apply { setPackage(packageName) })
+    }
+
+    private fun audioModeOrNormal(): Int = try {
+        (getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager).mode
+    } catch (e: Exception) {
+        AppLog.w("AapProjectionActivity: Could not read the audio mode: ${e.message}")
+        android.media.AudioManager.MODE_NORMAL
+    }
+
     override fun onUserLeaveHint() {
         // Optional: Auto-enter PiP if user presses home
 
         // For now, we only enter via dialog as requested.
+        // Also the one signal that the next onPause is the user's own doing, so the call raise
+        // below never argues with someone who chose to leave.
+        userLeftDeliberately = true
         super.onUserLeaveHint()
     }
 
@@ -1543,6 +1669,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         settleFocusCycle()
         lastSurfaceSetMs = SystemClock.elapsedRealtime()
         warmRelaunchCycleSpent = false
+        loggedKeyframelessPicture = false
         watchdogHandler.removeCallbacks(warmRelaunchCheckRunnable)
         watchdogHandler.postDelayed(
             warmRelaunchCheckRunnable,
@@ -1643,7 +1770,22 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         }
         AppLog.i("SurfaceCallback: onSurfaceDestroyed. Surface: $surface")
         isSurfaceSet = false
-        commManager.send(VideoFocusEvent(gain = false, unsolicited = false))
+        val nowMs = SystemClock.elapsedRealtime()
+        if (VideoFocusReleasePolicy.shouldReleaseOnSurfaceLost(
+                coverFollowsTouch = VideoFocusReleasePolicy.coverFollowsTouch(lastProjectionTouchMs, nowMs),
+                sessionConnected = commManager.isConnected,
+                activityEnding = isFinishing || isChangingConfigurations,
+                pipActive = App.isPiPActive,
+                focusCycleInFlight = focusCycleGainPending,
+            )
+        ) {
+            commManager.send(VideoFocusEvent(gain = false, unsolicited = false))
+        } else {
+            AppLog.i(
+                "AapProjectionActivity: the surface went away ${nowMs - lastProjectionTouchMs}ms after " +
+                    "a touch - holding video focus so Android Auto keeps its keyboard up"
+            )
+        }
         videoDecoder.stopIfCurrentSurface(surface, DecoderStopPolicy.REASON_SURFACE_DESTROYED)
     }
 
@@ -1763,6 +1905,11 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         }
 
         commManager.send(TouchEvent(ts, action, event.actionIndex, pointerData))
+        // ACTION_UP only: a swipe-up-home or edge-back gesture ends in ACTION_CANCEL, and neither
+        // must look like the text-field tap that opens Android Auto's phone keyboard.
+        if (event.actionMasked == MotionEvent.ACTION_UP) {
+            lastProjectionTouchMs = ts
+        }
     }
 
 
@@ -1814,6 +1961,7 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
 
     override fun onDestroy() {
         super.onDestroy()
+        closeCallRaiseEpisode("the projection is going away")
         if (isFinishReceiverRegistered) {
             unregisterReceiver(finishReceiver)
             isFinishReceiverRegistered = false

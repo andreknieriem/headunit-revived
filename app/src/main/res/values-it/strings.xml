@@ -454,6 +454,11 @@
     <string name="vehicle_year_label">Anno</string>
     <string name="vehicle_year_description">Anno del veicolo</string>
     <string name="vehicle_id_label">ID Veicolo</string>
+    <string name="vehicle_type_label">Tipo di veicolo</string>
+    <string name="vehicle_type_car">Auto</string>
+    <string name="vehicle_type_truck">Camion</string>
+    <string name="vehicle_type_motorcycle">Motocicletta</string>
+    <string name="vehicle_type_forced_by_microphone">Il microfono dell\'unità è disattivato, quindi ad Android Auto viene detto che questa è una motocicletta qualunque cosa venga scelta qui. È questo a far registrare il telefono da solo.</string>
     <string name="vehicle_id_description">Solo identificatore interno. Modificandolo, il telefono tratterà questo come un veicolo diverso, ripristinando le preferenze di Android Auto per questa auto.</string>
     <string name="head_unit_make_label">Marca</string>
     <string name="head_unit_make_description">Produttore della head unit</string>
@@ -540,7 +545,11 @@
     <string name="loading_screen_tap_fullscreen_hint">Tocca l\'anteprima per vederla a schermo intero</string>
     <string name="loading_screen_loop_video">Ripeti animazioni brevi in loop</string>
     <string name="microphone_settings">Impostazioni Microfono</string>
+    <string name="use_head_unit_microphone">Microfono dell\'unità</string>
+    <string name="use_head_unit_microphone_description">Attivo: Android Auto sente il microfono di questo dispositivo. Disattivo: questo dispositivo non registra mai e il telefono usa il proprio microfono, o un auricolare o interfono associato al telefono, così l\'assistente vocale continua a funzionare. Richiede Android 11 o successivo sul telefono.</string>
+    <string name="head_unit_microphone_off_info">Il microfono dell\'unità è disattivato, quindi nulla di quanto segue si applica. Ad Android Auto viene detto che questo dispositivo non può registrare ed è una motocicletta, ed è questo a far registrare il telefono da solo. Su Android 10 e precedenti il telefono se ne dimentica tra una sessione e l\'altra e potrebbe smettere di connettersi.</string>
     <string name="microphone_settings_description">Configura l\'ingresso del microfono e l\'elaborazione audio.</string>
+    <string name="mic_wire_format_info">Android Auto riceve sempre il microfono a 16000 Hz, 16 bit, mono. Rifiuta qualsiasi altro formato, quindi queste impostazioni cambiano ciò che fa l\'hardware, non ciò che viene inviato al telefono.</string>
     <string name="mic_echo_canceler">Cancellazione dell\'eco (AEC)</string>
     <string name="mic_echo_canceler_description">Tenta di rimuovere l\'eco dal microfono. Disabilita se riscontri silenzio o distorsione.</string>
     <string name="mic_noise_suppressor">Soppressione del rumore (NS)</string>
@@ -957,4 +966,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (ritardo di %2$ds)</string>
     <string name="failed_aa_not_system">Operazione non riuscita: Android Auto non è installato come app di sistema!</string>
     <string name="failed_aa_not_installed">Operazione non riuscita: Android Auto non è installato!</string>
+    <string name="raise_projection_during_call">Resta in Android Auto durante le chiamate</string>
+    <string name="raise_projection_during_call_description">Solo Modalità Self. Riporta la proiezione sopra la schermata di chiamata del telefono, così le chiamate si rispondono e si chiudono nell\'interfaccia di Android Auto</string>
 </resources>

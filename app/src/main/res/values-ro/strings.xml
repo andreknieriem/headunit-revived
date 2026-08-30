@@ -447,6 +447,11 @@
     <string name="vehicle_year_label">An</string>
     <string name="vehicle_year_description">Anul vehiculului</string>
     <string name="vehicle_id_label">ID vehicul</string>
+    <string name="vehicle_type_label">Tip de vehicul</string>
+    <string name="vehicle_type_car">Automobil</string>
+    <string name="vehicle_type_truck">Camion</string>
+    <string name="vehicle_type_motorcycle">Motocicletă</string>
+    <string name="vehicle_type_forced_by_microphone">Microfonul unității este dezactivat, așa că Android Auto este informat că acesta este o motocicletă, indiferent ce se alege aici. Asta face telefonul să înregistreze singur.</string>
     <string name="vehicle_id_description">Doar identificator intern. Schimbarea acestuia va face ca telefonul dvs. să detecteze acesta ca un vehicul diferit, resetând preferințele Android Auto pentru această mașină.</string>
     <string name="head_unit_make_label">Producător</string>
     <string name="head_unit_make_description">Producătorul unității principale</string>
@@ -534,7 +539,11 @@
     <string name="loading_screen_tap_fullscreen_hint">Atingeți previzualizarea pentru a o vedea pe tot ecranul</string>
     <string name="loading_screen_loop_video">Repetă animațiile scurte în buclă</string>
     <string name="microphone_settings">Setări microfon</string>
+    <string name="use_head_unit_microphone">Microfonul unității</string>
+    <string name="use_head_unit_microphone_description">Activat: Android Auto aude microfonul acestui dispozitiv. Dezactivat: acest dispozitiv nu înregistrează niciodată, iar telefonul folosește propriul microfon sau o cască ori un interfon asociat telefonului, astfel încât asistentul vocal continuă să funcționeze. Necesită Android 11 sau mai nou pe telefon.</string>
+    <string name="head_unit_microphone_off_info">Microfonul unității este dezactivat, așa că nimic din ce urmează nu se aplică. Android Auto este informat că acest dispozitiv nu poate înregistra și că este o motocicletă, iar asta face telefonul să înregistreze singur. Pe Android 10 și mai vechi telefonul uită acest lucru între sesiuni și s-ar putea să nu se mai conecteze.</string>
     <string name="microphone_settings_description">Configurați intrarea microfonului și procesarea audio.</string>
+    <string name="mic_wire_format_info">Android Auto primește întotdeauna microfonul la 16000 Hz, 16 biți, mono. Respinge orice altceva, așa că aceste setări schimbă ce face hardware-ul, nu ce se trimite către telefon.</string>
     <string name="mic_echo_canceler">Anularea ecoului (AEC)</string>
     <string name="mic_echo_canceler_description">Încearcă să elimine ecoul din microfon. Dezactivați dacă întâmpinați tăcere sau distorsiuni.</string>
     <string name="mic_noise_suppressor">Suprimarea zgomotului (NS)</string>
@@ -951,4 +960,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (întârziere %2$ds)</string>
     <string name="failed_aa_not_system">Eșuat: Android Auto nu este instalat ca aplicație de sistem!</string>
     <string name="failed_aa_not_installed">Eșuat: Android Auto nu este instalat!</string>
+    <string name="raise_projection_during_call">Rămâi în Android Auto în timpul apelurilor</string>
+    <string name="raise_projection_during_call_description">Doar Mod local. Readuce proiecția peste ecranul de apel al telefonului, astfel încât apelurile se răspund și se închid din interfața Android Auto</string>
 </resources>

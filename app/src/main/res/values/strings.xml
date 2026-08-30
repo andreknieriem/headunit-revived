@@ -195,7 +195,7 @@
     <string name="wifi">WiFi</string>
     <string name="dpi">Pixel density (DPI)</string>
     <string name="pixel_aspect_ratio">Pixel aspect ratio</string>
-    <string name="mic_sample_rate">Mic sample rate</string>
+    <string name="mic_sample_rate">Mic capture rate</string>
     <string name="keymap">Keymap</string>
     <string name="night_mode">Dark Mode (Android Auto)</string>
     <string name="night_mode_threshold">Night Mode Threshold</string>
@@ -487,7 +487,7 @@
     <string name="playback_focus_mode_auto">Automatic</string>
     <string name="playback_focus_mode_always">Always</string>
     <string name="playback_focus_mode_never">Never</string>
-    <string name="playback_focus_mode_auto_hint">Pauses another player on the headunit (for example the radio) while Android Auto audio plays, but not while a Bluetooth audio link is connected — that link is usually the same phone, and pausing it would stop Android Auto\'s own sound.</string>
+    <string name="playback_focus_mode_auto_hint">Pauses another player on the headunit (for example the radio) while Android Auto audio plays. If that turns out to stop your phone\'s own playback instead, which happens when the headunit is the phone\'s Bluetooth speaker, it stops doing it and remembers. Choose this mode again to let it try once more.</string>
     <string name="playback_focus_mode_always_hint">Always pauses other audio while Android Auto plays. If your music stops after a second or two whenever Bluetooth is on, switch back to Automatic.</string>
     <string name="playback_focus_mode_never_hint">Never touches system audio focus. Other audio on the headunit may keep playing over Android Auto.</string>
     <string name="playback_focus_mode_static_hint">With Static Audio Focus on, this applies from the moment the phone connects and lasts the whole session, rather than only while audio is playing.</string>
@@ -502,7 +502,11 @@
     <string name="assistant_volume_offset">Assistant Volume Offset</string>
     <string name="navigation_volume_offset">Navigation Volume Offset</string>
     <string name="microphone_settings">Microphone Settings</string>
+    <string name="use_head_unit_microphone">Head unit microphone</string>
+    <string name="use_head_unit_microphone_description">On: Android Auto hears this device\'s microphone. Off: this device never records and the phone uses its own microphone, or a headset or intercom paired to the phone, so the voice assistant still works. Needs Android 11 or newer on the phone.</string>
+    <string name="head_unit_microphone_off_info">The head unit microphone is off, so nothing below applies. Android Auto is told this device cannot record and is a motorcycle, which is what makes the phone record for itself. On Android 10 and older the phone forgets that between sessions and may stop connecting.</string>
     <string name="microphone_settings_description">Configure microphone input and audio processing.</string>
+    <string name="mic_wire_format_info">Android Auto always receives the microphone at 16000 Hz, 16-bit, mono. It rejects anything else, so these settings change what the hardware does, not what the phone is sent.</string>
     <string name="mic_input_source">Microphone Input Source</string>
     <string name="mic_input_source_description">Choose the audio source for the microphone.</string>
     <string-array name="mic_input_sources">
@@ -515,9 +519,9 @@
     <string name="mic_echo_canceler">Echo cancellation (AEC)</string>
     <string name="mic_echo_canceler_description">Attempts to remove echo from the microphone. Disable if you experience silence or distortion.</string>
     <string name="mic_noise_suppressor">Noise suppression (NS)</string>
-    <string name="mic_noise_suppressor_description">Attempts to reduce background noise. Disable if your voice sounds muffled.</string>
+    <string name="mic_noise_suppressor_description">Attempts to reduce background noise. Android Auto expects this off on a single microphone and does its own processing. Disable if your voice sounds muffled.</string>
     <string name="mic_auto_gain_control">Automatic gain control (AGC)</string>
-    <string name="mic_auto_gain_control_description">Automatically adjusts microphone volume. Disable if the volume is unstable.</string>
+    <string name="mic_auto_gain_control_description">Automatically adjusts microphone volume. Android Auto expects this off and applies its own gain control; the two together usually sound worse. Disable if the volume is unstable.</string>
     <string name="mic_feature_unsupported">This feature is not supported on your device.</string>
 
     <!-- Info Settings -->
@@ -741,6 +745,8 @@
 
     <string name="kill_on_disconnect">Close app on disconnect</string>
     <string name="kill_on_disconnect_description">Automatically close the app when Android Auto disconnects</string>
+    <string name="raise_projection_during_call">Stay in Android Auto during calls</string>
+    <string name="raise_projection_during_call_description">Self Mode only. Brings the projection back over the phone\'s call screen so calls are answered and ended in the Android Auto interface</string>
     <string name="kill_on_disconnect_warning_title">Warning</string>
     <string name="kill_on_disconnect_warning">The following reconnection settings will conflict with closing the app on disconnect:\n\n%1$s\n\nYour initial connection settings (auto-connect, auto-start) will still work when the headunit turns on. However, after the first disconnection the app will close immediately instead of trying to reconnect.\n\nNote: Some aftermarket head units never fully shut down — they hibernate instead, similar to a phone that locks its screen but never actually powers off. With this option enabled, the app will close after the first disconnection and may not reopen automatically on the next ignition cycle.\n\nWould you like to disable the reconnection settings listed above?</string>
     <string name="kill_on_disconnect_disable_and_enable">Disable and enable</string>
@@ -770,6 +776,11 @@
     <string name="vehicle_year_label">Year</string>
     <string name="vehicle_year_description">Vehicle year</string>
     <string name="vehicle_id_label">Vehicle ID</string>
+    <string name="vehicle_type_label">Vehicle Type</string>
+    <string name="vehicle_type_car">Car</string>
+    <string name="vehicle_type_truck">Truck</string>
+    <string name="vehicle_type_motorcycle">Motorcycle</string>
+    <string name="vehicle_type_forced_by_microphone">The head unit microphone is off, so Android Auto is told this is a motorcycle whatever is picked here. That is what makes the phone record for itself.</string>
     <string name="vehicle_id_description">Internal identifier only. Changing this will cause your phone to treat this as a different vehicle, resetting your Android Auto preferences for this car.</string>
     <string name="head_unit_make_label">Make</string>
     <string name="head_unit_make_description">Head unit manufacturer</string>
@@ -894,6 +905,7 @@
     <!-- The failure banner on the main screen. One per condition, shown after a failed attempt. -->
     <string name="connection_issue_banner_bt_silent">Your phone connected over Bluetooth, but nothing this unit sent ever reached it. This is a fault in the head unit\'s Bluetooth that this app cannot work around. Tap to switch to USB, Wireless Helper or Auto, which do not need the Bluetooth handshake.</string>
     <string name="connection_issue_banner_bssid">This unit could not read its own WiFi MAC address (BSSID), so your phone was never told which network to join. Tap to turn on Location, or to enter the address by hand.</string>
+    <string name="connection_issue_banner_hotspot_off">This unit\'s hotspot is off, so there was no network to send your phone to. Turn the hotspot on before connecting, or tap to let the app switch it on for you.</string>
     <string name="connection_issue_banner_hotspot_config">This unit will not tell the app its hotspot name and password, so your phone had nothing to join. Tap to enter them by hand.</string>
     <string name="connection_issue_banner_dismiss">Dismiss</string>
     <!-- What the hotspot banner types into the settings search. Both override rows carry it

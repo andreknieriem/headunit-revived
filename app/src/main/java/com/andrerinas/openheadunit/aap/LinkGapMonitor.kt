@@ -140,6 +140,21 @@ class LinkGapMonitor(
      * The transport outlives a session and is re-armed for the next one, so a stamp left by the
      * previous phone would otherwise be measured as this session's first gap.
      */
+    /**
+     * Excludes a silence the caller expected, without discarding the window.
+     *
+     * A [reset] here would restart the 30 s window on every media-sink cycle, so a series that
+     * stops and starts faster than that would never report at all. The interval before [nowMs] is
+     * not measured and the window is shifted past it, so what the window has already measured
+     * survives and its percentages stay against live time.
+     */
+    fun skipExpectedGap(nowMs: Long) {
+        if (!started) return
+        val silenceMs = nowMs - lastMessageMs
+        if (silenceMs > 0) windowStartMs += silenceMs
+        lastMessageMs = nowMs
+    }
+
     fun reset() {
         started = false
         lastMessageMs = 0L

@@ -197,12 +197,13 @@ object ProjectionWatchdogPolicy {
      *
      * @param sessionLive see [isSessionLive].
      * @param surfaceSet whether the decoder has been handed a surface at all yet.
-     * @param renderedSinceSurfaceSet whether any frame has reached the screen on that surface.
+     * @param crediblePictureOnSurface whether that surface is showing a picture a keyframe accounts
+     *   for. A codec rebuilt with cached parameter sets renders gray P-frame output, which is not one.
      */
     fun shouldNudgeForFirstFrame(
         sessionLive: Boolean,
         surfaceSet: Boolean,
-        renderedSinceSurfaceSet: Boolean,
+        crediblePictureOnSurface: Boolean,
         warmRelaunchCycleSpent: Boolean,
-    ): Boolean = sessionLive && surfaceSet && !renderedSinceSurfaceSet && !warmRelaunchCycleSpent
+    ): Boolean = sessionLive && surfaceSet && !crediblePictureOnSurface && !warmRelaunchCycleSpent
 }

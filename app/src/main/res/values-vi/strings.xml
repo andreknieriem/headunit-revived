@@ -271,7 +271,11 @@
     <string name="assistant_volume_offset">Bù âm lượng trợ lý</string>
     <string name="navigation_volume_offset">Bù âm lượng điều hướng</string>
     <string name="microphone_settings">Cài đặt micro</string>
+    <string name="use_head_unit_microphone">Micro của đầu máy</string>
+    <string name="use_head_unit_microphone_description">Bật: Android Auto nghe micro của thiết bị này. Tắt: thiết bị này không bao giờ ghi âm và điện thoại dùng micro của chính nó, hoặc tai nghe hay bộ đàm đã ghép nối với điện thoại, nên trợ lý giọng nói vẫn hoạt động. Cần Android 11 trở lên trên điện thoại.</string>
+    <string name="head_unit_microphone_off_info">Micro của đầu máy đang tắt nên không có mục nào bên dưới được áp dụng. Android Auto được thông báo rằng thiết bị này không thể ghi âm và là một xe máy, đó chính là điều khiến điện thoại tự ghi âm. Trên Android 10 trở xuống, điện thoại quên điều này giữa các phiên và có thể ngừng kết nối.</string>
     <string name="microphone_settings_description">Cấu hình đầu vào micro và xử lý âm thanh.</string>
+    <string name="mic_wire_format_info">Android Auto luôn nhận micro ở 16000 Hz, 16 bit, đơn kênh. Mọi định dạng khác đều bị từ chối, nên các cài đặt này thay đổi cách phần cứng hoạt động chứ không thay đổi những gì được gửi tới điện thoại.</string>
     <string name="mic_input_source">Nguồn vào micro</string>
     <string name="mic_input_source_description">Chọn nguồn âm thanh cho micro.</string>
     <string-array name="mic_input_sources">
@@ -460,6 +464,11 @@
     <string name="vehicle_year_label">Năm</string>
     <string name="vehicle_year_description">Năm sản xuất xe</string>
     <string name="vehicle_id_label">ID xe</string>
+    <string name="vehicle_type_label">Loại xe</string>
+    <string name="vehicle_type_car">Ô tô</string>
+    <string name="vehicle_type_truck">Xe tải</string>
+    <string name="vehicle_type_motorcycle">Xe máy</string>
+    <string name="vehicle_type_forced_by_microphone">Micro của đầu máy đang tắt nên dù chọn gì ở đây, Android Auto vẫn được thông báo rằng đây là một xe máy. Đó chính là điều khiến điện thoại tự ghi âm.</string>
     <string name="vehicle_id_description">Định danh nội bộ. Đổi giá trị này sẽ khiến điện thoại coi đây là xe khác và đặt lại tuỳ chỉnh Android Auto cho xe này.</string>
     <string name="head_unit_make_label">Hãng</string>
     <string name="head_unit_make_description">Hãng sản xuất headunit</string>
@@ -957,4 +966,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (trễ %2$d giây)</string>
     <string name="failed_aa_not_system">Thất bại: Android Auto không được cài đặt dưới dạng ứng dụng hệ thống!</string>
     <string name="failed_aa_not_installed">Thất bại: Android Auto chưa được cài đặt!</string>
+    <string name="raise_projection_during_call">Ở lại Android Auto trong khi gọi điện</string>
+    <string name="raise_projection_during_call_description">Chỉ Chế độ độc lập. Đưa màn hình chiếu trở lại phía trên màn hình cuộc gọi của điện thoại, để trả lời và kết thúc cuộc gọi trong giao diện Android Auto</string>
 </resources>

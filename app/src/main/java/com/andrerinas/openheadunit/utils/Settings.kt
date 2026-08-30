@@ -11,6 +11,7 @@ import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
 import com.andrerinas.openheadunit.decoder.video.DeviceMemoryProfile
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
+import com.andrerinas.openheadunit.aap.VehicleTypePolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
@@ -106,8 +107,20 @@ class Settings(private val context: Context) {
         get() = prefs.getInt("ui-scale-settings-percent", 100)
         set(value) { prefs.edit().putInt("ui-scale-settings-percent", value).apply() }
 
+    /**
+     * The rate the microphone hardware is opened at when 16 kHz cannot be opened. Not what the phone
+     * receives: that is always 16 kHz mono, because Android Auto validates the announced config and
+     * rejects anything outside {16000, 48000} Hz.
+     *
+     * The list used to run 8000 to 48000 and the announcement was hardcoded at 16000, so every other
+     * choice sent the phone PCM at a rate it had never been told about. A stored value from then is
+     * migrated here rather than in a one-shot, since only the two remaining rates convert cleanly.
+     */
     var micSampleRate: Int
-        get() = prefs.getInt("mic-sample-rate", 16000)
+        get() {
+            val stored = prefs.getInt("mic-sample-rate", MicSampleRates.first())
+            return if (stored in MicSampleRates) stored else MicSampleRates.first()
+        }
         set(sampleRate) {
             prefs.edit().putInt("mic-sample-rate", sampleRate).apply()
         }
@@ -129,6 +142,19 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean(KEY_SYNC_MEDIA_SESSION_AA_METADATA, false)
         set(value) {
             prefs.edit().putBoolean(KEY_SYNC_MEDIA_SESSION_AA_METADATA, value).apply()
+        }
+
+    /**
+     * In Self Mode, put the projection back on top when a call covers it.
+     *
+     * Android Auto's own call UI is already on the projected surface, so the phone's call screen
+     * only hides it. Self Mode only: anywhere else the call screen is on the phone, not on the
+     * head unit.
+     */
+    var raiseProjectionDuringCall: Boolean
+        get() = prefs.getBoolean("raise-projection-during-call", true)
+        set(value) {
+            prefs.edit().putBoolean("raise-projection-during-call", value).apply()
         }
 
     var nightMode: NightMode
@@ -531,6 +557,10 @@ class Settings(private val context: Context) {
         get() = prefs.getString("vehicle-id", "headlessunit-001")!!
         set(value) { prefs.edit().putString("vehicle-id", value).apply() }
 
+    var vehicleType: Int
+        get() = VehicleTypePolicy.sanitised(prefs.getInt("vehicle-type", VehicleTypePolicy.CAR))
+        set(value) { prefs.edit().putInt("vehicle-type", value).apply() }
+
     var headUnitMake: String
         get() = prefs.getString("head-unit-make", "Google")!!
         set(value) { prefs.edit().putString("head-unit-make", value).apply() }
@@ -644,6 +674,9 @@ class Settings(private val context: Context) {
     /** The external-GPS choice only applies when a phone is connected; false only for Self-only. */
     fun showsExternalGps(): Boolean = showsUsb() || showsWifi()
 
+    /** Whether Self Mode settings should be shown (empty selection shows everything). */
+    fun showsSelf(): Boolean = connectionModes.isEmpty() || ConnectionMode.SELF in connectionModes
+
     var autoConnectLastSession: Boolean
         get() = prefs.getBoolean("auto-connect-last-session", false)
         set(value) { prefs.edit().putBoolean("auto-connect-last-session", value).apply() }
@@ -676,6 +709,19 @@ class Settings(private val context: Context) {
         lastConnectionUsbDevice = ""
     }
 
+    /**
+     * Whether the head unit records at all. Off leaves the microphone to the phone.
+     *
+     * Off does not omit the microphone service: Android Auto's required-service check refuses a
+     * head unit that does not declare one. It declares it, declines every request, and sends
+     * nothing, which is what frees the physical microphone for a Bluetooth headset or intercom.
+     */
+    var useHeadUnitMicrophone: Boolean
+        get() = prefs.getBoolean("use-head-unit-microphone", true)
+        set(value) {
+            prefs.edit().putBoolean("use-head-unit-microphone", value).apply()
+        }
+
     var enableAudioSink: Boolean
         get() = prefs.getBoolean("enable-audio-sink", true)
         set(value) { prefs.edit().putBoolean("enable-audio-sink", value).apply() }
@@ -685,14 +731,22 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("static-audio-focus", value).apply() }
 
     // Whether AA playback takes system audio focus, so another local player (typically the car
-    // radio) pauses while it runs. AUTO skips it when a Bluetooth media link is up, because the
-    // A2DP sink answers our focus grab by pausing the phone that is feeding us. See
+    // radio) pauses while it runs. AUTO takes it until the phone is seen cutting its own audio in
+    // response, which is what happens when this head unit is its Bluetooth A2DP sink. See
     // PlaybackFocusPolicy for the whole story; ALWAYS and NEVER are the manual overrides.
     var playbackFocusMode: PlaybackFocusPolicy.Mode
         get() = PlaybackFocusPolicy.Mode.fromInt(
             prefs.getInt("playback-focus-mode", PlaybackFocusPolicy.Mode.AUTO.value)
         )
         set(value) { prefs.edit().putInt("playback-focus-mode", value.value).apply() }
+
+    // What AUTO learned: taking system audio focus stops the phone's own playback on this head
+    // unit, so stop asking for it. Remembered because the trial that finds it out costs the user a
+    // couple of interrupted tracks, and there is no reason to pay that at every connect. Re-picking
+    // the focus mode clears it, which is the way back from a false positive.
+    var playbackFocusSelfDefeating: Boolean
+        get() = prefs.getBoolean("playback-focus-self-defeating", false)
+        set(value) { prefs.edit().putBoolean("playback-focus-self-defeating", value).apply() }
 
     // Whether the physical media buttons reach Android Auto, or are left to the Bluetooth side that
     // may already act on the same press — two consumers of one button skip two tracks. See
@@ -1446,7 +1500,11 @@ class Settings(private val context: Context) {
             }
         }
 
-        val MicSampleRates = listOf(8000, 16000, 24000, 32000, 44100, 48000) // Changed to List
+        /**
+         * The two rates Android Auto accepts. 48000 is the fallback because it is a whole multiple
+         * of 16000, so converting it needs no filter; 44100 and the rest were never usable.
+         */
+        val MicSampleRates = listOf(16000, 48000)
 
         fun getNextMicSampleRate(currentRate: Int): Int {
             val currentIndex = MicSampleRates.indexOf(currentRate)
@@ -1629,6 +1687,11 @@ class Settings(private val context: Context) {
     var connectionIssueHotspotConfigAtEpochMs: Long
         get() = prefs.getLong("connection-issue-hotspot-config", 0L)
         set(value) = prefs.edit().putLong("connection-issue-hotspot-config", value).apply()
+
+    /** No access point was up at all, so there was no network to send the phone to. */
+    var connectionIssueHotspotOffAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-hotspot-off", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-hotspot-off", value).apply()
 
     /**
      * When the user last dismissed the failure banner.

@@ -453,6 +453,11 @@
     <string name="vehicle_year_label">Год</string>
     <string name="vehicle_year_description">Год выпуска автомобиля</string>
     <string name="vehicle_id_label">ID автомобиля</string>
+    <string name="vehicle_type_label">Тип транспортного средства</string>
+    <string name="vehicle_type_car">Автомобиль</string>
+    <string name="vehicle_type_truck">Грузовик</string>
+    <string name="vehicle_type_motorcycle">Мотоцикл</string>
+    <string name="vehicle_type_forced_by_microphone">Микрофон головного устройства выключен, поэтому Android Auto сообщается, что это мотоцикл, независимо от выбора здесь. Именно это заставляет телефон записывать самостоятельно.</string>
     <string name="vehicle_id_description">Только внутренний идентификатор. Его изменение приведёт к тому, что телефон определит это как другой автомобиль, сбросив настройки Android Auto для этой машины.</string>
     <string name="head_unit_make_label">Производитель</string>
     <string name="head_unit_make_description">Производитель головного устройства</string>
@@ -536,7 +541,11 @@
     <string name="media_action_next">Следующий</string>
     <string name="error_usb_permission_failed">Системная ошибка: Не удалось запросить диалоговое окно разрешения USB.</string>
     <string name="microphone_settings">Настройки микрофона</string>
+    <string name="use_head_unit_microphone">Микрофон головного устройства</string>
+    <string name="use_head_unit_microphone_description">Включено: Android Auto слышит микрофон этого устройства. Выключено: это устройство никогда не записывает, а телефон использует собственный микрофон либо гарнитуру или интерком, сопряжённые с телефоном, поэтому голосовой помощник продолжает работать. Требуется Android 11 или новее на телефоне.</string>
+    <string name="head_unit_microphone_off_info">Микрофон головного устройства выключен, поэтому ничего из указанного ниже не применяется. Android Auto сообщается, что это устройство не может записывать и является мотоциклом, — именно это заставляет телефон записывать самостоятельно. На Android 10 и старее телефон забывает это между сеансами и может перестать подключаться.</string>
     <string name="microphone_settings_description">Настройка входа микрофона и обработки звука.</string>
+    <string name="mic_wire_format_info">Android Auto всегда получает микрофон с частотой 16000 Гц, 16 бит, моно. Всё остальное отклоняется, поэтому эти настройки меняют работу оборудования, а не то, что отправляется на телефон.</string>
     <string name="mic_echo_canceler">Эхоподавление (AEC)</string>
     <string name="mic_echo_canceler_description">Попытка удалить эхо из микрофона. Отключите, если слышите тишину или искажения.</string>
     <string name="mic_noise_suppressor">Шумоподавление (NS)</string>
@@ -953,4 +962,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (задержка %2$dс)</string>
     <string name="failed_aa_not_system">Ошибка: Android Auto не установлен как системное приложение!</string>
     <string name="failed_aa_not_installed">Ошибка: Android Auto не установлен!</string>
+    <string name="raise_projection_during_call">Оставаться в Android Auto во время звонков</string>
+    <string name="raise_projection_during_call_description">Только Автономный режим. Возвращает проекцию поверх экрана вызова телефона, чтобы отвечать на звонки и завершать их в интерфейсе Android Auto</string>
 </resources>

@@ -445,6 +445,11 @@
     <string name="vehicle_year_label">Yıl</string>
     <string name="vehicle_year_description">Araç yılı</string>
     <string name="vehicle_id_label">Araç ID</string>
+    <string name="vehicle_type_label">Araç türü</string>
+    <string name="vehicle_type_car">Otomobil</string>
+    <string name="vehicle_type_truck">Kamyon</string>
+    <string name="vehicle_type_motorcycle">Motosiklet</string>
+    <string name="vehicle_type_forced_by_microphone">Ana ünite mikrofonu kapalı, bu yüzden burada ne seçilirse seçilsin Android Auto\'ya bunun bir motosiklet olduğu bildirilir. Telefonun kendi başına kayıt yapmasını sağlayan da budur.</string>
     <string name="vehicle_id_description">Sadece dahili tanımlayıcıdır. Bunu değiştirmek, telefonunuzun bu aracı farklı bir araç olarak görmesine neden olur ve bu araba için Android Auto tercihlerinizi sıfırlar.</string>
     <string name="head_unit_make_label">Marka</string>
     <string name="head_unit_make_description">Multimedya sistemi üreticisi</string>
@@ -507,7 +512,11 @@
     <string name="media_action_next">Sonraki</string>
     <string name="error_usb_permission_failed">Sistem hatası: USB izin iletişim kutusu istenemedi.</string>
     <string name="microphone_settings">Mikrofon Ayarları</string>
+    <string name="use_head_unit_microphone">Ana ünite mikrofonu</string>
+    <string name="use_head_unit_microphone_description">Açık: Android Auto bu cihazın mikrofonunu duyar. Kapalı: bu cihaz asla kayıt yapmaz ve telefon kendi mikrofonunu ya da telefona eşleştirilmiş bir kulaklık veya interkomu kullanır, böylece sesli asistan çalışmaya devam eder. Telefonda Android 11 veya daha yenisi gerekir.</string>
+    <string name="head_unit_microphone_off_info">Ana ünite mikrofonu kapalı, bu yüzden aşağıdakilerin hiçbiri geçerli değil. Android Auto\'ya bu cihazın kayıt yapamadığı ve bir motosiklet olduğu bildirilir; telefonun kendi başına kayıt yapmasını sağlayan da budur. Android 10 ve öncesinde telefon bunu oturumlar arasında unutur ve bağlanmayı bırakabilir.</string>
     <string name="microphone_settings_description">Mikrofon girişini ve ses işlemeyi yapılandırın.</string>
+    <string name="mic_wire_format_info">Android Auto mikrofonu her zaman 16000 Hz, 16 bit, mono olarak alır. Başka her şeyi reddeder, bu nedenle bu ayarlar donanımın ne yaptığını değiştirir, telefona ne gönderildiğini değil.</string>
     <string name="mic_echo_canceler">Yankı giderme (AEC)</string>
     <string name="mic_echo_canceler_description">Mikrofondaki yankıyı gidermeye çalışır. Sessizlik veya bozulma yaşıyorsanız bunu devre dışı bırakın.</string>
     <string name="mic_noise_suppressor">Gürültü bastırma (NS)</string>
@@ -949,4 +958,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$d sn gecikme)</string>
     <string name="failed_aa_not_system">Başarısız: Android Auto bir sistem uygulaması olarak yüklü değil!</string>
     <string name="failed_aa_not_installed">Başarısız: Android Auto yüklü değil!</string>
+    <string name="raise_projection_during_call">Aramalar sırasında Android Auto\'da kal</string>
+    <string name="raise_projection_during_call_description">Yalnızca Dahili Mod. Yansıtmayı telefonun arama ekranının üzerine geri getirir, böylece aramalar Android Auto arayüzünden yanıtlanır ve sonlandırılır</string>
 </resources>

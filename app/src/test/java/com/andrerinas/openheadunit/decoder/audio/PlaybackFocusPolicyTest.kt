@@ -13,14 +13,12 @@ class PlaybackFocusPolicyTest {
         staticAudioFocus: Boolean = false,
         audioSinkEnabled: Boolean = true,
         isAudioChannel: Boolean = true,
-        btMediaLinkActive: Boolean = false,
         selfDefeatingLatched: Boolean = false
     ) = PlaybackFocusPolicy.shouldAcquire(
         mode = mode,
         staticAudioFocus = staticAudioFocus,
         audioSinkEnabled = audioSinkEnabled,
         isAudioChannel = isAudioChannel,
-        btMediaLinkActive = btMediaLinkActive,
         selfDefeatingLatched = selfDefeatingLatched
     )
 
@@ -50,36 +48,38 @@ class PlaybackFocusPolicyTest {
     // --- AUTO ---
 
     @Test
-    fun `auto takes focus when no bluetooth media link is up`() {
-        // The car-radio case this feature was written for: nothing on Bluetooth, so the player we
-        // silence is genuinely a local one.
-        assertTrue(acquire(mode = Mode.AUTO, btMediaLinkActive = false))
+    fun `auto takes focus until the harm is observed`() {
+        // The car-radio case this feature was written for, and also the head unit that unmutes its
+        // amplifier from the focus request: both need us to ask.
+        assertTrue(acquire(mode = Mode.AUTO))
     }
 
     @Test
-    fun `auto declines while a bluetooth media link is up`() {
-        // Taking focus here makes the A2DP sink AVRCP-pause the phone that is feeding us.
-        assertFalse(acquire(mode = Mode.AUTO, btMediaLinkActive = true))
+    fun `auto declines once the latch has tripped`() {
+        // Taking focus here makes the A2DP sink AVRCP-pause the phone that is feeding us, and the
+        // latch is what saw it happen. This is the only thing that stops AUTO.
+        assertFalse(acquire(mode = Mode.AUTO, selfDefeatingLatched = true))
     }
 
     @Test
-    fun `auto declines once the latch has tripped, even with no bluetooth link detected`() {
-        // The backstop for units where the Bluetooth probe reports nothing useful.
-        assertFalse(acquire(mode = Mode.AUTO, btMediaLinkActive = false, selfDefeatingLatched = true))
+    fun `auto and always agree until the latch trips`() {
+        // A connected Bluetooth media link used to veto the grab here. Any paired phone has one, so
+        // a head unit that routes its amplifier from the focus request played nothing at all, while
+        // the harm the veto guessed at is what the latch measures directly.
+        assertEquals(acquire(mode = Mode.ALWAYS), acquire(mode = Mode.AUTO))
     }
 
     // --- ALWAYS / NEVER ---
 
     @Test
     fun `always keeps taking focus whatever the detection says`() {
-        assertTrue(acquire(mode = Mode.ALWAYS, btMediaLinkActive = true))
+        assertTrue(acquire(mode = Mode.ALWAYS))
         assertTrue(acquire(mode = Mode.ALWAYS, selfDefeatingLatched = true))
-        assertTrue(acquire(mode = Mode.ALWAYS, btMediaLinkActive = true, selfDefeatingLatched = true))
     }
 
     @Test
-    fun `never declines even when the detection is clean`() {
-        assertFalse(acquire(mode = Mode.NEVER, btMediaLinkActive = false, selfDefeatingLatched = false))
+    fun `never declines even when nothing has gone wrong`() {
+        assertFalse(acquire(mode = Mode.NEVER, selfDefeatingLatched = false))
     }
 
     // --- static mode's permanent grab ---
@@ -142,7 +142,6 @@ class PlaybackFocusPolicyTest {
                                 staticAudioFocus = static,
                                 audioSinkEnabled = sink,
                                 isAudioChannel = true,
-                                btMediaLinkActive = bt,
                                 selfDefeatingLatched = latched
                             )
                             val permanent = acquirePermanent(
@@ -206,7 +205,7 @@ class PlaybackFocusPolicyTest {
     }
 
     @Test
-    fun `auto is the stored default so an unset preference behaves like 3 point 1 point 1 plus detection`() {
+    fun `auto is the stored default so an unset preference takes focus until it learns not to`() {
         assertEquals(0, Mode.AUTO.value)
     }
 }

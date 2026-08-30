@@ -449,6 +449,11 @@
     <string name="vehicle_year_label">السنة</string>
     <string name="vehicle_year_description">سنة المركبة</string>
     <string name="vehicle_id_label">معرف المركبة</string>
+    <string name="vehicle_type_label">نوع المركبة</string>
+    <string name="vehicle_type_car">سيارة</string>
+    <string name="vehicle_type_truck">شاحنة</string>
+    <string name="vehicle_type_motorcycle">دراجة نارية</string>
+    <string name="vehicle_type_forced_by_microphone">ميكروفون الوحدة الرئيسية معطّل، لذا يتم إبلاغ Android Auto بأن هذه دراجة نارية مهما كان الاختيار هنا. وهذا ما يجعل الهاتف يسجّل بنفسه.</string>
     <string name="vehicle_id_description">معرف داخلي فقط. تغييره سيجعل هاتفك يكتشف هذا كمركبة مختلفة، مما يعيد تعيين تفضيلات Android Auto لهذه السيارة.</string>
     <string name="head_unit_make_label">الشركة المصنعة</string>
     <string name="head_unit_make_description">الشركة المصنعة لوحدة الوسائط</string>
@@ -533,7 +538,11 @@
     <string name="loading_screen_tap_fullscreen_hint">انقر على المعاينة لعرضها بملء الشاشة</string>
     <string name="loading_screen_loop_video">تكرار الرسوم المتحركة القصيرة</string>
     <string name="microphone_settings">إعدادات الميكروفون</string>
+    <string name="use_head_unit_microphone">ميكروفون الوحدة الرئيسية</string>
+    <string name="use_head_unit_microphone_description">مفعّل: يسمع Android Auto ميكروفون هذا الجهاز. معطّل: لا يسجّل هذا الجهاز أبدًا ويستخدم الهاتف ميكروفونه الخاص، أو سماعة أو جهاز اتصال داخلي مقترنًا بالهاتف، فيظل المساعد الصوتي يعمل. يتطلب Android 11 أو أحدث على الهاتف.</string>
+    <string name="head_unit_microphone_off_info">ميكروفون الوحدة الرئيسية معطّل، لذا لا ينطبق أي مما يلي. يتم إبلاغ Android Auto بأن هذا الجهاز لا يمكنه التسجيل وأنه دراجة نارية، وهذا ما يجعل الهاتف يسجّل بنفسه. في Android 10 والأقدم ينسى الهاتف ذلك بين الجلسات وقد يتوقف عن الاتصال.</string>
     <string name="microphone_settings_description">تكوين مدخل الميكروفون ومعالجة الصوت.</string>
+    <string name="mic_wire_format_info">يستقبل Android Auto الميكروفون دائمًا بمعدل 16000 هرتز، 16 بت، أحادي. ويرفض أي شيء آخر، لذا تغيّر هذه الإعدادات ما يفعله العتاد، لا ما يُرسل إلى الهاتف.</string>
     <string name="mic_echo_canceler">إلغاء الصدى (AEC)</string>
     <string name="mic_echo_canceler_description">يحاول إزالة الصدى من الميكروفون. قم بتعطيله إذا واجهت صمتاً أو تشويشاً.</string>
     <string name="mic_noise_suppressor">إخماد الضوضاء (NS)</string>
@@ -952,4 +961,6 @@
     <string name="auto_connect_delay_summary_format">%1$s (تأخير %2$dث)</string>
     <string name="failed_aa_not_system">فشل: أندرويد أوتو غير مثبت كتطبيق نظام!</string>
     <string name="failed_aa_not_installed">فشل: أندرويد أوتو غير مثبت!</string>
+    <string name="raise_projection_during_call">البقاء في Android Auto أثناء المكالمات</string>
+    <string name="raise_projection_during_call_description">الوضع الذاتي فقط. يُعيد العرض فوق شاشة اتصال الهاتف بحيث يتم الرد على المكالمات وإنهاؤها من واجهة Android Auto</string>
 </resources>
