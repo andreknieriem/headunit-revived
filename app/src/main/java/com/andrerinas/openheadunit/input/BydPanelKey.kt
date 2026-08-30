@@ -1,11 +1,11 @@
 package com.andrerinas.openheadunit.input
 
-import android.view.KeyEvent
 import java.util.Locale
 
 /**
  * Decodes the panel / steering-wheel key frames a BYD head unit broadcasts, and maps them onto the
  * key codes the rest of this app speaks.
+ * Information onf how steering wheel keys are handled decoded by reverse engineering BYD system apps
  *
  * On these units the media buttons are **not Android `KeyEvent`s** — not merely unhandled ones, but
  * events that never exist in that form at all. The button reaches the MCU, the MCU reaches
@@ -30,13 +30,6 @@ import java.util.Locale
  * two-byte header with unrelated meanings (the Bluetooth one puts ASCII device names behind `02 03`),
  * which is why [ACTION] is the single action worth registering for and every other channel is left
  * alone.
- *
- * Only three codes are confirmed — they are the three the stock player implements and the two that
- * were captured live. The rest become learnable virtual key codes rather than guesses; see
- * [toKeyCode].
- *
- * Pure and unit-tested; the registration and the send live in
- * [com.andrerinas.openheadunit.connection.carkey.byd.CarBydReceiver].
  */
 object BydPanelKey {
 
@@ -53,15 +46,6 @@ object BydPanelKey {
     /** Not a panel key frame. */
     const val NO_KEY = -1
 
-    // ── Panel key codes ──────────────────────────────────────────────────────────────────────────
-    // Confirmed: implemented in the stock player's `onPanelKeyDown`, and NEXT/PREV were also
-    // captured live on a real unit.
-    const val CODE_PLAY_PAUSE = 0x02
-    const val CODE_NEXT = 0x03
-    const val CODE_PREV = 0x04
-    const val CODE_PHONE = 0x5E
-    const val CODE_MENU = 0x5F
-
     /**
      * Base for the virtual key codes given to panel keys with no confirmed meaning, so a user can
      * learn them in the keymap. Follows the convention the other proprietary receivers already use
@@ -75,11 +59,44 @@ object BydPanelKey {
     val VIRTUAL_RANGE = VIRTUAL_BASE until (VIRTUAL_BASE + 256)
 
     /**
+     * The catalogue, for logs and for the keymap screen. Twenty panel buttons from the factory test
+     * app plus the three steering-wheel codes.
+     *
+     * `Next` appears twice on purpose — `0x03` on the wheel, `0x84` on the panel — as does the pair
+     * `Prev`/`Pre`. They are separate buttons in separate ranges that happen to do the same thing.
+     */
+    private val NAMES = mapOf(
+        0x02 to "PlayPause",
+        0x03 to "Next",
+        0x04 to "Prev",
+        0x10 to "VolumeDown",
+        0x11 to "VolumeUp",
+        0x43 to "TurnUp",
+        0x44 to "TurnDown",
+        0x45 to "Aux",
+        0x53 to "Phone",
+        0x54 to "SD",
+        0x5D to "Voice",
+        0x5E to "Connect",
+        0x5F to "Drop",
+        0x7E to "USB",
+        0x81 to "Mode",
+        0x82 to "Pre",
+        0x84 to "Next",
+        0x86 to "RightFront",
+        0x88 to "Power",
+        0x8D to "Radio",
+        0x9C to "Music",
+        0x9D to "Video",
+        0x9E to "ScreenOff",
+    )
+
+    /**
      * The panel key code carried by [frame], or [NO_KEY] when this frame is not a key press.
      *
-     * The channel is busy with source changes, ACC state, launcher metadata and the service's own
-     * echo of what other apps send it, so the group/sub check is what keeps all of that out. It also
-     * means a stray broadcast of this very generic action name cannot inject an arbitrary key.
+     * The channel is busy with source changes, ACC state, camera control, launcher metadata and the
+     * service's own echo of what other apps send it, so the group/sub check is what keeps all of that
+     * out.
      */
     fun panelKeyCode(frame: ByteArray?): Int {
         if (frame == null || frame.size < 3) return NO_KEY
@@ -90,41 +107,35 @@ object BydPanelKey {
     /**
      * The key code to hand to `CarKeyReceiver.handleClick` for a panel key code.
      *
-     * The three confirmed codes become the real Android media key codes, so play/pause, next and
-     * previous work on a BYD unit with nothing configured. Everything else becomes a virtual code:
-     * sending a guess would be worse than sending nothing, because a wrong guess is a button that
-     * does the wrong thing every time and reads as a bug, whereas a virtual code shows up in the
-     * keymap screen ready to be assigned to whichever Android Auto action the user finds it should
-     * do.
+     * **Every** panel key becomes a virtual code — none is mapped to an Android key code here, not
+     * even the three the stock player implements. Nothing this channel produces reaches Android Auto
+     * until the user binds it in the keymap screen.
+     *
+     * `CommManager.sendKey` drops an unmapped code at or above 1000 rather than sending nonsense to
+     * the phone, so an unbound button is inert rather than unpredictable. [nameOf] is what makes
+     * binding it practical: the keymap screen shows the button by name instead of a bare number.
      */
-    fun toKeyCode(panelCode: Int): Int = when (panelCode) {
-        CODE_PLAY_PAUSE -> KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
-        CODE_NEXT -> KeyEvent.KEYCODE_MEDIA_NEXT
-        CODE_PREV -> KeyEvent.KEYCODE_MEDIA_PREVIOUS
-        else -> VIRTUAL_BASE + panelCode
-    }
+    fun toKeyCode(panelCode: Int): Int = VIRTUAL_BASE + panelCode
+
     /** The panel key code behind a virtual key code, or null when [keyCode] is not one of ours. */
     fun panelCodeOf(keyCode: Int): Int? =
         if (keyCode in VIRTUAL_RANGE) keyCode - VIRTUAL_BASE else null
 
+    /** The catalogued name of a panel code, or null for one nobody has identified. */
+    fun nameOf(panelCode: Int): String? = NAMES[panelCode]
+
     /**
      * A name for one of our virtual key codes, for the keymap screen — `KeyEvent.keyCodeToString`
      * renders these as a bare number, which tells a user nothing about which button they just
-     * pressed. Null for any key code that is not ours.
+     * pressed. Null for any key code that is not ours, including the panel codes that map to real
+     * Android key codes and so already have a platform name.
      *
-     * Deliberately not translated, like the `keyCodeToString` names it appears alongside: this
-     * names a piece of hardware, and the hex is what a user quotes in a bug report. The question
-     * mark on the phone button is not decoration — that reading is an inference from correlated
-     * Bluetooth traffic, never confirmed at the unit.
+     * Deliberately not translated, like the `keyCodeToString` names it appears alongside: this names
+     * a piece of hardware, and the hex is what a user quotes in a bug report.
      */
     fun label(keyCode: Int): String? {
         val panelCode = panelCodeOf(keyCode) ?: return null
-        val name = when (panelCode) {
-            CODE_PHONE -> "PHONE"
-            CODE_MENU -> "MENU"
-            else -> "KEY"
-        }
-        return String.format(Locale.US, "BYD %s (0x%02X)", name, panelCode)
+        return String.format(Locale.US, "BYD %s (0x%02X)", nameOf(panelCode) ?: "key", panelCode)
     }
 
     /** Hex rendering of a frame, so an unrecognised one stays recoverable from a user's log. */

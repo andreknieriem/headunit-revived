@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.view.KeyEvent
 import androidx.core.content.ContextCompat
 import com.andrerinas.openheadunit.connection.carkey.CarKeyReceiver
 import com.andrerinas.openheadunit.input.BydPanelKey
@@ -42,9 +41,16 @@ class CarBydReceiver : BroadcastReceiver(), CarKeyReceiver {
      * [MULTIMEDIA_PACKAGE] would silently disable the feature on any firmware variant that renamed
      * it — a false negative here is a head unit whose media buttons do nothing, which is far worse
      * than an idle receiver on a unit that never sends the action. Registering costs one
-     * `IntentFilter` with one vendor-specific action that no other head unit broadcasts, and
-     * [BydPanelKey.panelKeyCode] rejects anything that is not a well-formed key frame, so a stray
-     * broadcast of the same name cannot inject a key.
+     * `IntentFilter` with one vendor-specific action that no other head unit broadcasts.
+     *
+     * Note what this does *not* protect against. The channel is unprotected in both directions: any
+     * installed app can `sendBroadcast` a well-formed frame, and a receiver cannot tell an injected
+     * one from a real press. [BydPanelKey.panelKeyCode] bounds that to the panel key space rather
+     * than preventing it, and `CommManager` will only forward while a projection is actually running
+     * — but within those bounds an injected frame is indistinguishable from a button press. The same
+     * is already true of every action
+     * [com.andrerinas.openheadunit.connection.carkey.CarKeyBroadcastReceiver] listens on, including
+     * `MEDIA_BUTTON`.
      */
     override val isSupported = true
 
@@ -94,12 +100,14 @@ class CarBydReceiver : BroadcastReceiver(), CarKeyReceiver {
         }
 
         val keyCode = BydPanelKey.toKeyCode(panelCode)
-        // A virtual key code gets its own name; a confirmed one already has a platform name. Always
-        // with the raw frame, so a button nobody has catalogued yet is recoverable from a user's log.
+        // Name the button and the code it will be learned as, always with the raw frame. This is the
+        // line a user reads to find out which button they just pressed, so it has to be useful for a
+        // code the catalogue has never heard of too.
         AppLog.i(
-            "CarKeyReceiver: BYD panel key 0x%02X -> %s [%s]".format(
+            "CarKeyReceiver: BYD panel key %s 0x%02X -> keycode %d [%s]".format(
+                BydPanelKey.nameOf(panelCode) ?: "unnamed",
                 panelCode,
-                BydPanelKey.label(keyCode) ?: KeyEvent.keyCodeToString(keyCode),
+                keyCode,
                 BydPanelKey.hex(payload),
             ),
         )
@@ -116,7 +124,9 @@ class CarBydReceiver : BroadcastReceiver(), CarKeyReceiver {
             },
         )
 
-        // One frame per press, with no release to follow, so the click is synthesised here.
+        // One frame per press, with no release to follow, so the click is synthesised here. Both
+        // edges are broadcast for the keymap screen to learn from; CommManager then drops the key
+        // unless the user has bound it, so an unbound button is inert rather than unpredictable.
         handleClick(context, keyCode)
     }
 }
