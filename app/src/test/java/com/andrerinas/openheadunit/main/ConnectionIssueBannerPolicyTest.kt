@@ -170,6 +170,29 @@ class ConnectionIssueBannerPolicyTest {
     }
 
     @Test
+    fun `only the hotspot route can be blocked by there being no access point`() {
+        // WiFi Direct hosts its own group, so "no access point" cannot be why it failed.
+        assertTrue(
+            ConnectionIssue.HOTSPOT_NOT_RUNNING in
+                ConnectionIssueBannerPolicy.relevantNow(3, NativeTransport.HOTSPOT)
+        )
+        assertFalse(
+            ConnectionIssue.HOTSPOT_NOT_RUNNING in
+                ConnectionIssueBannerPolicy.relevantNow(3, NativeTransport.WIFI_DIRECT)
+        )
+    }
+
+    @Test
+    fun `no setting is a remedy for there being no access point`() {
+        // Switching the hotspot on disproves it outright, so the record retires itself and there is
+        // nothing for remedyApplied to hide.
+        assertFalse(
+            ConnectionIssue.HOTSPOT_NOT_RUNNING in
+                ConnectionIssueBannerPolicy.remedyApplied("OHU-TEST", "testtest1234", "AA:BB:CC:DD:EE:FF")
+        )
+    }
+
+    @Test
     fun `every issue is relevant on some route`() {
         // The same guard as `every issue can be shown`: a condition no route claims would be
         // recorded on the connection path and then never shown to anybody.

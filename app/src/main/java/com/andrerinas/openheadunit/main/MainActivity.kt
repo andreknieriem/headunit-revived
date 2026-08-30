@@ -923,6 +923,7 @@ class MainActivity : BaseActivity() {
                 ConnectionIssue.BLUETOOTH_SENT_NO_DATA -> R.string.connection_issue_banner_bt_silent
                 ConnectionIssue.BSSID_UNAVAILABLE -> R.string.connection_issue_banner_bssid
                 ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE -> R.string.connection_issue_banner_hotspot_config
+                ConnectionIssue.HOTSPOT_NOT_RUNNING -> R.string.connection_issue_banner_hotspot_off
             }
         )
         banner.setOnClickListener { openRemedyFor(issue) }
@@ -961,6 +962,7 @@ class MainActivity : BaseActivity() {
             ConnectionIssue.BSSID_UNAVAILABLE -> getString(R.string.static_bssid_title)
             ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE ->
                 getString(R.string.connection_issue_remedy_hotspot_query)
+            ConnectionIssue.HOTSPOT_NOT_RUNNING -> getString(R.string.auto_enable_hotspot)
         }
         startActivity(
             Intent(this, SettingsActivity::class.java)

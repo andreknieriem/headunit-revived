@@ -23,7 +23,15 @@ enum class ConnectionIssue {
     BSSID_UNAVAILABLE,
 
     /** The device will not name its own access point, so the phone had nothing to join. */
-    HOTSPOT_CONFIG_UNREADABLE
+    HOTSPOT_CONFIG_UNREADABLE,
+
+    /**
+     * No access point is up at all, so there is no network for the phone to be sent to.
+     *
+     * The commonest way the hotspot route fails and, until now, the quietest: the resolve loop said
+     * so once per run into a log that a busy unit drops, and nothing anywhere carried it afterwards.
+     */
+    HOTSPOT_NOT_RUNNING
 }
 
 /** An issue that is currently true, and when it was last raised. */
@@ -118,6 +126,7 @@ object ConnectionIssues {
                 ConnectionIssue.BLUETOOTH_SENT_NO_DATA -> settings.connectionIssueBluetoothSilentAtEpochMs
                 ConnectionIssue.BSSID_UNAVAILABLE -> settings.connectionIssueBssidAtEpochMs
                 ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE -> settings.connectionIssueHotspotConfigAtEpochMs
+                ConnectionIssue.HOTSPOT_NOT_RUNNING -> settings.connectionIssueHotspotOffAtEpochMs
             }
         } catch (e: Exception) {
             0L
@@ -129,6 +138,7 @@ object ConnectionIssues {
                     ConnectionIssue.BLUETOOTH_SENT_NO_DATA -> settings.connectionIssueBluetoothSilentAtEpochMs = atEpochMs
                     ConnectionIssue.BSSID_UNAVAILABLE -> settings.connectionIssueBssidAtEpochMs = atEpochMs
                     ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE -> settings.connectionIssueHotspotConfigAtEpochMs = atEpochMs
+                    ConnectionIssue.HOTSPOT_NOT_RUNNING -> settings.connectionIssueHotspotOffAtEpochMs = atEpochMs
                 }
             } catch (e: Exception) {
                 AppLog.d("ConnectionIssues: could not record $issue: ${e.message}")
