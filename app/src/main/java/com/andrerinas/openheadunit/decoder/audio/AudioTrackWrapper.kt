@@ -12,10 +12,12 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Process
+import android.os.SystemClock
 import com.andrerinas.openheadunit.utils.AppLog
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 class AudioTrackWrapper(
     stream: Int,
@@ -39,6 +41,14 @@ class AudioTrackWrapper(
     companion object {
         private const val AUDIO_BUFFER_POOL_LIMIT = 16
         private const val MIN_POOLED_AUDIO_BUFFER_SIZE = 4096
+
+        /**
+         * Ceiling on the computed drain wait.
+         *
+         * The wait is normally a couple of hundred milliseconds. The cap is for when the frame
+         * accounting is off, so a bad subtraction costs a beat rather than a hang.
+         */
+        private const val DRAIN_CAP_MS = 1_000L
     }
 
     private val audioTrack: AudioTrack?
@@ -94,9 +104,32 @@ class AudioTrackWrapper(
         }
     }
 
-    // Track frames written for better draining
+    // Frames written, for the pre-roll trigger and the drain wait. Volatile because the AAC path
+    // advances it from the write executor while the playback thread reads it, and a long is not
+    // read atomically on 32-bit ABIs. Only one thread per instance increments it, so visibility is
+    // the only hazard.
+    @Volatile
     private var framesWritten: Long = 0
     private val bytesPerFrame: Int = channelCount * (if (bitDepth == 16) 2 else 1)
+    private val sampleRate: Int = sampleRateInHz
+
+    /** Byte size handed to the AudioTrack, recorded by [createAudioTrack] for the pre-roll target. */
+    private var trackBufferBytes: Int = 0
+
+    /** Frames to bank before [android.media.AudioTrack.play]. See [AudioPrerollPolicy]. */
+    private var prerollTargetFrames: Int = 1
+
+    /**
+     * When audio first reached this track, for the pre-roll deadline.
+     *
+     * Stamped on the first write rather than at construction: a track precreated at Media Sink
+     * Setup can sit idle for minutes, and a deadline measured from then has already expired when
+     * the first chunk arrives.
+     */
+    @Volatile
+    private var firstAudioMs: Long = 0L
+
+    private val playbackStarted = AtomicBoolean(false)
 
     init {
         this.name = "AudioPlaybackThread"
@@ -113,7 +146,10 @@ class AudioTrackWrapper(
             setVolume(gain)
             audioTrack?.let { track ->
                 attachHwDspEqualizerQuietly(track.audioSessionId)
-                track.play()
+                // Deliberately no play() here: started empty, the track underran on every media
+                // start. [AudioPrerollPolicy] decides when enough is banked to begin.
+                prerollTargetFrames =
+                    AudioPrerollPolicy.targetFrames(sampleRateInHz, trackCapacityFrames(track))
             }
         }
 
@@ -225,10 +261,48 @@ class AudioTrackWrapper(
             framesWritten += size / bytesPerFrame
         } else {
             applyGain(buffer, size)
+            // Before the write, on whichever thread makes it: write() on a track that is not
+            // playing blocks until only play() can make room, so a check after it is too late.
+            maybeStartPlayback(size / bytesPerFrame)
             val result = audioTrack?.write(buffer, 0, size) ?: 0
             if (result > 0) {
                 framesWritten += result / bytesPerFrame
             }
+        }
+    }
+
+    /**
+     * Starts the track once [AudioPrerollPolicy] says enough is banked.
+     *
+     * [writeToTrack] calls it in front of every write, which is where an ordinary stream starts;
+     * the run loop calls it once a pass, which is what plays a stream too short to reach its
+     * target. Idempotent because the AAC path writes from the write executor while the run loop
+     * turns, so both can arrive at once.
+     */
+    private fun maybeStartPlayback(framesIncoming: Int) {
+        if (playbackStarted.get()) return
+        val track = audioTrack ?: return
+        val now = SystemClock.elapsedRealtime()
+        if (framesIncoming > 0 && firstAudioMs == 0L) firstAudioMs = now
+        if (firstAudioMs == 0L) return
+        val elapsed = now - firstAudioMs
+        if (!AudioPrerollPolicy.shouldStart(
+                framesWritten,
+                framesIncoming,
+                prerollTargetFrames,
+                elapsed
+            )
+        ) return
+
+        if (!playbackStarted.compareAndSet(false, true)) return
+        try {
+            track.play()
+            AppLog.i(
+                "AudioTrackWrapper: playback started with $framesWritten frames banked " +
+                    "(target $prerollTargetFrames) after ${elapsed}ms"
+            )
+        } catch (e: Exception) {
+            AppLog.e("Failed to start AudioTrack playback", e)
         }
     }
 
@@ -240,6 +314,9 @@ class AudioTrackWrapper(
             try {
                 // Use poll to avoid blocking indefinitely if isRunning becomes false
                 val chunk = dataQueue.poll(200, TimeUnit.MILLISECONDS)
+                // The fill trigger lives in writeToTrack; this call carries only the deadline, so
+                // a stream too short to reach its target still gets played.
+                maybeStartPlayback(0)
                 if (chunk != null) {
                     try {
                         if (isAac && decoder != null) {
@@ -373,6 +450,8 @@ class AudioTrackWrapper(
         val minBufferSize = AudioTrack.getMinBufferSize(sampleRateInHz, channelConfig, dataFormat)
         val bufferSize = if (minBufferSize > 0) minBufferSize * multiplier else minBufferSize
 
+        trackBufferBytes = bufferSize
+
         AppLog.i("Audio stream: $stream buffer size: $bufferSize (min: $minBufferSize) sampleRateInHz: $sampleRateInHz channelCount: $channelCount")
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -420,6 +499,25 @@ class AudioTrackWrapper(
                 AudioTrack.MODE_STREAM
             )
         }
+    }
+
+    /**
+     * Frames the track can actually hold.
+     *
+     * `setBufferSizeInBytes()` is a request the framework may clamp, and the pre-roll margin is the
+     * only thing keeping a write off a not-yet-playing track from blocking on the thread that would
+     * start it. Ask the track where the API allows; fall back to the requested size below M.
+     */
+    private fun trackCapacityFrames(track: AudioTrack): Int {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val frames = try {
+                track.bufferSizeInFrames
+            } catch (e: Exception) {
+                0
+            }
+            if (frames > 0) return frames
+        }
+        return if (bytesPerFrame > 0) trackBufferBytes / bytesPerFrame else 0
     }
 
     private fun attachHwDspEqualizerQuietly(sessionId: Int) {
@@ -495,31 +593,52 @@ class AudioTrackWrapper(
             mixer.unregisterChannel(channelId)
         }
 
-        // 3. Gracefully stop the AudioTrack – stop() plays remaining buffer data
+        // 3. stop() plays out what is still buffered on a MODE_STREAM track; this only waits for
+        // that to finish before release().
+        //
+        // It used to wait by polling playbackHeadPosition against framesWritten *after* stop(),
+        // and neither exit could fire: stop() zeroes the head, and the stagnation escape was
+        // guarded on `pos > 0`. Measured: the full 2500 ms budget on every teardown, long enough
+        // to overlap the next track's start.
+        //
+        // Sampling the head *before* stop() says how much is left to play, so compute the wait.
         val track = audioTrack
-        if (track != null && track.playState == AudioTrack.PLAYSTATE_PLAYING) {
-            try {
-                track.stop()
-
-                // Wait for the AudioTrack hardware buffer to drain.
-                // Especially important on older devices (KitKat etc.).
-                var lastPos = -1
-                var stagnantCount = 0
-                val startTime = System.currentTimeMillis()
-                while (System.currentTimeMillis() - startTime < 2500) {
-                    val pos = track.playbackHeadPosition
-                    if (framesWritten > 0 && pos >= framesWritten) break
-                    if (pos == lastPos && pos > 0) {
-                        stagnantCount++
-                        if (stagnantCount >= 3) break
-                    } else {
-                        lastPos = pos
-                        stagnantCount = 0
-                    }
-                    Thread.sleep(100)
+        // A track that never reached its pre-roll target still holds everything written to it. It
+        // is not playing, so the guard below would skip stop() and release() would discard it -
+        // silence where a prompt shorter than the target used to be heard. Start it first.
+        if (track != null && !playbackStarted.get() && framesWritten > 0) {
+            if (playbackStarted.compareAndSet(false, true)) {
+                try {
+                    track.play()
+                } catch (e: Exception) {
+                    AppLog.e("Failed to start AudioTrack for its final drain", e)
                 }
+            }
+        }
+        if (track != null && track.playState == AudioTrack.PLAYSTATE_PLAYING) {
+            var drainMs = 0L
+            try {
+                val played = track.playbackHeadPosition.toLong() and 0xFFFFFFFFL
+                val pending = (framesWritten - played).coerceAtLeast(0L)
+                drainMs = if (sampleRate > 0) {
+                    (pending * 1000L / sampleRate).coerceAtMost(DRAIN_CAP_MS)
+                } else {
+                    0L
+                }
+                track.stop()
             } catch (e: Exception) {
-                AppLog.e("Error during audio track cleanup", e)
+                AppLog.e("Error stopping audio track", e)
+            }
+
+            if (drainMs > 0) {
+                try {
+                    Thread.sleep(drainMs)
+                } catch (e: InterruptedException) {
+                    // A restart, not a failure, and what is left in the buffer is stale anyway.
+                    // Logged at info: reporters attach these logs, and a stack trace here misled.
+                    AppLog.i("AudioTrackWrapper: ${drainMs}ms drain cut short by a restart")
+                    Thread.currentThread().interrupt()
+                }
             }
         }
 

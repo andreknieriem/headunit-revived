@@ -195,7 +195,7 @@
     <string name="wifi">WiFi</string>
     <string name="dpi">Pixel density (DPI)</string>
     <string name="pixel_aspect_ratio">Pixel aspect ratio</string>
-    <string name="mic_sample_rate">Mic sample rate</string>
+    <string name="mic_sample_rate">Mic capture rate</string>
     <string name="keymap">Keymap</string>
     <string name="night_mode">Dark Mode (Android Auto)</string>
     <string name="night_mode_threshold">Night Mode Threshold</string>
@@ -502,7 +502,11 @@
     <string name="assistant_volume_offset">Assistant Volume Offset</string>
     <string name="navigation_volume_offset">Navigation Volume Offset</string>
     <string name="microphone_settings">Microphone Settings</string>
+    <string name="use_head_unit_microphone">Head unit microphone</string>
+    <string name="use_head_unit_microphone_description">On: Android Auto hears this device\'s microphone. Off: this device never records and the phone uses its own microphone, or a headset or intercom paired to the phone, so the voice assistant still works. Needs Android 11 or newer on the phone.</string>
+    <string name="head_unit_microphone_off_info">The head unit microphone is off, so nothing below applies. Android Auto is told this device cannot record and is a motorcycle, which is what makes the phone record for itself. On Android 10 and older the phone forgets that between sessions and may stop connecting.</string>
     <string name="microphone_settings_description">Configure microphone input and audio processing.</string>
+    <string name="mic_wire_format_info">Android Auto always receives the microphone at 16000 Hz, 16-bit, mono. It rejects anything else, so these settings change what the hardware does, not what the phone is sent.</string>
     <string name="mic_input_source">Microphone Input Source</string>
     <string name="mic_input_source_description">Choose the audio source for the microphone.</string>
     <string-array name="mic_input_sources">
@@ -515,9 +519,9 @@
     <string name="mic_echo_canceler">Echo cancellation (AEC)</string>
     <string name="mic_echo_canceler_description">Attempts to remove echo from the microphone. Disable if you experience silence or distortion.</string>
     <string name="mic_noise_suppressor">Noise suppression (NS)</string>
-    <string name="mic_noise_suppressor_description">Attempts to reduce background noise. Disable if your voice sounds muffled.</string>
+    <string name="mic_noise_suppressor_description">Attempts to reduce background noise. Android Auto expects this off on a single microphone and does its own processing. Disable if your voice sounds muffled.</string>
     <string name="mic_auto_gain_control">Automatic gain control (AGC)</string>
-    <string name="mic_auto_gain_control_description">Automatically adjusts microphone volume. Disable if the volume is unstable.</string>
+    <string name="mic_auto_gain_control_description">Automatically adjusts microphone volume. Android Auto expects this off and applies its own gain control; the two together usually sound worse. Disable if the volume is unstable.</string>
     <string name="mic_feature_unsupported">This feature is not supported on your device.</string>
 
     <!-- Info Settings -->
@@ -772,6 +776,11 @@
     <string name="vehicle_year_label">Year</string>
     <string name="vehicle_year_description">Vehicle year</string>
     <string name="vehicle_id_label">Vehicle ID</string>
+    <string name="vehicle_type_label">Vehicle Type</string>
+    <string name="vehicle_type_car">Car</string>
+    <string name="vehicle_type_truck">Truck</string>
+    <string name="vehicle_type_motorcycle">Motorcycle</string>
+    <string name="vehicle_type_forced_by_microphone">The head unit microphone is off, so Android Auto is told this is a motorcycle whatever is picked here. That is what makes the phone record for itself.</string>
     <string name="vehicle_id_description">Internal identifier only. Changing this will cause your phone to treat this as a different vehicle, resetting your Android Auto preferences for this car.</string>
     <string name="head_unit_make_label">Make</string>
     <string name="head_unit_make_description">Head unit manufacturer</string>

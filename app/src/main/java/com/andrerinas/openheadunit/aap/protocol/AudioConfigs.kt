@@ -40,6 +40,9 @@ object AudioConfigs {
         }.build()
         audioTracks.put(Channel.ID_AU1, audioConfig1)
 
+        // 16 kHz mono is required here, not preferred. The phone accepts the SYSTEM sink only if
+        // it offers that config, and with the audio sink off this is the only sink left - so
+        // anything else empties its endpoint list and the session ends with "No audio/mic".
         val audioConfig2 = Media.AudioConfiguration.newBuilder().apply {
             sampleRate = AudioDecoder.SAMPLE_RATE_HZ_16
             numberOfBits = 16

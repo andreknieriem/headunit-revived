@@ -11,6 +11,7 @@ import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
 import com.andrerinas.openheadunit.decoder.video.DeviceMemoryProfile
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
+import com.andrerinas.openheadunit.aap.VehicleTypePolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
@@ -106,8 +107,20 @@ class Settings(private val context: Context) {
         get() = prefs.getInt("ui-scale-settings-percent", 100)
         set(value) { prefs.edit().putInt("ui-scale-settings-percent", value).apply() }
 
+    /**
+     * The rate the microphone hardware is opened at when 16 kHz cannot be opened. Not what the phone
+     * receives: that is always 16 kHz mono, because Android Auto validates the announced config and
+     * rejects anything outside {16000, 48000} Hz.
+     *
+     * The list used to run 8000 to 48000 and the announcement was hardcoded at 16000, so every other
+     * choice sent the phone PCM at a rate it had never been told about. A stored value from then is
+     * migrated here rather than in a one-shot, since only the two remaining rates convert cleanly.
+     */
     var micSampleRate: Int
-        get() = prefs.getInt("mic-sample-rate", 16000)
+        get() {
+            val stored = prefs.getInt("mic-sample-rate", MicSampleRates.first())
+            return if (stored in MicSampleRates) stored else MicSampleRates.first()
+        }
         set(sampleRate) {
             prefs.edit().putInt("mic-sample-rate", sampleRate).apply()
         }
@@ -544,6 +557,10 @@ class Settings(private val context: Context) {
         get() = prefs.getString("vehicle-id", "headlessunit-001")!!
         set(value) { prefs.edit().putString("vehicle-id", value).apply() }
 
+    var vehicleType: Int
+        get() = VehicleTypePolicy.sanitised(prefs.getInt("vehicle-type", VehicleTypePolicy.CAR))
+        set(value) { prefs.edit().putInt("vehicle-type", value).apply() }
+
     var headUnitMake: String
         get() = prefs.getString("head-unit-make", "Google")!!
         set(value) { prefs.edit().putString("head-unit-make", value).apply() }
@@ -691,6 +708,19 @@ class Settings(private val context: Context) {
         lastConnectionIp = ""
         lastConnectionUsbDevice = ""
     }
+
+    /**
+     * Whether the head unit records at all. Off leaves the microphone to the phone.
+     *
+     * Off does not omit the microphone service: Android Auto's required-service check refuses a
+     * head unit that does not declare one. It declares it, declines every request, and sends
+     * nothing, which is what frees the physical microphone for a Bluetooth headset or intercom.
+     */
+    var useHeadUnitMicrophone: Boolean
+        get() = prefs.getBoolean("use-head-unit-microphone", true)
+        set(value) {
+            prefs.edit().putBoolean("use-head-unit-microphone", value).apply()
+        }
 
     var enableAudioSink: Boolean
         get() = prefs.getBoolean("enable-audio-sink", true)
@@ -1470,7 +1500,11 @@ class Settings(private val context: Context) {
             }
         }
 
-        val MicSampleRates = listOf(8000, 16000, 24000, 32000, 44100, 48000) // Changed to List
+        /**
+         * The two rates Android Auto accepts. 48000 is the fallback because it is a whole multiple
+         * of 16000, so converting it needs no filter; 44100 and the rest were never usable.
+         */
+        val MicSampleRates = listOf(16000, 48000)
 
         fun getNextMicSampleRate(currentRate: Int): Int {
             val currentIndex = MicSampleRates.indexOf(currentRate)
