@@ -5,9 +5,12 @@ import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapMessage
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.aap.NarrowBandProfilePolicy
+import com.andrerinas.openheadunit.aap.VehicleIdentityPolicy
+import com.andrerinas.openheadunit.aap.VehicleTypePolicy
 import com.andrerinas.openheadunit.input.KeyCode
 import com.andrerinas.openheadunit.aap.protocol.AudioConfigs
 import com.andrerinas.openheadunit.aap.protocol.Channel
+import com.andrerinas.openheadunit.aap.protocol.MicCaptureFormat
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.aap.protocol.proto.Media
 import com.andrerinas.openheadunit.aap.protocol.proto.Sensors
@@ -195,19 +198,37 @@ class ServiceDiscoveryResponse(private val context: Context)
                         "channels - the phone will not send audio and this is not a fault")
             }
 
-            // Microphone Service (Channel 7) - Always required for AA connection (Assistant)
-            val mic = Control.Service.newBuilder().also { service ->
-                service.id = Channel.ID_MIC
-                service.mediaSourceService = Control.Service.MediaSourceService.newBuilder().also {
-                    it.type = Media.MediaCodecType.MEDIA_CODEC_AUDIO_PCM
-                    it.audioConfig = Media.AudioConfiguration.newBuilder().apply {
-                        sampleRate = 16000
-                        numberOfBits = 16
-                        numberOfChannels = 1
+            // Microphone Service (Channel 7), announced only when this head unit will record.
+            // Advertising it and then declining every request leaves the assistant with nothing:
+            // the phone chooses its recorder once at projection start, and takes its own only for a
+            // motorcycle that offers it no microphone. Omitting it is safe only because we claim a
+            // motorcycle - the phone aborts connection setup with "No audio/mic" for any other
+            // type, so the two go together and neither works alone.
+            // The format comes from MicCaptureFormat so the announcement and the capture cannot
+            // drift again, and it is never anything but 16 kHz: the phone validates this config and
+            // rejects everything outside {16000, 48000} Hz, 16 bits, 1 or 2 channels. 48 kHz is in
+            // that set for the media channel, not for this one - AudioConfiguration is shared by
+            // every audio service and the validator accepts the union.
+            if (settings.useHeadUnitMicrophone) {
+                val mic = Control.Service.newBuilder().also { service ->
+                    service.id = Channel.ID_MIC
+                    service.mediaSourceService = Control.Service.MediaSourceService.newBuilder().also {
+                        it.type = Media.MediaCodecType.MEDIA_CODEC_AUDIO_PCM
+                        it.audioConfig = Media.AudioConfiguration.newBuilder().apply {
+                            sampleRate = MicCaptureFormat.SAMPLE_RATE_HZ
+                            numberOfBits = MicCaptureFormat.BITS
+                            numberOfChannels = MicCaptureFormat.CHANNELS
+                        }.build()
                     }.build()
                 }.build()
-            }.build()
-            services.add(mic)
+                services.add(mic)
+            } else {
+                AppLog.i("Head unit microphone is off in Settings. Skipping the microphone " +
+                        "service - the phone is told this head unit cannot record, no voice " +
+                        "request will arrive here, and this is not a fault. This needs the phone " +
+                        "to keep our motorcycle claim, which Android 10 and older do not, so a " +
+                        "session that connects once and then stops on an older phone may be this")
+            }
 
             // Bluetooth Service
             if (settings.bluetoothAddress.isNotEmpty()) {
@@ -223,7 +244,12 @@ class ServiceDiscoveryResponse(private val context: Context)
                 }.build()
                 services.add(bluetooth)
             } else {
-                AppLog.i("BT MAC Address is empty. Skip bluetooth service")
+                // What the omission costs, in the user's terms. Android Auto keeps telephony
+                // disabled until a hands-free link is up, and this is the message that tells the
+                // phone where to connect one - so a blank field is why calls stay on the phone.
+                AppLog.i("BT MAC Address is empty, so no Bluetooth service is announced. The phone " +
+                    "is not told where to connect hands-free, and Android Auto keeps phone calls " +
+                    "on the phone until it is")
             }
 
             val mediaPlaybackStatus = Control.Service.newBuilder().also { service ->
@@ -247,11 +273,19 @@ class ServiceDiscoveryResponse(private val context: Context)
                 (if (settings.hideBatteryLevel) 0x04 else 0)
             // 0x08 is "CAN_PLAY_NATIVE_MEDIA_DURING_VR"
 
+            // Every type gets its own announced id. The phone looks its stored record up by
+            // make/model/year and a hash of this id, and on a hit it stamps the stored vehicle type
+            // over the one we declare. A different id misses that lookup, so our claim survives;
+            // reusing one would make a changed type arrive as the old one.
+            val vehicleType = VehicleTypePolicy.vehicleType(
+                settings.vehicleType, settings.useHeadUnitMicrophone)
+            val announcedVehicleId = VehicleIdentityPolicy.vehicleId(settings.vehicleId, vehicleType)
+
             return Control.ServiceDiscoveryResponse.newBuilder().apply {
                 make = settings.vehicleMake
                 model = settings.vehicleModel // fun fact: AA checks internally if it ends with "truck"?!
                 year = settings.vehicleYear
-                vehicleId = settings.vehicleId
+                vehicleId = announcedVehicleId
                 headUnitModel = settings.headUnitModel
                 headUnitMake = settings.headUnitMake
                 headUnitSoftwareBuild = "1"
@@ -268,9 +302,14 @@ class ServiceDiscoveryResponse(private val context: Context)
                     setMake(settings.vehicleMake)
                     setModel(settings.vehicleModel)
                     setYear(settings.vehicleYear)
-                    setVehicleId(settings.vehicleId)
+                    setVehicleId(announcedVehicleId)
                     setHeadUnitSoftwareBuild("1")
                     setHeadUnitSoftwareVersion("0.1.0")
+                    // The phone stores this per head unit and reads it in a dozen places, and an
+                    // absent field reads as a car. A motorcycle is the only claim it answers by
+                    // recording with its own microphone, so the microphone setting overrides the
+                    // user's choice here.
+                    setVehicleType(vehicleType)
                 }.build())
 
                 addAllServices(services)

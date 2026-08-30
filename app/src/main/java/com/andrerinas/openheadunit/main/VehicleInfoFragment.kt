@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
+import com.andrerinas.openheadunit.aap.VehicleTypePolicy
 import com.andrerinas.openheadunit.main.settings.SettingItem
 import com.andrerinas.openheadunit.main.settings.SettingsAdapter
 import com.andrerinas.openheadunit.utils.Settings
@@ -32,6 +33,7 @@ class VehicleInfoFragment : Fragment() {
     private var pendingVehicleModel: String? = null
     private var pendingVehicleYear: String? = null
     private var pendingVehicleId: String? = null
+    private var pendingVehicleType: Int? = null
     private var pendingRightHandDrive: Boolean? = null
     private var pendingHeadUnitMake: String? = null
     private var pendingHeadUnitModel: String? = null
@@ -53,6 +55,7 @@ class VehicleInfoFragment : Fragment() {
         pendingVehicleModel = settings.vehicleModel
         pendingVehicleYear = settings.vehicleYear
         pendingVehicleId = settings.vehicleId
+        pendingVehicleType = settings.vehicleType
         pendingRightHandDrive = settings.rightHandDrive
         pendingHeadUnitMake = settings.headUnitMake
         pendingHeadUnitModel = settings.headUnitModel
@@ -127,6 +130,7 @@ class VehicleInfoFragment : Fragment() {
         pendingVehicleModel?.let { settings.vehicleModel = it }
         pendingVehicleYear?.let { settings.vehicleYear = it }
         pendingVehicleId?.let { settings.vehicleId = it }
+        pendingVehicleType?.let { settings.vehicleType = it }
         pendingRightHandDrive?.let { settings.rightHandDrive = it }
         pendingHeadUnitMake?.let { settings.headUnitMake = it }
         pendingHeadUnitModel?.let { settings.headUnitModel = it }
@@ -143,6 +147,7 @@ class VehicleInfoFragment : Fragment() {
                 pendingVehicleModel != settings.vehicleModel ||
                 pendingVehicleYear != settings.vehicleYear ||
                 pendingVehicleId != settings.vehicleId ||
+                pendingVehicleType != settings.vehicleType ||
                 pendingRightHandDrive != settings.rightHandDrive ||
                 pendingHeadUnitMake != settings.headUnitMake ||
                 pendingHeadUnitModel != settings.headUnitModel
@@ -233,6 +238,32 @@ class VehicleInfoFragment : Fragment() {
                 }
             }
         ))
+
+        val vehicleTypeOptions = listOf(
+            getString(R.string.vehicle_type_car),
+            getString(R.string.vehicle_type_truck),
+            getString(R.string.vehicle_type_motorcycle)
+        )
+
+        items.add(SettingItem.SegmentedButtonSettingEntry(
+            stableId = "vehicleType",
+            nameResId = R.string.vehicle_type_label,
+            options = vehicleTypeOptions,
+            selectedIndex = VehicleTypePolicy.indexOf(pendingVehicleType ?: VehicleTypePolicy.CAR),
+            onOptionSelected = { index ->
+                pendingVehicleType = VehicleTypePolicy.atIndex(index)
+                checkChanges()
+            }
+        ))
+
+        // The microphone setting overrides this, so say so rather than showing a choice that is
+        // not what goes on the wire.
+        if (!settings.useHeadUnitMicrophone) {
+            items.add(SettingItem.InfoBanner(
+                stableId = "vehicleTypeForcedByMicrophone",
+                textResId = R.string.vehicle_type_forced_by_microphone
+            ))
+        }
 
         items.add(SettingItem.ToggleSettingEntry(
             stableId = "rightHandDrive",

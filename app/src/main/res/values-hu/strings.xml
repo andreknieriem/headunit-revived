@@ -448,6 +448,11 @@
     <string name="vehicle_year_label">Évjárat</string>
     <string name="vehicle_year_description">Jármű évjárata</string>
     <string name="vehicle_id_label">Jármű-azonosító</string>
+    <string name="vehicle_type_label">Járműtípus</string>
+    <string name="vehicle_type_car">Autó</string>
+    <string name="vehicle_type_truck">Teherautó</string>
+    <string name="vehicle_type_motorcycle">Motorkerékpár</string>
+    <string name="vehicle_type_forced_by_microphone">A fejegység mikrofonja ki van kapcsolva, így az Android Auto azt az információt kapja, hogy ez motorkerékpár, bármi is legyen itt kiválasztva. Éppen ez készteti a telefont saját rögzítésre.</string>
     <string name="vehicle_id_description">Csak belső azonosító. Megváltoztatása azt eredményezi, hogy telefonja ezt más járműként érzékeli, visszaállítva az Android Auto beállításait ehhez az autóhoz.</string>
     <string name="head_unit_make_label">Gyártó</string>
     <string name="head_unit_make_description">Fejegység gyártója</string>
@@ -532,7 +537,11 @@
     <string name="loading_screen_tap_fullscreen_hint">Érintse meg az előnézetet a teljes képernyős megjelenítéshez</string>
     <string name="loading_screen_loop_video">Rövid animációk ismétlése</string>
     <string name="microphone_settings">Mikrofon beállítások</string>
+    <string name="use_head_unit_microphone">Fejegység mikrofonja</string>
+    <string name="use_head_unit_microphone_description">Bekapcsolva: az Android Auto hallja az eszköz mikrofonját. Kikapcsolva: ez az eszköz soha nem rögzít, és a telefon a saját mikrofonját, illetve a telefonhoz párosított fejhallgatót vagy intercomot használja, így a hangasszisztens továbbra is működik. A telefonon Android 11 vagy újabb szükséges.</string>
+    <string name="head_unit_microphone_off_info">A fejegység mikrofonja ki van kapcsolva, így az alábbiak egyike sem érvényes. Az Android Auto azt az információt kapja, hogy ez az eszköz nem tud rögzíteni és motorkerékpár, és éppen ez készteti a telefont saját rögzítésre. Android 10 és régebbi rendszeren a telefon ezt a munkamenetek között elfelejti, és előfordulhat, hogy nem csatlakozik többé.</string>
     <string name="microphone_settings_description">A mikrofonbemenet és a hangfeldolgozás konfigurálása.</string>
+    <string name="mic_wire_format_info">Az Android Auto a mikrofont mindig 16000 Hz, 16 bit, monó formában kapja. Minden mást elutasít, így ezek a beállítások azt módosítják, amit a hardver csinál, nem azt, amit a telefon kap.</string>
     <string name="mic_echo_canceler">Visszhangkioltás (AEC)</string>
     <string name="mic_echo_canceler_description">Megpróbálja eltávolítani a visszhangot a mikrofonból. Kapcsolja ki, ha csendet vagy torzítást tapasztal.</string>
     <string name="mic_noise_suppressor">Zajcsökkentés (NS)</string>

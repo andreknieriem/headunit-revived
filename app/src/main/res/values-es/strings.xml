@@ -449,6 +449,11 @@
     <string name="vehicle_year_label">Año</string>
     <string name="vehicle_year_description">Año del vehículo</string>
     <string name="vehicle_id_label">ID del vehículo</string>
+    <string name="vehicle_type_label">Tipo de vehículo</string>
+    <string name="vehicle_type_car">Coche</string>
+    <string name="vehicle_type_truck">Camión</string>
+    <string name="vehicle_type_motorcycle">Motocicleta</string>
+    <string name="vehicle_type_forced_by_microphone">El micrófono de la unidad está desactivado, así que a Android Auto se le indica que esto es una motocicleta sea cual sea la opción elegida aquí. Eso es lo que hace que el teléfono grabe por sí mismo.</string>
     <string name="vehicle_id_description">Identificador interno únicamente. Cambiarlo hará que tu teléfono detecte este como un vehículo diferente, reiniciando las preferencias de Android Auto para este auto.</string>
     <string name="head_unit_make_label">Fabricante</string>
     <string name="head_unit_make_description">Fabricante de la radio</string>
@@ -533,7 +538,11 @@
     <string name="loading_screen_tap_fullscreen_hint">Toca la vista previa para verla en pantalla completa</string>
     <string name="loading_screen_loop_video">Repetir animaciones cortas en bucle</string>
     <string name="microphone_settings">Ajustes del micrófono</string>
+    <string name="use_head_unit_microphone">Micrófono de la unidad</string>
+    <string name="use_head_unit_microphone_description">Activado: Android Auto oye el micrófono de este dispositivo. Desactivado: este dispositivo nunca graba y el teléfono usa su propio micrófono, o unos auriculares o intercomunicador emparejados con el teléfono, de modo que el asistente de voz sigue funcionando. Requiere Android 11 o posterior en el teléfono.</string>
+    <string name="head_unit_microphone_off_info">El micrófono de la unidad está desactivado, así que nada de lo siguiente se aplica. A Android Auto se le indica que este dispositivo no puede grabar y que es una motocicleta, que es lo que hace que el teléfono grabe por sí mismo. En Android 10 y anteriores el teléfono lo olvida entre sesiones y puede dejar de conectarse.</string>
     <string name="microphone_settings_description">Configura la entrada del micrófono y el procesamiento de audio.</string>
+    <string name="mic_wire_format_info">Android Auto siempre recibe el micrófono a 16000 Hz, 16 bits, mono. Rechaza cualquier otra cosa, así que estos ajustes cambian lo que hace el hardware, no lo que se envía al teléfono.</string>
     <string name="mic_echo_canceler">Cancelación de eco (AEC)</string>
     <string name="mic_echo_canceler_description">Intenta eliminar el eco del micrófono. Desactívalo si experimentas silencio o distorsión.</string>
     <string name="mic_noise_suppressor">Supresión de ruido (NS)</string>

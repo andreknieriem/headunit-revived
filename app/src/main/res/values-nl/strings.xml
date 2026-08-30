@@ -446,6 +446,11 @@
     <string name="vehicle_year_label">Bouwjaar</string>
     <string name="vehicle_year_description">Bouwjaar van het voertuig</string>
     <string name="vehicle_id_label">Voertuig-ID</string>
+    <string name="vehicle_type_label">Voertuigtype</string>
+    <string name="vehicle_type_car">Auto</string>
+    <string name="vehicle_type_truck">Vrachtwagen</string>
+    <string name="vehicle_type_motorcycle">Motorfiets</string>
+    <string name="vehicle_type_forced_by_microphone">De microfoon van de hoofdunit staat uit, dus Android Auto krijgt te horen dat dit een motorfiets is, wat hier ook wordt gekozen. Dat is wat de telefoon zelf laat opnemen.</string>
     <string name="vehicle_id_description">Alleen interne identificatie. Wijzigen zorgt ervoor dat uw telefoon dit als een ander voertuig detecteert, waardoor uw Android Auto-voorkeuren voor deze auto worden gereset.</string>
     <string name="head_unit_make_label">Merk</string>
     <string name="head_unit_make_description">Fabrikant van de headunit</string>
@@ -533,7 +538,11 @@
     <string name="loading_screen_tap_fullscreen_hint">Tik op het voorbeeld om het op volledig scherm te zien</string>
     <string name="loading_screen_loop_video">Korte animaties herhalen</string>
     <string name="microphone_settings">Microfooninstellingen</string>
+    <string name="use_head_unit_microphone">Microfoon van hoofdunit</string>
+    <string name="use_head_unit_microphone_description">Aan: Android Auto hoort de microfoon van dit apparaat. Uit: dit apparaat neemt nooit op en de telefoon gebruikt zijn eigen microfoon, of een headset of intercom die met de telefoon is gekoppeld, zodat de spraakassistent blijft werken. Vereist Android 11 of nieuwer op de telefoon.</string>
+    <string name="head_unit_microphone_off_info">De microfoon van de hoofdunit staat uit, dus niets hieronder is van toepassing. Android Auto krijgt te horen dat dit apparaat niet kan opnemen en een motorfiets is, en dat is wat de telefoon zelf laat opnemen. Op Android 10 en ouder vergeet de telefoon dat tussen sessies en maakt hij mogelijk geen verbinding meer.</string>
     <string name="microphone_settings_description">Microfooningang en audioverwerking configureren.</string>
+    <string name="mic_wire_format_info">Android Auto ontvangt de microfoon altijd op 16000 Hz, 16-bits, mono. Al het andere wordt geweigerd, dus deze instellingen veranderen wat de hardware doet, niet wat naar de telefoon wordt gestuurd.</string>
     <string name="mic_echo_canceler">Echonderdrukking (AEC)</string>
     <string name="mic_echo_canceler_description">Probeert echo van de microfoon te verwijderen. Schakel dit uit als u stilte of vervorming ervaart.</string>
     <string name="mic_noise_suppressor">Ruisonderdrukking (NS)</string>

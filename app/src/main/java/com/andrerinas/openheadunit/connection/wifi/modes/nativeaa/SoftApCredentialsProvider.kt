@@ -53,6 +53,15 @@ class SoftApCredentialsProvider(
         /** How long to keep looking before giving up and saying so. */
         private const val RESOLVE_BUDGET_MS = 30_000L
 
+        /**
+         * How often to repeat that no access point could be found.
+         *
+         * Said once per run it was reliably lost: a unit logging hard enough drops old lines, and
+         * the one capture that needed this had every trace of it evicted before the user exported
+         * the log. Repeating puts it inside any window long enough to be worth reading.
+         */
+        private const val NO_AP_REPORT_INTERVAL_MS = 60_000L
+
         /** How long to wait for a user-configured AP before trying to switch one on ourselves. */
         private const val AUTO_ENABLE_AFTER_MS = 5_000L
 
@@ -102,8 +111,8 @@ class SoftApCredentialsProvider(
      */
     @Volatile private var runStartedAt = 0L
 
-    /** So that budget is reported once per run, not once per [refresh]. */
-    @Volatile private var reportedBudgetExhausted = false
+    /** When the budget was last reported, so [refresh] cannot restart the count. */
+    @Volatile private var lastNoApReportAtMs = 0L
 
     /**
      * Same idea for the unreadable-configuration dead end, but latched for the whole run rather
@@ -148,7 +157,7 @@ class SoftApCredentialsProvider(
         runStartedAt = System.currentTimeMillis()
         triedAutoEnable = false
         reportedConfigUnreadable = false
-        reportedBudgetExhausted = false
+        lastNoApReportAtMs = 0L
         if (!isReceiverRegistered) {
             try {
                 // A system broadcast, so EXPORTED: NOT_EXPORTED silently never fires on API 34+.
@@ -179,7 +188,7 @@ class SoftApCredentialsProvider(
         autoEnabled = false
         triedAutoEnable = false
         reportedConfigUnreadable = false
-        reportedBudgetExhausted = false
+        lastNoApReportAtMs = 0L
         if (isReceiverRegistered) {
             // Reset even if unregister throws: a flag set in only one direction is how a
             // long-lived manager ends up unable to re-arm.
@@ -225,7 +234,7 @@ class SoftApCredentialsProvider(
                         // Nothing on air yet, which is exactly what auto-enable is for. Reached only
                         // here, so an access point that is up but unreadable never triggers it.
                         val waited = System.currentTimeMillis() - runStartedAt
-                        reportBudgetExhaustedOnce(waited)
+                        reportNoAccessPoint(waited)
                         if (!triedAutoEnable && waited >= AUTO_ENABLE_AFTER_MS && settings.autoEnableHotspot) {
                             triedAutoEnable = true
                             AppLog.i("SoftApCredentials: No access point after ${waited / 1000}s — trying to switch this device's hotspot on.")
@@ -239,29 +248,34 @@ class SoftApCredentialsProvider(
             }
 
             if (isActive && isRunning) {
-                reportBudgetExhaustedOnce(System.currentTimeMillis() - runStartedAt, force = true)
+                reportNoAccessPoint(System.currentTimeMillis() - runStartedAt, force = true)
                 onInvalidated?.invoke()
             }
         }
     }
 
     /**
-     * Says once per run that this has been going on too long to be a hotspot still coming up.
+     * Says that this has been going on too long to be a hotspot still coming up.
      *
      * Reported rather than acted on: the polling continues, because the user switching the hotspot
-     * on by hand is a real recovery and the only one left on a device where auto-enable cannot. What
-     * this replaces is silence — the old message was tied to a deadline [beginResolve] restamped on
-     * every [refresh], so on the path that needed it most it never printed at all.
+     * on by hand is a real recovery and the only one left on a device where auto-enable cannot.
+     * Repeated on a cooldown rather than said once, so a capture taken minutes into the attempt
+     * still carries it, and recorded as well as logged, so something says it after the log rolls.
      */
-    private fun reportBudgetExhaustedOnce(waited: Long, force: Boolean = false) {
-        if (reportedBudgetExhausted || (!force && waited < RESOLVE_BUDGET_MS)) return
-        reportedBudgetExhausted = true
+    private fun reportNoAccessPoint(waited: Long, force: Boolean = false) {
+        if (!force && waited < RESOLVE_BUDGET_MS) return
+        val now = System.currentTimeMillis()
+        if (lastNoApReportAtMs != 0L && now - lastNoApReportAtMs < NO_AP_REPORT_INTERVAL_MS) return
+        lastNoApReportAtMs = now
         AppLog.e(
             "SoftApCredentials: No usable access point after ${waited / 1000}s. " +
                 "Turn this device's hotspot on before connecting — 5 GHz is strongly " +
                 "recommended, Android Auto video is poor over 2.4 GHz — or switch the " +
                 "Android Auto network transport back to WiFi Direct."
         )
+        // The durable half. The line above is the instruction; this is what still says it after the
+        // log has rolled and the user is back in front of the app.
+        ConnectionIssues.raise(context, ConnectionIssue.HOTSPOT_NOT_RUNNING)
     }
 
     /** The interface we settled on, and whether the user named it rather than us guessing. */
@@ -420,6 +434,10 @@ class SoftApCredentialsProvider(
                     "can, so the hotspot-configuration record stays as it is."
             )
         }
+        // An access point we could name and hand over is proof there is one, whatever the last run
+        // concluded. Retired here rather than on the interface being found, so a device that shows
+        // an interface but never yields joinable credentials keeps the record it earned.
+        ConnectionIssues.clear(context, ConnectionIssue.HOTSPOT_NOT_RUNNING)
         if (!credentialsHandoff.publish(NativeNetworkCredentials(ssid, psk, ip, bssid))) {
             // Held rather than lost, so the connection still happens, but say so, because until
             // this line existed the log of a unit that never woke its phone was identical to the

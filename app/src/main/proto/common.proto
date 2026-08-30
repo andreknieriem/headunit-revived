@@ -38,13 +38,24 @@ enum MessageStatus
     STATUS_OUT_OF_MEMORY = -255;
 }
 
+// Numbers taken from Android Auto's own copy of this message, which is the only reader.
+// The previous order put head_unit_make first, so every value arrived under the wrong name:
+// the phone keys its per-head-unit records on make/model/year/vehicle_id and matches vendor
+// workarounds against them.
 message HeadUnitInfo {
-    optional string head_unit_make = 1;
-    optional string head_unit_model = 2;
-    optional string make = 3;
-    optional string model = 4;
-    optional string year = 5;
-    optional string head_unit_software_build = 6;
-    optional string vehicle_id = 7;
+    optional string make = 1;
+    optional string model = 2;
+    optional string year = 3;
+    optional string vehicle_id = 4;
+    optional string head_unit_make = 5;
+    optional string head_unit_model = 6;
+    optional string head_unit_software_build = 7;
     optional string head_unit_software_version = 8;
+    // Android Auto's vehicle type: 0 unspecified, 1 car, 2 truck, 3 motorcycle. An unset field
+    // reads as a car, measured, and the phone's own fallback can only ever guess car or truck from
+    // the model string, so this field is the only way to claim a motorcycle. Only a motorcycle
+    // makes the phone record with its own microphone. The phone stamps the type it has stored for
+    // this head unit over whatever arrives here, so see VehicleIdentityPolicy for how a changed
+    // type gets through.
+    optional int32 vehicle_type = 9;
 }

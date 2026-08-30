@@ -449,6 +449,11 @@
     <string name="vehicle_year_label">Rok</string>
     <string name="vehicle_year_description">Rok výroby vozidla</string>
     <string name="vehicle_id_label">ID vozidla</string>
+    <string name="vehicle_type_label">Typ vozidla</string>
+    <string name="vehicle_type_car">Automobil</string>
+    <string name="vehicle_type_truck">Nákladní vůz</string>
+    <string name="vehicle_type_motorcycle">Motocykl</string>
+    <string name="vehicle_type_forced_by_microphone">Mikrofon hlavní jednotky je vypnutý, takže Android Auto dostane informaci, že jde o motocykl, ať se zde zvolí cokoli. Právě to donutí telefon nahrávat samostatně.</string>
     <string name="vehicle_id_description">Pouze interní identifikátor. Jeho změna způsobí, že váš telefon bude toto vozidlo považovat za jiné, čímž se resetují vaše předvolby Android Auto pro toto auto.</string>
     <string name="head_unit_make_label">Výrobce</string>
     <string name="head_unit_make_description">Výrobce autorádia</string>
@@ -533,7 +538,11 @@
     <string name="loading_screen_tap_fullscreen_hint">Klepněte na náhled pro zobrazení na celou obrazovku</string>
     <string name="loading_screen_loop_video">Opakovat krátké animace</string>
     <string name="microphone_settings">Nastavení mikrofonu</string>
+    <string name="use_head_unit_microphone">Mikrofon hlavní jednotky</string>
+    <string name="use_head_unit_microphone_description">Zapnuto: Android Auto slyší mikrofon tohoto zařízení. Vypnuto: toto zařízení nikdy nenahrává a telefon použije vlastní mikrofon, případně náhlavní soupravu nebo interkom spárovaný s telefonem, takže hlasový asistent dál funguje. Vyžaduje Android 11 nebo novější v telefonu.</string>
+    <string name="head_unit_microphone_off_info">Mikrofon hlavní jednotky je vypnutý, takže nic níže neplatí. Android Auto dostane informaci, že toto zařízení nemůže nahrávat a je motocykl, což je právě to, co donutí telefon nahrávat samostatně. V Androidu 10 a starším to telefon mezi relacemi zapomene a může se přestat připojovat.</string>
     <string name="microphone_settings_description">Konfigurace vstupu mikrofonu a zpracování zvuku.</string>
+    <string name="mic_wire_format_info">Android Auto vždy přijímá mikrofon na 16000 Hz, 16 bitů, mono. Cokoli jiného odmítne, takže tato nastavení mění chování hardwaru, nikoli to, co se odesílá do telefonu.</string>
     <string name="mic_echo_canceler">Potlačení ozvěny (AEC)</string>
     <string name="mic_echo_canceler_description">Pokusí se odstranit ozvěnu z mikrofonu. Vypněte, pokud zaznamenáte ticho nebo zkreslení.</string>
     <string name="mic_noise_suppressor">Potlačení šumu (NS)</string>
