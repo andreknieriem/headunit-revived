@@ -81,6 +81,8 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 - UI: a destroyed activity stops listening, and a recycled row keeps its subtitle
 - Fix Android 4 Problems
 - Fix Orientation issues
+- Several Native Mode fixes and enhancements
+- Mic: fix the uplink, and let the phone keep the microphone
 
 ### v.3.2.6
 - Fix settings UI crash and dpi input on older Android devices
