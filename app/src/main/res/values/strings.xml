@@ -195,7 +195,7 @@
     <string name="wifi">WiFi</string>
     <string name="dpi">Pixel density (DPI)</string>
     <string name="pixel_aspect_ratio">Pixel aspect ratio</string>
-    <string name="mic_sample_rate">Mic sample rate</string>
+    <string name="mic_sample_rate">Mic capture rate</string>
     <string name="keymap">Keymap</string>
     <string name="night_mode">Dark Mode (Android Auto)</string>
     <string name="night_mode_threshold">Night Mode Threshold</string>
@@ -492,17 +492,67 @@
     <string name="playback_focus_mode_never_hint">Never touches system audio focus. Other audio on the headunit may keep playing over Android Auto.</string>
     <string name="playback_focus_mode_static_hint">With Static Audio Focus on, this applies from the moment the phone connects and lasts the whole session, rather than only while audio is playing.</string>
     <string name="separate_audio_streams">Separate Audio Streams</string>
-    <string name="separate_audio_streams_description">Separate audio channels for music, calls, and notifications instead of a single multimedia stream (may not work correctly on some devices).</string>
+    <string name="separate_audio_streams_description">Give the Media, Guidance and System Sounds channels their own output streams instead of one shared multimedia stream (may not work correctly on some devices).</string>
+
+    <!-- Audio stream settings screen -->
+    <string name="audio_stream_settings">Audio Streams</string>
+    <string name="audio_stream_settings_description">Choose the system stream each Android Auto channel plays on.</string>
+    <string name="audio_stream_settings_info">Android Auto sends audio on three channels — Media, Guidance and System Sounds. Each one is handed to the head unit on a system stream, and which stream you pick decides the volume key it follows and, on many head units, whether the amplifier unmutes for it at all. Use the speaker button to hear a test tone on the stream before saving.</string>
+    <!-- The three audio channels Android Auto opens. One set of names, used by the Audio Streams
+         screen and by the Audio Volume Offset sliders, so both describe the same thing the same way. -->
+    <string name="audio_channel_media">Media</string>
+    <string name="audio_channel_media_description">App playback: music, podcasts, radio and audiobooks. The only channel sent in stereo (48 kHz).</string>
+    <string name="audio_channel_guidance">Guidance / Navigation</string>
+    <string name="audio_channel_guidance_description">Spoken turn-by-turn directions and the voice assistant\'s replies (16 kHz mono). </string>
+    <string name="audio_channel_system">System Sounds / Notification</string>
+    <!-- Shown in place of the three channel names when separate streams is off and all of them
+         share one output. Spelling every channel out is what tells the user the single picker
+         below covers the lot, so no separate "separate streams are off" note is needed. -->
+    <string name="audio_channel_all">Media, Guidance, Navigation, Notification and System</string>
+    <string name="audio_channel_all_short">all channels</string>
+    <string name="audio_channel_all_description">Every Android Auto audio channel — app playback, spoken guidance, alerts and notification sounds — shares this one output stream.</string>
+    <string name="audio_channel_system_description">Android Auto\'s own alerts, chimes and notification sounds (16 kHz mono).</string>
+    <string name="audio_stream_test">Play a test tone on this stream</string>
+    <string name="audio_stream_muted_warning">%1$s is muted on this device — raise its volume to hear the test tone.</string>
+    <string name="audio_stream_test_failed">Could not play a test tone on this stream.</string>
+    <string name="audio_stream_pick_title">Stream for %1$s</string>
+    <!-- Output streams, named by id. Only the ones this device actually reports are offered, so a
+         head unit with a vendor stream shows that too - under the name its own framework gives it. -->
+    <string name="audio_stream_voice_call">Voice call</string>
+    <string name="audio_stream_system">System</string>
+    <string name="audio_stream_ring">Ringtone</string>
+    <string name="audio_stream_music">Media (music)</string>
+    <string name="audio_stream_alarm">Alarm</string>
+    <string name="audio_stream_notification">Notification</string>
+    <string name="audio_stream_bluetooth_sco">Bluetooth SCO</string>
+    <string name="audio_stream_system_enforced">System (enforced)</string>
+    <string name="audio_stream_dtmf">DTMF</string>
+    <string name="audio_stream_tts">Text-to-speech</string>
+    <string name="audio_stream_accessibility">Accessibility</string>
+    <string name="audio_stream_assistant">Assistant</string>
+    <!-- A stream this device has that stock Android does not, e.g. "MUSIC_SECOND (10)". -->
+    <string name="audio_stream_vendor_format" translatable="false">%1$s (%2$d)</string>
+    <!-- A stream with no name at all: only its number is known. -->
+    <string name="audio_stream_unnamed_format">Stream %1$d</string>
+    <!-- A saved stream that this device does not have, e.g. after restoring a backup. -->
+    <string name="audio_stream_unavailable_format">Stream %1$d (not on this device)</string>
+    <string name="audio_stream_vendor_info">This head unit has output streams that stock Android does not, listed below under the names its own system gives them. They are often the ones the car\'s amplifier is actually wired to, so try them with the speaker button if a channel stays silent.</string>
+
+    <!-- Onboarding: audio step -->
+    <string name="onb_audio_title">Audio</string>
+    <string name="onb_audio_help">Pick the system stream each Android Auto channel plays on, and tap the speaker to hear it. If a channel stays silent in the car, moving it to another stream is usually the fix.</string>
+    <string name="onb_audio_more_hint">You can change these again later under Settings → Audio Streams.</string>
     <string name="use_aac_audio">Use AAC Audio</string>
     <string name="use_aac_audio_description">Use AAC codec for audio to save bandwidth (Experimental).</string>
     <string name="attach_hw_dsp_equalizer">Hardware DSP Equalizer Trigger</string>
     <string name="attach_hw_dsp_equalizer_description">Attaches a dummy Equalizer effect to the audio session to force hardware DSP routing on specific headunits. Keep disabled if using ViPER4Android / ViperFX or if sound is muffled on older Android versions.</string>
     <string name="audio_volume_offset">Audio Volume Offset</string>
-    <string name="media_volume_offset">Media Volume Offset</string>
-    <string name="assistant_volume_offset">Assistant Volume Offset</string>
-    <string name="navigation_volume_offset">Navigation Volume Offset</string>
     <string name="microphone_settings">Microphone Settings</string>
+    <string name="use_head_unit_microphone">Head unit microphone</string>
+    <string name="use_head_unit_microphone_description">On: Android Auto hears this device\'s microphone. Off: this device never records and the phone uses its own microphone, or a headset or intercom paired to the phone, so the voice assistant still works. Needs Android 11 or newer on the phone.</string>
+    <string name="head_unit_microphone_off_info">The head unit microphone is off, so nothing below applies. Android Auto is told this device cannot record and is a motorcycle, which is what makes the phone record for itself. On Android 10 and older the phone forgets that between sessions and may stop connecting.</string>
     <string name="microphone_settings_description">Configure microphone input and audio processing.</string>
+    <string name="mic_wire_format_info">Android Auto always receives the microphone at 16000 Hz, 16-bit, mono. It rejects anything else, so these settings change what the hardware does, not what the phone is sent.</string>
     <string name="mic_input_source">Microphone Input Source</string>
     <string name="mic_input_source_description">Choose the audio source for the microphone.</string>
     <string-array name="mic_input_sources">
@@ -515,9 +565,9 @@
     <string name="mic_echo_canceler">Echo cancellation (AEC)</string>
     <string name="mic_echo_canceler_description">Attempts to remove echo from the microphone. Disable if you experience silence or distortion.</string>
     <string name="mic_noise_suppressor">Noise suppression (NS)</string>
-    <string name="mic_noise_suppressor_description">Attempts to reduce background noise. Disable if your voice sounds muffled.</string>
+    <string name="mic_noise_suppressor_description">Attempts to reduce background noise. Android Auto expects this off on a single microphone and does its own processing. Disable if your voice sounds muffled.</string>
     <string name="mic_auto_gain_control">Automatic gain control (AGC)</string>
-    <string name="mic_auto_gain_control_description">Automatically adjusts microphone volume. Disable if the volume is unstable.</string>
+    <string name="mic_auto_gain_control_description">Automatically adjusts microphone volume. Android Auto expects this off and applies its own gain control; the two together usually sound worse. Disable if the volume is unstable.</string>
     <string name="mic_feature_unsupported">This feature is not supported on your device.</string>
 
     <!-- Info Settings -->
@@ -772,6 +822,11 @@
     <string name="vehicle_year_label">Year</string>
     <string name="vehicle_year_description">Vehicle year</string>
     <string name="vehicle_id_label">Vehicle ID</string>
+    <string name="vehicle_type_label">Vehicle Type</string>
+    <string name="vehicle_type_car">Car</string>
+    <string name="vehicle_type_truck">Truck</string>
+    <string name="vehicle_type_motorcycle">Motorcycle</string>
+    <string name="vehicle_type_forced_by_microphone">The head unit microphone is off, so Android Auto is told this is a motorcycle whatever is picked here. That is what makes the phone record for itself.</string>
     <string name="vehicle_id_description">Internal identifier only. Changing this will cause your phone to treat this as a different vehicle, resetting your Android Auto preferences for this car.</string>
     <string name="head_unit_make_label">Make</string>
     <string name="head_unit_make_description">Head unit manufacturer</string>
@@ -896,6 +951,7 @@
     <!-- The failure banner on the main screen. One per condition, shown after a failed attempt. -->
     <string name="connection_issue_banner_bt_silent">Your phone connected over Bluetooth, but nothing this unit sent ever reached it. This is a fault in the head unit\'s Bluetooth that this app cannot work around. Tap to switch to USB, Wireless Helper or Auto, which do not need the Bluetooth handshake.</string>
     <string name="connection_issue_banner_bssid">This unit could not read its own WiFi MAC address (BSSID), so your phone was never told which network to join. Tap to turn on Location, or to enter the address by hand.</string>
+    <string name="connection_issue_banner_hotspot_off">This unit\'s hotspot is off, so there was no network to send your phone to. Turn the hotspot on before connecting, or tap to let the app switch it on for you.</string>
     <string name="connection_issue_banner_hotspot_config">This unit will not tell the app its hotspot name and password, so your phone had nothing to join. Tap to enter them by hand.</string>
     <string name="connection_issue_banner_dismiss">Dismiss</string>
     <!-- What the hotspot banner types into the settings search. Both override rows carry it

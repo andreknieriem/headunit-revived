@@ -27,6 +27,21 @@ sealed class SettingItem {
         val onClick: (settingId: String) -> Unit // Callback when the setting is clicked
     ) : SettingItem()
 
+    /**
+     * A picker row with a speaker button beside it, for choosing an output stream and hearing it
+     * without leaving the screen. The test plays the value shown in the row, which is the pending
+     * choice rather than the saved one — the point is to try a stream before committing to it.
+     */
+    data class StreamSettingEntry(
+        override val stableId: String,
+        @StringRes val nameResId: Int,
+        var value: String,
+        @StringRes val descriptionResId: Int? = null,
+        val searchKeywords: String? = null,
+        val onClick: (settingId: String) -> Unit,
+        val onTest: () -> Unit
+    ) : SettingItem()
+
     data class ToggleSettingEntry(
         override val stableId: String,
         @StringRes val nameResId: Int,
@@ -84,6 +99,7 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
         private const val VIEW_TYPE_INFO_BANNER = 5
         private const val VIEW_TYPE_ACTION_BUTTON = 6
         private const val VIEW_TYPE_SEGMENTED = 7
+        private const val VIEW_TYPE_STREAM = 8
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -95,6 +111,7 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
             is SettingItem.InfoBanner -> VIEW_TYPE_INFO_BANNER
             is SettingItem.ActionButton -> VIEW_TYPE_ACTION_BUTTON
             is SettingItem.SegmentedButtonSettingEntry -> VIEW_TYPE_SEGMENTED
+            is SettingItem.StreamSettingEntry -> VIEW_TYPE_STREAM
         }
     }
 
@@ -108,6 +125,7 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
             VIEW_TYPE_INFO_BANNER -> InfoBannerViewHolder(inflater.inflate(R.layout.layout_setting_info_banner, parent, false))
             VIEW_TYPE_ACTION_BUTTON -> ActionButtonViewHolder(inflater.inflate(R.layout.layout_setting_action_button, parent, false))
             VIEW_TYPE_SEGMENTED -> SegmentedButtonViewHolder(inflater.inflate(R.layout.layout_setting_item_segmented, parent, false))
+            VIEW_TYPE_STREAM -> StreamSettingViewHolder(inflater.inflate(R.layout.layout_setting_item_stream, parent, false))
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }
@@ -115,7 +133,7 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = getItem(position)
 
-        if (holder is SettingViewHolder || holder is ToggleSettingViewHolder || holder is SliderSettingViewHolder || holder is ActionButtonViewHolder || holder is SegmentedButtonViewHolder) {
+        if (holder is SettingViewHolder || holder is ToggleSettingViewHolder || holder is SliderSettingViewHolder || holder is ActionButtonViewHolder || holder is SegmentedButtonViewHolder || holder is StreamSettingViewHolder) {
             updateItemVisuals(holder.itemView, position)
         }
 
@@ -127,6 +145,7 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
             is SettingItem.InfoBanner -> (holder as InfoBannerViewHolder).bind(item)
             is SettingItem.ActionButton -> (holder as ActionButtonViewHolder).bind(item)
             is SettingItem.SegmentedButtonSettingEntry -> (holder as SegmentedButtonViewHolder).bind(item)
+            is SettingItem.StreamSettingEntry -> (holder as StreamSettingViewHolder).bind(item)
         }
     }
 
@@ -164,6 +183,28 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
             else settingName.setText(setting.nameResId)
             settingValue.text = setting.value
             itemView.setOnClickListener { setting.onClick(setting.stableId) }
+        }
+    }
+
+    class StreamSettingViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val settingName: TextView = itemView.findViewById(R.id.settingName)
+        private val settingValue: TextView = itemView.findViewById(R.id.settingValue)
+        private val settingDescription: TextView = itemView.findViewById(R.id.settingDescription)
+        private val testButton: com.google.android.material.button.MaterialButton =
+            itemView.findViewById(R.id.settingTestButton)
+
+        fun bind(setting: SettingItem.StreamSettingEntry) {
+            settingName.setText(setting.nameResId)
+            settingValue.text = setting.value
+            // Both branches set the visibility, because the holder is recycled.
+            if (setting.descriptionResId != null) {
+                settingDescription.setText(setting.descriptionResId)
+                settingDescription.visibility = View.VISIBLE
+            } else {
+                settingDescription.visibility = View.GONE
+            }
+            itemView.setOnClickListener { setting.onClick(setting.stableId) }
+            testButton.setOnClickListener { setting.onTest() }
         }
     }
 
@@ -337,6 +378,9 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
                     oldItem.textResId == newItem.textResId && oldItem.text == newItem.text
                 oldItem is SettingItem.ActionButton && newItem is SettingItem.ActionButton ->
                     oldItem.textResId == newItem.textResId && oldItem.isEnabled == newItem.isEnabled
+                oldItem is SettingItem.StreamSettingEntry && newItem is SettingItem.StreamSettingEntry ->
+                    oldItem.nameResId == newItem.nameResId && oldItem.value == newItem.value &&
+                        oldItem.descriptionResId == newItem.descriptionResId
                 oldItem is SettingItem.SegmentedButtonSettingEntry && newItem is SettingItem.SegmentedButtonSettingEntry ->
                     oldItem.nameResId == newItem.nameResId && oldItem.options == newItem.options && oldItem.selectedIndex == newItem.selectedIndex
                 else -> false

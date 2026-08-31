@@ -116,7 +116,7 @@ class SettingsFragment : Fragment() {
         // Input
         "keymap",
         // Audio
-        "enableAudioSink", "micSettings", "audioVolumeOffsets",
+        "enableAudioSink", "audioStreamSettings", "micSettings", "audioVolumeOffsets",
         // Info
         "version", "about", "support"
     )
@@ -140,7 +140,6 @@ class SettingsFragment : Fragment() {
     private var pendingEnableAudioSink: Boolean? = null
     private var pendingStaticAudioFocus: Boolean? = null
     private var pendingPlaybackFocusMode: PlaybackFocusPolicy.Mode? = null
-    private var pendingSeparateAudioStreams: Boolean? = null
     private var pendingUseAacAudio: Boolean? = null
     private var pendingAttachHwDspEqualizer: Boolean? = null
     private var pendingMicInputSource: Int? = null
@@ -189,8 +188,8 @@ class SettingsFragment : Fragment() {
     private var pendingUiScaleSettingsPercent: Int? = null
 
     private var pendingMediaVolumeOffset: Int? = null
-    private var pendingAssistantVolumeOffset: Int? = null
-    private var pendingNavigationVolumeOffset: Int? = null
+    private var pendingGuidanceVolumeOffset: Int? = null
+    private var pendingSystemVolumeOffset: Int? = null
 
     private var pendingHideBatteryLevel: Boolean? = null
     private var pendingHidePhoneSignal: Boolean? = null
@@ -287,7 +286,6 @@ class SettingsFragment : Fragment() {
         pendingEnableAudioSink = settings.enableAudioSink
         pendingStaticAudioFocus = settings.staticAudioFocus
         pendingPlaybackFocusMode = settings.playbackFocusMode
-        pendingSeparateAudioStreams = settings.separateAudioStreams
         pendingUseAacAudio = settings.useAacAudio
         pendingAttachHwDspEqualizer = settings.attachHwDspEqualizer
         pendingMicInputSource = settings.micInputSource
@@ -335,8 +333,8 @@ class SettingsFragment : Fragment() {
         pendingUiScaleSettingsPercent = settings.uiScaleSettingsPercent
 
         pendingMediaVolumeOffset = settings.mediaVolumeOffset
-        pendingAssistantVolumeOffset = settings.assistantVolumeOffset
-        pendingNavigationVolumeOffset = settings.navigationVolumeOffset
+        pendingGuidanceVolumeOffset = settings.guidanceVolumeOffset
+        pendingSystemVolumeOffset = settings.systemVolumeOffset
 
         pendingHidePhoneSignal = settings.hidePhoneSignal
         pendingHideBatteryLevel = settings.hideBatteryLevel
@@ -407,7 +405,6 @@ class SettingsFragment : Fragment() {
         pendingEnableAudioSink = settings.enableAudioSink
         pendingStaticAudioFocus = settings.staticAudioFocus
         pendingPlaybackFocusMode = settings.playbackFocusMode
-        pendingSeparateAudioStreams = settings.separateAudioStreams
         pendingUseAacAudio = settings.useAacAudio
         pendingAttachHwDspEqualizer = settings.attachHwDspEqualizer
         pendingEnableRotary = settings.enableRotary
@@ -447,8 +444,8 @@ class SettingsFragment : Fragment() {
         pendingUiScaleHomePercent = settings.uiScaleHomePercent
         pendingUiScaleSettingsPercent = settings.uiScaleSettingsPercent
         pendingMediaVolumeOffset = settings.mediaVolumeOffset
-        pendingAssistantVolumeOffset = settings.assistantVolumeOffset
-        pendingNavigationVolumeOffset = settings.navigationVolumeOffset
+        pendingGuidanceVolumeOffset = settings.guidanceVolumeOffset
+        pendingSystemVolumeOffset = settings.systemVolumeOffset
         pendingHideBatteryLevel = settings.hideBatteryLevel
         pendingHidePhoneSignal = settings.hidePhoneSignal
         pendingHideClock = settings.hideClock
@@ -541,7 +538,6 @@ class SettingsFragment : Fragment() {
         val focusModeChanged = pendingPlaybackFocusMode != null && pendingPlaybackFocusMode != settings.playbackFocusMode
         pendingPlaybackFocusMode?.let { settings.playbackFocusMode = it }
         if (focusModeChanged) settings.playbackFocusSelfDefeating = false
-        pendingSeparateAudioStreams?.let { settings.separateAudioStreams = it }
         pendingUseAacAudio?.let { settings.useAacAudio = it }
         pendingAttachHwDspEqualizer?.let { settings.attachHwDspEqualizer = it }
         pendingMicInputSource?.let { settings.micInputSource = it }
@@ -554,8 +550,8 @@ class SettingsFragment : Fragment() {
         pendingScreenOrientation?.let { settings.screenOrientation = it }
 
         pendingMediaVolumeOffset?.let { settings.mediaVolumeOffset = it }
-        pendingAssistantVolumeOffset?.let { settings.assistantVolumeOffset = it }
-        pendingNavigationVolumeOffset?.let { settings.navigationVolumeOffset = it }
+        pendingGuidanceVolumeOffset?.let { settings.guidanceVolumeOffset = it }
+        pendingSystemVolumeOffset?.let { settings.systemVolumeOffset = it }
 
 
         pendingAppLanguage?.let { settings.appLanguage = it }
@@ -667,7 +663,6 @@ class SettingsFragment : Fragment() {
                         pendingEnableAudioSink != settings.enableAudioSink ||
                         pendingStaticAudioFocus != settings.staticAudioFocus ||
                         pendingPlaybackFocusMode != settings.playbackFocusMode ||
-                        pendingSeparateAudioStreams != settings.separateAudioStreams ||
                         pendingUseAacAudio != settings.useAacAudio ||
                         pendingAttachHwDspEqualizer != settings.attachHwDspEqualizer ||
                         pendingMicInputSource != settings.micInputSource ||
@@ -688,8 +683,8 @@ class SettingsFragment : Fragment() {
                         pendingInsetRight != settings.insetRight ||
                         pendingInsetBottom != settings.insetBottom ||
                         pendingMediaVolumeOffset != settings.mediaVolumeOffset ||
-                        pendingAssistantVolumeOffset != settings.assistantVolumeOffset ||
-                        pendingNavigationVolumeOffset != settings.navigationVolumeOffset ||
+                        pendingGuidanceVolumeOffset != settings.guidanceVolumeOffset ||
+                        pendingSystemVolumeOffset != settings.systemVolumeOffset ||
                         pendingKillOnDisconnect != settings.killOnDisconnect ||
                         pendingRaiseProjectionDuringCall != settings.raiseProjectionDuringCall ||
                         pendingAutoEnableHotspot != settings.autoEnableHotspot ||
@@ -727,7 +722,6 @@ class SettingsFragment : Fragment() {
                           pendingEnableAudioSink != settings.enableAudioSink ||
                           pendingStaticAudioFocus != settings.staticAudioFocus ||
                           pendingPlaybackFocusMode != settings.playbackFocusMode ||
-                          pendingSeparateAudioStreams != settings.separateAudioStreams ||
                           pendingUseAacAudio != settings.useAacAudio ||
                           pendingAttachHwDspEqualizer != settings.attachHwDspEqualizer ||
                           pendingAudioLatencyMultiplier != settings.audioLatencyMultiplier ||
@@ -1886,15 +1880,18 @@ class SettingsFragment : Fragment() {
             }
         }
 
-        items.add(SettingItem.ToggleSettingEntry(
-            stableId = "separateAudioStreams",
-            nameResId = R.string.separate_audio_streams,
-            descriptionResId = R.string.separate_audio_streams_description,
-            isChecked = pendingSeparateAudioStreams ?: true,
-            onCheckedChanged = { isChecked ->
-                pendingSeparateAudioStreams = isChecked
-                checkChanges()
-                updateSettingsList()
+        items.add(SettingItem.SettingEntry(
+            stableId = "audioStreamSettings",
+            nameResId = R.string.audio_stream_settings,
+            value = getString(R.string.audio_stream_settings_description),
+            searchKeywords = kw(
+                R.string.separate_audio_streams,
+                R.string.audio_channel_media,
+                R.string.audio_channel_guidance,
+                R.string.audio_channel_system
+            ),
+            onClick = { _ ->
+                findNavController().navigate(R.id.action_settingsFragment_to_audioStreamSettingsFragment)
             }
         ))
 
@@ -1939,7 +1936,7 @@ class SettingsFragment : Fragment() {
             stableId = "micSettings",
             nameResId = R.string.microphone_settings,
             value = getString(R.string.microphone_settings_description),
-            searchKeywords = kw(R.string.mic_sample_rate),
+            searchKeywords = kw(R.string.mic_sample_rate, R.string.use_head_unit_microphone),
             onClick = { _ ->
                 findNavController().navigate(R.id.action_settingsFragment_to_micSettingsFragment)
             }
@@ -1948,7 +1945,7 @@ class SettingsFragment : Fragment() {
         items.add(SettingItem.SettingEntry(
             stableId = "audioVolumeOffsets",
             nameResId = R.string.audio_volume_offset,
-            value = "${(100 + (pendingMediaVolumeOffset ?: 0))}% / ${(100 + (pendingAssistantVolumeOffset ?: 0))}% / ${(100 + (pendingNavigationVolumeOffset ?: 0))}%",
+            value = "${(100 + (pendingMediaVolumeOffset ?: 0))}% / ${(100 + (pendingGuidanceVolumeOffset ?: 0))}% / ${(100 + (pendingSystemVolumeOffset ?: 0))}%",
             onClick = {
                 showAudioOffsetsDialog()
             }
@@ -2493,6 +2490,11 @@ class SettingsFragment : Fragment() {
         imm?.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
+    override fun onPause() {
+        super.onPause()
+        view?.let { hideKeyboard(it) }
+    }
+
     private fun renderSettings(scrollState: android.os.Parcelable? = null) {
         // While searching, the tab has no effect (search spans both tiers), so hint that.
         settingsTabGroup?.isEnabled = searchQuery.isBlank()
@@ -2570,6 +2572,8 @@ class SettingsFragment : Fragment() {
             "${item.nameOverride ?: getString(item.nameResId)} ${item.value} ${item.searchKeywords ?: ""}"
         is SettingItem.ToggleSettingEntry ->
             "${item.nameOverride ?: getString(item.nameResId)} ${if (item.descriptionResId != null) getString(item.descriptionResId) else ""} ${item.searchKeywords ?: ""}"
+        is SettingItem.StreamSettingEntry ->
+            "${getString(item.nameResId)} ${item.value} ${if (item.descriptionResId != null) getString(item.descriptionResId) else ""} ${item.searchKeywords ?: ""}"
         is SettingItem.SliderSettingEntry ->
             "${getString(item.nameResId)} ${item.value}"
         is SettingItem.SegmentedButtonSettingEntry ->
@@ -3148,25 +3152,25 @@ class SettingsFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_audio_offsets, null)
 
         val seekMedia = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_media)
-        val seekAssistant = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_assistant)
-        val seekNavigation = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_navigation)
+        val seekGuidance = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_guidance)
+        val seekSystem = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_system)
 
         val textMedia = dialogView.findViewById<android.widget.TextView>(R.id.text_media_val)
-        val textAssistant = dialogView.findViewById<android.widget.TextView>(R.id.text_assistant_val)
-        val textNavigation = dialogView.findViewById<android.widget.TextView>(R.id.text_navigation_val)
+        val textGuidance = dialogView.findViewById<android.widget.TextView>(R.id.text_guidance_val)
+        val textSystem = dialogView.findViewById<android.widget.TextView>(R.id.text_system_val)
 
         // Mapping: 0 to 100 on SeekBar -> 0% to 200% Gain. Default is 50 (100% Gain, 0 Offset)
         // Offset = (seekValue - 50) * 2
         // seekValue = (offset / 2) + 50
 
         seekMedia.progress = ((pendingMediaVolumeOffset ?: 0) / 2) + 50
-        seekAssistant.progress = ((pendingAssistantVolumeOffset ?: 0) / 2) + 50
-        seekNavigation.progress = ((pendingNavigationVolumeOffset ?: 0) / 2) + 50
+        seekGuidance.progress = ((pendingGuidanceVolumeOffset ?: 0) / 2) + 50
+        seekSystem.progress = ((pendingSystemVolumeOffset ?: 0) / 2) + 50
 
         val updateLabels = {
             textMedia.text = "${(seekMedia.progress * 2)}%"
-            textAssistant.text = "${(seekAssistant.progress * 2)}%"
-            textNavigation.text = "${(seekNavigation.progress * 2)}%"
+            textGuidance.text = "${(seekGuidance.progress * 2)}%"
+            textSystem.text = "${(seekSystem.progress * 2)}%"
         }
         updateLabels()
 
@@ -3179,16 +3183,16 @@ class SettingsFragment : Fragment() {
         }
 
         seekMedia.setOnSeekBarChangeListener(listener)
-        seekAssistant.setOnSeekBarChangeListener(listener)
-        seekNavigation.setOnSeekBarChangeListener(listener)
+        seekGuidance.setOnSeekBarChangeListener(listener)
+        seekSystem.setOnSeekBarChangeListener(listener)
 
         MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
             .setTitle(R.string.audio_volume_offset)
             .setView(dialogView)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 pendingMediaVolumeOffset = (seekMedia.progress - 50) * 2
-                pendingAssistantVolumeOffset = (seekAssistant.progress - 50) * 2
-                pendingNavigationVolumeOffset = (seekNavigation.progress - 50) * 2
+                pendingGuidanceVolumeOffset = (seekGuidance.progress - 50) * 2
+                pendingSystemVolumeOffset = (seekSystem.progress - 50) * 2
                 checkChanges()
                 updateSettingsList()
                 dialog.dismiss()
@@ -3349,6 +3353,11 @@ class SettingsFragment : Fragment() {
                 pendingInsetBottom = settings.insetBottom
 
                 dialog.dismiss()
+            }
+            .setOnDismissListener {
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE)
+                        as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(inputLeft.windowToken, 0)
             }
             .create()
 
@@ -3745,6 +3754,11 @@ class SettingsFragment : Fragment() {
                 dialog.dismiss()
             }
             .setNegativeButton(android.R.string.cancel, null)
+            .setOnDismissListener {
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE)
+                        as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(editView.windowToken, 0)
+            }
             .create()
 
         dialog.window?.clearFlags(
@@ -3783,6 +3797,11 @@ class SettingsFragment : Fragment() {
                 dialog.dismiss()
             }
             .setNegativeButton(android.R.string.cancel, null)
+            .setOnDismissListener {
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE)
+                        as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(editView.windowToken, 0)
+            }
             .create()
 
         dialog.window?.clearFlags(

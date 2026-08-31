@@ -3,6 +3,8 @@ package com.andrerinas.openheadunit.main
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -18,6 +20,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.bumptech.glide.signature.ObjectKey
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -27,6 +30,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.app.BaseActivity
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.ColorUtils
+import com.andrerinas.openheadunit.utils.HomeUiHelper
 import com.andrerinas.openheadunit.utils.PickImageContract
 import com.andrerinas.openheadunit.utils.Settings
 import kotlinx.coroutines.Dispatchers
@@ -298,78 +302,24 @@ class CustomizationFragment : Fragment() {
         if (hasCustomImage && bgCustom != null) {
             bgDefault?.visibility = View.GONE
             bgCustom.visibility = View.VISIBLE
-            Glide.with(this).load(File(path)).centerCrop().into(bgCustom)
+            Glide.with(this)
+                .load(File(path))
+                .signature(ObjectKey(File(path).lastModified()))
+                .centerCrop()
+                .into(bgCustom)
         } else {
             bgCustom?.visibility = View.GONE
             bgDefault?.visibility = View.VISIBLE
         }
 
         // 2. Sync Button Colors & Monochrome Theme
-        val selfBtn = homeView.findViewById<MaterialButton>(R.id.self_mode_button)
-        val usbBtn = homeView.findViewById<MaterialButton>(R.id.usb_button)
-        val wifiBtn = homeView.findViewById<MaterialButton>(R.id.wifi_button)
-        val settingsBtn = homeView.findViewById<MaterialButton>(R.id.settings_button)
-
         val isNightActive = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        val isDarkTheme = settings.appTheme == Settings.AppTheme.DARK ||
-                          settings.appTheme == Settings.AppTheme.EXTREME_DARK ||
-                          isNightActive
+        HomeUiHelper.applyButtonStyles(ctx, homeView, settings, isNightActive)
 
-        if (isDarkTheme && settings.monochromeIcons) {
-            val monochromeBackground = ContextCompat.getDrawable(ctx, R.drawable.gradient_monochrome)
-            val grayTint = ColorStateList.valueOf(0xFF808080.toInt())
-            listOfNotNull(selfBtn, usbBtn, wifiBtn, settingsBtn).forEach { button ->
-                button.background = monochromeBackground?.constantState?.newDrawable()?.mutate()
-                button.iconTint = grayTint
-            }
-        } else {
-            val whiteTint = ColorStateList.valueOf(0xFFFFFFFF.toInt())
-            val configs = listOf(
-                Triple(selfBtn, R.drawable.gradient_blue, settings.customSelfModeButtonColor),
-                Triple(usbBtn, R.drawable.gradient_orange, settings.customUsbButtonColor),
-                Triple(wifiBtn, R.drawable.gradient_purple, settings.customWifiButtonColor),
-                Triple(settingsBtn, R.drawable.gradient_darkblue, settings.customSettingsButtonColor)
-            )
-            configs.forEach { (button, defaultDrawableRes, customColor) ->
-                if (button != null) {
-                    if (customColor != 0) {
-                        button.background = ColorUtils.createGradientDrawable(customColor, 32f, ctx)
-                    } else {
-                        button.background = ContextCompat.getDrawable(ctx, defaultDrawableRes)
-                    }
-                    button.iconTint = whiteTint
-                }
-            }
-        }
-
-        // 3. SCALE THE HOME BUTTONS LAYOUT EXACTLY LIKE HOMEFRAGMENT DOES WITH MARGIN MAGIC!
+        // 3. Scale Home Buttons
         val density = resources.displayMetrics.density
-        val buttons = listOfNotNull(selfBtn, usbBtn, wifiBtn, settingsBtn)
         val isPortrait = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-
-        if (isPortrait) {
-            val basePaddingDp = 12f
-            val adjustedPaddingPx = ((basePaddingDp * (2.0f - scaleFactor)).coerceIn(4f, 16f) * density).toInt()
-            buttons.forEach { button ->
-                (button.parent as? View)?.setPadding(adjustedPaddingPx, adjustedPaddingPx, adjustedPaddingPx, adjustedPaddingPx)
-            }
-        } else {
-            val baseMarginDp = 40f
-            val adjustedMarginPx = ((baseMarginDp * (2.0f - scaleFactor)).coerceIn(12f, 48f) * density).toInt()
-            buttons.forEach { button ->
-                val params = button.layoutParams as? ViewGroup.MarginLayoutParams
-                if (params != null) {
-                    params.setMargins(adjustedMarginPx, adjustedMarginPx, adjustedMarginPx, adjustedMarginPx)
-                    button.layoutParams = params
-                }
-            }
-        }
-
-        val mainButtonsLayout = homeView.findViewById<View>(R.id.main_buttons_layout)
-        if (mainButtonsLayout != null) {
-            mainButtonsLayout.scaleX = scaleFactor
-            mainButtonsLayout.scaleY = scaleFactor
-        }
+        HomeUiHelper.applyButtonScale(homeView, validScale, isPortrait, density)
     }
 
     private fun handleImageSelected(uri: Uri) {
@@ -379,23 +329,40 @@ class CustomizationFragment : Fragment() {
             var success = false
 
             try {
-                if (uri.scheme == "file") {
-                    val srcFile = uri.path?.let { File(it) }
-                    if (srcFile != null && srcFile.exists()) {
-                        srcFile.inputStream().use { input ->
-                            destFile.outputStream().use { output -> input.copyTo(output) }
+                val dm = ctx.resources.displayMetrics
+                val maxDim = maxOf(dm.widthPixels, dm.heightPixels, 1920)
+
+                // Use Glide to load and scale the Uri safely on background thread.
+                // Glide handles content providers, permissions, EXIF orientation, and downsampling.
+                val bitmap = Glide.with(ctx.applicationContext)
+                    .asBitmap()
+                    .load(uri)
+                    .override(maxDim, maxDim)
+                    .submit()
+                    .get()
+
+                if (bitmap != null) {
+                    destFile.outputStream().use { outStream ->
+                        if (bitmap.hasAlpha()) {
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream)
+                        } else {
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 88, outStream)
                         }
-                        success = true
                     }
-                } else {
+                    success = true
+                    AppLog.i("Custom background saved: ${bitmap.width}x${bitmap.height}, ${destFile.length() / 1024} KB")
+                }
+            } catch (e: Exception) {
+                AppLog.e("Failed to decode custom background image via Glide: ${e.message}")
+                try {
                     ctx.contentResolver.openInputStream(uri)?.use { input ->
                         destFile.outputStream().use { output -> input.copyTo(output) }
                         success = true
                     }
+                } catch (fallbackEx: Exception) {
+                    AppLog.e("Fallback copy failed: ${fallbackEx.message}")
+                    success = false
                 }
-            } catch (e: Exception) {
-                AppLog.e("Failed to copy custom background image: ${e.message}")
-                success = false
             }
 
             withContext(Dispatchers.Main) {
@@ -442,10 +409,12 @@ class CustomizationFragment : Fragment() {
                 iv.visibility = View.VISIBLE
                 Glide.with(this)
                     .load(File(path))
+                    .signature(ObjectKey(File(path).lastModified()))
                     .centerCrop()
                     .into(iv)
             }
-            txtStatus?.text = getString(R.string.home_background_custom)
+            val sizeKb = File(path).length() / 1024
+            txtStatus?.text = "${getString(R.string.home_background_custom)} (${sizeKb} KB)"
             btnResetBg?.isEnabled = true
         } else {
             bgCustomImageView?.let { iv ->
@@ -644,6 +613,8 @@ class CustomizationFragment : Fragment() {
             .setNegativeButton(R.string.cancel, null)
             .setOnDismissListener {
                 hexEditText.removeTextChangedListener(textWatcher)
+                val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(hexEditText.windowToken, 0)
             }
             .show()
     }

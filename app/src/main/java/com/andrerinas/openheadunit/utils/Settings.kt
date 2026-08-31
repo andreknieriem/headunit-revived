@@ -6,11 +6,13 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
+import android.media.AudioManager
 import android.os.Build
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
 import com.andrerinas.openheadunit.decoder.video.DeviceMemoryProfile
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
+import com.andrerinas.openheadunit.aap.VehicleTypePolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
@@ -106,8 +108,20 @@ class Settings(private val context: Context) {
         get() = prefs.getInt("ui-scale-settings-percent", 100)
         set(value) { prefs.edit().putInt("ui-scale-settings-percent", value).apply() }
 
+    /**
+     * The rate the microphone hardware is opened at when 16 kHz cannot be opened. Not what the phone
+     * receives: that is always 16 kHz mono, because Android Auto validates the announced config and
+     * rejects anything outside {16000, 48000} Hz.
+     *
+     * The list used to run 8000 to 48000 and the announcement was hardcoded at 16000, so every other
+     * choice sent the phone PCM at a rate it had never been told about. A stored value from then is
+     * migrated here rather than in a one-shot, since only the two remaining rates convert cleanly.
+     */
     var micSampleRate: Int
-        get() = prefs.getInt("mic-sample-rate", 16000)
+        get() {
+            val stored = prefs.getInt("mic-sample-rate", MicSampleRates.first())
+            return if (stored in MicSampleRates) stored else MicSampleRates.first()
+        }
         set(sampleRate) {
             prefs.edit().putInt("mic-sample-rate", sampleRate).apply()
         }
@@ -544,6 +558,10 @@ class Settings(private val context: Context) {
         get() = prefs.getString("vehicle-id", "headlessunit-001")!!
         set(value) { prefs.edit().putString("vehicle-id", value).apply() }
 
+    var vehicleType: Int
+        get() = VehicleTypePolicy.sanitised(prefs.getInt("vehicle-type", VehicleTypePolicy.CAR))
+        set(value) { prefs.edit().putInt("vehicle-type", value).apply() }
+
     var headUnitMake: String
         get() = prefs.getString("head-unit-make", "Google")!!
         set(value) { prefs.edit().putString("head-unit-make", value).apply() }
@@ -692,6 +710,19 @@ class Settings(private val context: Context) {
         lastConnectionUsbDevice = ""
     }
 
+    /**
+     * Whether the head unit records at all. Off leaves the microphone to the phone.
+     *
+     * Off does not omit the microphone service: Android Auto's required-service check refuses a
+     * head unit that does not declare one. It declares it, declines every request, and sends
+     * nothing, which is what frees the physical microphone for a Bluetooth headset or intercom.
+     */
+    var useHeadUnitMicrophone: Boolean
+        get() = prefs.getBoolean("use-head-unit-microphone", true)
+        set(value) {
+            prefs.edit().putBoolean("use-head-unit-microphone", value).apply()
+        }
+
     var enableAudioSink: Boolean
         get() = prefs.getBoolean("enable-audio-sink", true)
         set(value) { prefs.edit().putBoolean("enable-audio-sink", value).apply() }
@@ -731,6 +762,31 @@ class Settings(private val context: Context) {
     var separateAudioStreams: Boolean
         get() = prefs.getBoolean("separate-audio-streams", false)
         set(value) { prefs.edit().putBoolean("separate-audio-streams", value).apply() }
+
+    // Which system stream each Android Auto audio channel is played on, stored as the
+    // AudioManager.STREAM_* constant. Named after the AudioStreamType the channel is declared as
+    // in ServiceDiscoveryResponse - MEDIA on ID_AUD, SPEECH on ID_AU1, SYSTEM on ID_AU2 - because
+    // the Android stream a channel is pointed at is exactly what these choose, and naming them
+    // after the streams instead made the two impossible to talk about apart.
+    //
+    // The defaults reproduce the mapping that separate streams always used, so an install that
+    // never opens the screen behaves exactly as before; the pickers exist because head units route
+    // the streams differently (a unit whose amplifier only unmutes on STREAM_MUSIC needs the
+    // guidance channel moved off STREAM_VOICE_CALL to be heard at all).
+    //
+    // Only the media stream applies while separateAudioStreams is off: every channel then shares
+    // it, which is what "a single multimedia stream" means.
+    var mediaAudioStream: Int
+        get() = prefs.getInt("media-audio-stream", AudioManager.STREAM_MUSIC)
+        set(value) { prefs.edit().putInt("media-audio-stream", value).apply() }
+
+    var guidanceAudioStream: Int
+        get() = prefs.getInt("guidance-audio-stream", AudioManager.STREAM_VOICE_CALL)
+        set(value) { prefs.edit().putInt("guidance-audio-stream", value).apply() }
+
+    var systemAudioStream: Int
+        get() = prefs.getInt("system-audio-stream", AudioManager.STREAM_NOTIFICATION)
+        set(value) { prefs.edit().putInt("system-audio-stream", value).apply() }
 
     var micInputSource: Int
         get() = prefs.getInt("mic-input-source", 0) // Default: DEFAULT
@@ -910,15 +966,21 @@ class Settings(private val context: Context) {
         get() = prefs.getString("app-language", "")!!
         set(value) { prefs.edit().putString("app-language", value).apply() }
 
+    // Per-channel playback gain, as a percentage offset applied by AudioDecoder.setGain. Named
+    // after the channel each one drives - MEDIA on ID_AUD, guidance on ID_AU1, system sounds on
+    // ID_AU2 - which is not what the stored keys say: "assistant" and "navigation" were the old
+    // names for the last two, and ID_AU2 was never the navigation channel (spoken directions
+    // arrive on ID_AU1 with the assistant). The keys keep the old spelling because they are
+    // shipped data and renaming them would reset every existing user's offsets.
     var mediaVolumeOffset: Int
         get() = prefs.getInt("media-volume-offset", 0)
         set(value) { prefs.edit().putInt("media-volume-offset", value).apply() }
 
-    var assistantVolumeOffset: Int
+    var guidanceVolumeOffset: Int
         get() = prefs.getInt("assistant-volume-offset", 0)
         set(value) { prefs.edit().putInt("assistant-volume-offset", value).apply() }
 
-    var navigationVolumeOffset: Int
+    var systemVolumeOffset: Int
         get() = prefs.getInt("navigation-volume-offset", 0)
         set(value) { prefs.edit().putInt("navigation-volume-offset", value).apply() }
 
@@ -1470,7 +1532,11 @@ class Settings(private val context: Context) {
             }
         }
 
-        val MicSampleRates = listOf(8000, 16000, 24000, 32000, 44100, 48000) // Changed to List
+        /**
+         * The two rates Android Auto accepts. 48000 is the fallback because it is a whole multiple
+         * of 16000, so converting it needs no filter; 44100 and the rest were never usable.
+         */
+        val MicSampleRates = listOf(16000, 48000)
 
         fun getNextMicSampleRate(currentRate: Int): Int {
             val currentIndex = MicSampleRates.indexOf(currentRate)
@@ -1653,6 +1719,11 @@ class Settings(private val context: Context) {
     var connectionIssueHotspotConfigAtEpochMs: Long
         get() = prefs.getLong("connection-issue-hotspot-config", 0L)
         set(value) = prefs.edit().putLong("connection-issue-hotspot-config", value).apply()
+
+    /** No access point was up at all, so there was no network to send the phone to. */
+    var connectionIssueHotspotOffAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-hotspot-off", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-hotspot-off", value).apply()
 
     /**
      * When the user last dismissed the failure banner.

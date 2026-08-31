@@ -20,6 +20,12 @@ package com.andrerinas.openheadunit.decoder.video
  *
  * The wait is bounded because a codec can also be wedged rather than slow. Past [WAIT_BUDGET_MS]
  * the frame is shed exactly as before, and the wedge belongs to the sync_stall watchdog.
+ *
+ * **The paced thread carries audio too.** One read thread serves the session, and this budget is the
+ * same order as the audio sink's own depth, so a codec at its ceiling can push audio into the drop
+ * path in [AudioTrackWrapper.write] rather than merely delaying it. Unmeasured, because the units
+ * that stutter are link-starved and never take the wait. Raising this budget spends audio headroom
+ * as well as video latency.
  */
 object VideoFeedThrottlePolicy {
 

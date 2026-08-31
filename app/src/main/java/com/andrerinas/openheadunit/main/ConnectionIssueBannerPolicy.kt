@@ -27,7 +27,7 @@ object ConnectionIssueBannerPolicy {
      *   which only runs in Native AA. `BSSID_UNAVAILABLE` is raised on the abort branch alone, and
      *   only WiFi Direct aborts — the hotspot transport sends an empty BSSID and carries on
      *   (`NativeCredentialsPolicy.onUnusableBssid`).
-     * - `HOTSPOT_CONFIG_UNREADABLE` is raised in `SoftApCredentialsProvider`, which only the
+     * - `HOTSPOT_NOT_RUNNING` and `HOTSPOT_CONFIG_UNREADABLE` are raised in `SoftApCredentialsProvider`, which only the
      *   Native AA hotspot transport ever constructs. Helper strategy 4 rides its own access point
      *   too but never resolves credentials from it, so it cannot raise this and does not appear
      *   here — which is also why this takes no `helperConnectionStrategy`: no rule uses it.
@@ -45,7 +45,8 @@ object ConnectionIssueBannerPolicy {
             )
             NativeTransport.HOTSPOT -> setOf(
                 ConnectionIssue.BLUETOOTH_SENT_NO_DATA,
-                ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE
+                ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE,
+                ConnectionIssue.HOTSPOT_NOT_RUNNING
             )
         }
     }
@@ -67,7 +68,8 @@ object ConnectionIssueBannerPolicy {
      * that every state one of them declines to retire is one this function hides.
      *
      * `BLUETOOTH_SENT_NO_DATA` has no entry because its remedy is leaving Native AA, which
-     * [relevantNow] already answers.
+     * [relevantNow] already answers. `HOTSPOT_NOT_RUNNING` has none either: no setting fixes it,
+     * and switching the access point on disproves it outright, so the record retires itself.
      *
      * @param hotspotSsid [com.andrerinas.openheadunit.utils.Settings.hotspotSsid]
      * @param hotspotPassword [com.andrerinas.openheadunit.utils.Settings.hotspotPassword] — needed

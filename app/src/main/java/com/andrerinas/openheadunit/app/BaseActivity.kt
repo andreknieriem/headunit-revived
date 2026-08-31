@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +20,7 @@ import com.andrerinas.openheadunit.utils.Settings
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.bumptech.glide.signature.ObjectKey
 import java.io.File
 
 /**
@@ -119,10 +121,12 @@ open class BaseActivity : AppCompatActivity() {
                 Glide.with(this)
                     .asBitmap()
                     .load(file)
+                    .signature(ObjectKey(file.lastModified()))
                     .centerCrop()
                     .into(object : CustomTarget<Bitmap>() {
                         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                            if (!isFinishing && !isDestroyed) {
+                            val isDestroyedCompat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed
+                            if (!isFinishing && !isDestroyedCompat) {
                                 window.setBackgroundDrawable(BitmapDrawable(resources, resource))
                             }
                         }

@@ -69,6 +69,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Declared so the microphone type can be claimed; it is only ever requested when
+         RECORD_AUDIO is actually granted, because claiming it without throws on Android 14+. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <!--
         Only requested up to API 32. From API 33 (Android 13) a granted READ_LOGS makes the app a
@@ -124,6 +127,7 @@
         <activity
             android:name=".main.MainActivity"
             android:configChanges="keyboardHidden|uiMode"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan"
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/SplashTheme">
@@ -213,7 +217,7 @@
         <service
             android:name=".aap.AapService"
             android:exported="false"
-            android:foregroundServiceType="connectedDevice|mediaPlayback"
+            android:foregroundServiceType="connectedDevice|mediaPlayback|microphone"
             android:stopWithTask="false">
             <!-- MediaButtonReceiver looks for a Service with this intent-filter -->
             <intent-filter>

@@ -362,7 +362,164 @@
             </LinearLayout>
         </ScrollView>
 
-        <!-- Step 5: Automation -->
+        <!-- Step 6: Audio streams -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/onb_audio_title"
+                    android:textAppearance="?attr/textAppearanceHeadline5"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/onb_audio_help"
+                    android:textAppearance="?attr/textAppearanceBody2" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="16dp">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="@string/separate_audio_streams"
+                        android:textAppearance="?attr/textAppearanceBody1" />
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/onb_audio_separate_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <!-- Media (ID_AUD), or every channel at once when separate streams is off -->
+                <TextView
+                    android:id="@+id/onb_audio_media_label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/audio_channel_media"
+                    android:textAppearance="?attr/textAppearanceSubtitle2" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/onb_audio_media_button"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        app:icon="@android:drawable/ic_menu_manage" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/onb_audio_media_test"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:minWidth="0dp"
+                        android:contentDescription="@string/audio_stream_test"
+                        app:icon="@drawable/ic_speaker_test"
+                        app:iconPadding="0dp" />
+                </LinearLayout>
+
+                <!-- Guidance / Navigation (ID_AU1) -->
+                <LinearLayout
+                    android:id="@+id/onb_audio_guidance_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/audio_channel_guidance"
+                        android:textAppearance="?attr/textAppearanceSubtitle2" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="4dp">
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/onb_audio_guidance_button"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            app:icon="@android:drawable/ic_menu_manage" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/onb_audio_guidance_test"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:minWidth="0dp"
+                            android:contentDescription="@string/audio_stream_test"
+                            app:icon="@drawable/ic_speaker_test"
+                            app:iconPadding="0dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- System Sounds / Notification (ID_AU2) -->
+                <LinearLayout
+                    android:id="@+id/onb_audio_system_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/audio_channel_system"
+                        android:textAppearance="?attr/textAppearanceSubtitle2" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="4dp">
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/onb_audio_system_button"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            app:icon="@android:drawable/ic_menu_manage" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/onb_audio_system_test"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:minWidth="0dp"
+                            android:contentDescription="@string/audio_stream_test"
+                            app:icon="@drawable/ic_speaker_test"
+                            app:iconPadding="0dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/onb_audio_more_hint"
+                    android:textAppearance="?attr/textAppearanceCaption" />
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- Step 7: Automation -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -499,7 +656,7 @@
             </LinearLayout>
         </ScrollView>
 
-        <!-- Step 6: GPS / Location -->
+        <!-- Step 8: GPS / Location -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -550,7 +707,7 @@
             </LinearLayout>
         </ScrollView>
 
-        <!-- Step 7: Car brand (vehicle identity sent to Android Auto) -->
+        <!-- Step 9: Car brand (vehicle identity sent to Android Auto) -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -664,7 +821,7 @@
             </LinearLayout>
         </ScrollView>
 
-        <!-- Step 9: Permissions -->
+        <!-- Step 10: Permissions -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -699,7 +856,7 @@
             </LinearLayout>
         </ScrollView>
 
-        <!-- Step 10: Ready -->
+        <!-- Step 11: Ready -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
