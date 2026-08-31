@@ -34,10 +34,15 @@ object Aa174Notice {
         if (settings.onboardingVersion < OnboardingActivity.CURRENT_ONBOARDING_VERSION) return
 
         try {
+            val messageSpanned = HtmlCompat.fromHtml(
+                activity.getString(R.string.aa174_notice_message),
+                HtmlCompat.FROM_HTML_MODE_LEGACY
+            )
+
             dialog = MaterialAlertDialogBuilder(activity, R.style.DarkAlertDialog)
                 .setIcon(R.drawable.ic_warning_white)
                 .setTitle(R.string.aa174_notice_title)
-                .setMessage(activity.getText(R.string.aa174_notice_message))
+                .setMessage(messageSpanned)
                 .setCancelable(false)
                 .setPositiveButton(R.string.aa174_notice_button_confirm) { d: DialogInterface, _: Int ->
                     settings.aa174NoticeShown = true
