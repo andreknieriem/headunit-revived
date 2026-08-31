@@ -66,7 +66,7 @@ object HomeUiHelper {
                 settings.appTheme == Settings.AppTheme.EXTREME_DARK ||
                 isNightActive
 
-        if (isDarkTheme && settings.monochromeIcons) {
+        if (isDarkTheme && settings.autoMonochromeButtonsAtNight) {
             val monochromeBackground = ContextCompat.getDrawable(context, R.drawable.gradient_monochrome)
             val grayTint = ColorStateList.valueOf(0xFF808080.toInt())
             buttons.forEach { button ->

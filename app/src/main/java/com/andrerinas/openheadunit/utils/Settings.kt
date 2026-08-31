@@ -1605,9 +1605,33 @@ class Settings(private val context: Context) {
         }
     }
 
+    enum class BackgroundNightMode(val value: Int) {
+        DIM(0),
+        PURE_BLACK(1),
+        NONE(2);
+
+        companion object {
+            private val map = values().associateBy(BackgroundNightMode::value)
+            fun fromInt(value: Int) = map[value] ?: DIM
+        }
+    }
+
+    var homeBackgroundNightMode: BackgroundNightMode
+        get() {
+            val value = prefs.getInt("home-background-night-mode", BackgroundNightMode.DIM.value)
+            return BackgroundNightMode.fromInt(value)
+        }
+        set(mode) {
+            prefs.edit().putInt("home-background-night-mode", mode.value).apply()
+        }
+
+    var autoMonochromeButtonsAtNight: Boolean
+        get() = prefs.getBoolean("auto-monochrome-buttons-at-night", false)
+        set(value) { prefs.edit().putBoolean("auto-monochrome-buttons-at-night", value).apply() }
+
     var monochromeIcons: Boolean
-        get() = prefs.getBoolean("monochrome-icons", false)
-        set(value) { prefs.edit().putBoolean("monochrome-icons", value).apply() }
+        get() = autoMonochromeButtonsAtNight
+        set(value) { autoMonochromeButtonsAtNight = value }
 
     var useExtremeDarkMode: Boolean
         get() = prefs.getBoolean("use-extreme-dark-mode", false)

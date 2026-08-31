@@ -3,6 +3,9 @@ package com.andrerinas.openheadunit.app
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -115,8 +118,15 @@ open class BaseActivity : AppCompatActivity() {
         currentHomeBackgroundImagePath = settings.homeBackgroundImagePath
         val path = settings.homeBackgroundImagePath
         val file = if (path.isNotEmpty()) File(path) else null
+        val isNightActive = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
         if (file != null && file.exists() && file.length() > 0) {
+            // When dark mode is active and user wants OLED pure black at night:
+            if (isNightActive && settings.homeBackgroundNightMode == Settings.BackgroundNightMode.PURE_BLACK) {
+                window.setBackgroundDrawable(ColorDrawable(ContextCompat.getColor(this, R.color.extreme_dark_background)))
+                return
+            }
+
             try {
                 Glide.with(this)
                     .asBitmap()
@@ -127,7 +137,11 @@ open class BaseActivity : AppCompatActivity() {
                         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                             val isDestroyedCompat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed
                             if (!isFinishing && !isDestroyedCompat) {
-                                window.setBackgroundDrawable(BitmapDrawable(resources, resource))
+                                val drawable = BitmapDrawable(resources, resource)
+                                if (isNightActive && settings.homeBackgroundNightMode == Settings.BackgroundNightMode.DIM) {
+                                    drawable.colorFilter = PorterDuffColorFilter(Color.argb(135, 0, 0, 0), PorterDuff.Mode.SRC_ATOP)
+                                }
+                                window.setBackgroundDrawable(drawable)
                             }
                         }
 
@@ -146,12 +160,20 @@ open class BaseActivity : AppCompatActivity() {
         val settings = Settings(this)
         val isNightActive = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         if (settings.appTheme == Settings.AppTheme.EXTREME_DARK ||
-            (settings.useExtremeDarkMode && isNightActive)) {
+            (isNightActive && (settings.useExtremeDarkMode || settings.homeBackgroundNightMode == Settings.BackgroundNightMode.PURE_BLACK))) {
             window.setBackgroundDrawable(ColorDrawable(ContextCompat.getColor(this, R.color.extreme_dark_background)))
         } else if (settings.useGradientBackground) {
-            window.setBackgroundDrawable(ContextCompat.getDrawable(this, R.drawable.bg_gradient))
+            val drawable = ContextCompat.getDrawable(this, R.drawable.bg_gradient)?.mutate()
+            if (isNightActive && settings.homeBackgroundNightMode == Settings.BackgroundNightMode.DIM) {
+                drawable?.colorFilter = PorterDuffColorFilter(Color.argb(135, 0, 0, 0), PorterDuff.Mode.SRC_ATOP)
+            }
+            window.setBackgroundDrawable(drawable)
         } else {
-            window.setBackgroundDrawable(ContextCompat.getDrawable(this, R.drawable.bg))
+            val drawable = ContextCompat.getDrawable(this, R.drawable.bg)?.mutate()
+            if (isNightActive && settings.homeBackgroundNightMode == Settings.BackgroundNightMode.DIM) {
+                drawable?.colorFilter = PorterDuffColorFilter(Color.argb(135, 0, 0, 0), PorterDuff.Mode.SRC_ATOP)
+            }
+            window.setBackgroundDrawable(drawable)
         }
     }
 }

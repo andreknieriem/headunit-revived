@@ -148,6 +148,8 @@ object SettingsBackupManager {
         "app-theme-manual-end" to ValueType.INT,
         "show-fps-counter" to ValueType.BOOLEAN,
         "monochrome-icons" to ValueType.BOOLEAN,
+        "auto-monochrome-buttons-at-night" to ValueType.BOOLEAN,
+        "home-background-night-mode" to ValueType.INT,
         "use-extreme-dark-mode" to ValueType.BOOLEAN,
         "use-gradient-background" to ValueType.BOOLEAN,
         "aa-monochrome-enabled" to ValueType.BOOLEAN,

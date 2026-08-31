@@ -6,6 +6,9 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -23,7 +26,9 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.signature.ObjectKey
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
@@ -47,6 +52,19 @@ class CustomizationFragment : Fragment() {
     private var btnSelectImage: MaterialButton? = null
     private var btnResetBg: MaterialButton? = null
 
+    // Background Selection & Night Behavior views
+    private var toggleGroupBgType: MaterialButtonToggleGroup? = null
+    private var btnBgClassic: MaterialButton? = null
+    private var btnBgGradient: MaterialButton? = null
+    private var btnBgCustom: MaterialButton? = null
+    private var layoutCustomImageActions: View? = null
+    private var isInternalBgTypeChange = false
+
+    private var toggleGroupNightBehavior: MaterialButtonToggleGroup? = null
+    private var btnNightDim: MaterialButton? = null
+    private var btnNightPureBlack: MaterialButton? = null
+    private var btnNightNone: MaterialButton? = null
+
     // Button color previews & rows
     private var previewBtnSelfMode: MaterialButton? = null
     private var previewBtnUsb: MaterialButton? = null
@@ -62,6 +80,8 @@ class CustomizationFragment : Fragment() {
     private var rowColorUsb: View? = null
     private var rowColorWifi: View? = null
     private var rowColorSettings: View? = null
+    private var switchAutoMonochromeNight: SwitchMaterial? = null
+    private var btnMakeAllMonochrome: MaterialButton? = null
     private var btnResetColors: MaterialButton? = null
 
     // Button Scale views
@@ -133,6 +153,19 @@ class CustomizationFragment : Fragment() {
         btnSelectImage = view.findViewById(R.id.btn_select_image)
         btnResetBg = view.findViewById(R.id.btn_reset_bg)
 
+        // Background type selection
+        toggleGroupBgType = view.findViewById(R.id.toggle_group_bg_type)
+        btnBgClassic = view.findViewById(R.id.btn_bg_classic)
+        btnBgGradient = view.findViewById(R.id.btn_bg_gradient)
+        btnBgCustom = view.findViewById(R.id.btn_bg_custom)
+        layoutCustomImageActions = view.findViewById(R.id.layout_custom_image_actions)
+
+        // Background night behavior
+        toggleGroupNightBehavior = view.findViewById(R.id.toggle_group_night_behavior)
+        btnNightDim = view.findViewById(R.id.btn_night_dim)
+        btnNightPureBlack = view.findViewById(R.id.btn_night_pure_black)
+        btnNightNone = view.findViewById(R.id.btn_night_none)
+
         // Button Color views
         previewBtnSelfMode = view.findViewById(R.id.preview_btn_self_mode)
         previewBtnUsb = view.findViewById(R.id.preview_btn_usb)
@@ -148,6 +181,8 @@ class CustomizationFragment : Fragment() {
         rowColorUsb = view.findViewById(R.id.row_color_usb)
         rowColorWifi = view.findViewById(R.id.row_color_wifi)
         rowColorSettings = view.findViewById(R.id.row_color_settings)
+        switchAutoMonochromeNight = view.findViewById(R.id.switch_auto_monochrome_night)
+        btnMakeAllMonochrome = view.findViewById(R.id.btn_make_all_monochrome)
         btnResetColors = view.findViewById(R.id.btn_reset_colors)
 
         // Button Scale views
@@ -225,6 +260,66 @@ class CustomizationFragment : Fragment() {
             resetAllButtonColors()
         }
 
+        toggleGroupBgType?.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isInternalBgTypeChange || !isChecked) return@addOnButtonCheckedListener
+            when (checkedId) {
+                R.id.btn_bg_classic -> {
+                    settings.useGradientBackground = false
+                    settings.homeBackgroundImagePath = ""
+                    notifyMainActivityBackgroundChanged()
+                    refreshUI()
+                }
+                R.id.btn_bg_gradient -> {
+                    settings.useGradientBackground = true
+                    settings.homeBackgroundImagePath = ""
+                    notifyMainActivityBackgroundChanged()
+                    refreshUI()
+                }
+                R.id.btn_bg_custom -> {
+                    val path = settings.homeBackgroundImagePath
+                    if (path.isNotEmpty() && File(path).exists()) {
+                        notifyMainActivityBackgroundChanged()
+                        refreshUI()
+                    } else {
+                        try {
+                            imagePicker.launch(Unit)
+                        } catch (e: Exception) {
+                            AppLog.e("Failed to launch image picker: ${e.message}")
+                            Toast.makeText(requireContext(), R.string.loading_screen_file_error, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        }
+
+        toggleGroupNightBehavior?.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                when (checkedId) {
+                    R.id.btn_night_dim -> settings.homeBackgroundNightMode = Settings.BackgroundNightMode.DIM
+                    R.id.btn_night_pure_black -> settings.homeBackgroundNightMode = Settings.BackgroundNightMode.PURE_BLACK
+                    R.id.btn_night_none -> settings.homeBackgroundNightMode = Settings.BackgroundNightMode.NONE
+                }
+                notifyMainActivityBackgroundChanged()
+                refreshUI()
+            }
+        }
+
+        switchAutoMonochromeNight?.setOnCheckedChangeListener { _, isChecked ->
+            settings.autoMonochromeButtonsAtNight = isChecked
+            settings.monochromeIcons = isChecked
+            refreshUI()
+        }
+
+        btnMakeAllMonochrome?.setOnClickListener {
+            val grayColor = 0xFF555555.toInt()
+            settings.customSelfModeButtonColor = grayColor
+            settings.customUsbButtonColor = grayColor
+            settings.customWifiButtonColor = grayColor
+            settings.customSettingsButtonColor = grayColor
+            refreshUI()
+            Toast.makeText(requireContext(), R.string.btn_make_all_monochrome, Toast.LENGTH_SHORT).show()
+        }
+
         // Button Scale listeners
         val currentScale = settings.homeButtonScalePercent
         val currentFloat = currentScale.coerceIn(60, 120).toFloat()
@@ -299,9 +394,12 @@ class CustomizationFragment : Fragment() {
         val bgCustom = homeView.findViewById<ImageView>(R.id.bg_custom_image_view)
         val path = settings.homeBackgroundImagePath
         val hasCustomImage = path.isNotEmpty() && File(path).exists()
+        val isNightActive = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
         if (hasCustomImage && bgCustom != null) {
             bgDefault?.visibility = View.GONE
             bgCustom.visibility = View.VISIBLE
+            bgCustom.colorFilter = null
             Glide.with(this)
                 .load(File(path))
                 .signature(ObjectKey(File(path).lastModified()))
@@ -310,10 +408,14 @@ class CustomizationFragment : Fragment() {
         } else {
             bgCustom?.visibility = View.GONE
             bgDefault?.visibility = View.VISIBLE
+            if (settings.useGradientBackground) {
+                bgDefault?.background = ContextCompat.getDrawable(ctx, R.drawable.bg_gradient)
+            } else {
+                bgDefault?.background = ContextCompat.getDrawable(ctx, R.drawable.bg)
+            }
         }
 
         // 2. Sync Button Colors & Monochrome Theme
-        val isNightActive = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         HomeUiHelper.applyButtonStyles(ctx, homeView, settings, isNightActive)
 
         // 3. Scale Home Buttons
@@ -403,10 +505,33 @@ class CustomizationFragment : Fragment() {
         val path = settings.homeBackgroundImagePath
         val hasCustomImage = path.isNotEmpty() && File(path).exists()
 
+        // Update Background Type Toggle Group
+        isInternalBgTypeChange = true
+        if (hasCustomImage) {
+            toggleGroupBgType?.check(R.id.btn_bg_custom)
+            layoutCustomImageActions?.visibility = View.VISIBLE
+        } else if (settings.useGradientBackground) {
+            toggleGroupBgType?.check(R.id.btn_bg_gradient)
+            layoutCustomImageActions?.visibility = View.GONE
+        } else {
+            toggleGroupBgType?.check(R.id.btn_bg_classic)
+            layoutCustomImageActions?.visibility = View.GONE
+        }
+        isInternalBgTypeChange = false
+
+        // Update Night Behavior Toggle
+        when (settings.homeBackgroundNightMode) {
+            Settings.BackgroundNightMode.DIM -> toggleGroupNightBehavior?.check(R.id.btn_night_dim)
+            Settings.BackgroundNightMode.PURE_BLACK -> toggleGroupNightBehavior?.check(R.id.btn_night_pure_black)
+            Settings.BackgroundNightMode.NONE -> toggleGroupNightBehavior?.check(R.id.btn_night_none)
+        }
+
+        // Update Top Card Preview (always shows clean background, independent of night mode)
         if (hasCustomImage) {
             bgDefaultView?.visibility = View.GONE
             bgCustomImageView?.let { iv ->
                 iv.visibility = View.VISIBLE
+                iv.colorFilter = null
                 Glide.with(this)
                     .load(File(path))
                     .signature(ObjectKey(File(path).lastModified()))
@@ -422,9 +547,22 @@ class CustomizationFragment : Fragment() {
                 iv.visibility = View.GONE
             }
             bgDefaultView?.visibility = View.VISIBLE
-            txtStatus?.text = getString(R.string.home_background_default)
             btnResetBg?.isEnabled = false
+
+            if (settings.useGradientBackground) {
+                val drawable = ContextCompat.getDrawable(ctx, R.drawable.bg_gradient)?.mutate()
+                drawable?.colorFilter = null
+                bgDefaultView?.background = drawable
+                txtStatus?.text = getString(R.string.bg_type_gradient)
+            } else {
+                val drawable = ContextCompat.getDrawable(ctx, R.drawable.bg)?.mutate()
+                drawable?.colorFilter = null
+                bgDefaultView?.background = drawable
+                txtStatus?.text = getString(R.string.bg_type_standard)
+            }
         }
+
+        switchAutoMonochromeNight?.isChecked = settings.autoMonochromeButtonsAtNight
 
         // Update button color previews & indicators
         updateButtonPreview(
