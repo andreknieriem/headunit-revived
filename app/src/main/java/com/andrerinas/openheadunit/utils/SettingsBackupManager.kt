@@ -109,6 +109,11 @@ object SettingsBackupManager {
         // ALWAYS for anything out of range.
         "media-key-routing" to ValueType.INT,
         "separate-audio-streams" to ValueType.BOOLEAN,
+        // AudioManager.STREAM_* constants; AudioStreamTester falls back to the media stream
+        // for anything it does not recognise, so an out-of-range value cannot break playback.
+        "media-audio-stream" to ValueType.INT,
+        "guidance-audio-stream" to ValueType.INT,
+        "system-audio-stream" to ValueType.INT,
         "use-head-unit-microphone" to ValueType.BOOLEAN,
         "mic-input-source" to ValueType.INT,
         "audio-latency-multiplier" to ValueType.INT,
@@ -198,6 +203,9 @@ object SettingsBackupManager {
         "static-audio-focus",
         "playback-focus-mode",
         "separate-audio-streams",
+        "media-audio-stream",
+        "guidance-audio-stream",
+        "system-audio-stream",
         "use-aac-audio",
         "attach_hw_dsp_equalizer",
         "audio-latency-multiplier",

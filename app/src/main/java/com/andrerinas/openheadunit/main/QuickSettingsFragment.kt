@@ -95,7 +95,7 @@ class QuickSettingsFragment : DialogFragment() {
         items.add(SettingItem.SettingEntry(
             stableId = "audioVolumeOffsets",
             nameResId = R.string.audio_volume_offset,
-            value = "${(100 + settings.mediaVolumeOffset)}% / ${(100 + settings.assistantVolumeOffset)}% / ${(100 + settings.navigationVolumeOffset)}%",
+            value = "${(100 + settings.mediaVolumeOffset)}% / ${(100 + settings.guidanceVolumeOffset)}% / ${(100 + settings.systemVolumeOffset)}%",
             onClick = { showAudioOffsetsDialog() }
         ))
 
@@ -285,21 +285,21 @@ class QuickSettingsFragment : DialogFragment() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_audio_offsets, null)
         
         val seekMedia = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_media)
-        val seekAssistant = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_assistant)
-        val seekNavigation = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_navigation)
+        val seekGuidance = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_guidance)
+        val seekSystem = dialogView.findViewById<android.widget.SeekBar>(R.id.seek_system)
         
         val textMedia = dialogView.findViewById<android.widget.TextView>(R.id.text_media_val)
-        val textAssistant = dialogView.findViewById<android.widget.TextView>(R.id.text_assistant_val)
-        val textNavigation = dialogView.findViewById<android.widget.TextView>(R.id.text_navigation_val)
+        val textGuidance = dialogView.findViewById<android.widget.TextView>(R.id.text_guidance_val)
+        val textSystem = dialogView.findViewById<android.widget.TextView>(R.id.text_system_val)
 
         seekMedia.progress = (settings.mediaVolumeOffset / 2) + 50
-        seekAssistant.progress = (settings.assistantVolumeOffset / 2) + 50
-        seekNavigation.progress = (settings.navigationVolumeOffset / 2) + 50
+        seekGuidance.progress = (settings.guidanceVolumeOffset / 2) + 50
+        seekSystem.progress = (settings.systemVolumeOffset / 2) + 50
 
         val updateLabels = {
             textMedia.text = "${(seekMedia.progress * 2)}%"
-            textAssistant.text = "${(seekAssistant.progress * 2)}%"
-            textNavigation.text = "${(seekNavigation.progress * 2)}%"
+            textGuidance.text = "${(seekGuidance.progress * 2)}%"
+            textSystem.text = "${(seekSystem.progress * 2)}%"
         }
         updateLabels()
 
@@ -312,16 +312,16 @@ class QuickSettingsFragment : DialogFragment() {
         }
 
         seekMedia.setOnSeekBarChangeListener(listener)
-        seekAssistant.setOnSeekBarChangeListener(listener)
-        seekNavigation.setOnSeekBarChangeListener(listener)
+        seekGuidance.setOnSeekBarChangeListener(listener)
+        seekSystem.setOnSeekBarChangeListener(listener)
 
         MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
             .setTitle(R.string.audio_volume_offset)
             .setView(dialogView)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 settings.mediaVolumeOffset = (seekMedia.progress - 50) * 2
-                settings.assistantVolumeOffset = (seekAssistant.progress - 50) * 2
-                settings.navigationVolumeOffset = (seekNavigation.progress - 50) * 2
+                settings.guidanceVolumeOffset = (seekGuidance.progress - 50) * 2
+                settings.systemVolumeOffset = (seekSystem.progress - 50) * 2
                 settings.commit()
                 notifyChange()
                 updateSettingsList()

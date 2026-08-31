@@ -18,6 +18,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.app.BaseActivity
 import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import com.andrerinas.openheadunit.utils.AppPermissions
+import com.andrerinas.openheadunit.utils.AudioStreamTester
 import com.andrerinas.openheadunit.utils.AppThemeManager
 import com.andrerinas.openheadunit.utils.LocaleHelper
 import com.andrerinas.openheadunit.utils.PermissionRowBinder
@@ -43,7 +44,7 @@ import kotlin.math.sqrt
  * is older than CURRENT_ONBOARDING_VERSION, and re-launchable from Settings.
  *
  * Steps: Welcome(+language) / Safety(mandatory) / Connection / Display scan /
- * Appearance / Automation / Location / Ready.
+ * Appearance / Audio streams / Automation / Location / Ready.
  *
  * Every step reuses the real settings and their strings, and deep-links into the
  * full settings sub-screens for advanced configuration.
@@ -313,6 +314,9 @@ class OnboardingActivity : BaseActivity() {
                 Settings.syncAutoStartOnWifiToDeviceStorage(this@OnboardingActivity, v)
             }
         }
+        // --- Audio streams: which system stream each Android Auto channel plays on ---
+        bindAudioStep()
+
         // --- Location: this device's GPS vs the connected phone's GPS ---
         val gpsGroup = findViewById<MaterialButtonToggleGroup>(R.id.onb_gps_group)
         isBinding = true
@@ -325,6 +329,86 @@ class OnboardingActivity : BaseActivity() {
 
         // --- Car brand: the display name sent to Android Auto, and the manufacturer with it ---
         bindVehicleStep()
+    }
+
+    /**
+     * Binds the audio-stream step: the separate-streams switch plus one picker per channel, each
+     * with a speaker button that plays a tone on the stream currently chosen.
+     *
+     * The tone is what makes this worth a wizard step: which stream a head unit's amplifier
+     * actually unmutes for is not knowable in advance, and finding out after the first drive is
+     * how people conclude the app has no sound.
+     */
+    private fun bindAudioStep() {
+        findViewById<SwitchMaterial>(R.id.onb_audio_separate_switch).apply {
+            isChecked = settings.separateAudioStreams
+            setOnCheckedChangeListener { _, checked ->
+                settings.separateAudioStreams = checked
+                applyAudioStepVisibility()
+            }
+        }
+
+        bindAudioStreamRow(
+            R.id.onb_audio_media_button, R.id.onb_audio_media_test,
+            { mediaPickerTitle() },
+            { settings.mediaAudioStream }, { settings.mediaAudioStream = it }
+        )
+        bindAudioStreamRow(
+            R.id.onb_audio_guidance_button, R.id.onb_audio_guidance_test,
+            { getString(R.string.audio_channel_guidance) },
+            { settings.guidanceAudioStream }, { settings.guidanceAudioStream = it }
+        )
+        bindAudioStreamRow(
+            R.id.onb_audio_system_button, R.id.onb_audio_system_test,
+            { getString(R.string.audio_channel_system) },
+            { settings.systemAudioStream }, { settings.systemAudioStream = it }
+        )
+
+        applyAudioStepVisibility()
+    }
+
+    private fun bindAudioStreamRow(
+        buttonId: Int,
+        testId: Int,
+        title: () -> String,
+        get: () -> Int,
+        set: (Int) -> Unit
+    ) {
+        val button = findViewById<MaterialButton>(buttonId)
+        button.text = AudioStreamTester.label(this, get())
+        button.setOnClickListener {
+            val labels = AudioStreamTester.labels(this)
+            MaterialAlertDialogBuilder(this, R.style.DarkAlertDialog)
+                .setTitle(getString(R.string.audio_stream_pick_title, title()))
+                .setSingleChoiceItems(labels, AudioStreamTester.indexOf(this, get())) { dialog, which ->
+                    set(AudioStreamTester.streamAt(this, which))
+                    button.text = AudioStreamTester.label(this, get())
+                    dialog.dismiss()
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
+        findViewById<MaterialButton>(testId).setOnClickListener {
+            AudioStreamTester.play(this, get())
+        }
+    }
+
+    /** The picker title for the first row, which covers every channel while streams are shared. */
+    private fun mediaPickerTitle(): String = getString(
+        if (settings.separateAudioStreams) R.string.audio_channel_media
+        else R.string.audio_channel_all_short
+    )
+
+    /** With separate streams off every channel plays on the media stream, so hide the other two
+     *  and widen the heading above the one that remains to name all of them. */
+    private fun applyAudioStepVisibility() {
+        val separate = settings.separateAudioStreams
+        val vis = if (separate) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.onb_audio_guidance_row).visibility = vis
+        findViewById<View>(R.id.onb_audio_system_row).visibility = vis
+        findViewById<TextView>(R.id.onb_audio_media_label).setText(
+            if (separate) R.string.audio_channel_media else R.string.audio_channel_all
+        )
     }
 
     /**
@@ -420,6 +504,7 @@ class OnboardingActivity : BaseActivity() {
             else -> true
         }
         if (step == STEP_READY) findViewById<TextView>(R.id.onb_ready_summary).text = summaryText()
+        if (step == STEP_AUDIO) applyAudioStepVisibility()
         if (step == STEP_AUTOMATION) applyAutomationVisibility()
         if (step == STEP_PERMISSIONS) permissionBinder?.rebind()
         if (step == STEP_DPI) {
@@ -741,16 +826,17 @@ class OnboardingActivity : BaseActivity() {
         @Volatile
         var deferredThisSession = false
         private const val KEY_STEP = "onb_step"
-        private const val STEP_COUNT = 11
+        private const val STEP_COUNT = 12
         private const val STEP_SAFETY = 1
         private const val STEP_CONNECTION = 2
         private const val STEP_DISPLAY = 3
         private const val STEP_DPI = 4
-        private const val STEP_AUTOMATION = 6
-        private const val STEP_GPS = 7
-        private const val STEP_VEHICLE = 8
-        private const val STEP_PERMISSIONS = 9
-        private const val STEP_READY = 10
+        private const val STEP_AUDIO = 6
+        private const val STEP_AUTOMATION = 7
+        private const val STEP_GPS = 8
+        private const val STEP_VEHICLE = 9
+        private const val STEP_PERMISSIONS = 10
+        private const val STEP_READY = 11
 
         // The manufacturer half of the Desktop Head Unit identity we report by default.
         private const val DHU_MAKE = "Google"

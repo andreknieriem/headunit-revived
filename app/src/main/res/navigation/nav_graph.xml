@@ -100,6 +100,13 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
+            android:id="@+id/action_settingsFragment_to_audioStreamSettingsFragment"
+            app:destination="@id/audioStreamSettingsFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
             android:id="@+id/action_settingsFragment_to_micSettingsFragment"
             app:destination="@id/micSettingsFragment"
             app:enterAnim="@anim/slide_in_right"
@@ -224,6 +231,11 @@
         android:id="@+id/micSettingsFragment"
         android:name="com.andrerinas.openheadunit.main.MicSettingsFragment"
         android:label="@string/microphone_settings" />
+
+    <fragment
+        android:id="@+id/audioStreamSettingsFragment"
+        android:name="com.andrerinas.openheadunit.main.AudioStreamSettingsFragment"
+        android:label="@string/audio_stream_settings" />
 
     <fragment
         android:id="@+id/customizationFragment"

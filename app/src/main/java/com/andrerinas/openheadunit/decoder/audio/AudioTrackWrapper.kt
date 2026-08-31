@@ -454,51 +454,73 @@ class AudioTrackWrapper(
 
         AppLog.i("Audio stream: $stream buffer size: $bufferSize (min: $minBufferSize) sampleRateInHz: $sampleRateInHz channelCount: $channelCount")
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val (usage, contentType) = when (stream) {
-                AudioManager.STREAM_NOTIFICATION -> Pair(
-                    AudioAttributes.USAGE_NOTIFICATION,
-                    AudioAttributes.CONTENT_TYPE_SONIFICATION
-                )
-                AudioManager.STREAM_VOICE_CALL -> Pair(
-                    AudioAttributes.USAGE_VOICE_COMMUNICATION,
-                    AudioAttributes.CONTENT_TYPE_SPEECH
-                )
-                else -> Pair(
-                    AudioAttributes.USAGE_MEDIA,
-                    AudioAttributes.CONTENT_TYPE_MUSIC
-                )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                return modernAudioTrack(stream, sampleRateInHz, channelConfig, dataFormat, bufferSize)
+            } catch (e: IllegalArgumentException) {
+                // AudioAttributes.setLegacyStreamType refuses stream types it has no usage for -
+                // STREAM_ACCESSIBILITY by name, and any stream a vendor added that the public
+                // mapping never learned about. The deprecated constructor goes through the
+                // framework's internal mapping, which does know them, so it is the way to reach a
+                // head unit's own stream rather than silently landing on the media one.
+                AppLog.w("AudioTrackWrapper: stream $stream has no AudioAttributes mapping " +
+                        "(${e.message}), falling back to the legacy AudioTrack constructor")
             }
+        }
 
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(usage)
-                .setContentType(contentType)
-                .setLegacyStreamType(stream)
-                .build()
+        @Suppress("DEPRECATION")
+        return AudioTrack(
+            stream,
+            sampleRateInHz,
+            channelConfig,
+            dataFormat,
+            bufferSize,
+            AudioTrack.MODE_STREAM
+        )
+    }
 
-            val audioFormat = AudioFormat.Builder()
-                .setSampleRate(sampleRateInHz)
-                .setChannelMask(channelConfig)
-                .setEncoding(dataFormat)
-                .build()
-
-            AudioTrack.Builder()
-                .setAudioAttributes(audioAttributes)
-                .setAudioFormat(audioFormat)
-                .setBufferSizeInBytes(bufferSize)
-                .setTransferMode(AudioTrack.MODE_STREAM)
-                .build()
-        } else {
-            @Suppress("DEPRECATION")
-            AudioTrack(
-                stream,
-                sampleRateInHz,
-                channelConfig,
-                dataFormat,
-                bufferSize,
-                AudioTrack.MODE_STREAM
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.M)
+    private fun modernAudioTrack(
+        stream: Int,
+        sampleRateInHz: Int,
+        channelConfig: Int,
+        dataFormat: Int,
+        bufferSize: Int
+    ): AudioTrack {
+        val (usage, contentType) = when (stream) {
+            AudioManager.STREAM_NOTIFICATION -> Pair(
+                AudioAttributes.USAGE_NOTIFICATION,
+                AudioAttributes.CONTENT_TYPE_SONIFICATION
+            )
+            AudioManager.STREAM_VOICE_CALL -> Pair(
+                AudioAttributes.USAGE_VOICE_COMMUNICATION,
+                AudioAttributes.CONTENT_TYPE_SPEECH
+            )
+            else -> Pair(
+                AudioAttributes.USAGE_MEDIA,
+                AudioAttributes.CONTENT_TYPE_MUSIC
             )
         }
+
+        // Throws for a stream with no public usage mapping; createAudioTrack catches it.
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(usage)
+            .setContentType(contentType)
+            .setLegacyStreamType(stream)
+            .build()
+
+        val audioFormat = AudioFormat.Builder()
+            .setSampleRate(sampleRateInHz)
+            .setChannelMask(channelConfig)
+            .setEncoding(dataFormat)
+            .build()
+
+        return AudioTrack.Builder()
+            .setAudioAttributes(audioAttributes)
+            .setAudioFormat(audioFormat)
+            .setBufferSizeInBytes(bufferSize)
+            .setTransferMode(AudioTrack.MODE_STREAM)
+            .build()
     }
 
     /**
