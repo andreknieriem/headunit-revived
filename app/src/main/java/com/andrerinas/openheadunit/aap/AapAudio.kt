@@ -298,7 +298,12 @@ internal class AapAudio(
 
         val config = AudioConfigs.get(channel)
         val stream = AudioConfigs.stream(
-            channel, mediaAudioStream, guidanceAudioStream, systemAudioStream)
+            channel,
+            separateAudioStreams,
+            mediaAudioStream,
+            guidanceAudioStream,
+            systemAudioStream
+        )
 
         val offset = when (channel) {
             Channel.ID_AUD -> mediaVolumeOffset
