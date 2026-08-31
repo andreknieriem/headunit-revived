@@ -1,5 +1,6 @@
 package com.andrerinas.openheadunit.connection.self
 
+import com.andrerinas.openheadunit.connection.CommManager
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
@@ -17,6 +18,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+
 
 class SelfLauncherManager(
     private val service: AapService,
@@ -252,4 +255,16 @@ class SelfLauncherManager(
 
         const val AA_PACKAGE = "com.google.android.projection.gearhead"
     }
+
+    fun stopSelfMode() {
+        AppLog.i("SelfMode: stopping Self Mode session")
+        isActive = false
+        clearLaunchInFlight()
+        stopDummyVpnWatchdog()
+        val commManager = App.provide(service).commManager
+        if (commManager.isConnected || commManager.connectionState.value is CommManager.ConnectionState.Connecting) {
+            commManager.disconnect(sendByeBye = true)
+        }
+    }
+
 }

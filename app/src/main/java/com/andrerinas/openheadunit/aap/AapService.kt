@@ -281,6 +281,7 @@ class AapService : Service() {
     private val commManager get() = App.provide(this).commManager
 
     fun isSelfModeActive() = selfLauncherManager.isActive
+    fun stopSelfMode() = selfLauncherManager.stopSelfMode()
 
     fun updateMediaSessionState(isPlaying: Boolean) {
         mediaSessionIsPlaying = isPlaying
