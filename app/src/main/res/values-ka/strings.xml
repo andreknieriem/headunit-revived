@@ -723,6 +723,10 @@
     <string name="rename_notice_title">ჩვენი სახელი იცვლება — Open Headunit</string>
     <string name="rename_notice_message">Headunit Revived თქვენი წყალობით იზრდება და საკუთარ რაღაცად იქცევა: Open Headunit. ახალ სახელს მომდევნო განახლებების განმავლობაში თანდათან შემოვიღებთ, ამიტომ ზოგან ძველ სახელს ჯერ კიდევ დაინახავთ.\n\nიგივე აპი, იგივე ხალხი მის უკან, და ყველა თქვენი პარამეტრი ზუსტად ისე რჩება, როგორც არის.</string>
     <string name="rename_notice_button">გასაგებია</string>
+    <string name="aa174_notice_title">მნიშვნელოვანი შეტყობინება: Android Auto 17.4+</string>
+    <string name="aa174_notice_message">Android Auto 17.4 ვერსიიდან მოყოლებული, Google-მა დაბლოკა ავტომატური გაშვება Wireless Helper-ის საშუალებით და კლასიკური Self-Mode.<br/><br/><b>ხელმისაწვდომი გადაწყვეტილებები:</b><br/><br/><b>1. Headunit Server (დეველოპერის რეჟიმი):</b><br/>ერთადერთი გამოსავალი Self-Mode-სთვის! ტელეფონში გახსენით Android Auto-ს დეველოპერის პარამეტრები და ჩართეთ "Headunit Server".<br/><br/><b>2. ნატიური რეჟიმი:</b><br/>პირდაპირი კავშირი Wi-Fi Direct-ით ან ჰოტსპოტით.<br/><br/><b>3. უსადენო USB ადაპტერი:</b><br/>USB დონგლი უზრუნველყოფს ყველაზე სტაბილურ მუშაობას.<br/><br/><b>4. Wireless Helper:</b><br/>საიმედოდ მუშაობს Android Auto 17.3 ვერსიამდე.</string>
+    <string name="aa174_notice_button_confirm">გასაგებია</string>
+    <string name="aa174_notice_button_guide">ინსტრუქციის გახსნა</string>
 
     <string name="onb_summary_permissions_format">Permissions: %1$d of %2$d granted</string>
     <string name="onb_ready_loading_intro">One more thing: you can now set a custom loading screen, shown while the car connects.</string>

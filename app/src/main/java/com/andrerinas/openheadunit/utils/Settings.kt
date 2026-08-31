@@ -291,6 +291,12 @@ class Settings(private val context: Context) {
             prefs.edit().putBoolean("rename_notice_shown_v2", value).apply()
         }
 
+    var aa174NoticeShown: Boolean
+        get() = prefs.getBoolean("aa174_notice_shown", false)
+        set(value) {
+            prefs.edit().putBoolean("aa174_notice_shown", value).apply()
+        }
+
     // Custom Insets (Screen Margins)
     var insetLeft: Int
         get() = prefs.getInt("inset-left", 0)

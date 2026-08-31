@@ -795,6 +795,10 @@
     <string name="rename_notice_title">이름이 Open Headunit(으)로 바뀌고 있어요</string>
     <string name="rename_notice_message">Headunit Revived는 여러분 덕분에 성장하고 있고, 이제 고유한 이름인 Open Headunit(으)로 바뀌어 가고 있습니다. 새 이름은 앞으로의 업데이트에 걸쳐 차차 적용되니, 한동안은 일부 화면에서 예전 이름이 보일 수도 있습니다.\n\n같은 앱, 같은 사람들, 그리고 모든 설정은 지금 그대로 유지됩니다.</string>
     <string name="rename_notice_button">확인</string>
+    <string name="aa174_notice_title">중요 안내: Android Auto 17.4+</string>
+    <string name="aa174_notice_message">Android Auto 17.4부터 Google의 내부 변경 사항으로 인해 Wireless Helper를 통한 자동 실행 및 기존 Self-Mode를 사용할 수 없게 되었습니다.<br/><br/><b>사용 가능한 해결 방법:</b><br/><br/><b>1. Headunit Server(개발자 모드):</b><br/>Self-Mode에서 사용 가능한 유일한 해결책입니다! 휴대전화에서 Android Auto 개발자 설정을 열고 "헤드유닛 서버 시작"을 탭하세요.<br/><br/><b>2. 네이티브 모드:</b><br/>Wi-Fi Direct 또는 헤드유닛 핫스팟을 통해 직접 연결합니다.<br/><br/><b>3. USB 무선 동글:</b><br/>하드웨어 USB 무선 어댑터가 가장 안정적인 플러그 앤 플레이 환경을 제공합니다.<br/><br/><b>4. Wireless Helper:</b><br/>Android Auto 17.3 이하 버전에서는 계속 정상 작동합니다.</string>
+    <string name="aa174_notice_button_confirm">확인</string>
+    <string name="aa174_notice_button_guide">가이드 열기</string>
 
     <string name="onb_summary_permissions_format">Permissions: %1$d of %2$d granted</string>
     <string name="onb_ready_loading_intro">One more thing: you can now set a custom loading screen, shown while the car connects.</string>

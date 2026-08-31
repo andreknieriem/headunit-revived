@@ -624,6 +624,7 @@ class HomeFragment : Fragment() {
 
             if (!act.isFinishing && !isDestroyed) {
                 RenameNotice.maybeShow(act, App.provide(requireContext()).settings)
+                Aa174Notice.maybeShow(act, App.provide(requireContext()).settings)
             }
         }
     }
@@ -633,6 +634,7 @@ class HomeFragment : Fragment() {
         activeDialog?.dismiss()
         activeDialog = null
         RenameNotice.dismiss()
+        Aa174Notice.dismiss()
     }
 
     override fun onDestroyView() {

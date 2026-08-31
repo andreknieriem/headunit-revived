@@ -820,6 +820,10 @@
     <string name="rename_notice_title">我們的名字正在改為 Open Headunit</string>
     <string name="rename_notice_message">多虧了大家，Headunit Revived 正在成長，並逐漸變成屬於自己的樣子：Open Headunit。我們會在接下來的更新中慢慢換上新名字，所以有些地方你可能還會看到舊名字一陣子。\n\n還是同一個 App，還是同一群人，你的所有設定也都原封不動。</string>
     <string name="rename_notice_button">知道了</string>
+    <string name="aa174_notice_title">重要通知：Android Auto 17.4+</string>
+    <string name="aa174_notice_message">從 Android Auto 17.4 開始，Google 進行了底層變更，停用了透過 Wireless Helper 的自動啟動以及經典的 Self-Mode（本機模式）。<br/><br/><b>可行解決方案：</b><br/><br/><b>1. Headunit Server（開發人員模式）：</b><br/>Self-Mode 唯一可行的解決方案！在手機上開啟 Android Auto 開發人員設定，然後點擊「啟動車載主機伺服器」。<br/><br/><b>2. 原生模式 (Native Mode)：</b><br/>透過 Wi-Fi Direct 或主機熱點直接連線。<br/><br/><b>3. USB 無線轉接器：</b><br/>硬體 USB 無線轉接器提供最穩定的隨插即用體驗。<br/><br/><b>4. Wireless Helper：</b><br/>在 Android Auto 17.3 及以下版本中仍可穩定運作。</string>
+    <string name="aa174_notice_button_confirm">我知道了</string>
+    <string name="aa174_notice_button_guide">開啟說明指南</string>
 
     <string name="onb_vehicle_help_sideload">Picking a real car brand also shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps you installed from outside the Play Store. Keep \"Google\" or \"Open Headunit\" if you use those apps.</string>
     <string-array name="vehicle_brands">
