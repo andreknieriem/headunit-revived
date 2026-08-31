@@ -3,6 +3,8 @@ package com.andrerinas.openheadunit.main
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -18,6 +20,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.bumptech.glide.signature.ObjectKey
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -299,7 +302,11 @@ class CustomizationFragment : Fragment() {
         if (hasCustomImage && bgCustom != null) {
             bgDefault?.visibility = View.GONE
             bgCustom.visibility = View.VISIBLE
-            Glide.with(this).load(File(path)).centerCrop().into(bgCustom)
+            Glide.with(this)
+                .load(File(path))
+                .signature(ObjectKey(File(path).lastModified()))
+                .centerCrop()
+                .into(bgCustom)
         } else {
             bgCustom?.visibility = View.GONE
             bgDefault?.visibility = View.VISIBLE
@@ -322,23 +329,40 @@ class CustomizationFragment : Fragment() {
             var success = false
 
             try {
-                if (uri.scheme == "file") {
-                    val srcFile = uri.path?.let { File(it) }
-                    if (srcFile != null && srcFile.exists()) {
-                        srcFile.inputStream().use { input ->
-                            destFile.outputStream().use { output -> input.copyTo(output) }
+                val dm = ctx.resources.displayMetrics
+                val maxDim = maxOf(dm.widthPixels, dm.heightPixels, 1920)
+
+                // Use Glide to load and scale the Uri safely on background thread.
+                // Glide handles content providers, permissions, EXIF orientation, and downsampling.
+                val bitmap = Glide.with(ctx.applicationContext)
+                    .asBitmap()
+                    .load(uri)
+                    .override(maxDim, maxDim)
+                    .submit()
+                    .get()
+
+                if (bitmap != null) {
+                    destFile.outputStream().use { outStream ->
+                        if (bitmap.hasAlpha()) {
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream)
+                        } else {
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 88, outStream)
                         }
-                        success = true
                     }
-                } else {
+                    success = true
+                    AppLog.i("Custom background saved: ${bitmap.width}x${bitmap.height}, ${destFile.length() / 1024} KB")
+                }
+            } catch (e: Exception) {
+                AppLog.e("Failed to decode custom background image via Glide: ${e.message}")
+                try {
                     ctx.contentResolver.openInputStream(uri)?.use { input ->
                         destFile.outputStream().use { output -> input.copyTo(output) }
                         success = true
                     }
+                } catch (fallbackEx: Exception) {
+                    AppLog.e("Fallback copy failed: ${fallbackEx.message}")
+                    success = false
                 }
-            } catch (e: Exception) {
-                AppLog.e("Failed to copy custom background image: ${e.message}")
-                success = false
             }
 
             withContext(Dispatchers.Main) {
@@ -385,10 +409,12 @@ class CustomizationFragment : Fragment() {
                 iv.visibility = View.VISIBLE
                 Glide.with(this)
                     .load(File(path))
+                    .signature(ObjectKey(File(path).lastModified()))
                     .centerCrop()
                     .into(iv)
             }
-            txtStatus?.text = getString(R.string.home_background_custom)
+            val sizeKb = File(path).length() / 1024
+            txtStatus?.text = "${getString(R.string.home_background_custom)} (${sizeKb} KB)"
             btnResetBg?.isEnabled = true
         } else {
             bgCustomImageView?.let { iv ->
