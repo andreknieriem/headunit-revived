@@ -829,6 +829,10 @@
     <string name="rename_notice_title">Nuestro nombre está cambiando a Open Headunit</string>
     <string name="rename_notice_message">Headunit Revived está creciendo, gracias a ustedes, y se está convirtiendo en algo propio: Open Headunit. Vamos a ir cambiando al nuevo nombre en las próximas actualizaciones, así que es posible que sigas viendo el nombre anterior en algunos lugares por un tiempo.\n\nLa misma app, la misma gente detrás, y todos tus ajustes se quedan exactamente como están.</string>
     <string name="rename_notice_button">Entendido</string>
+    <string name="aa174_notice_title">Aviso importante: Android Auto 17.4+</string>
+    <string name="aa174_notice_message">A partir de Android Auto 17.4, Google introdujo cambios internos que deshabilitan el inicio automático mediante Wireless Helper y el Self-Mode clásico.\n\n<b>Soluciones disponibles:</b>\n\n<b>1. Headunit Server (modo desarrollador):</b>\n¡La única solución funcional para Self-Mode! En tu teléfono, abre los ajustes de desarrollador de Android Auto y toca \'Iniciar servidor de unidad principal\'.\n\n<b>2. Modo nativo:</b>\nConecta directamente mediante Wi-Fi Direct o punto de acceso de la unidad.\n\n<b>3. Adaptador inalámbrico USB:</b>\nUn dongle USB inalámbrico ofrece la mayor estabilidad.\n\n<b>4. Wireless Helper:</b>\nSigue funcionando de forma fiable para Android Auto hasta la versión 17.3.</string>
+    <string name="aa174_notice_button_confirm">Entendido</string>
+    <string name="aa174_notice_button_guide">Abrir guía</string>
 
     <string name="onb_vehicle_help_sideload">Picking a real car brand also shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps you installed from outside the Play Store. Keep \"Google\" or \"Open Headunit\" if you use those apps.</string>
     <string-array name="vehicle_brands">

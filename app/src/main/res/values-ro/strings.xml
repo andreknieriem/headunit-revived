@@ -792,6 +792,10 @@
     <string name="rename_notice_title">Numele nostru se schimbă în Open Headunit</string>
     <string name="rename_notice_message">Headunit Revived crește, datorită vouă, și devine ceva al său: Open Headunit. Introducem noul nume treptat, pe parcursul următoarelor actualizări, așa că e posibil să mai vezi numele vechi în unele locuri o vreme.\n\nAceeași aplicație, aceiași oameni în spatele ei, iar toate setările tale rămân exact așa cum sunt.</string>
     <string name="rename_notice_button">Am înțeles</string>
+    <string name="aa174_notice_title">Notificare importantă: Android Auto 17.4+</string>
+    <string name="aa174_notice_message">Începând cu Android Auto 17.4, Google a introdus modificări interne care dezactivează pornirea automată prin Wireless Helper și Self-Mode clasic.\n\n<b>Soluții disponibile:</b>\n\n<b>1. Headunit Server (Mod dezvoltator):</b>\nSingura soluție funcțională pentru Self-Mode! Pe telefon, deschide setările de dezvoltator Android Auto și apasă \'Porniți serverul unității principale\'.\n\n<b>2. Mod Nativ:</b>\nSe conectează direct prin Wi-Fi Direct sau hotspot-ul unității.\n\n<b>3. Adaptor USB wireless:</b>\nUn dongle USB oferă cea mai stabilă conexiune.\n\n<b>4. Wireless Helper:</b>\nContinuă să funcționeze stabil pentru Android Auto până la versiunea 17.3.</string>
+    <string name="aa174_notice_button_confirm">Am înțeles</string>
+    <string name="aa174_notice_button_guide">Deschide ghidul</string>
 
     <string name="onb_summary_permissions_format">Permissions: %1$d of %2$d granted</string>
     <string name="onb_ready_loading_intro">One more thing: you can now set a custom loading screen, shown while the car connects.</string>

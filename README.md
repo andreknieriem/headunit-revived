@@ -13,8 +13,12 @@ Open Headunit is an Android app that allows you to turn your Android tablet or p
 https://github.com/mikereidis/headunit
 
 ## NOTE!
-**Android Auto 17.4 will break nearly every wireless connection with self mode included, which is not native or with the headunit server. So Wireless Helper won't work anymore.
-We hope, that Google will take back these changes in the next Android Auto update, but until then, we have to wait. If you want to use wireless connection, please use the native connection method or the headunit server on your phone or buy a wireless Android Auto USB Dongle.**
+**Android Auto 17.4 and newer breaks almost all third-party wireless triggers including Self-Mode and the automated launch via Wireless Helper.**
+Google has introduced internal changes preventing projection from launching automatically without the native developer server or hardware dongles. To connect wirelessly or run in Self-Mode on AA 17.4+, please use one of the 4 options below:
+1. **USB Wireless Android Auto Dongle (Recommended):** Hardware dongles provide seamless, hardware-level plug-and-play.
+2. **Native Mode:** Direct Wi-Fi Direct or Headunit Hotspot handshake.
+3. **Headunit Server (Developer Mode):** The **only remaining solution for Self-Mode!** On your phone, open Android Auto developer settings and tap "Start Headunit Server".
+4. **Wireless Helper:** Continues to work reliably for Android Auto versions up to **17.3**.
 
 ## Screenshots
 <img width="1280" height="800" alt="image" src="https://github.com/user-attachments/assets/22abbc13-75d5-436f-b0ae-2e92b7648d50" />
@@ -31,21 +35,31 @@ We hope, that Google will take back these changes in the next Android Auto updat
 - Click the USB Button in Open Headunit, find your phone and click the right button to allow connection
 - Click on your phone in the list and wait for Android Auto to start
 
-### Wireless Helper (Recommended)
-This is the most reliable way to connect wirelessly. It uses our companion app on your phone to trigger the connection.
+### Wireless Connection Options
+Choose from one of four connection strategies depending on your Android Auto version and setup:
 
+#### 1. USB Wireless Android Auto Dongle (Most Reliable)
+- A standard hardware USB Wireless Android Auto Dongle (plugged into the headunit) handles the entire wireless negotiation independently.
+- Provides seamless plug-and-play connection regardless of phone Android Auto version.
+
+#### 2. Native Mode (Wi-Fi Direct / Headunit Hotspot)
+- Directly communicates with Android Auto's native wireless protocol without helper apps.
+- Supports **Wi-Fi Direct (P2P)** or the **Headunit Hotspot** transport.
+- Configure under Open Headunit Settings -> **Android Auto Mode** -> **Native Mode**.
+
+#### 3. Headunit Server (Essential for Self-Mode on AA 17.4+)
+- Starts the native Android Auto developer server directly on your phone or on the same device (Self-Mode).
+- **Setup:**
+  1. Open Android Auto settings on your phone (or tablet in Self-Mode).
+  2. Scroll down and tap **Version** 10 times to unlock Developer settings.
+  3. Tap the three-dot menu in the top right corner and choose **Start headunit server**.
+  4. In Open Headunit, tap the **WiFi** button to connect (or use Self-Mode).
+
+#### 4. Wireless Helper (for Android Auto up to v17.3)
+- Our companion app triggers the wireless connection automatically in the background.
+- **Compatibility:** Android Auto **v17.3 and below**.
 - **Download:** [Wireless Helper on Google Play Store](https://play.google.com/store/apps/details?id=com.andrerinas.wirelesshelper)
-- **Features:** Minimal configuration, supports NSD, Wi-Fi Direct Auto-Connect, and Bluetooth Auto-Start.
-
-**Setup:**
-- In Open Headunit Settings: Set **Wireless Mode** to **Helper Mode**.
-- Ensure both devices are in the same network (Hotspot or WiFi).
-- Open the Wireless Helper app on your phone and start the service.
-- The helper will find your headunit and initiate the connection automatically.
-
-### Legacy Wireless Options
-- **Wireless Launcher:** You can still use the original [Wireless Launcher](https://play.google.com/store/apps/details?id=com.borconi.emil.wifilauncherforhur) by Emil Borconi.
-- **Manual / Native:** Uses the native "Headunit Server" built into Android Auto developer settings (may fail on 10.x.x.x networks).
+- **Setup:** Set Open Headunit Wireless Mode to **Helper Mode**, ensure both devices are in the same network or Wi-Fi Direct group, and start the service in the Wireless Helper app.
 
 ### Connect Wirelessly via Intent (Power Users)
 You can trigger a wireless connection attempt using an Android Intent. This is useful for automation tools like **Tasker**, **MacroDroid**, or via **ADB**.

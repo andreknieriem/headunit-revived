@@ -819,6 +819,10 @@
     <string name="rename_notice_title">Unser Name wird zu Open Headunit</string>
     <string name="rename_notice_message">Headunit Revived wächst, dank euch, und wird zu etwas Eigenem: Open Headunit. Wir führen den neuen Namen über die nächsten Updates hinweg ein, daher siehst du an manchen Stellen vielleicht noch eine Weile den alten Namen.\n\nGleiche App, dieselben Leute dahinter, und all deine Einstellungen bleiben genau so, wie sie sind.</string>
     <string name="rename_notice_button">Verstanden</string>
+    <string name="aa174_notice_title">Wichtiger Hinweis: Android Auto 17.4+</string>
+    <string name="aa174_notice_message">Mit dem Update auf Android Auto 17.4 hat Google tiefgreifende Änderungen eingeführt, die den automatischen Verbindungsaufbau über den Wireless Helper sowie den klassischen Self-Mode unbrauchbar machen.\n\n<b>Mögliche Lösungen:</b>\n\n<b>1. Headunit Server (Entwicklermodus):</b>\nDie einzige verbliebene Lösung für den Self-Mode! Öffne auf dem Smartphone die Android Auto Entwicklereinstellungen und starte den \'Headunit Server\'.\n\n<b>2. Nativer Modus:</b>\nVerbindet sich direkt via Wi-Fi Direct oder Headunit-Hotspot.\n\n<b>3. Drahtloser USB-Dongle:</b>\nEin externer Wireless-USB-Adapter bietet die stabilste Plug-and-Play-Verbindung.\n\n<b>4. Wireless Helper:</b>\nFunktioniert weiterhin zuverlässig für Android Auto bis einschließlich Version 17.3.</string>
+    <string name="aa174_notice_button_confirm">Verstanden</string>
+    <string name="aa174_notice_button_guide">Anleitung öffnen</string>
     <string name="category_ui">Oberfläche</string>
     <string name="hide_phone_signal_label">Verstecke Signalstärke vom Handy</string>
     <string name="hide_battery_level_label">Verstecke Akkustand vom Handy</string>
