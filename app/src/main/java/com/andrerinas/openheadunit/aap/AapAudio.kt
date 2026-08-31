@@ -11,6 +11,7 @@ import com.andrerinas.openheadunit.aap.protocol.AudioConfigs
 import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.decoder.audio.AudioDecoder
+import com.andrerinas.openheadunit.decoder.audio.AudioStreamCatalog
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
@@ -22,9 +23,14 @@ internal class AapAudio(
 
     private val staticAudioFocus = settings.staticAudioFocus
     private val separateAudioStreams = settings.separateAudioStreams
+    // Checked against what this device actually reports, not taken on trust: settings travel
+    // between head units, and an id this one does not have would be silence with no message.
+    private val mediaAudioStream = AudioStreamCatalog.sanitize(audioManager, settings.mediaAudioStream)
+    private val guidanceAudioStream = AudioStreamCatalog.sanitize(audioManager, settings.guidanceAudioStream)
+    private val systemAudioStream = AudioStreamCatalog.sanitize(audioManager, settings.systemAudioStream)
     private val mediaVolumeOffset = settings.mediaVolumeOffset
-    private val assistantVolumeOffset = settings.assistantVolumeOffset
-    private val navigationVolumeOffset = settings.navigationVolumeOffset
+    private val guidanceVolumeOffset = settings.guidanceVolumeOffset
+    private val systemVolumeOffset = settings.systemVolumeOffset
     private val audioLatencyMultiplier = settings.audioLatencyMultiplier
     private val useAacAudio = settings.useAacAudio
     private val audioQueueCapacity = settings.audioQueueCapacity
@@ -146,7 +152,7 @@ internal class AapAudio(
 
     fun requestFocusChange(stream: Int, focusRequest: Int, callback: AudioManager.OnAudioFocusChangeListener): Int {
         AppLog.i("Audio Focus Request: stream=$stream, type=$focusRequest")
-        
+
         var result = AudioManager.AUDIOFOCUS_REQUEST_FAILED
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // API 26+
@@ -172,7 +178,7 @@ internal class AapAudio(
                         .setWillPauseWhenDucked(false)
                         .setOnAudioFocusChangeListener(callback)
                         .build()
-                
+
                 result = audioManager.requestAudioFocus(audioFocusRequest!!)
                 AppLog.i("Audio focus request result: ${if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) "GRANTED" else "FAILED ($result)"}")
             }
@@ -217,7 +223,7 @@ internal class AapAudio(
                     .setOnAudioFocusChangeListener(playbackFocusListener)
                     .build()
             playbackFocusRequest = request
-            
+
             val result = audioManager.requestAudioFocus(request)
             AppLog.i("AapAudio: Playback transient focus request result: ${if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) "GRANTED" else "FAILED ($result)"}")
         } else {
@@ -231,16 +237,16 @@ internal class AapAudio(
 
     private fun releasePlaybackFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            playbackFocusRequest?.let { 
+            playbackFocusRequest?.let {
                 AppLog.i("AapAudio: Releasing playback transient audio focus")
-                audioManager.abandonAudioFocusRequest(it) 
+                audioManager.abandonAudioFocusRequest(it)
             }
             playbackFocusRequest = null
         } else {
             @Suppress("DEPRECATION")
-            legacyPlaybackFocusListener?.let { 
+            legacyPlaybackFocusListener?.let {
                 AppLog.i("AapAudio: Releasing playback transient audio focus (legacy)")
-                audioManager.abandonAudioFocus(it) 
+                audioManager.abandonAudioFocus(it)
             }
             legacyPlaybackFocusListener = null
         }
@@ -291,12 +297,13 @@ internal class AapAudio(
         if (audioDecoder.getTrack(channel) != null) return
 
         val config = AudioConfigs.get(channel)
-        val stream = AudioConfigs.stream(channel, separateAudioStreams)
+        val stream = AudioConfigs.stream(
+            channel, mediaAudioStream, guidanceAudioStream, systemAudioStream)
 
         val offset = when (channel) {
             Channel.ID_AUD -> mediaVolumeOffset
-            Channel.ID_AU1 -> assistantVolumeOffset
-            Channel.ID_AU2 -> navigationVolumeOffset
+            Channel.ID_AU1 -> guidanceVolumeOffset
+            Channel.ID_AU2 -> systemVolumeOffset
             else -> 0
         }
         val gain = (1.0f + (offset / 100.0f)).coerceIn(0.0f, 2.0f)
@@ -427,12 +434,12 @@ internal class AapAudio(
 
     fun updateGains() {
         val mediaGain = (1.0f + (settings.mediaVolumeOffset / 100.0f)).coerceIn(0.0f, 2.0f)
-        val assistantGain = (1.0f + (settings.assistantVolumeOffset / 100.0f)).coerceIn(0.0f, 2.0f)
-        val navGain = (1.0f + (settings.navigationVolumeOffset / 100.0f)).coerceIn(0.0f, 2.0f)
+        val guidanceGain = (1.0f + (settings.guidanceVolumeOffset / 100.0f)).coerceIn(0.0f, 2.0f)
+        val systemGain = (1.0f + (settings.systemVolumeOffset / 100.0f)).coerceIn(0.0f, 2.0f)
 
         audioDecoder.setGain(Channel.ID_AUD, mediaGain)
-        audioDecoder.setGain(Channel.ID_AU1, assistantGain)
-        audioDecoder.setGain(Channel.ID_AU2, navGain)
+        audioDecoder.setGain(Channel.ID_AU1, guidanceGain)
+        audioDecoder.setGain(Channel.ID_AU2, systemGain)
     }
 
     fun restartAudio() {

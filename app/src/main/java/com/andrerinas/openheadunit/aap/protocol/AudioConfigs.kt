@@ -5,21 +5,42 @@ import android.util.SparseArray
 import com.andrerinas.openheadunit.aap.protocol.proto.Media
 
 import com.andrerinas.openheadunit.decoder.audio.AudioDecoder
+import com.andrerinas.openheadunit.utils.Settings
 
 object AudioConfigs {
     private val audioTracks = SparseArray<Media.AudioConfiguration>(3)
 
-    fun stream(channel: Int, separateAudioStreams: Boolean = true) : Int
+    /**
+     * Which system stream an Android Auto audio channel plays on.
+     *
+     * With separate streams off every channel shares the media stream — one multimedia output,
+     * the behaviour a head unit that only unmutes on a single stream needs. With it on, each of
+     * the three channels goes to the stream chosen for it in Audio Stream settings.
+     */
+    fun stream(
+        channel: Int,
+        separateAudioStreams: Boolean = true,
+        mediaStream: Int = AudioManager.STREAM_MUSIC,
+        guidanceStream: Int = AudioManager.STREAM_VOICE_CALL,
+        systemStream: Int = AudioManager.STREAM_NOTIFICATION
+    ) : Int
     {
-        if (separateAudioStreams) {
-            return when(channel) {
-                Channel.ID_AU1 -> AudioManager.STREAM_VOICE_CALL
-                Channel.ID_AU2 -> AudioManager.STREAM_NOTIFICATION
-                else -> AudioManager.STREAM_MUSIC
-            }
+        if (!separateAudioStreams) return mediaStream
+        return when(channel) {
+            Channel.ID_AU1 -> guidanceStream
+            Channel.ID_AU2 -> systemStream
+            else -> mediaStream
         }
-        return AudioManager.STREAM_MUSIC
     }
+
+    /** The same mapping, read straight from the user's settings. */
+    fun stream(channel: Int, settings: Settings): Int = stream(
+        channel,
+        settings.separateAudioStreams,
+        settings.mediaAudioStream,
+        settings.guidanceAudioStream,
+        settings.systemAudioStream
+    )
 
     fun get(channel: Int): Media.AudioConfiguration {
         return audioTracks.get(channel)

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
+import android.media.AudioManager
 import android.os.Build
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
@@ -762,6 +763,31 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("separate-audio-streams", false)
         set(value) { prefs.edit().putBoolean("separate-audio-streams", value).apply() }
 
+    // Which system stream each Android Auto audio channel is played on, stored as the
+    // AudioManager.STREAM_* constant. Named after the AudioStreamType the channel is declared as
+    // in ServiceDiscoveryResponse - MEDIA on ID_AUD, SPEECH on ID_AU1, SYSTEM on ID_AU2 - because
+    // the Android stream a channel is pointed at is exactly what these choose, and naming them
+    // after the streams instead made the two impossible to talk about apart.
+    //
+    // The defaults reproduce the mapping that separate streams always used, so an install that
+    // never opens the screen behaves exactly as before; the pickers exist because head units route
+    // the streams differently (a unit whose amplifier only unmutes on STREAM_MUSIC needs the
+    // guidance channel moved off STREAM_VOICE_CALL to be heard at all).
+    //
+    // Only the media stream applies while separateAudioStreams is off: every channel then shares
+    // it, which is what "a single multimedia stream" means.
+    var mediaAudioStream: Int
+        get() = prefs.getInt("media-audio-stream", AudioManager.STREAM_MUSIC)
+        set(value) { prefs.edit().putInt("media-audio-stream", value).apply() }
+
+    var guidanceAudioStream: Int
+        get() = prefs.getInt("guidance-audio-stream", AudioManager.STREAM_VOICE_CALL)
+        set(value) { prefs.edit().putInt("guidance-audio-stream", value).apply() }
+
+    var systemAudioStream: Int
+        get() = prefs.getInt("system-audio-stream", AudioManager.STREAM_NOTIFICATION)
+        set(value) { prefs.edit().putInt("system-audio-stream", value).apply() }
+
     var micInputSource: Int
         get() = prefs.getInt("mic-input-source", 0) // Default: DEFAULT
         set(value) { prefs.edit().putInt("mic-input-source", value).apply() }
@@ -940,15 +966,21 @@ class Settings(private val context: Context) {
         get() = prefs.getString("app-language", "")!!
         set(value) { prefs.edit().putString("app-language", value).apply() }
 
+    // Per-channel playback gain, as a percentage offset applied by AudioDecoder.setGain. Named
+    // after the channel each one drives - MEDIA on ID_AUD, guidance on ID_AU1, system sounds on
+    // ID_AU2 - which is not what the stored keys say: "assistant" and "navigation" were the old
+    // names for the last two, and ID_AU2 was never the navigation channel (spoken directions
+    // arrive on ID_AU1 with the assistant). The keys keep the old spelling because they are
+    // shipped data and renaming them would reset every existing user's offsets.
     var mediaVolumeOffset: Int
         get() = prefs.getInt("media-volume-offset", 0)
         set(value) { prefs.edit().putInt("media-volume-offset", value).apply() }
 
-    var assistantVolumeOffset: Int
+    var guidanceVolumeOffset: Int
         get() = prefs.getInt("assistant-volume-offset", 0)
         set(value) { prefs.edit().putInt("assistant-volume-offset", value).apply() }
 
-    var navigationVolumeOffset: Int
+    var systemVolumeOffset: Int
         get() = prefs.getInt("navigation-volume-offset", 0)
         set(value) { prefs.edit().putInt("navigation-volume-offset", value).apply() }
 
