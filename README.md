@@ -83,6 +83,7 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 - Fix Orientation issues
 - Several Native Mode fixes and enhancements
 - Mic: fix the uplink, and let the phone keep the microphone
+- Fix: Close keyboard that stays open on older Android versions to prevent layout issues
 
 ### v.3.2.6
 - Fix settings UI crash and dpi input on older Android devices

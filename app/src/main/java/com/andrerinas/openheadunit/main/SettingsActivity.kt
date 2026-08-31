@@ -68,6 +68,16 @@ class SettingsActivity : BaseActivity() {
         SystemUI.apply(window, root, appSettings.fullscreenMode)
     }
 
+    override fun onPause() {
+        super.onPause()
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+        currentFocus?.let { v ->
+            imm?.hideSoftInputFromWindow(v.windowToken, 0)
+        } ?: window.peekDecorView()?.let { v ->
+            imm?.hideSoftInputFromWindow(v.windowToken, 0)
+        }
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.settings_nav_host) as? NavHostFragment

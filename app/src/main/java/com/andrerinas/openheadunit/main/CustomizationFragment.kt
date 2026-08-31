@@ -27,6 +27,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.app.BaseActivity
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.ColorUtils
+import com.andrerinas.openheadunit.utils.HomeUiHelper
 import com.andrerinas.openheadunit.utils.PickImageContract
 import com.andrerinas.openheadunit.utils.Settings
 import kotlinx.coroutines.Dispatchers
@@ -305,71 +306,13 @@ class CustomizationFragment : Fragment() {
         }
 
         // 2. Sync Button Colors & Monochrome Theme
-        val selfBtn = homeView.findViewById<MaterialButton>(R.id.self_mode_button)
-        val usbBtn = homeView.findViewById<MaterialButton>(R.id.usb_button)
-        val wifiBtn = homeView.findViewById<MaterialButton>(R.id.wifi_button)
-        val settingsBtn = homeView.findViewById<MaterialButton>(R.id.settings_button)
-
         val isNightActive = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        val isDarkTheme = settings.appTheme == Settings.AppTheme.DARK ||
-                          settings.appTheme == Settings.AppTheme.EXTREME_DARK ||
-                          isNightActive
+        HomeUiHelper.applyButtonStyles(ctx, homeView, settings, isNightActive)
 
-        if (isDarkTheme && settings.monochromeIcons) {
-            val monochromeBackground = ContextCompat.getDrawable(ctx, R.drawable.gradient_monochrome)
-            val grayTint = ColorStateList.valueOf(0xFF808080.toInt())
-            listOfNotNull(selfBtn, usbBtn, wifiBtn, settingsBtn).forEach { button ->
-                button.background = monochromeBackground?.constantState?.newDrawable()?.mutate()
-                button.iconTint = grayTint
-            }
-        } else {
-            val whiteTint = ColorStateList.valueOf(0xFFFFFFFF.toInt())
-            val configs = listOf(
-                Triple(selfBtn, R.drawable.gradient_blue, settings.customSelfModeButtonColor),
-                Triple(usbBtn, R.drawable.gradient_orange, settings.customUsbButtonColor),
-                Triple(wifiBtn, R.drawable.gradient_purple, settings.customWifiButtonColor),
-                Triple(settingsBtn, R.drawable.gradient_darkblue, settings.customSettingsButtonColor)
-            )
-            configs.forEach { (button, defaultDrawableRes, customColor) ->
-                if (button != null) {
-                    if (customColor != 0) {
-                        button.background = ColorUtils.createGradientDrawable(customColor, 32f, ctx)
-                    } else {
-                        button.background = ContextCompat.getDrawable(ctx, defaultDrawableRes)
-                    }
-                    button.iconTint = whiteTint
-                }
-            }
-        }
-
-        // 3. SCALE THE HOME BUTTONS LAYOUT EXACTLY LIKE HOMEFRAGMENT DOES WITH MARGIN MAGIC!
+        // 3. Scale Home Buttons
         val density = resources.displayMetrics.density
-        val buttons = listOfNotNull(selfBtn, usbBtn, wifiBtn, settingsBtn)
         val isPortrait = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-
-        if (isPortrait) {
-            val basePaddingDp = 12f
-            val adjustedPaddingPx = ((basePaddingDp * (2.0f - scaleFactor)).coerceIn(4f, 16f) * density).toInt()
-            buttons.forEach { button ->
-                (button.parent as? View)?.setPadding(adjustedPaddingPx, adjustedPaddingPx, adjustedPaddingPx, adjustedPaddingPx)
-            }
-        } else {
-            val baseMarginDp = 40f
-            val adjustedMarginPx = ((baseMarginDp * (2.0f - scaleFactor)).coerceIn(12f, 48f) * density).toInt()
-            buttons.forEach { button ->
-                val params = button.layoutParams as? ViewGroup.MarginLayoutParams
-                if (params != null) {
-                    params.setMargins(adjustedMarginPx, adjustedMarginPx, adjustedMarginPx, adjustedMarginPx)
-                    button.layoutParams = params
-                }
-            }
-        }
-
-        val mainButtonsLayout = homeView.findViewById<View>(R.id.main_buttons_layout)
-        if (mainButtonsLayout != null) {
-            mainButtonsLayout.scaleX = scaleFactor
-            mainButtonsLayout.scaleY = scaleFactor
-        }
+        HomeUiHelper.applyButtonScale(homeView, validScale, isPortrait, density)
     }
 
     private fun handleImageSelected(uri: Uri) {
@@ -644,6 +587,8 @@ class CustomizationFragment : Fragment() {
             .setNegativeButton(R.string.cancel, null)
             .setOnDismissListener {
                 hexEditText.removeTextChangedListener(textWatcher)
+                val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(hexEditText.windowToken, 0)
             }
             .show()
     }

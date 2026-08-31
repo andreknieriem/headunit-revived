@@ -573,7 +573,11 @@ class DarkModeFragment : Fragment(), SensorEventListener {
                     androidx.core.os.bundleOf(MapPickerFragment.ARG_MODE to MapPickerFragment.MODE_POINT)
                 )
             }
-            .setNegativeButton(R.string.cancel, null)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setOnDismissListener {
+                val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(latInput.windowToken, 0)
+            }
             .show()
     }
 

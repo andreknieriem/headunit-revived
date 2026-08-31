@@ -2493,6 +2493,11 @@ class SettingsFragment : Fragment() {
         imm?.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
+    override fun onPause() {
+        super.onPause()
+        view?.let { hideKeyboard(it) }
+    }
+
     private fun renderSettings(scrollState: android.os.Parcelable? = null) {
         // While searching, the tab has no effect (search spans both tiers), so hint that.
         settingsTabGroup?.isEnabled = searchQuery.isBlank()
@@ -3350,6 +3355,11 @@ class SettingsFragment : Fragment() {
 
                 dialog.dismiss()
             }
+            .setOnDismissListener {
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE)
+                        as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(inputLeft.windowToken, 0)
+            }
             .create()
 
         dialog.window?.clearFlags(
@@ -3745,6 +3755,11 @@ class SettingsFragment : Fragment() {
                 dialog.dismiss()
             }
             .setNegativeButton(android.R.string.cancel, null)
+            .setOnDismissListener {
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE)
+                        as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(editView.windowToken, 0)
+            }
             .create()
 
         dialog.window?.clearFlags(
@@ -3783,6 +3798,11 @@ class SettingsFragment : Fragment() {
                 dialog.dismiss()
             }
             .setNegativeButton(android.R.string.cancel, null)
+            .setOnDismissListener {
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE)
+                        as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(editView.windowToken, 0)
+            }
             .create()
 
         dialog.window?.clearFlags(

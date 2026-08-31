@@ -65,6 +65,10 @@ object DialogUtils {
                 onResult("")
             }
             .setNegativeButton(R.string.cancel, null)
+            .setOnDismissListener {
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                imm?.hideSoftInputFromWindow(editText.windowToken, 0)
+            }
             .create()
 
         dialog.window?.clearFlags(

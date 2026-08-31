@@ -851,6 +851,10 @@ class MainActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+        window.peekDecorView()?.let { v ->
+            imm?.hideSoftInputFromWindow(v.windowToken, 0)
+        }
         setFullscreen()
         applyCustomHomeBackground()
 

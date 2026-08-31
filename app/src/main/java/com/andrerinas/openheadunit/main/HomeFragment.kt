@@ -36,6 +36,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.andrerinas.openheadunit.utils.Settings
+import com.andrerinas.openheadunit.utils.ColorUtils
+import com.andrerinas.openheadunit.utils.HomeUiHelper
 import com.andrerinas.openheadunit.utils.VpnControl
 import com.andrerinas.openheadunit.utils.BluetoothHelper
 import com.andrerinas.openheadunit.connection.usb.UsbReceiver
@@ -78,6 +80,7 @@ class HomeFragment : Fragment() {
     private var hasAttemptedAutoConnect = false
     private var hasAttemptedSingleUsbAutoConnect = false
     private var activeDialog: androidx.appcompat.app.AlertDialog? = null
+    private var portraitLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
 
     private fun updateWifiButtonFeedback(scanning: Boolean) {
         if (scanning) {
@@ -112,6 +115,8 @@ class HomeFragment : Fragment() {
 
         setupListeners()
         updateProjectionButtonText()
+        updateButtonStyle()
+        updateButtonScale()
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -314,45 +319,21 @@ class HomeFragment : Fragment() {
         return true
     }
 
-    private val originalBackgrounds = mapOf(
-        R.id.self_mode_button to R.drawable.gradient_blue,
-        R.id.usb_button to R.drawable.gradient_orange,
-        R.id.wifi_button to R.drawable.gradient_purple,
-        R.id.settings_button to R.drawable.gradient_darkblue
-    )
-
-    private fun applyMonochromeStyle() {
-        val monochromeBackground = ContextCompat.getDrawable(requireContext(), R.drawable.gradient_monochrome)
-        val grayTint = ColorStateList.valueOf(0xFF808080.toInt())
-        listOf(self_mode_button, usb, wifi, settings).forEach { button ->
-            button.background = monochromeBackground?.constantState?.newDrawable()?.mutate()
-            (button as? com.google.android.material.button.MaterialButton)?.iconTint = grayTint
-        }
-    }
-
-    private fun restoreOriginalStyle() {
-        val whiteTint = ColorStateList.valueOf(0xFFFFFFFF.toInt())
-        val buttons = listOf(self_mode_button, usb, wifi, settings)
-        val ids = listOf(R.id.self_mode_button, R.id.usb_button, R.id.wifi_button, R.id.settings_button)
-        buttons.zip(ids).forEach { (button, id) ->
-            originalBackgrounds[id]?.let { drawableRes ->
-                button.background = ContextCompat.getDrawable(requireContext(), drawableRes)
-            }
-            (button as? com.google.android.material.button.MaterialButton)?.iconTint = whiteTint
-        }
-    }
-
     private fun updateButtonStyle() {
-        val appSettings = App.provide(requireContext()).settings
+        val ctx = context ?: return
+        val v = view ?: return
+        val appSettings = App.provide(ctx).settings
         val isNightActive = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        val isDarkTheme = appSettings.appTheme == Settings.AppTheme.DARK ||
-                          appSettings.appTheme == Settings.AppTheme.EXTREME_DARK ||
-                          isNightActive
-        if (isDarkTheme && appSettings.monochromeIcons) {
-            applyMonochromeStyle()
-        } else {
-            restoreOriginalStyle()
-        }
+        HomeUiHelper.applyButtonStyles(ctx, v, appSettings, isNightActive)
+    }
+
+    private fun updateButtonScale() {
+        val v = view ?: return
+        val ctx = context ?: return
+        val appSettings = App.provide(ctx).settings
+        val density = resources.displayMetrics.density
+        val isPortrait = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+        HomeUiHelper.applyButtonScale(v, appSettings.homeButtonScalePercent, isPortrait, density)
     }
 
     private fun setupListeners() {
@@ -570,12 +551,16 @@ class HomeFragment : Fragment() {
     private fun constrainPortraitGridWidth(rootView: View) {
         val gridLayout = rootView.findViewById<android.widget.LinearLayout>(R.id.main_buttons_layout)
             ?: return
-        // Capture density before the callback — accessing `resources` inside onGlobalLayout
-        // is unsafe if the fragment has been detached by the time the layout pass fires.
         val density = resources.displayMetrics.density
-        gridLayout.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+
+        portraitLayoutListener?.let {
+            if (gridLayout.viewTreeObserver.isAlive) {
+                gridLayout.viewTreeObserver.removeOnGlobalLayoutListener(it)
+            }
+        }
+
+        val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
-                gridLayout.viewTreeObserver.removeOnGlobalLayoutListener(this)
                 if (!isAdded) return
 
                 val container = gridLayout.parent as? View ?: return
@@ -600,14 +585,17 @@ class HomeFragment : Fragment() {
                 val cellPadPx = (12 * 2 * 2 * density).toInt() // 2 cols × 2 sides × 12 dp
                 val maxGridW = maxBtn * 2 + cellPadPx
 
-                // Only shrink, never grow beyond what the existing constraints allow
-                if (maxGridW < containerW) {
-                    val params = gridLayout.layoutParams as? ConstraintLayout.LayoutParams ?: return
-                    params.matchConstraintMaxWidth = maxGridW
+                val defaultMaxW = (1200 * density).toInt()
+                val targetMaxWidth = if (maxGridW < containerW) maxGridW else defaultMaxW
+                val params = gridLayout.layoutParams as? ConstraintLayout.LayoutParams ?: return
+                if (params.matchConstraintMaxWidth != targetMaxWidth) {
+                    params.matchConstraintMaxWidth = targetMaxWidth
                     gridLayout.layoutParams = params
                 }
             }
-        })
+        }
+        portraitLayoutListener = listener
+        gridLayout.viewTreeObserver.addOnGlobalLayoutListener(listener)
     }
 
     private fun updateProjectionButtonText() {
@@ -623,7 +611,11 @@ class HomeFragment : Fragment() {
         AppLog.i("HomeFragment: onResume. isConnected=${commManager.isConnected}")
         updateProjectionButtonText()
         updateButtonStyle()
+        updateButtonScale()
         updateTextColors()
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            view?.let { constrainPortraitGridWidth(it) }
+        }
         activity?.let { act ->
             val isDestroyed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
                 act.isDestroyed
@@ -641,6 +633,16 @@ class HomeFragment : Fragment() {
         activeDialog?.dismiss()
         activeDialog = null
         RenameNotice.dismiss()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        portraitLayoutListener?.let {
+            view?.findViewById<View>(R.id.main_buttons_layout)?.viewTreeObserver?.let { vto ->
+                if (vto.isAlive) vto.removeOnGlobalLayoutListener(it)
+            }
+            portraitLayoutListener = null
+        }
     }
 
     private fun showNativeAaDeviceSelector() {

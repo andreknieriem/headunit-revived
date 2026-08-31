@@ -127,6 +127,7 @@
         <activity
             android:name=".main.MainActivity"
             android:configChanges="keyboardHidden|uiMode"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustPan"
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/SplashTheme">
