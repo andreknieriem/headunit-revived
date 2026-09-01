@@ -34,8 +34,9 @@ object Aa174Notice {
         if (settings.onboardingVersion < OnboardingActivity.CURRENT_ONBOARDING_VERSION) return
 
         try {
+            val rawMessage = activity.getString(R.string.aa174_notice_message)
             val messageSpanned = HtmlCompat.fromHtml(
-                activity.getString(R.string.aa174_notice_message),
+                rawMessage.replace("\n", "<br/>"),
                 HtmlCompat.FROM_HTML_MODE_LEGACY
             )
 

@@ -800,7 +800,7 @@
     <string name="rename_notice_message">Headunit Revived は皆さんのおかげで成長を続け、独自のもの、Open Headunit へと変わりつつあります。新しい名前は今後のアップデートで少しずつ切り替えていくので、しばらくは古い名前が一部に残っているかもしれません。\n\n同じアプリ、同じ開発チーム、そして設定もすべてそのまま残ります。</string>
     <string name="rename_notice_button">了解</string>
     <string name="aa174_notice_title">重要なお知らせ：Android Auto 17.4+</string>
-    <string name="aa174_notice_message">Android Auto 17.4以降、Googleの内部仕様変更により、Wireless Helperによる自動起動および従来のSelf-Mode（セルフモード）が利用できなくなりました。<br/><br/><b>利用可能な解決策：</b><br/><br/><b>1. Headunit Server（開発者モード）：</b><br/>Self-Modeで唯一機能する方法です。スマホのAndroid Auto開発者向け設定を開き、「ヘッドユニットサーバーを起動」をタップしてください。<br/><br/><b>2. ネイティブモード：</b><br/>Wi-Fi Directまたはヘッドユニットのホットスポット経由で直接接続します。<br/><br/><b>3. USBワイヤレスドングル：</b><br/>市販のワイヤレスAA USBドングルを使用するのが最も安定した接続方法です。<br/><br/><b>4. Wireless Helper：</b><br/>Android Auto 17.3以下のバージョンでは引き続き正常に動作します。</string>
+    <string name="aa174_notice_message"><![CDATA[Android Auto 17.4以降、Googleの内部仕様変更により、Wireless Helperによる自動起動および従来のSelf-Mode（セルフモード）が利用できなくなりました。<br/><br/><b>利用可能な解決策：</b><br/><br/><b>1. Headunit Server（開発者モード）：</b><br/>Self-Modeで唯一機能する方法です。スマホのAndroid Auto開発者向け設定を開き、「ヘッドユニットサーバーを起動」をタップしてください。<br/><br/><b>2. ネイティブモード：</b><br/>Wi-Fi Directまたはヘッドユニットのホットスポット経由で直接接続します。<br/><br/><b>3. USBワイヤレスドングル：</b><br/>市販のワイヤレスAA USBドングルを使用するのが最も安定した接続方法です。<br/><br/><b>4. Wireless Helper：</b><br/>Android Auto 17.3以下のバージョンでは引き続き正常に動作します。]]></string>
     <string name="aa174_notice_button_confirm">了解</string>
     <string name="aa174_notice_button_guide">ガイドを開く</string>
 
