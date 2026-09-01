@@ -907,7 +907,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Na lista negra</string>
     <string name="usb_blacklist_title">Lista negra de dispositivos USB</string>
-    <string name="usb_blacklist_description">Dispositivos na lista negra serão completamente ignorados ao conectar.</string>
+    <string name="usb_blacklist_description">Os dispositivos na lista negra são ignorados ao conectar: sem início automático nem avisos. O dispositivo é identificado pelo nome, portanto um telefone bloqueado permanece bloqueado em qualquer modo USB. Alguns fabricantes dão o mesmo nome a todos os modelos, não sendo possível diferenciá-los.</string>
     <string name="add_to_blacklist">Adicionar à lista negra</string>
     <string name="remove_from_blacklist">Remover da lista negra</string>
     <string name="usb_device_action_title">Ação do dispositivo USB</string>
@@ -953,6 +953,8 @@
     <string name="wifi_direct_band_hint">Automático solicita 5 GHz e recorre a 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Seu celular conectou via Bluetooth, mas não recebeu dados. Toque para alternar para USB, Wireless Helper ou Auto.</string>
     <string name="connection_issue_banner_bssid">Não foi possível ler o endereço MAC WiFi (BSSID). Toque para ativar Localização ou inserir o endereço manualmente.</string>
+    <string name="connection_issue_banner_hotspot_off">O ponto de acesso desta unidade está desativado, portanto não havia rede para seu telefone se conectar. Ative o ponto de acesso antes de conectar ou toque para que o app o ative para você.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">O Wi-Fi desta unidade não pôde criar a rede Wi-Fi Direct à qual seu telefone iria se conectar, e o aplicativo não pode forçá-la. Se esta unidade estiver conectada a outra rede Wi-Fi, tente desconectá-la. Toque para usar o ponto de acesso próprio desta unidade.</string>
     <string name="connection_issue_banner_hotspot_config">Não foi possível obter nome e senha do ponto de acesso. Toque para inserir manualmente.</string>
     <string name="connection_issue_banner_dismiss">Fechar</string>
     <string name="connection_issue_remedy_hotspot_query">Nome e senha do ponto de acesso</string>

@@ -887,7 +887,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">შავ სიაშია</string>
     <string name="usb_blacklist_title">USB მოწყობილობების შავი სია</string>
-    <string name="usb_blacklist_description">შავ სიაში მყოფი მოწყობილობები შეერთებისას სრულად იგნორირებული იქნება.</string>
+    <string name="usb_blacklist_description">შავ სიაში მყოფი მოწყობილობები იგნორირებულია მიერთებისას: არც ავტო-გაშვება, არც მოთხოვნები. მოწყობილობა ამოიცნობა სახელით, ამიტომ დაბლოკილი ტელეფონი დაბლოკილი რჩება ნებისმიერ USB რეჟიმში. ზოგიერთი მწარმოებელი ყველა მოდელს ერთსა და იმავე სახელს არქმევს და მათი გარჩევა შეუძლებელია.</string>
     <string name="add_to_blacklist">შავ სიაში დამატება</string>
     <string name="remove_from_blacklist">შავი სიიდან ამოშლა</string>
     <string name="usb_device_action_title">USB მოწყობილობის მოქმედება</string>
@@ -933,6 +933,8 @@
     <string name="wifi_direct_band_hint">ავტომატური ითხოვს 5 GHz-ს და გადადის 2.4 GHz-ზე.</string>
     <string name="connection_issue_banner_bt_silent">ტელეფონი დაუკავშირდა Bluetooth-ით, მაგრამ მონაცემები ვერ მიიღო. დააჭირეთ USB, Wireless Helper ან Auto რეჟიმზე გადასართავად.</string>
     <string name="connection_issue_banner_bssid">მოწყობილობამ ვერ წაიკითხა WiFi MAC (BSSID). ჩართეთ მდებარეობა ან შეიყვანეთ ხელით.</string>
+    <string name="connection_issue_banner_hotspot_off">ამ მოწყობილობის Hotspot გამორთულია, ამიტომ ქსელი არ იყო ხელმისაწვდომი ტელეფონის დასაკავშირებლად. ჩართეთ Hotspot დაკავშირებამდე ან შეეხეთ, რათა აპმა ჩართოს თქვენ ნაცვლად.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">ამ მოწყობილობის WiFi-მ ვერ შექმნა WiFi Direct ქსელი, რომელსაც თქვენი ტელეფონი უნდა შეერთებოდა, და აპლიკაციას არ შეუძლია ამის იძულება. თუ მოწყობილობა სხვა WiFi-ს უკავშირდება, სცადეთ მისი გათიშვა. შეეხეთ, რათა გამოიყენოთ ამ მოწყობილობის საკუთარი Hotspot.</string>
     <string name="connection_issue_banner_hotspot_config">Hotspot-ის სახელი და პაროლი ვერ მოიძებნა. შეიყვანეთ ხელით.</string>
     <string name="connection_issue_banner_dismiss">დახურვა</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-ის სახელი და პაროლი</string>

@@ -948,7 +948,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Bloqué (Liste noire)</string>
     <string name="usb_blacklist_title">Liste noire des appareils USB</string>
-    <string name="usb_blacklist_description">Les appareils sur liste noire seront totalement ignorés lors de la connexion.</string>
+    <string name="usb_blacklist_description">Les appareils sur la liste noire sont ignorés lors de la connexion : pas de démarrage automatique, pas d\'invites. Un appareil est identifié par son nom, ainsi un téléphone bloqué reste bloqué dans tous les modes USB. Certains fabricants donnent le même nom à tous leurs modèles, qui ne peuvent alors pas être distingués.</string>
     <string name="add_to_blacklist">Ajouter à la liste noire</string>
     <string name="remove_from_blacklist">Retirer de la liste noire</string>
     <string name="usb_device_action_title">Action pour périphérique USB</string>
@@ -1001,6 +1001,8 @@
     <string name="wifi_direct_band_hint">Auto demande 5 GHz avec repli sur 2,4 GHz. Le 2,4 GHz est fiable jusqu\'à 720p, choisissez 5 GHz au-delà.</string>
     <string name="connection_issue_banner_bt_silent">Votre téléphone s\'est connecté en Bluetooth, mais n\'a reçu aucun paquet. Touchez pour passer en USB, Wireless Helper ou Auto.</string>
     <string name="connection_issue_banner_bssid">Cet appareil n\'a pas pu lire son adresse MAC Wi-Fi (BSSID). Touchez pour activer la localisation ou entrer l\'adresse manuellement.</string>
+    <string name="connection_issue_banner_hotspot_off">Le point d\'accès de cet appareil est désactivé, aucun réseau n\'était donc disponible pour votre téléphone. Activez le point d\'accès avant de vous connecter ou touchez pour laisser l\'application l\'activer pour vous.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Le Wi-Fi de cet appareil n\'a pas pu créer le réseau Wi-Fi Direct que votre téléphone devait rejoindre, et l\'application ne peut pas le forcer. Si cet appareil est connecté à un autre réseau Wi-Fi, essayez de le déconnecter. Touchez pour utiliser le point d\'accès de cet appareil à la place.</string>
     <string name="connection_issue_banner_hotspot_config">Cet appareil ne peut pas transmettre le nom et le mot de passe du point d\'accès. Touchez pour les saisir manuellement.</string>
     <string name="connection_issue_banner_dismiss">Ignorer</string>
     <string name="connection_issue_remedy_hotspot_query">Nom et mot de passe du point d\'accès</string>

@@ -905,7 +905,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">已列入黑名單</string>
     <string name="usb_blacklist_title">USB 裝置黑名單</string>
-    <string name="usb_blacklist_description">黑名單中的裝置在連線時將被完全忽略（不自動啟動、不提示）。</string>
+    <string name="usb_blacklist_description">黑名單中的裝置在連線時會被忽略：不自動啟動、不顯示提示。系統透過名稱比對裝置，因此被封鎖的手機在所有 USB 模式下皆會保持封鎖。部分製造商為所有型號使用相同的名稱，此類裝置將無法個別區分。</string>
     <string name="add_to_blacklist">加入黑名單</string>
     <string name="remove_from_blacklist">從黑名單移除</string>
     <string name="usb_device_action_title">USB 裝置操作</string>
@@ -951,6 +951,8 @@
     <string name="wifi_direct_band_hint">自動會優先要求 5 GHz，必要時降至 2.4 GHz。</string>
     <string name="connection_issue_banner_bt_silent">手機已透過藍牙連線，但未收到任何資料。請輕觸以切換至 USB、Wireless Helper 或 Auto 模式。</string>
     <string name="connection_issue_banner_bssid">無法讀取 WiFi MAC 位址（BSSID）。輕觸以開啟定位或手動輸入位址。</string>
+    <string name="connection_issue_banner_hotspot_off">此主機的熱點已關閉，因此沒有可供手機加入的網路。連線前請先開啟熱點，或輕觸讓應用程式為您開啟。</string>
+    <string name="connection_issue_banner_wifi_direct_refused">此主機的 WiFi 無法建立手機要加入的 WiFi Direct 網路，且應用程式無法強制建立。若此主機已連線至其他 WiFi 網路，建議嘗試中斷連線。輕觸以改用此主機本身的熱點。</string>
     <string name="connection_issue_banner_hotspot_config">無法取得熱點名稱與密碼。輕觸以手動輸入。</string>
     <string name="connection_issue_banner_dismiss">關閉</string>
     <string name="connection_issue_remedy_hotspot_query">熱點名稱與密碼</string>

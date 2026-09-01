@@ -905,7 +905,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Na czarnej liście</string>
     <string name="usb_blacklist_title">Czarna lista urządzeń USB</string>
-    <string name="usb_blacklist_description">Urządzenia z czarnej listy będą całkowicie ignorowane po podłączeniu.</string>
+    <string name="usb_blacklist_description">Urządzenia z czarnej listy są ignorowane podczas podłączania: brak autostartu i powiadomień. Urządzenie jest dopasowywane po nazwie, więc zablokowany telefon pozostaje zablokowany w każdym trybie USB. Niektórzy producenci nadają wszystkim modelom tę samą nazwę, przez co nie da się ich rozróżnić.</string>
     <string name="add_to_blacklist">Dodaj do czarnej listy</string>
     <string name="remove_from_blacklist">Usuń z czarnej listy</string>
     <string name="usb_device_action_title">Akcja urządzenia USB</string>
@@ -951,6 +951,8 @@
     <string name="wifi_direct_band_hint">Automatycznie żąda 5 GHz i przełącza na 2,4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Telefon połączył się przez Bluetooth, ale nie odebrał danych. Dotknij, aby przełączyć na USB, Wireless Helper lub Auto.</string>
     <string name="connection_issue_banner_bssid">Nie udało się odczytać adresu MAC WiFi (BSSID). Dotknij, aby włączyć Lokalizację lub wprowadzić adres ręcznie.</string>
+    <string name="connection_issue_banner_hotspot_off">Hotspot tego urządzenia jest wyłączony, więc telefon nie miał sieci, z którą mógłby się połączyć. Włącz hotspot przed połączeniem lub dotknij, aby aplikacja włączyła go za Ciebie.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Moduł Wi-Fi tego urządzenia nie mógł utworzyć sieci Wi-Fi Direct, z którą miał połączyć się telefon, a aplikacja nie może tego wymusić. Jeśli urządzenie jest połączone z inną siecią Wi-Fi, spróbuj ją rozłączyć. Dotknij, aby użyć hotspotu tego urządzenia.</string>
     <string name="connection_issue_banner_hotspot_config">Nie udało się uzyskać nazwy i hasła hotspotu. Dotknij, aby wprowadzić je ręcznie.</string>
     <string name="connection_issue_banner_dismiss">Zamknij</string>
     <string name="connection_issue_remedy_hotspot_query">Nazwa i hasło hotspotu</string>

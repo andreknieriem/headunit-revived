@@ -901,7 +901,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Kara listede</string>
     <string name="usb_blacklist_title">USB Cihazı Kara Listesi</string>
-    <string name="usb_blacklist_description">Kara listedeki cihazlar bağlandığında tamamen yok sayılır (otomatik başlatma veya bildirim olmaz).</string>
+    <string name="usb_blacklist_description">Kara listedeki cihazlar bağlandığında yoksayılır: otomatik başlatma ve istemler olmaz. Cihaz adı ile eşleştirilir, bu nedenle engellenen bir telefon her USB modunda engelli kalır. Bazı üreticiler her modele aynı adı verir ve bunlar ayırt edilemez.</string>
     <string name="add_to_blacklist">Kara Listeye Ekle</string>
     <string name="remove_from_blacklist">Kara Listeden Çıkar</string>
     <string name="usb_device_action_title">USB Cihazı Eylemi</string>
@@ -947,6 +947,8 @@
     <string name="wifi_direct_band_hint">Otomatik 5 GHz ister ve 2.4 GHz\'e geri döner.</string>
     <string name="connection_issue_banner_bt_silent">Telefonunuz Bluetooth ile bağlandı ancak veri alamadı. USB, Wireless Helper veya Auto moduna geçmek için dokunun.</string>
     <string name="connection_issue_banner_bssid">Cihaz kendi WiFi MAC adresini (BSSID) okuyamadı. Konumu açmak veya adresi manuel girmek için dokunun.</string>
+    <string name="connection_issue_banner_hotspot_off">Bu cihazın erişim noktası kapalı olduğundan telefonun bağlanacağı bir ağ yoktu. Bağlanmadan önce erişim noktasını açın veya uygulamanın sizin için açması için dokunun.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Bu cihazın Wi-Fi\'ı, telefonunuzun katılacağı Wi-Fi Direct ağını oluşturamadı ve uygulama bunu zorlayamaz. Cihaz başka bir Wi-Fi ağına bağlıysa bağlantısını kesmeyi deneyin. Bunun yerine bu cihazın kendi erişim noktasını kullanmak için dokunun.</string>
     <string name="connection_issue_banner_hotspot_config">Erişim noktası adı ve şifresi alınamadı. Manuel girmek için dokunun.</string>
     <string name="connection_issue_banner_dismiss">Kapat</string>
     <string name="connection_issue_remedy_hotspot_query">Erişim noktası adı ve şifresi</string>

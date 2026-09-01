@@ -902,7 +902,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Feketelistán</string>
     <string name="usb_blacklist_title">USB eszközök feketelistája</string>
-    <string name="usb_blacklist_description">A feketelistán lévő eszközöket a rendszer csatlakoztatáskor teljesen figyelmen kívül hagyja.</string>
+    <string name="usb_blacklist_description">A feketelistán lévő eszközök figyelmen kívül maradnak csatlakozáskor: nincs automatikus indítás, nincsenek értesítések. Az eszköz azonosítása név alapján történik, így a letiltott telefon minden USB-módban letiltva marad. Egyes gyártók minden modellnek ugyanazt a nevet adják, így nem különböztethetők meg.</string>
     <string name="add_to_blacklist">Hozzáadás a feketelistához</string>
     <string name="remove_from_blacklist">Eltávolítás a feketelistáról</string>
     <string name="usb_device_action_title">USB eszköz művelet</string>
@@ -948,6 +948,8 @@
     <string name="wifi_direct_band_hint">Az Automatikus 5 GHz-et kér, és 2,4 GHz-re vált vissza.</string>
     <string name="connection_issue_banner_bt_silent">A telefon Bluetooth-on csatlakozott, de nem érkezett adat. Érintse meg az USB, Wireless Helper vagy Auto módra váltáshoz.</string>
     <string name="connection_issue_banner_bssid">Az egység nem tudta beolvasni a WiFi MAC-címét (BSSID). Érintse meg a Helymeghatározás bekapcsolásához vagy a cím kézi megadásához.</string>
+    <string name="connection_issue_banner_hotspot_off">Az egység hotspotja ki van kapcsolva, így a telefonnak nem volt mihez csatlakoznia. Kapcsolja be a hotspotot a csatlakozás előtt, vagy érintse meg, hogy az alkalmazás bekapcsolja Ön helyett.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Az egység Wi-Fi-je nem tudta létrehozni a Wi-Fi Direct hálózatot, amelyhez a telefon csatlakozott volna, és az alkalmazás nem tudja ezt kényszeríteni. Ha az egység másik Wi-Fi-hálózathoz csatlakozik, próbálja meg lecsatlakoztatni. Érintse meg az egység saját hotspotjának használatához.</string>
     <string name="connection_issue_banner_hotspot_config">A készülék nem adta meg a hotspot nevét és jelszavát. Érintse meg a kézi megadáshoz.</string>
     <string name="connection_issue_banner_dismiss">Elvetés</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot neve és jelszava</string>

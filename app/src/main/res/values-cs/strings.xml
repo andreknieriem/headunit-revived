@@ -906,7 +906,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Na černé listině</string>
     <string name="usb_blacklist_title">Černá listina USB zařízení</string>
-    <string name="usb_blacklist_description">Zařízení na černé listině budou při připojení zcela ignorována (žádné automatické spouštění, žádné výzvy).</string>
+    <string name="usb_blacklist_description">Zařízení na černé listině jsou při připojení ignorována: žádné automatické spuštění ani výzvy. Zařízení se rozpoznává podle názvu, takže blokovaný telefon zůstane blokován v každém režimu USB. Někteří výrobci dávají všem modelům stejný název, takže je nelze odlišit.</string>
     <string name="add_to_blacklist">Přidat na černou listinu</string>
     <string name="remove_from_blacklist">Odebrat z černé listiny</string>
     <string name="usb_device_action_title">Akce USB zařízení</string>
@@ -952,6 +952,8 @@
     <string name="wifi_direct_band_hint">Automaticky požaduje 5 GHz a přechází na 2,4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Telefon se připojil přes Bluetooth, ale nepřijal žádná data. Klepnutím přepněte na USB, Wireless Helper nebo Auto.</string>
     <string name="connection_issue_banner_bssid">Jednotka nemohla přečíst svou MAC adresu WiFi (BSSID). Klepnutím zapněte Polohu nebo zadejte adresu ručně.</string>
+    <string name="connection_issue_banner_hotspot_off">Hotspot této jednotky je vypnutý, takže telefon neměl síť, ke které by se připojil. Před připojením hotspot zapněte nebo klepněte, aby jej aplikace zapnula za vás.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi této jednotky nemohla vytvořit síť Wi-Fi Direct, ke které se měl telefon připojit, a aplikace to nemůže vynutit. Pokud je jednotka připojena k jiné síti Wi-Fi, zkuste ji odpojit. Klepnutím použijte vlastní hotspot této jednotky.</string>
     <string name="connection_issue_banner_hotspot_config">Jednotka neposkytla název a heslo hotspotu. Klepnutím je zadejte ručně.</string>
     <string name="connection_issue_banner_dismiss">Zavřít</string>
     <string name="connection_issue_remedy_hotspot_query">Název a heslo hotspotu</string>

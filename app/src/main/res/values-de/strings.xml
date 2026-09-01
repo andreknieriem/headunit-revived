@@ -226,7 +226,7 @@
     <string name="listen_for_usb_devices_description">Zeige die Android-Systemaufforderung an, wenn ein USB-Gerät angeschlossen wird.</string>
     <string name="blacklisted">Blockiert (Blacklist)</string>
     <string name="usb_blacklist_title">USB-Geräte Blacklist</string>
-    <string name="usb_blacklist_description">Geräte auf der Blacklist werden beim Anschließen komplett ignoriert (kein Autostart, keine Aktionen).</string>
+    <string name="usb_blacklist_description">Geräte auf der Blacklist werden beim Anschließen ignoriert: kein Autostart, keine Aktionen. Ein Gerät wird über seinen Namen abgeglichen, sodass ein blockiertes Telefon in jedem USB-Modus blockiert bleibt. Manche Hersteller vergeben für jedes Modell denselben Namen; diese können nicht unterschieden werden.</string>
     <string name="add_to_blacklist">Auf Blacklist setzen</string>
     <string name="remove_from_blacklist">Von Blacklist entfernen</string>
     <string name="usb_device_action_title">USB-Geräte Aktion</string>
@@ -958,6 +958,8 @@
     <string name="wifi_direct_band_hint">Automatisch fordert 5 GHz an und weicht auf 2,4 GHz aus (auf Android 9 und älter wird zuerst ein 5-GHz-Kanal angefordert). 2,4 GHz reicht bis 720p, darüber wird 5 GHz empfohlen.</string>
     <string name="connection_issue_banner_bt_silent">Dein Telefon hat sich über Bluetooth verbunden, aber nichts von diesem Gerät gesendetes kam an. Dies ist ein Bluetooth-Problem des Headunits. Tippe hier, um auf USB, Wireless Helper oder Auto zu wechseln.</string>
     <string name="connection_issue_banner_bssid">Dieses Gerät konnte seine eigene WLAN-MAC-Adresse (BSSID) nicht ermitteln. Tippe hier, um den Standort zu aktivieren oder die Adresse manuell einzugeben.</string>
+    <string name="connection_issue_banner_hotspot_off">Der Hotspot dieses Geräts ist ausgeschaltet, sodass kein Netzwerk vorhanden war, mit dem sich dein Telefon verbinden konnte. Schalte den Hotspot vor dem Verbinden ein oder tippe hier, damit die App ihn für dich einschaltet.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Das WLAN dieses Geräts konnte das WiFi-Direct-Netzwerk nicht erstellen, mit dem sich dein Telefon verbinden sollte, und die App kann es nicht erzwingen. Wenn dieses Gerät mit einem anderen WLAN verbunden ist, trenne die Verbindung testweise. Tippe hier, um stattdessen den eigenen Hotspot dieses Geräts zu nutzen.</string>
     <string name="connection_issue_banner_hotspot_config">Dieses Gerät kann Hotspot-Name und -Passwort nicht an die App übergeben. Tippe hier, um sie manuell einzugeben.</string>
     <string name="connection_issue_banner_dismiss">Schließen</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-Name und Passwort</string>

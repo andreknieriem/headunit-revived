@@ -904,7 +904,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">차단 목록에 추가됨</string>
     <string name="usb_blacklist_title">USB 장치 차단 목록</string>
-    <string name="usb_blacklist_description">차단 목록에 있는 장치는 연결 시 완전히 무시됩니다(자동 실행 안 함, 메시지 안 뜸).</string>
+    <string name="usb_blacklist_description">블랙리스트에 등록된 기기는 연결 시 완전히 무시됩니다(자동 시작 및 알림 없음). 기기는 이름을 기준으로 매칭되므로, 차단된 휴대전화는 모든 USB 모드에서 차단 상태를 유지합니다. 일부 제조업체는 모든 모델에 동일한 이름을 부여하므로 이를 구분할 수 없습니다.</string>
     <string name="add_to_blacklist">차단 목록에 추가</string>
     <string name="remove_from_blacklist">차단 목록에서 제거</string>
     <string name="usb_device_action_title">USB 장치 작업</string>
@@ -949,6 +949,8 @@
     <string name="wifi_direct_band_hint">자동 설정은 5 GHz를 요청하고 2.4 GHz로 대체됩니다.</string>
     <string name="connection_issue_banner_bt_silent">휴대전화가 블루투스로 연결되었지만 데이터를 수신하지 못했습니다. USB, Wireless Helper 또는 Auto로 전환하려면 탭하세요.</string>
     <string name="connection_issue_banner_bssid">기기의 WiFi MAC 주소(BSSID)를 읽을 수 없습니다. 위치를 켜거나 직접 입력하려면 탭하세요.</string>
+    <string name="connection_issue_banner_hotspot_off">이 기기의 핫스팟이 꺼져 있어 휴대전화가 연결할 네트워크가 없습니다. 연결하기 전에 핫스팟을 켜거나, 앱이 대신 켤 수 있도록 탭하세요.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">이 기기의 WiFi가 휴대전화가 연결하려는 WiFi Direct 네트워크를 생성하지 못했으며, 앱에서 이를 강제할 수 없습니다. 기기가 다른 WiFi 네트워크에 연결되어 있다면 연결을 해제해 보세요. 이 기기의 자체 핫스팟을 대신 사용하려면 탭하세요.</string>
     <string name="connection_issue_banner_hotspot_config">핫스팟 이름과 비밀번호를 읽을 수 없습니다. 직접 입력하려면 탭하세요.</string>
     <string name="connection_issue_banner_dismiss">닫기</string>
     <string name="connection_issue_remedy_hotspot_query">핫스팟 이름 및 비밀번호</string>

@@ -914,7 +914,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">En lista negra</string>
     <string name="usb_blacklist_title">Lista negra de dispositivos USB</string>
-    <string name="usb_blacklist_description">Los dispositivos en la lista negra se ignorarán por completo al conectarse.</string>
+    <string name="usb_blacklist_description">Los dispositivos en la lista negra se ignoran al conectarse: sin inicio automático ni avisos. El dispositivo se identifica por su nombre, por lo que un teléfono bloqueado permanece bloqueado en cualquier modo USB. Algunos fabricantes asignan el mismo nombre a todos sus modelos y no se pueden diferenciar.</string>
     <string name="add_to_blacklist">Añadir a la lista negra</string>
     <string name="remove_from_blacklist">Eliminar de la lista negra</string>
     <string name="usb_device_action_title">Acción del dispositivo USB</string>
@@ -960,6 +960,8 @@
     <string name="wifi_direct_band_hint">Automático solicita 5 GHz y recurre a 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Su teléfono se conectó por Bluetooth, pero no recibió datos. Toque para cambiar a USB, Wireless Helper o Auto.</string>
     <string name="connection_issue_banner_bssid">Esta unidad no pudo leer su dirección MAC WiFi (BSSID). Toque para activar Ubicación o introducir la dirección a mano.</string>
+    <string name="connection_issue_banner_hotspot_off">El punto de acceso de esta unidad está desactivado, por lo que no había red a la que conectar su teléfono. Active el punto de acceso antes de conectar o toque para permitir que la app lo active por usted.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">El Wi-Fi de esta unidad no pudo crear la red Wi-Fi Direct a la que se iba a unir su teléfono, y la app no puede forzarlo. Si esta unidad está conectada a otra red Wi-Fi, pruebe a desconectarla. Toque para usar el punto de acceso propio de esta unidad.</string>
     <string name="connection_issue_banner_hotspot_config">Esta unidad no proporcionó el nombre y contraseña del punto de acceso. Toque para introducirlos a mano.</string>
     <string name="connection_issue_banner_dismiss">Descartar</string>
     <string name="connection_issue_remedy_hotspot_query">Nombre y contraseña del punto de acceso</string>

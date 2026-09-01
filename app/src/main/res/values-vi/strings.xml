@@ -909,7 +909,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Trong danh sách đen</string>
     <string name="usb_blacklist_title">Danh sách đen thiết bị USB</string>
-    <string name="usb_blacklist_description">Các thiết bị trong danh sách đen sẽ hoàn toàn bị bỏ qua khi kết nối.</string>
+    <string name="usb_blacklist_description">Các thiết bị trong danh sách đen sẽ bị bỏ qua khi kết nối: không tự khởi động, không hỏi quyền. Thiết bị được so khớp theo tên, do đó điện thoại bị chặn sẽ vẫn bị chặn ở mọi chế độ USB. Một số hãng đặt cùng tên cho mọi mẫu máy nên không thể phân biệt.</string>
     <string name="add_to_blacklist">Thêm vào danh sách đen</string>
     <string name="remove_from_blacklist">Xóa khỏi danh sách đen</string>
     <string name="usb_device_action_title">Hành động thiết bị USB</string>
@@ -955,6 +955,8 @@
     <string name="wifi_direct_band_hint">Tự động yêu cầu 5 GHz và chuyển về 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Điện thoại đã kết nối qua Bluetooth nhưng không nhận được dữ liệu. Nhấn để chuyển sang USB, Wireless Helper hoặc Auto.</string>
     <string name="connection_issue_banner_bssid">Không thể đọc địa chỉ MAC WiFi (BSSID). Nhấn để bật Vị trí hoặc nhập địa chỉ thủ công.</string>
+    <string name="connection_issue_banner_hotspot_off">Điểm phát sóng của thiết bị này đang tắt nên không có mạng để điện thoại kết nối. Hãy bật điểm phát sóng trước khi kết nối hoặc nhấn để ứng dụng tự bật giúp bạn.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi của thiết bị này không thể tạo mạng Wi-Fi Direct để điện thoại kết nối và ứng dụng không thể ép buộc. Nếu thiết bị đang kết nối với mạng Wi-Fi khác, hãy thử ngắt kết nối. Nhấn để sử dụng điểm phát sóng của thiết bị này.</string>
     <string name="connection_issue_banner_hotspot_config">Không thể lấy tên và mật khẩu điểm phát sóng. Nhấn để nhập thủ công.</string>
     <string name="connection_issue_banner_dismiss">Bỏ qua</string>
     <string name="connection_issue_remedy_hotspot_query">Tên và mật khẩu điểm phát sóng</string>

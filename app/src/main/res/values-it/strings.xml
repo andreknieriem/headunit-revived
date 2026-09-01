@@ -909,7 +909,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">In lista nera</string>
     <string name="usb_blacklist_title">Lista nera dispositivi USB</string>
-    <string name="usb_blacklist_description">I dispositivi nella lista nera verranno completamente ignorati alla connessione.</string>
+    <string name="usb_blacklist_description">I dispositivi nella lista nera vengono ignorati alla connessione: nessun avvio automatico, nessun messaggio. Il dispositivo viene riconosciuto dal nome, quindi un telefono bloccato rimane bloccato in qualsiasi modalità USB. Alcuni produttori usano lo stesso nome per tutti i modelli, rendendoli indistinguibili.</string>
     <string name="add_to_blacklist">Aggiungi alla lista nera</string>
     <string name="remove_from_blacklist">Rimuovi dalla lista nera</string>
     <string name="usb_device_action_title">Azione dispositivo USB</string>
@@ -955,6 +955,8 @@
     <string name="wifi_direct_band_hint">Automatico richiede 5 GHz e ripiega su 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Il telefono si è connesso tramite Bluetooth, ma non ha ricevuto dati. Tocca per passare a USB, Wireless Helper o Auto.</string>
     <string name="connection_issue_banner_bssid">Questa unità non è riuscita a leggere il proprio MAC WiFi (BSSID). Tocca per attivare la posizione o inserire l\'indirizzo a mano.</string>
+    <string name="connection_issue_banner_hotspot_off">L\'hotspot di questa unità è disattivato, quindi non c\'era alcuna rete a cui connettere il telefono. Attiva l\'hotspot prima di connetterti o tocca per consentire all\'app di attivarlo automaticamente.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Il Wi-Fi di questa unità non è riuscito a creare la rete Wi-Fi Direct a cui il telefono doveva connettersi e l\'app non può forzarlo. Se l\'unità è connessa a un\'altra rete Wi-Fi, prova a disconnetterla. Tocca per utilizzare invece l\'hotspot di questa unità.</string>
     <string name="connection_issue_banner_hotspot_config">Questa unità non ha fornito nome e password dell\'hotspot. Tocca per inserirli a mano.</string>
     <string name="connection_issue_banner_dismiss">Ignora</string>
     <string name="connection_issue_remedy_hotspot_query">Nome e password dell\'hotspot</string>

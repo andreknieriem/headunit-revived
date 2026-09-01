@@ -906,7 +906,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Op zwarte lijst</string>
     <string name="usb_blacklist_title">USB-apparaten zwarte lijst</string>
-    <string name="usb_blacklist_description">Apparaten op de zwarte lijst worden volledig genegeerd bij aansluiting.</string>
+    <string name="usb_blacklist_description">Apparaten op de zwarte lijst worden genegeerd bij aansluiting: geen autostart, geen meldingen. Een apparaat wordt herkend aan de naam, zodat een geblokkeerde telefoon in elke USB-modus geblokkeerd blijft. Sommige fabrikanten geven elk model dezelfde naam, waardoor ze niet te onderscheiden zijn.</string>
     <string name="add_to_blacklist">Toevoegen aan zwarte lijst</string>
     <string name="remove_from_blacklist">Verwijderen van zwarte lijst</string>
     <string name="usb_device_action_title">USB-apparaat actie</string>
@@ -952,6 +952,8 @@
     <string name="wifi_direct_band_hint">Automatisch vraagt 5 GHz aan en valt terug op 2,4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Je telefoon is via Bluetooth verbonden, maar ontving geen gegevens. Tik om over te schakelen naar USB, Wireless Helper of Auto.</string>
     <string name="connection_issue_banner_bssid">Dit apparaat kon zijn eigen WiFi MAC-adres (BSSID) niet lezen. Tik om Locatie in te schakelen of het adres handmatig in te voeren.</string>
+    <string name="connection_issue_banner_hotspot_off">De hotspot van dit apparaat staat uit, dus er was geen netwerk om je telefoon mee te verbinden. Schakel de hotspot in voordat je verbinding maakt, of tik om de app deze voor je te laten inschakelen.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">De wifi van dit apparaat kon het Wi-Fi Direct-netwerk niet aanmaken waarmee je telefoon verbinding wilde maken, en de app kan dit niet forceren. Als dit apparaat verbonden is met een ander wifi-netwerk, verbreek dan die verbinding om te testen. Tik om in plaats daarvan de hotspot van dit apparaat te gebruiken.</string>
     <string name="connection_issue_banner_hotspot_config">Hotspot-naam en wachtwoord konden niet worden gelezen. Tik om handmatig in te voeren.</string>
     <string name="connection_issue_banner_dismiss">Sluiten</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-naam en wachtwoord</string>

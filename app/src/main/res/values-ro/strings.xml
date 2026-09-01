@@ -903,7 +903,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">Pe lista neagră</string>
     <string name="usb_blacklist_title">Lista neagră dispozitive USB</string>
-    <string name="usb_blacklist_description">Dispozitivele de pe lista neagră vor fi complet ignorate la conectare.</string>
+    <string name="usb_blacklist_description">Dispozitivele din lista neagră sunt ignorate la conectare: fără pornire automată, fără solicitări. Dispozitivul este identificat după nume, astfel că un telefon blocat rămâne blocat în orice mod USB. Unii producători dau același nume tuturor modelelor, făcându-le imposibil de distins.</string>
     <string name="add_to_blacklist">Adaugă la lista neagră</string>
     <string name="remove_from_blacklist">Elimină din lista neagră</string>
     <string name="usb_device_action_title">Acțiune dispozitiv USB</string>
@@ -949,6 +949,8 @@
     <string name="wifi_direct_band_hint">Automat solicită 5 GHz și recurge la 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Telefonul s-a conectat prin Bluetooth, dar nu a primit date. Atingeți pentru a comuta pe USB, Wireless Helper sau Auto.</string>
     <string name="connection_issue_banner_bssid">Unitatea nu a putut citi adresa MAC WiFi (BSSID). Atingeți pentru a porni Locația sau a introduce adresa manual.</string>
+    <string name="connection_issue_banner_hotspot_off">Hotspotul acestei unități este oprit, astfel că telefonul nu a avut la ce rețea să se conecteze. Porniți hotspotul înainte de conectare sau atingeți pentru ca aplicația să îl pornească pentru dvs.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi-ul acestei unități nu a putut crea rețeaua Wi-Fi Direct la care urma să se conecteze telefonul, iar aplicația nu poate forța acest lucru. Dacă unitatea este conectată la altă rețea Wi-Fi, încercați să o deconectați. Atingeți pentru a utiliza hotspotul acestei unități.</string>
     <string name="connection_issue_banner_hotspot_config">Unitatea nu a furnizat numele și parola hotspotului. Atingeți pentru a le introduce manual.</string>
     <string name="connection_issue_banner_dismiss">Închide</string>
     <string name="connection_issue_remedy_hotspot_query">Nume și parolă hotspot</string>

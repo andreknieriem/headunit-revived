@@ -910,7 +910,7 @@
     <!-- Auto-added missing translations -->
     <string name="blacklisted">ブラックリスト登録済み</string>
     <string name="usb_blacklist_title">USBデバイスのブラックリスト</string>
-    <string name="usb_blacklist_description">ブラックリスト内のデバイスは接続時に完全に無視されます（自動起動なし、プロンプトなし）。</string>
+    <string name="usb_blacklist_description">ブラックリスト内のデバイスは接続時に無視されます（自動起動なし、確認プロンプトなし）。デバイスは名前で照合されるため、ブロックされたスマートフォンはすべてのUSBモードでブロックされたままになります。一部のメーカーは全モデルに同じ名前を付けており、それらを区別することはできません。</string>
     <string name="add_to_blacklist">ブラックリストに追加</string>
     <string name="remove_from_blacklist">ブラックリストから削除</string>
     <string name="usb_device_action_title">USBデバイスのアクション</string>
@@ -956,6 +956,8 @@
     <string name="wifi_direct_band_hint">自動は5GHzを要求し、2.4GHzにフォールバックします。</string>
     <string name="connection_issue_banner_bt_silent">Bluetoothで接続されましたがデータを受信できませんでした。タップしてUSB、Wireless Helper、またはAutoに切り替えてください。</string>
     <string name="connection_issue_banner_bssid">WiFi MACアドレス（BSSID）を読み取れませんでした。タップして位置情報をオンにするか手動で入力してください。</string>
+    <string name="connection_issue_banner_hotspot_off">このユニットのホットスポットがオフになっているため、スマートフォンが接続するネットワークがありませんでした。接続する前にホットスポットをオンにするか、タップしてアプリにオンにさせてください。</string>
+    <string name="connection_issue_banner_wifi_direct_refused">このユニットのWiFiはスマートフォンが接続しようとしたWiFi Directネットワークを作成できず、アプリ側で強制することもできません。このユニットが別のWiFiネットワークに接続されている場合は、切断してみてください。タップしてこのユニット独自のホットスポットを代わりに使用します。</string>
     <string name="connection_issue_banner_hotspot_config">ホットスポット名とパスワードを取得できませんでした。タップして手動で入力してください。</string>
     <string name="connection_issue_banner_dismiss">閉じる</string>
     <string name="connection_issue_remedy_hotspot_query">ホットスポット名とパスワード</string>

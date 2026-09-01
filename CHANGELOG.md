@@ -1,5 +1,5 @@
 # Changelog
-### v.3.3.0-beta4
+### v.3.3.0
 - Begin for theming of the App.
 - Refactor WiFi-Code from AapService into their own classes for better maintenance, thanks to @MrEAlderson
 - Refactor Self-Mode and USB-Mode from AapService into their own classes for better maintenance, thanks to @MrEAlderson
