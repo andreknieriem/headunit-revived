@@ -1,9 +1,11 @@
 package com.andrerinas.openheadunit.connection.usb
 
+import android.content.Context
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbInterface
 import android.os.Build
+import com.andrerinas.openheadunit.utils.Settings
 import com.andrerinas.openheadunit.utils.Utils
 import java.util.Locale
 
@@ -29,11 +31,6 @@ class UsbDeviceCompat(val wrappedDevice: UsbDevice) {
         get() = isInAccessoryMode(wrappedDevice)
 
     companion object {
-        private const val USB_VID_GOO = 0x18D1   // 6353   Nexus or ACC mode, see PID to distinguish
-        private const val USB_PID_ACC = 0x2D00      // Accessory                  100
-        private const val USB_PID_ACC_ADB = 0x2D01      // Accessory + ADB            110
-        private const val APPLE_VID = 0x05AC
-
         fun getUniqueName(device: UsbDevice): String {
             val vendorId = device.vendorId
             val productId = device.productId
@@ -55,79 +52,96 @@ class UsbDeviceCompat(val wrappedDevice: UsbDevice) {
             return vidPid
         }
 
-        fun isInAccessoryMode(device: UsbDevice): Boolean {
-            val dev_vend_id = device.vendorId
-            val dev_prod_id = device.productId
-            return dev_vend_id == USB_VID_GOO &&
-                (dev_prod_id == USB_PID_ACC || dev_prod_id == USB_PID_ACC_ADB)
-        }
+        fun isInAccessoryMode(device: UsbDevice): Boolean =
+            UsbDeviceIdentityPolicy.isInAccessoryMode(device.vendorId, device.productId)
 
-        fun isAndroidDevice(device: UsbDevice): Boolean {
-            // Apple does not support Android Auto
-            if (device.vendorId == APPLE_VID) return false
+        fun isAndroidDevice(device: UsbDevice): Boolean = evaluate(device).accepted
 
-            if (isInAccessoryMode(device)) return true
+        /**
+         * [isAndroidDevice] plus the user's blacklist. Every path that acts on a device asks this
+         * one; [isAndroidDevice] alone is for the list UI and the diagnostic dump, where a
+         * blacklisted device still has to appear so it can be taken off the list.
+         *
+         * The blacklist is read from device-protected storage, so it applies during a locked boot
+         * as well. It used to be consulted in one of seven paths, and skipped entirely when the
+         * user had not unlocked.
+         */
+        fun isConnectable(context: Context, device: UsbDevice): Boolean =
+            isAndroidDevice(device) && !Settings.isUsbDeviceBlacklisted(context, device)
 
-            return hasAndroidInterface(device)
+        /**
+         * How the device is named in the user's blacklist. Manufacturer and product rather than
+         * VID:PID, because those survive a USB mode change and the numbers do not; see
+         * [UsbBlacklistPolicy].
+         */
+        fun blacklistKey(device: UsbDevice): String {
+            val readable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+            return UsbBlacklistPolicy.key(
+                manufacturer = if (readable) device.manufacturerName else null,
+                product = if (readable) device.productName else null,
+                vendorId = device.vendorId,
+                productId = device.productId,
+            )
         }
 
         /**
-         * Identifies an Android device by USB class/subclass
-         * More reliable than a VID list
+         * The same decision as [isAndroidDevice], but it says which rule fired. A user reporting
+         * "no USB device found" cannot otherwise be told apart from a device we rejected, so this
+         * feeds the diagnostic dump rather than any connection logic.
          */
-        private fun hasAndroidInterface(device: UsbDevice): Boolean {
+        fun matchReason(device: UsbDevice): String = evaluate(device).toString()
+
+        /**
+         * [matchReason] plus the blacklist, for the paths that refuse on [isConnectable]. The
+         * descriptor verdict on its own says "accepted" for a device the user has vetoed, which
+         * is the opposite of what someone reading the log to find out why their phone will not
+         * connect is looking for.
+         */
+        fun connectableReason(context: Context, device: UsbDevice): String =
+            if (Settings.isUsbDeviceBlacklisted(context, device)) BLACKLISTED_REASON
+            else matchReason(device)
+
+        /**
+         * The blacklist is the one reason a device the descriptors accept still will not connect,
+         * and a user who set it months ago will not mention it in a bug report.
+         */
+        const val BLACKLISTED_REASON = "rejected: blacklisted by the user"
+
+        private fun evaluate(device: UsbDevice): UsbDeviceIdentityPolicy.Verdict =
+            UsbDeviceIdentityPolicy.evaluate(describe(device))
+
+        /** Maps the Android object onto the plain descriptors the policy decides on. */
+        private fun describe(device: UsbDevice): UsbDeviceIdentityPolicy.Device {
+            val interfaces = ArrayList<UsbDeviceIdentityPolicy.Interface>(device.interfaceCount)
             for (i in 0 until device.interfaceCount) {
-                val usbInterface = device.getInterface(i)
-                val ifaceClass = usbInterface.interfaceClass
-                val ifaceSubclass = usbInterface.interfaceSubclass
-                val ifaceProtocol = usbInterface.interfaceProtocol
-
-                // AOAP (Android Open Accessory Protocol)
-                if (ifaceClass == 0xFF && ifaceSubclass == 0xFF && ifaceProtocol == 0x00) {
-                    if (hasBulkEndpoint(usbInterface)) return true
-                }
-
-                // MTP (Media Transfer Protocol)
-                if (ifaceClass == UsbConstants.USB_CLASS_MASS_STORAGE &&
-                    ifaceSubclass == 0x06 && ifaceProtocol == 0x01) {
-                    return true
-                }
-
-                // ADB (Android Debug Bridge)
-                if (ifaceClass == 0xFF && ifaceSubclass == 0x42 && ifaceProtocol == 0x01) {
-                    return true
-                }
-
-                // RNDIS (USB tethering)
-                if (ifaceClass == 0xE0 && ifaceSubclass == 0x01 && ifaceProtocol == 0x03) {
-                    return true
-                }
-
-                // IAD (Interface Association Descriptor) - современные Android
-                if (ifaceClass == 0xEF && ifaceSubclass == 0x04 && ifaceProtocol == 0x01) {
-                    return true
-                }
-
-                // PTP (Picture Transfer Protocol) - старые Android
-                if (ifaceClass == 0x06 && ifaceSubclass == 0x01 && ifaceProtocol == 0x01) {
-                    return true
-                }
+                interfaces.add(describe(device.getInterface(i)))
             }
-
-            return false
+            return UsbDeviceIdentityPolicy.Device(
+                vendorId = device.vendorId,
+                productId = device.productId,
+                deviceClass = device.deviceClass,
+                interfaces = interfaces,
+            )
         }
 
-        /**
-         * Checks for the presence of a bulk endpoint (needed for data transfer)
-         */
-        private fun hasBulkEndpoint(usbInterface: UsbInterface): Boolean {
+        private fun describe(usbInterface: UsbInterface): UsbDeviceIdentityPolicy.Interface {
+            var hasBulkIn = false
+            var hasBulkOut = false
             for (j in 0 until usbInterface.endpointCount) {
                 val endpoint = usbInterface.getEndpoint(j)
-                if (endpoint.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {
-                    return true
-                }
+                if (endpoint.type != UsbConstants.USB_ENDPOINT_XFER_BULK) continue
+                if (endpoint.direction == UsbConstants.USB_DIR_IN) hasBulkIn = true else hasBulkOut = true
             }
-            return false
+            return UsbDeviceIdentityPolicy.Interface(
+                ifaceClass = usbInterface.interfaceClass,
+                subclass = usbInterface.interfaceSubclass,
+                protocol = usbInterface.interfaceProtocol,
+                // getName() is API 21; below that the descriptor rules run without it, which
+                // only costs the accessory case its tie-breaker.
+                name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) usbInterface.name else null,
+                hasBulkIn = hasBulkIn,
+                hasBulkOut = hasBulkOut,
+            )
         }
     }
 }

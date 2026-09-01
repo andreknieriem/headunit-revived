@@ -483,6 +483,7 @@ object SettingsBackupManager {
         Settings.syncAutoStartWifiSsidToDeviceStorage(context, settings.autoStartWifiSsid)
         Settings.syncListenForUsbDevicesToDeviceStorage(context, settings.listenForUsbDevices)
         Settings.syncAutoStartBtMacsToDeviceStorage(context, settings.autoStartBluetoothDeviceMacs)
+        Settings.syncUsbBlacklistToDeviceStorage(context, settings.usbBlacklist)
         Settings.setUsbAttachedActivityEnabled(context, settings.listenForUsbDevices)
         AppThemeManager.reapply(context, settings)
     }

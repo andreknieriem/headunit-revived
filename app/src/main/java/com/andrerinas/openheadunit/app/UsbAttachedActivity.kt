@@ -16,6 +16,7 @@ import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.connection.usb.UsbAccessoryMode
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceDiagnostics
 import com.andrerinas.openheadunit.connection.usb.UsbReceiver
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.DeviceIntent
@@ -34,6 +35,7 @@ class UsbAttachedActivity : Activity() {
 
     private fun resolveUsbDevice(intent: Intent?): UsbDevice? {
         val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+        UsbDeviceDiagnostics.logDeviceList(this, usbManager, "USB attach")
         val androidDevices = usbManager.deviceList.values.filter { UsbDeviceCompat.isAndroidDevice(it) }
         return resolveDevice(intent, androidDevices)
     }
@@ -88,8 +90,8 @@ class UsbAttachedActivity : Activity() {
 
         val settings = if (!isLocked) Settings(this) else null
 
-        if (settings != null && settings.isUsbDeviceBlacklisted(device.vendorId, device.productId)) {
-            AppLog.i("UsbAttachedActivity: Ignored blacklisted USB device (${settings.formatUsbVidPidDisplay(device.vendorId, device.productId)})")
+        if (Settings.isUsbDeviceBlacklisted(this, device)) {
+            AppLog.i("UsbAttachedActivity: Ignored blacklisted USB device (${Settings.formatUsbVidPidDisplay(device.vendorId, device.productId)})")
             finish()
             return
         }
@@ -189,9 +191,8 @@ class UsbAttachedActivity : Activity() {
         val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                       !(getSystemService(Context.USER_SERVICE) as UserManager).isUserUnlocked
 
-        val settings = if (!isLocked) Settings(this) else null
-        if (settings != null && settings.isUsbDeviceBlacklisted(device.vendorId, device.productId)) {
-            AppLog.i("UsbAttachedActivity: Ignored blacklisted USB device in onNewIntent (${settings.formatUsbVidPidDisplay(device.vendorId, device.productId)})")
+        if (Settings.isUsbDeviceBlacklisted(this, device)) {
+            AppLog.i("UsbAttachedActivity: Ignored blacklisted USB device in onNewIntent (${Settings.formatUsbVidPidDisplay(device.vendorId, device.productId)})")
             finish()
             return
         }

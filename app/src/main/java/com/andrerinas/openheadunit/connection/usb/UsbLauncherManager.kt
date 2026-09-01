@@ -138,7 +138,8 @@ class UsbLauncherManager(val service: AapService) {
             isSwitchingToProjection.get()) return
 
         val usbManager = service.getSystemService(Context.USB_SERVICE) as UsbManager
-        val deviceList = usbManager.deviceList.values.filter { UsbDeviceCompat.isAndroidDevice(it) }
+        UsbDeviceDiagnostics.logDeviceList(service, usbManager, "service scan (force=$force)")
+        val deviceList = usbManager.deviceList.values.filter { UsbDeviceCompat.isConnectable(service, it) }
 
         // Check for devices already in accessory mode first.
         // After AOA switch the device re-enumerates and appears as a new USB device — we must

@@ -28,6 +28,7 @@ import com.andrerinas.openheadunit.aap.AapProjectionActivity
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.NearbyManager
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceDiagnostics
 import android.content.res.Configuration
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.AppPermissions
@@ -396,8 +397,9 @@ class HomeFragment : Fragment() {
 
             // Get list of Android USB devices
             val usbManager = requireContext().getSystemService(Context.USB_SERVICE) as UsbManager
+            UsbDeviceDiagnostics.logDeviceList(requireContext(), usbManager, "USB button")
             val androidDevices = usbManager.deviceList.values
-                .filter { UsbDeviceCompat.isAndroidDevice(it) }
+                .filter { UsbDeviceCompat.isConnectable(requireContext(), it) }
 
             // If exactly one device found - auto-connect
             if (androidDevices.size == 1) {

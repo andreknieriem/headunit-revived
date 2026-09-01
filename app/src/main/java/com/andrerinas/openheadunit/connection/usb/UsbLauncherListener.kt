@@ -8,6 +8,7 @@ import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.connection.usb.UsbLauncherManager.Companion.ATTACH_FALLBACK_DELAY_MS
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.utils.Settings
 import com.andrerinas.openheadunit.utils.ToastUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -21,8 +22,8 @@ class UsbLauncherListener(private val manager: UsbLauncherManager) : UsbReceiver
     private val service = manager.service
 
     override fun onUsbAttach(device: UsbDevice) {
-        if (!UsbDeviceCompat.isAndroidDevice(device)) {
-            AppLog.i("Ignoring non-Android USB device attached in service (VID: ${device.vendorId}): ${device.deviceName}")
+        if (!UsbDeviceCompat.isConnectable(service, device)) {
+            AppLog.i("Ignoring USB device attached in service (${Settings.formatUsbVidPidDisplay(device.vendorId, device.productId)}): ${UsbDeviceCompat.connectableReason(service, device)}")
             return
         }
 
@@ -86,8 +87,8 @@ class UsbLauncherListener(private val manager: UsbLauncherManager) : UsbReceiver
     }
 
     override fun onUsbPermission(granted: Boolean, connect: Boolean, device: UsbDevice) {
-        if (!UsbDeviceCompat.isAndroidDevice(device)) {
-            AppLog.i("Ignoring USB permission callback for non-Android device (VID: ${device.vendorId}): ${device.deviceName}")
+        if (!UsbDeviceCompat.isConnectable(service, device)) {
+            AppLog.i("Ignoring USB permission callback (VID: ${device.vendorId}): ${UsbDeviceCompat.matchReason(device)}")
             return
         }
         val deviceName = UsbDeviceCompat(device).uniqueName

@@ -126,7 +126,7 @@ class UsbListFragment : Fragment() {
             holder.startButton.tag = position
             holder.startButton.setOnClickListener(this)
 
-            val isBlacklisted = mSettings.isUsbDeviceBlacklisted(device.vendorId, device.productId)
+            val isBlacklisted = mSettings.isUsbDeviceBlacklisted(device.wrappedDevice)
 
             if (device.isInAccessoryMode) {
                 holder.allowButton.setText(R.string.allowed)
@@ -169,19 +169,19 @@ class UsbListFragment : Fragment() {
             }
             val device = deviceList[position]
             if (v.id == android.R.id.button1) {
-                val isBlacklisted = mSettings.isUsbDeviceBlacklisted(device.vendorId, device.productId)
+                val isBlacklisted = mSettings.isUsbDeviceBlacklisted(device.wrappedDevice)
                 val isAllowed = allowedDevices.contains(device.uniqueName)
 
                 when {
                     isBlacklisted -> {
                         // Blacklisted -> Ignored
-                        mSettings.removeUsbDeviceFromBlacklist(device.vendorId, device.productId)
+                        mSettings.removeUsbDeviceFromBlacklist(device.wrappedDevice)
                     }
                     isAllowed -> {
                         // Allowed -> Blacklisted
                         allowedDevices.remove(device.uniqueName)
                         mSettings.allowedDevices = allowedDevices
-                        mSettings.addUsbDeviceToBlacklist(device.vendorId, device.productId)
+                        mSettings.addUsbDeviceToBlacklist(device.wrappedDevice)
                     }
                     else -> {
                         // Ignored -> Allowed
@@ -191,6 +191,11 @@ class UsbListFragment : Fragment() {
                 }
                 notifyDataSetChanged()
             } else {
+                if (mSettings.isUsbDeviceBlacklisted(device.wrappedDevice)) {
+                    // The row already says "Blacklisted" and the button used to connect anyway.
+                    Toast.makeText(mContext, R.string.blacklisted, Toast.LENGTH_SHORT).show()
+                    return
+                }
                 if (App.provide(mContext).commManager.isConnected) {
 
                     // Already connected -> bring existing projection to front

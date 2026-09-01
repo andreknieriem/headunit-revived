@@ -57,6 +57,9 @@ class App : Application() {
             Settings.syncAutoStartOnWifiToDeviceStorage(this, settings.autoStartOnWifi)
             Settings.syncAutoStartWifiSsidToDeviceStorage(this, settings.autoStartWifiSsid)
             Settings.syncAutoStartBtMacsToDeviceStorage(this, settings.autoStartBluetoothDeviceMacs)
+            // The blacklist joins them: an install that predates the mirror has its list only in
+            // credential storage, so without this it is invisible until the user edits it.
+            Settings.syncUsbBlacklistToDeviceStorage(this, settings.usbBlacklist)
 
             // Apply app theme (runs the live manager when dynamic, or when a saved place
             // can force the app theme even over a static base).
