@@ -113,6 +113,11 @@ class UsbAttachedActivity : Activity() {
                 finish()
                 return
             }
+            if (isLocked) {
+                AppLog.w("Usb in accessory mode, but the user has not unlocked yet and a session needs credential storage. Waiting for unlock.")
+                finish()
+                return
+            }
             AppLog.i("Usb in accessory mode and has permission. Starting AapService.")
             ContextCompat.startForegroundService(this, Intent(this, AapService::class.java).apply {
                 action = AapService.ACTION_CHECK_USB
@@ -128,7 +133,7 @@ class UsbAttachedActivity : Activity() {
         // Use device-protected storage for the auto-start check so it works
         // during locked boot (before credential storage is available)
         val autoStartOnUsb = Settings.isAutoStartOnUsbEnabled(this)
-        if (autoStartOnUsb && !App.provide(this).commManager.isConnected) {
+        if (autoStartOnUsb && (isLocked || !App.provide(this).commManager.isConnected)) {
             AppLog.i("USB auto-start: launching app for ${deviceCompat.uniqueName}")
             try {
                 startActivity(Intent(this, MainActivity::class.java).apply {

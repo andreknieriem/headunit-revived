@@ -23,9 +23,17 @@ class AutoStartReceiver : BroadcastReceiver() {
         val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && 
                       !(context.getSystemService(Context.USER_SERVICE) as UserManager).isUserUnlocked
         
+        // Before the first unlock there is no credential storage, which both the session and the
+        // object graph read, so there is nothing to start yet. Nothing replays this event either,
+        // so a phone that connected at the lock screen has to reconnect once the user is in.
+        if (isLocked) {
+            AppLog.w("AutoStartReceiver: device is locked, ignoring the Bluetooth event until the user unlocks.")
+            return
+        }
+
         // [FIX] Don't trigger auto-start if we are already connected!
         // This prevents activity restarts if BT reconnects during a session.
-        if (!isLocked && com.andrerinas.openheadunit.App.provide(context).commManager.isConnected) {
+        if (com.andrerinas.openheadunit.App.provide(context).commManager.isConnected) {
             AppLog.d("AutoStartReceiver: Already connected to Android Auto. Ignoring BT event.")
             return
         }

@@ -4,7 +4,10 @@ import androidx.appcompat.app.AppCompatDelegate
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.UserManager
 import android.os.Build
 import androidx.core.content.ContextCompat
@@ -42,31 +45,18 @@ class App : Application() {
             ConscryptInitializer.initialize()
         }
 
-        // Root support
-        component.suExecutor.register()
-
         if (isUserUnlocked()) {
-            val settings = Settings(this) // Create a Settings instance
-            AppLog.init(settings, this) // Initialize AppLog with settings for conditional logging
-
-            // Sync auto-start settings to device-protected storage so that
-            // BootCompleteReceiver, UsbAttachedActivity, and AutoStartReceiver
-            // can read them during locked boot (before user unlock)
-            Settings.syncAutoStartOnBootToDeviceStorage(this, settings.autoStartOnBoot)
-            Settings.syncAutoStartOnUsbToDeviceStorage(this, settings.autoStartOnUsb)
-            Settings.syncAutoStartOnWifiToDeviceStorage(this, settings.autoStartOnWifi)
-            Settings.syncAutoStartWifiSsidToDeviceStorage(this, settings.autoStartWifiSsid)
-            Settings.syncAutoStartBtMacsToDeviceStorage(this, settings.autoStartBluetoothDeviceMacs)
-            // The blacklist joins them: an install that predates the mirror has its list only in
-            // credential storage, so without this it is invisible until the user edits it.
-            Settings.syncUsbBlacklistToDeviceStorage(this, settings.usbBlacklist)
-
-            // Apply app theme (runs the live manager when dynamic, or when a saved place
-            // can force the app theme even over a static base).
-            AppThemeManager.reapply(this, settings)
+            initUnlockedOnce()
         } else {
             AppLog.init(null, this) // Initialize with default logging if locked
             AppLog.w("App started in Direct Boot mode (locked). Settings access deferred.")
+            // The process outlives the lock screen, so without this it would spend the rest of
+            // its life on defaults: the user's log level, their theme and the auto-start mirrors
+            // would all stay unread until the process happened to die.
+            ContextCompat.registerReceiver(
+                this, userUnlockedReceiver, IntentFilter(Intent.ACTION_USER_UNLOCKED),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
         }
 
         if (ConscryptInitializer.isAvailable()) {
@@ -82,26 +72,72 @@ class App : Application() {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val serviceChannel = NotificationChannel(defaultChannel, "Headunit Service", NotificationManager.IMPORTANCE_LOW)
             serviceChannel.description = "Persistent service notification"
             serviceChannel.setShowBadge(false)
-            component.notificationManager.createNotificationChannel(serviceChannel)
+            notificationManager.createNotificationChannel(serviceChannel)
 
             val mediaChannel = NotificationChannel(BackgroundNotification.mediaChannel, "Media Playback", NotificationManager.IMPORTANCE_LOW)
             mediaChannel.setSound(null, null)
             mediaChannel.setShowBadge(false)
-            component.notificationManager.createNotificationChannel(mediaChannel)
+            notificationManager.createNotificationChannel(mediaChannel)
 
             AapNavigation.createNotificationChannel(this)
 
             val bootChannel = NotificationChannel(bootStartChannel, "Boot Auto-Start", NotificationManager.IMPORTANCE_HIGH)
             bootChannel.description = "Shown once after boot to open the app"
             bootChannel.setShowBadge(false)
-            component.notificationManager.createNotificationChannel(bootChannel)
+            notificationManager.createNotificationChannel(bootChannel)
         }
 
         // Register the main broadcast receiver safely for Android 14+ using ContextCompat
         ContextCompat.registerReceiver(this, AapBroadcastReceiver(), AapBroadcastReceiver.filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+    }
+
+    /**
+     * Everything that needs credential-encrypted storage, including the object graph itself:
+     * AppComponent builds a VideoDecoder whose fields read Settings, so touching it before the
+     * first unlock throws and takes the whole process down. Runs once, at start or at unlock.
+     */
+    private fun initUnlockedOnce() {
+        if (unlockedInitDone) return
+        unlockedInitDone = true
+
+        // Root support
+        component.suExecutor.register()
+
+        val settings = Settings(this) // Create a Settings instance
+        AppLog.init(settings, this) // Initialize AppLog with settings for conditional logging
+
+        // Sync auto-start settings to device-protected storage so that
+        // BootCompleteReceiver, UsbAttachedActivity, and AutoStartReceiver
+        // can read them during locked boot (before user unlock)
+        Settings.syncAutoStartOnBootToDeviceStorage(this, settings.autoStartOnBoot)
+        Settings.syncAutoStartOnUsbToDeviceStorage(this, settings.autoStartOnUsb)
+        Settings.syncAutoStartOnWifiToDeviceStorage(this, settings.autoStartOnWifi)
+        Settings.syncAutoStartWifiSsidToDeviceStorage(this, settings.autoStartWifiSsid)
+        Settings.syncAutoStartBtMacsToDeviceStorage(this, settings.autoStartBluetoothDeviceMacs)
+        // The blacklist joins them: an install that predates the mirror has its list only in
+        // credential storage, so without this it is invisible until the user edits it.
+        Settings.syncUsbBlacklistToDeviceStorage(this, settings.usbBlacklist)
+
+        // Apply app theme (runs the live manager when dynamic, or when a saved place
+        // can force the app theme even over a static base).
+        AppThemeManager.reapply(this, settings)
+    }
+
+    private var unlockedInitDone = false
+
+    private val userUnlockedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            AppLog.i("App: user unlocked, credential storage is available, applying settings")
+            initUnlockedOnce()
+            try {
+                unregisterReceiver(this)
+            } catch (_: IllegalArgumentException) {
+            }
+        }
     }
 
     private fun isUserUnlocked(): Boolean {
