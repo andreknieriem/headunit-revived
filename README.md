@@ -98,7 +98,7 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 - Several Native Mode fixes and enhancements
 - Mic: fix the uplink, and let the phone keep the microphone
 - Fix: Close keyboard that stays open on older Android versions to prevent layout issues
-- Per-channel audio stream selectio thanks to @nicoruy
+- Per-channel audio stream selection, thanks to @nicoruy
 - Added Android Auto 17.4 Notice for users, who don't know why their wireless setup broke
 - Clean Up Dark Mode and Theming Option confusions
 - Fix: Projection dies when a Bluetooth keyboard connects or disconnects
