@@ -251,7 +251,8 @@ object HotspotManager {
             attempted = tryConnectivityManager(context, enabled) || attempted
             attempted = tryLegacyWifiManager(context, enabled) || attempted
         } else {
-            AppLog.w("HotspotManager: Cannot enable the hotspot without the \"Modify system settings\" permission (WRITE_SETTINGS). Grant it in the setup wizard or Settings > Permissions.")
+            val verb = if (enabled) "enable" else "turn off"
+            AppLog.w("HotspotManager: Cannot $verb the hotspot without the \"Modify system settings\" permission (WRITE_SETTINGS). Grant it in the setup wizard or Settings > Permissions.")
         }
 
         if (!enabled) return BandOutcome(attempted, up = false, configured = configured)

@@ -31,7 +31,17 @@ enum class ConnectionIssue {
      * The commonest way the hotspot route fails and, until now, the quietest: the resolve loop said
      * so once per run into a log that a busy unit drops, and nothing anywhere carried it afterwards.
      */
-    HOTSPOT_NOT_RUNNING
+    HOTSPOT_NOT_RUNNING,
+
+    /**
+     * The platform would not create a WiFi Direct group, so there was no network to hand the phone.
+     *
+     * Distinct from the two hotspot records in that no setting reaches it: the refusal is the unit's
+     * radio saying it cannot be a group owner right now, most often because it is already an
+     * associated station on some other network. The user's levers are leaving that network or
+     * switching the Native transport to the head unit's own access point.
+     */
+    WIFI_DIRECT_GROUP_REFUSED
 }
 
 /** An issue that is currently true, and when it was last raised. */
@@ -127,6 +137,7 @@ object ConnectionIssues {
                 ConnectionIssue.BSSID_UNAVAILABLE -> settings.connectionIssueBssidAtEpochMs
                 ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE -> settings.connectionIssueHotspotConfigAtEpochMs
                 ConnectionIssue.HOTSPOT_NOT_RUNNING -> settings.connectionIssueHotspotOffAtEpochMs
+                ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> settings.connectionIssueWifiDirectRefusedAtEpochMs
             }
         } catch (e: Exception) {
             0L
@@ -139,6 +150,7 @@ object ConnectionIssues {
                     ConnectionIssue.BSSID_UNAVAILABLE -> settings.connectionIssueBssidAtEpochMs = atEpochMs
                     ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE -> settings.connectionIssueHotspotConfigAtEpochMs = atEpochMs
                     ConnectionIssue.HOTSPOT_NOT_RUNNING -> settings.connectionIssueHotspotOffAtEpochMs = atEpochMs
+                    ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> settings.connectionIssueWifiDirectRefusedAtEpochMs = atEpochMs
                 }
             } catch (e: Exception) {
                 AppLog.d("ConnectionIssues: could not record $issue: ${e.message}")
