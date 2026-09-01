@@ -101,6 +101,7 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 - Per-channel audio stream selectio thanks to @nicoruy
 - Added Android Auto 17.4 Notice for users, who don't know why their wireless setup broke
 - Clean Up Dark Mode and Theming Option confusions
+- Fix: Projection dies when a Bluetooth keyboard connects or disconnects
 
 ### v.3.2.6
 - Fix settings UI crash and dpi input on older Android devices
