@@ -18,6 +18,7 @@ import com.andrerinas.openheadunit.main.MainActivity
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.Settings
 import android.os.Build
+import android.os.UserManager
 
 class WifiAutoStartReceiver : BroadcastReceiver() {
 
@@ -42,6 +43,16 @@ class WifiAutoStartReceiver : BroadcastReceiver() {
             if (!Settings.isAutoStartOnWifiEnabled(context)) return
             val targetSsid = Settings.getAutoStartWifiSsid(context).removeSurrounding("\"")
             if (targetSsid.isEmpty()) return
+
+            // Before the first unlock there is no credential storage, which both the session and
+            // the object graph read, so there is nothing to start yet. BootCompleteReceiver runs
+            // this decision again on ACTION_USER_UNLOCKED. Asked after the settings above so a
+            // user who never enabled this does not get the line on every locked boot.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                !(context.getSystemService(Context.USER_SERVICE) as UserManager).isUserUnlocked) {
+                AppLog.w("WifiAutoStartReceiver: device is locked, deferring WiFi auto-start until unlock.")
+                return
+            }
 
             val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
             val wifiInfo: WifiInfo? = wifiManager.connectionInfo

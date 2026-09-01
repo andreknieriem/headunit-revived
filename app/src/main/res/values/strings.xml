@@ -181,7 +181,7 @@
     <string name="ignored">Ignored</string>
     <string name="blacklisted">Blacklisted</string>
     <string name="usb_blacklist_title">USB Device Blacklist</string>
-    <string name="usb_blacklist_description">Devices in the blacklist will be completely ignored on connection (no auto-start, no prompts).</string>
+    <string name="usb_blacklist_description">Devices in the blacklist are ignored on connection: no auto-start, no prompts. A device is matched by its name, so a blacklisted phone stays blacklisted in every USB mode. Some makers give every model the same name, and those cannot be told apart.</string>
     <string name="add_to_blacklist">Add to Blacklist</string>
     <string name="remove_from_blacklist">Remove from Blacklist</string>
     <string name="usb_device_action_title">USB Device Action</string>

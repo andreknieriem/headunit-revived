@@ -16,6 +16,7 @@ import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.connection.usb.UsbAccessoryMode
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceDiagnostics
 import com.andrerinas.openheadunit.connection.usb.UsbReceiver
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.DeviceIntent
@@ -34,6 +35,7 @@ class UsbAttachedActivity : Activity() {
 
     private fun resolveUsbDevice(intent: Intent?): UsbDevice? {
         val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+        UsbDeviceDiagnostics.logDeviceList(this, usbManager, "USB attach")
         val androidDevices = usbManager.deviceList.values.filter { UsbDeviceCompat.isAndroidDevice(it) }
         return resolveDevice(intent, androidDevices)
     }
@@ -88,8 +90,8 @@ class UsbAttachedActivity : Activity() {
 
         val settings = if (!isLocked) Settings(this) else null
 
-        if (settings != null && settings.isUsbDeviceBlacklisted(device.vendorId, device.productId)) {
-            AppLog.i("UsbAttachedActivity: Ignored blacklisted USB device (${settings.formatUsbVidPidDisplay(device.vendorId, device.productId)})")
+        if (Settings.isUsbDeviceBlacklisted(this, device)) {
+            AppLog.i("UsbAttachedActivity: Ignored blacklisted USB device (${Settings.formatUsbVidPidDisplay(device.vendorId, device.productId)})")
             finish()
             return
         }
@@ -111,6 +113,11 @@ class UsbAttachedActivity : Activity() {
                 finish()
                 return
             }
+            if (isLocked) {
+                AppLog.w("Usb in accessory mode, but the user has not unlocked yet and a session needs credential storage. Waiting for unlock.")
+                finish()
+                return
+            }
             AppLog.i("Usb in accessory mode and has permission. Starting AapService.")
             ContextCompat.startForegroundService(this, Intent(this, AapService::class.java).apply {
                 action = AapService.ACTION_CHECK_USB
@@ -126,7 +133,7 @@ class UsbAttachedActivity : Activity() {
         // Use device-protected storage for the auto-start check so it works
         // during locked boot (before credential storage is available)
         val autoStartOnUsb = Settings.isAutoStartOnUsbEnabled(this)
-        if (autoStartOnUsb && !App.provide(this).commManager.isConnected) {
+        if (autoStartOnUsb && (isLocked || !App.provide(this).commManager.isConnected)) {
             AppLog.i("USB auto-start: launching app for ${deviceCompat.uniqueName}")
             try {
                 startActivity(Intent(this, MainActivity::class.java).apply {
@@ -189,9 +196,8 @@ class UsbAttachedActivity : Activity() {
         val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                       !(getSystemService(Context.USER_SERVICE) as UserManager).isUserUnlocked
 
-        val settings = if (!isLocked) Settings(this) else null
-        if (settings != null && settings.isUsbDeviceBlacklisted(device.vendorId, device.productId)) {
-            AppLog.i("UsbAttachedActivity: Ignored blacklisted USB device in onNewIntent (${settings.formatUsbVidPidDisplay(device.vendorId, device.productId)})")
+        if (Settings.isUsbDeviceBlacklisted(this, device)) {
+            AppLog.i("UsbAttachedActivity: Ignored blacklisted USB device in onNewIntent (${Settings.formatUsbVidPidDisplay(device.vendorId, device.productId)})")
             finish()
             return
         }

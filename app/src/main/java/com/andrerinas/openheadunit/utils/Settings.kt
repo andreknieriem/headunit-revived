@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.hardware.usb.UsbDevice
 import android.location.Location
 import android.media.AudioManager
 import android.os.Build
@@ -15,6 +16,7 @@ import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.aap.VehicleTypePolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
+import com.andrerinas.openheadunit.connection.usb.UsbBlacklistPolicy
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
@@ -875,37 +877,36 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("listen-for-usb-devices", value).apply() }
 
     var usbBlacklist: Set<String>
-        @Synchronized get() = prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()
-        @Synchronized set(value) { prefs.edit().putStringSet("usb-blacklist", value).apply() }
+        @Synchronized get() = prefs.getStringSet(KEY_USB_BLACKLIST, null)?.toSet() ?: emptySet()
+        @Synchronized set(value) { storeUsbBlacklist(UsbBlacklistPolicy.normalise(value)) }
 
-    fun formatUsbVidPidKey(vid: Int, pid: Int): String {
-        return String.format(java.util.Locale.US, "%04x:%04x", vid, pid).lowercase()
-    }
+    fun formatUsbVidPidDisplay(vid: Int, pid: Int): String = Companion.formatUsbVidPidDisplay(vid, pid)
 
-    fun formatUsbVidPidDisplay(vid: Int, pid: Int): String {
-        return String.format(java.util.Locale.US, "VID: 0x%04X, PID: 0x%04X", vid, pid)
+    @Synchronized
+    fun isUsbDeviceBlacklisted(device: UsbDevice): Boolean = UsbBlacklistPolicy.isBlacklisted(
+        usbBlacklist, UsbDeviceCompat.blacklistKey(device), device.vendorId, device.productId
+    )
+
+    @Synchronized
+    fun addUsbDeviceToBlacklist(device: UsbDevice) {
+        storeUsbBlacklist(UsbBlacklistPolicy.add(usbBlacklist, UsbDeviceCompat.blacklistKey(device)))
     }
 
     @Synchronized
-    fun isUsbDeviceBlacklisted(vid: Int, pid: Int): Boolean {
-        val key = formatUsbVidPidKey(vid, pid)
-        return usbBlacklist.contains(key)
+    fun removeUsbDeviceFromBlacklist(device: UsbDevice) {
+        storeUsbBlacklist(UsbBlacklistPolicy.remove(
+            usbBlacklist, UsbDeviceCompat.blacklistKey(device), device.vendorId, device.productId
+        ))
     }
 
-    @Synchronized
-    fun addUsbDeviceToBlacklist(vid: Int, pid: Int) {
-        val key = formatUsbVidPidKey(vid, pid)
-        val set = (prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()).toMutableSet()
-        set.add(key)
-        prefs.edit().putStringSet("usb-blacklist", set).apply()
-    }
-
-    @Synchronized
-    fun removeUsbDeviceFromBlacklist(vid: Int, pid: Int) {
-        val key = formatUsbVidPidKey(vid, pid)
-        val set = (prefs.getStringSet("usb-blacklist", null)?.toSet() ?: emptySet()).toMutableSet()
-        set.remove(key)
-        prefs.edit().putStringSet("usb-blacklist", set).apply()
+    /**
+     * Every write goes through here so the device-protected mirror can never fall behind. The
+     * mirror is what [isUsbDeviceBlacklisted] reads on a locked boot, where credential storage
+     * is unavailable and the check used to be skipped entirely.
+     */
+    private fun storeUsbBlacklist(value: Set<String>) {
+        prefs.edit().putStringSet(KEY_USB_BLACKLIST, value).apply()
+        syncUsbBlacklistToDeviceStorage(context, value)
     }
 
     var showToastMessages: Boolean
@@ -1063,6 +1064,7 @@ class Settings(private val context: Context) {
             syncAutoStartOnWifiToDeviceStorage(context, false)
             syncListenForUsbDevicesToDeviceStorage(context, true)
             syncAutoStartBtMacToDeviceStorage(context, "")
+            syncUsbBlacklistToDeviceStorage(context, emptySet())
         }
     }
 
@@ -1256,6 +1258,38 @@ class Settings(private val context: Context) {
         )
 
         private const val DEVICE_PREFS_NAME = "settings_device_protected"
+        const val KEY_USB_BLACKLIST = "usb-blacklist"
+
+        fun formatUsbVidPidDisplay(vid: Int, pid: Int): String =
+            String.format(java.util.Locale.US, "VID: 0x%04X, PID: 0x%04X", vid, pid)
+
+        /**
+         * Reads the USB blacklist from device-protected storage, so a blacklisted device is
+         * refused during a locked boot too. Falls back to regular prefs below API 24.
+         */
+        fun isUsbDeviceBlacklisted(context: Context, device: UsbDevice): Boolean {
+            val prefs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                context.createDeviceProtectedStorageContext()
+                    .getSharedPreferences(DEVICE_PREFS_NAME, Context.MODE_PRIVATE)
+            } else {
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            }
+            val blacklist = prefs.getStringSet(KEY_USB_BLACKLIST, null) ?: return false
+            return UsbBlacklistPolicy.isBlacklisted(
+                blacklist, UsbDeviceCompat.blacklistKey(device), device.vendorId, device.productId
+            )
+        }
+
+        fun syncUsbBlacklistToDeviceStorage(context: Context, blacklist: Set<String>) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                context.createDeviceProtectedStorageContext()
+                    .getSharedPreferences(DEVICE_PREFS_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putStringSet(KEY_USB_BLACKLIST, blacklist)
+                    .apply()
+            }
+        }
+
         private const val KEY_AUTO_START_ON_BOOT = "auto-start-on-boot"
 
         /**
