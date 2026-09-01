@@ -34,6 +34,8 @@ import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBssidPol
 import com.andrerinas.openheadunit.main.MainActivity
 import com.andrerinas.openheadunit.utils.ToastUtils
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.utils.ConnectionIssue
+import com.andrerinas.openheadunit.utils.ConnectionIssues
 import java.io.File
 import java.net.Inet4Address
 import java.net.InetSocketAddress
@@ -48,6 +50,15 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         private const val MAX_NATIVE_5GHZ_CREATE_RETRIES = 4
         private const val MAX_NATIVE_5GHZ_BAND_MISMATCH_RETRIES = 2
         private const val MAX_NATIVE_STANDARD_CREATE_RETRIES = 3
+
+        /**
+         * How often to repeat that this unit will not create a group.
+         *
+         * The same interval, and for the same reason, as `SoftApCredentialsProvider`'s no-access-point
+         * report: often enough that any window of a busy unit's log carries it, rare enough that a
+         * user can dismiss the banner it raises.
+         */
+        private const val GROUP_REFUSAL_REPORT_INTERVAL_MS = 60_000L
         private const val NATIVE_GROUP_MODE_UNKNOWN = "unknown"
         private const val NATIVE_GROUP_MODE_5GHZ_REQUESTED = "5GHz requested"
         private const val NATIVE_GROUP_MODE_24GHZ_REQUESTED = "2.4GHz requested"
@@ -134,6 +145,28 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      * are spent.
      */
     private var legacyChannelAttempt = 0
+
+    /**
+     * True once this unit has let a `setWifiP2pChannels` request go unanswered.
+     *
+     * The request is the only pre-Q band lever, and on a driver that reloads the P2P interface to
+     * apply it the pending listener is dropped, so [WifiP2pChannelCompat] has to time out instead.
+     * Asking again costs that timeout on every bring-up and cannot produce a different answer, so
+     * the rest of the session goes straight to creating the group on the driver's own channel.
+     * Cleared by [stop] with the ladder, so a mode change asks once more.
+     */
+    private var legacyChannelRequestUnanswered = false
+
+    /**
+     * When the group refusal was last reported, so a unit refusing every attempt says so at a
+     * readable rate rather than on each one.
+     *
+     * The retry ladder gives up several times a minute while the phone keeps re-dialling, and each
+     * report both writes an ERROR line and re-stamps the standing record. Re-stamping is what brings
+     * the main-screen banner back after a dismissal, so at that rate the user could not dismiss it
+     * at all. Reset by [stop] rather than by a bring-up, so one refusal is reported per mode.
+     */
+    private var lastGroupRefusalReportAtMs = 0L
 
     /**
      * Bumped by [stop]. Every P2P callback that continues into another framework call captures this
@@ -809,6 +842,51 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         }
     }
 
+    /**
+     * Say that this unit will not create a group, at most once per [GROUP_REFUSAL_REPORT_INTERVAL_MS].
+     *
+     * The station state goes on the line because it is the one fact that makes the refusal readable,
+     * and the nearest other mention of it in a reporter's log is a minute earlier in a different
+     * component's output.
+     */
+    private fun reportGroupRefusal(reasonStr: String) {
+        val now = SystemClock.elapsedRealtime()
+        if (lastGroupRefusalReportAtMs != 0L &&
+            now - lastGroupRefusalReportAtMs < GROUP_REFUSAL_REPORT_INTERVAL_MS
+        ) return
+        lastGroupRefusalReportAtMs = now
+        AppLog.e(
+            "WifiDirectManager: createQuietGroup failed completely! Reason: $reasonStr. " +
+                describeStationForRefusal()
+        )
+        ConnectionIssues.raise(context, ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED)
+    }
+
+    /**
+     * What this unit's own WiFi was doing when the platform refused to create a group.
+     *
+     * Descriptive, like [StationCoexistencePolicy], and for the same reason: a radio already serving
+     * a station link is the commonest shape of this refusal but has never been measured as its
+     * cause, so this states what was true and leaves the conclusion to whoever reads the log.
+     * [SupplicantState] rather than the SSID because the SSID is redacted without the location gate,
+     * which a head unit routinely cannot satisfy.
+     */
+    private fun describeStationForRefusal(): String = try {
+        val wifiManager = context.applicationContext
+            .getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val info = wifiManager.connectionInfo
+        when {
+            info == null -> "This unit's own WiFi state could not be read."
+            info.supplicantState != SupplicantState.COMPLETED ->
+                "This unit's WiFi is not joined to any network."
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && info.frequency > 0 ->
+                "This unit's WiFi is joined to another network on ${info.frequency} MHz."
+            else -> "This unit's WiFi is joined to another network."
+        }
+    } catch (e: Exception) {
+        "This unit's own WiFi state could not be read (${e.message})."
+    }
+
     private fun getInterfaceByIp(targetIp: String): String? {
         try {
             val interfaces = NetworkInterface.getNetworkInterfaces()
@@ -1294,6 +1372,15 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         }
 
         val frequency = WifiP2pOperatingChannelPolicy.frequencyMhzFor(operatingChannel)
+        if (legacyChannelRequestUnanswered) {
+            AppLog.i(
+                "WifiDirectManager: not asking for operating channel $operatingChannel " +
+                    "($frequency MHz) again - this unit left the last request unanswered, so the " +
+                    "band stays the driver's choice."
+            )
+            standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_LEGACY)
+            return
+        }
         AppLog.i(
             "WifiDirectManager: no band request below Android 10, so asking for operating channel " +
                 "$operatingChannel ($frequency MHz) instead - rung ${legacyChannelAttempt + 1} of " +
@@ -1301,14 +1388,21 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 "this restricts which frequencies it may pick."
         )
         markP2pRequest()
-        WifiP2pChannelCompat.setOperatingChannel(mgr, ch, operatingChannel, handler) { applied, detail ->
+        WifiP2pChannelCompat.setOperatingChannel(mgr, ch, operatingChannel, handler) { applied, answered, detail ->
             legacyChannelRestrictionApplied = applied
             if (applied) {
                 AppLog.i("WifiDirectManager: operating channel $operatingChannel ($frequency MHz) $detail.")
-            } else {
+            } else if (answered) {
                 AppLog.w(
                     "WifiDirectManager: this unit would not take an operating channel ($detail), so " +
                         "the group's band stays the driver's choice, as it was before."
+                )
+            } else {
+                legacyChannelRequestUnanswered = true
+                AppLog.w(
+                    "WifiDirectManager: this unit never answered the operating channel request " +
+                        "($detail), so the group's band stays the driver's choice and the rest of " +
+                        "this session goes straight to creating the group."
                 )
             }
             standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_LEGACY)
@@ -1344,6 +1438,8 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
                 AppLog.i("WifiDirectManager: Standard createGroup SUCCESS!")
+                // The one thing that disproves the record: this unit just hosted a group.
+                ConnectionIssues.clear(context, ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED)
                 nativeGroupCreationMode = groupMode
                 // The platform chose the band here, so there is no mismatch to correct.
                 nativeRequestedBand = NativeGroupBandPolicy.Band.UNSPECIFIED
@@ -1380,13 +1476,13 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                             "the next channel it was offered."
                     )
                     markP2pRequest()
-                    WifiP2pChannelCompat.clearOperatingChannel(mgr, ch, handler) { _, detail ->
+                    WifiP2pChannelCompat.clearOperatingChannel(mgr, ch, handler) { _, _, detail ->
                         legacyChannelRestrictionApplied = false
                         AppLog.i("WifiDirectManager: operating channel restriction cleared ($detail).")
                         createQuietGroup(0)
                     }
                 } else {
-                    AppLog.e("WifiDirectManager: createQuietGroup failed completely! Reason: $reasonStr")
+                    reportGroupRefusal(reasonStr)
                     isGroupCreatingOrCreated = false
                 }
             }
@@ -1403,7 +1499,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private fun releaseLegacyChannelRestriction(mgr: WifiP2pManager, ch: WifiP2pManager.Channel) {
         if (!legacyChannelRestrictionApplied) return
         legacyChannelRestrictionApplied = false
-        WifiP2pChannelCompat.clearOperatingChannel(mgr, ch, handler) { applied, detail ->
+        WifiP2pChannelCompat.clearOperatingChannel(mgr, ch, handler) { applied, _, detail ->
             if (applied) {
                 AppLog.i("WifiDirectManager: operating channel restriction released; discovery can use the social channels again.")
             } else {
@@ -1662,6 +1758,11 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         nativeRecreateCount = 0
         lastNativeGroupStatusMessage = null
         legacyChannelAttempt = 0
+        legacyChannelRequestUnanswered = false
+        lastGroupRefusalReportAtMs = 0L
+        // Unconditional, and not gated on legacyChannelRestrictionApplied: a request that never
+        // answered may still have been applied, and the restriction is supplicant state that
+        // outlives this process.
         manager?.let { mgr -> channel?.let { ch -> releaseLegacyChannelRestriction(mgr, ch) } }
         AapService.scanningState.value = false
         try { context.unregisterReceiver(receiver) } catch (e: Exception) {}

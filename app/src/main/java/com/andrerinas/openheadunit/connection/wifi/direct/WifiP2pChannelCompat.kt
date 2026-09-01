@@ -39,17 +39,19 @@ object WifiP2pChannelCompat {
      * @param onResult invoked exactly once, with the platform's own verdict where there is one and
      *   with the reflection's where there is not. [onResult] is what continues group creation, so it
      *   must run on every path - including the one where the method does not exist, and the one
-     *   where the platform simply never calls back.
+     *   where the platform simply never calls back. `answered` separates the two kinds of no: a
+     *   refusal arrives immediately and asking again is free, while a platform that never calls back
+     *   costs [ANSWER_TIMEOUT_MS] every time and cannot give a different reply.
      */
     fun setOperatingChannel(
         manager: WifiP2pManager,
         channel: WifiP2pManager.Channel,
         operatingChannel: Int,
         handler: Handler,
-        onResult: (applied: Boolean, detail: String) -> Unit,
+        onResult: (applied: Boolean, answered: Boolean, detail: String) -> Unit,
     ) {
         if (!WifiP2pOperatingChannelPolicy.isRequestable(operatingChannel)) {
-            onResult(false, "channel $operatingChannel is outside what the platform accepts")
+            onResult(false, true, "channel $operatingChannel is outside what the platform accepts")
             return
         }
         // One latch shared by the listener, the timeout and the failure paths below, so whichever
@@ -58,10 +60,10 @@ object WifiP2pChannelCompat {
         // Held so answering early can cancel it; postDelayed's token overload is API 28 and this
         // path exists for the devices below that.
         var timeout: Runnable? = null
-        val answer = { applied: Boolean, detail: String ->
+        val answer = { applied: Boolean, byPlatform: Boolean, detail: String ->
             if (answered.compareAndSet(false, true)) {
                 timeout?.let { handler.removeCallbacks(it) }
-                onResult(applied, detail)
+                onResult(applied, byPlatform, detail)
             }
         }
         try {
@@ -73,10 +75,10 @@ object WifiP2pChannelCompat {
                 WifiP2pManager.ActionListener::class.java,
             )
             val listener = object : WifiP2pManager.ActionListener {
-                override fun onSuccess() = answer(true, "accepted")
-                override fun onFailure(reason: Int) = answer(false, "refused (reason=$reason)")
+                override fun onSuccess() = answer(true, true, "accepted")
+                override fun onFailure(reason: Int) = answer(false, true, "refused (reason=$reason)")
             }
-            val onTimeout = Runnable { answer(false, "no answer in ${ANSWER_TIMEOUT_MS}ms") }
+            val onTimeout = Runnable { answer(false, false, "no answer in ${ANSWER_TIMEOUT_MS}ms") }
             timeout = onTimeout
             handler.postDelayed(onTimeout, ANSWER_TIMEOUT_MS)
             method.invoke(
@@ -87,13 +89,15 @@ object WifiP2pChannelCompat {
                 listener,
             )
         } catch (e: NoSuchMethodException) {
-            answer(false, "this platform has no $METHOD")
+            // Not an answer: the method is absent on this platform and will stay absent, so the
+            // caller should stop asking rather than retry a lookup that cannot start succeeding.
+            answer(false, false, "this platform has no $METHOD")
         } catch (e: Throwable) {
             // A SecurityException belongs here too: the manager-level call asks only for
             // CHANGE_WIFI_STATE, but the service side is free to want more, and a unit that says no
             // should still get a group.
             AppLog.d("WifiP2pChannelCompat: $METHOD threw: ${e.message}")
-            answer(false, "${e.javaClass.simpleName}: ${e.message}")
+            answer(false, false, "${e.javaClass.simpleName}: ${e.message}")
         }
     }
 
@@ -108,7 +112,7 @@ object WifiP2pChannelCompat {
         manager: WifiP2pManager,
         channel: WifiP2pManager.Channel,
         handler: Handler,
-        onResult: (applied: Boolean, detail: String) -> Unit = { _, _ -> },
+        onResult: (applied: Boolean, answered: Boolean, detail: String) -> Unit = { _, _, _ -> },
     ) = setOperatingChannel(
         manager,
         channel,

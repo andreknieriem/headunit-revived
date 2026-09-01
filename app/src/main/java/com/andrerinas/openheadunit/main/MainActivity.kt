@@ -928,6 +928,8 @@ class MainActivity : BaseActivity() {
                 ConnectionIssue.BSSID_UNAVAILABLE -> R.string.connection_issue_banner_bssid
                 ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE -> R.string.connection_issue_banner_hotspot_config
                 ConnectionIssue.HOTSPOT_NOT_RUNNING -> R.string.connection_issue_banner_hotspot_off
+                ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED ->
+                    R.string.connection_issue_banner_wifi_direct_refused
             }
         )
         banner.setOnClickListener { openRemedyFor(issue) }
@@ -949,10 +951,10 @@ class MainActivity : BaseActivity() {
     /**
      * Open Settings on the row that fixes [issue].
      *
-     * Seeds the search box rather than using EXTRA_DESTINATION, which targets a whole screen: all
-     * three remedies are rows inside the settings list, and search is the only thing that reaches
-     * them regardless of the Basic/Advanced tier. Static BSSID is Advanced-only, so a Basic-mode
-     * user sent to Settings without this would not find the row the banner just named.
+     * Seeds the search box rather than using EXTRA_DESTINATION, which targets a whole screen: every
+     * remedy is a row inside the settings list, and search is the only thing that reaches them
+     * regardless of the Basic/Advanced tier. Static BSSID is Advanced-only, so a Basic-mode user
+     * sent to Settings without this would not find the row the banner just named.
      *
      * The hotspot query is a phrase carried in both override rows' search keywords rather than
      * either row's title, because that condition needs *both* of them: with a manual name set the
@@ -967,6 +969,7 @@ class MainActivity : BaseActivity() {
             ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE ->
                 getString(R.string.connection_issue_remedy_hotspot_query)
             ConnectionIssue.HOTSPOT_NOT_RUNNING -> getString(R.string.auto_enable_hotspot)
+            ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> getString(R.string.native_ap_transport)
         }
         startActivity(
             Intent(this, SettingsActivity::class.java)

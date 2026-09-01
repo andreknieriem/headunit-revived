@@ -1766,7 +1766,7 @@ class Settings(private val context: Context) {
     // reboot, which an elapsed-realtime stamp does not survive. Every other stamp on this route is
     // elapsed realtime, so the AtEpochMs suffix is the reminder that these are not.
     //
-    // 0 means "not standing" in all four.
+    // 0 means "not standing" in all five.
     // ---------------------------------------------------------------------------------------------
 
     /** The phone connected over Bluetooth, we wrote, and nothing ever came back. */
@@ -1788,6 +1788,11 @@ class Settings(private val context: Context) {
     var connectionIssueHotspotOffAtEpochMs: Long
         get() = prefs.getLong("connection-issue-hotspot-off", 0L)
         set(value) = prefs.edit().putLong("connection-issue-hotspot-off", value).apply()
+
+    /** The platform refused to create a WiFi Direct group, so there was no network to hand over. */
+    var connectionIssueWifiDirectRefusedAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-p2p-refused", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-p2p-refused", value).apply()
 
     /**
      * When the user last dismissed the failure banner.

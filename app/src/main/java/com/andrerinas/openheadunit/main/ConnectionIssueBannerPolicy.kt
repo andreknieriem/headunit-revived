@@ -31,6 +31,10 @@ object ConnectionIssueBannerPolicy {
      *   Native AA hotspot transport ever constructs. Helper strategy 4 rides its own access point
      *   too but never resolves credentials from it, so it cannot raise this and does not appear
      *   here — which is also why this takes no `helperConnectionStrategy`: no rule uses it.
+     * - `WIFI_DIRECT_GROUP_REFUSED` is raised in `WifiDirectManager` on the branch that gives up on
+     *   group creation, which only the Native AA WiFi Direct transport reaches. The helper's own
+     *   WiFi Direct strategy shares that manager but hands the phone no credentials, so a refused
+     *   group there is not the reason a connection failed.
      *
      * A record is not deleted when it stops applying. It describes what the hardware did, and the
      * user may well be back on that route tomorrow; it is only hidden while it cannot be the
@@ -41,7 +45,8 @@ object ConnectionIssueBannerPolicy {
         return when (transport) {
             NativeTransport.WIFI_DIRECT -> setOf(
                 ConnectionIssue.BLUETOOTH_SENT_NO_DATA,
-                ConnectionIssue.BSSID_UNAVAILABLE
+                ConnectionIssue.BSSID_UNAVAILABLE,
+                ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED
             )
             NativeTransport.HOTSPOT -> setOf(
                 ConnectionIssue.BLUETOOTH_SENT_NO_DATA,
@@ -68,8 +73,9 @@ object ConnectionIssueBannerPolicy {
      * that every state one of them declines to retire is one this function hides.
      *
      * `BLUETOOTH_SENT_NO_DATA` has no entry because its remedy is leaving Native AA, which
-     * [relevantNow] already answers. `HOTSPOT_NOT_RUNNING` has none either: no setting fixes it,
-     * and switching the access point on disproves it outright, so the record retires itself.
+     * [relevantNow] already answers. `HOTSPOT_NOT_RUNNING` and `WIFI_DIRECT_GROUP_REFUSED` have none
+     * either: no setting fixes them, and an access point coming up or a group forming disproves them
+     * outright, so those records retire themselves.
      *
      * @param hotspotSsid [com.andrerinas.openheadunit.utils.Settings.hotspotSsid]
      * @param hotspotPassword [com.andrerinas.openheadunit.utils.Settings.hotspotPassword] — needed

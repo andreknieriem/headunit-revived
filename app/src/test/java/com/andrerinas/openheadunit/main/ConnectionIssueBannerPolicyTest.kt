@@ -183,6 +183,30 @@ class ConnectionIssueBannerPolicyTest {
     }
 
     @Test
+    fun `only the WiFi Direct route can be blocked by a refused group`() {
+        // The hotspot transport never asks for a group, so a refused one cannot be why it failed.
+        assertTrue(
+            ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED in
+                ConnectionIssueBannerPolicy.relevantNow(3, NativeTransport.WIFI_DIRECT)
+        )
+        assertFalse(
+            ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED in
+                ConnectionIssueBannerPolicy.relevantNow(3, NativeTransport.HOTSPOT)
+        )
+    }
+
+    @Test
+    fun `no setting is a remedy for a refused group`() {
+        // A group forming disproves it outright, so the record retires itself. Nothing the user can
+        // type reaches the radio's refusal, so hiding the banner on a typed value would hide a
+        // condition that is still exactly as true as it was.
+        assertFalse(
+            ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED in
+                ConnectionIssueBannerPolicy.remedyApplied("OHU-TEST", "testtest1234", "AA:BB:CC:DD:EE:FF")
+        )
+    }
+
+    @Test
     fun `no setting is a remedy for there being no access point`() {
         // Switching the hotspot on disproves it outright, so the record retires itself and there is
         // nothing for remedyApplied to hide.

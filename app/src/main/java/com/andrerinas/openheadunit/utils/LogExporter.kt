@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.andrerinas.openheadunit.BuildConfig
+import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.decoder.video.VideoFaultInjector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -138,10 +139,25 @@ object LogExporter {
             "video=codec:${settings.videoCodec} fps:${settings.fpsLimit} resId:${settings.resolutionId} " +
             "view:${settings.viewMode.name} forceSw:${settings.forceSoftwareDecoding} " +
             "swDecoder:${settings.softwareVideoDecoder.name} | " +
-            "wifi=mode:${settings.wifiConnectionMode} strategy:${settings.helperConnectionStrategy} | " +
+            "wifi=mode:${settings.wifiConnectionMode} strategy:${wifiTransport(settings)} | " +
             "logLevel=${settings.exporterLogLevel.name} | " +
             "debug=${debugLevers(settings)}"
     }
+
+    /**
+     * The transport selector that the reported mode actually reads.
+     *
+     * Native AA has its own, `nativeApStrategy`, and reads `helperConnectionStrategy` nowhere. This
+     * line printed the helper's for every mode, so a Native capture opened with a value nothing in
+     * that mode consults - which meant a header could not tell a Native/WiFi-Direct failure from a
+     * Native/hotspot one, and reading it literally sent triage after a Nearby path that never ran.
+     */
+    private fun wifiTransport(settings: Settings): String =
+        if (settings.wifiConnectionMode == WifiLauncherMode.NATIVE) {
+            settings.nativeApStrategy.name
+        } else {
+            settings.helperConnectionStrategy.name
+        }
 
     /**
      * The settings that make the app behave unlike itself, in the one line every capture opens with.

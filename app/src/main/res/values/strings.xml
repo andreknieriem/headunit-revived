@@ -967,6 +967,7 @@
     <string name="connection_issue_banner_bssid">This unit could not read its own WiFi MAC address (BSSID), so your phone was never told which network to join. Tap to turn on Location, or to enter the address by hand.</string>
     <string name="connection_issue_banner_hotspot_off">This unit\'s hotspot is off, so there was no network to send your phone to. Turn the hotspot on before connecting, or tap to let the app switch it on for you.</string>
     <string name="connection_issue_banner_hotspot_config">This unit will not tell the app its hotspot name and password, so your phone had nothing to join. Tap to enter them by hand.</string>
+    <string name="connection_issue_banner_wifi_direct_refused">This unit\'s WiFi would not create the WiFi Direct network your phone was going to join, and the app cannot make it. If this unit is joined to another WiFi network, disconnecting it is worth trying. Tap to use this unit\'s own hotspot instead.</string>
     <string name="connection_issue_banner_dismiss">Dismiss</string>
     <!-- What the hotspot banner types into the settings search. Both override rows carry it
          as a search keyword, so this one string is what makes the tap reach the pair. -->
