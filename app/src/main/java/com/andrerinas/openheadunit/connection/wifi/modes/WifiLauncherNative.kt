@@ -14,6 +14,7 @@ import com.andrerinas.openheadunit.connection.wifi.WifiLauncher
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherStopSequence
+import com.andrerinas.openheadunit.main.SettingsActivity
 import com.andrerinas.openheadunit.utils.AppLog
 
 class WifiLauncherNative : WifiLauncher {
@@ -52,6 +53,9 @@ class WifiLauncherNative : WifiLauncher {
         val wifiDirect = manager.sharedServices.wifiDirectManager
 
         handshakeManager = NativeAaHandshakeManager(service, this, service.serviceScope)
+        // The wake poke wakes the phone, and a phone that answers takes over the screen. Doing that
+        // to somebody who is in the middle of changing settings loses whatever they were reading.
+        handshakeManager?.userConfiguringProvider = { SettingsActivity.isForeground }
         softApCredentialsProvider = SoftApCredentialsProvider(service, service.serviceScope, settings)
         // Above the strategy branch, not inside it: the provider resolves on IO the instant it is
         // started, and on a unit whose access point is already up that is tens of milliseconds.
@@ -164,6 +168,14 @@ class WifiLauncherNative : WifiLauncher {
     fun hasLiveNetwork(): Boolean? =
         if (strategy == NativeStrategy.HOTSPOT) null
         else manager.sharedServices.wifiDirectManager?.hasLiveGroup
+
+    /**
+     * Whether a network of ours has been asked for and has not answered yet. Null on the hotspot
+     * route, where the access point is the user's and nothing here creates one.
+     */
+    fun networkComingUp(): Boolean? =
+        if (strategy == NativeStrategy.HOTSPOT) null
+        else manager.sharedServices.wifiDirectManager?.isCreatingGroup
 
     /**
      * A projection session has landed. The wake poke has nothing left to do, and a P2P group

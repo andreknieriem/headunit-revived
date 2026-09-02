@@ -2170,27 +2170,39 @@ class AapService : Service() {
                     val settings = App.provide(this).settings
                     val activeLauncher = wifiLauncherManager.active
 
-                    if (wifiLauncherManager.activeMode != WifiLauncherMode.NATIVE || settings.wifiConnectionMode != WifiLauncherMode.NATIVE) {
-                        AppLog.i("AapService: Initializing Native AA mode before poke...")
-                        wifiLauncherManager.setActiveFromSettings(force = true)
-                    } else if (activeLauncher is WifiLauncherNative && activeLauncher.handshakeManager?.isActive() != true) {
-                        // A completed handoff closes the AA listeners while leaving the manager
-                        // running, and start() returns immediately on isRunning, so calling it here
-                        // reopened nothing: the poke woke the phone, the phone opened RFCOMM, and
-                        // nothing was listening. The listeners are reopened directly rather than by
-                        // rebuilding the mode and its network under the phone.
-                        AppLog.i("AapService: Native AA listeners are closed, reopening them before the poke.")
-                        activeLauncher.rearmAfterSessionEnd()
-                    } else {
-                        AppLog.d("AapService: Already in Native AA mode, skipping re-init.")
-                    }
-
-                    val launcher = wifiLauncherManager.active
-
-                    if (launcher is WifiLauncherNative) {
-                        launcher.handshakeManager?.manualPoke(mac)
-                    } else {
+                    if (settings.wifiConnectionMode != WifiLauncherMode.NATIVE) {
+                        // Asked before the re-init, not after it: setActiveFromSettings reads the
+                        // stored mode, so on a Helper or Auto unit this button used to tear that
+                        // mode down and build it again before finding there was nothing to poke.
+                        AppLog.i("AapService: manual Native-AA poke ignored: the wireless mode is not Native AA.")
                         ToastUtils.showToast(this, "Native AA mode not active.")
+                    } else {
+                        if (wifiLauncherManager.activeMode != WifiLauncherMode.NATIVE) {
+                            AppLog.i("AapService: Initializing Native AA mode before poke...")
+                            wifiLauncherManager.setActiveFromSettings(force = true)
+                        } else if (activeLauncher is WifiLauncherNative && activeLauncher.handshakeManager?.isActive() != true) {
+                            // A completed handoff closes the AA listeners while leaving the manager
+                            // running, and start() returns immediately on isRunning, so calling it here
+                            // reopened nothing: the poke woke the phone, the phone opened RFCOMM, and
+                            // nothing was listening. The listeners are reopened directly rather than by
+                            // rebuilding the mode and its network under the phone.
+                            AppLog.i("AapService: Native AA listeners are closed, reopening them before the poke.")
+                            activeLauncher.rearmAfterSessionEnd()
+                        } else {
+                            AppLog.d("AapService: Already in Native AA mode, skipping re-init.")
+                        }
+
+                        // Kept on the re-init branch as well as the armed one: it is the only thing
+                        // that clears the handshake backoff, and the button has to mean one thing.
+                        // Its pre-flight refresh now waits on the create claimed above rather than
+                        // starting a second one.
+                        val launcher = wifiLauncherManager.active
+
+                        if (launcher is WifiLauncherNative) {
+                            launcher.handshakeManager?.manualPoke(mac)
+                        } else {
+                            ToastUtils.showToast(this, "Native AA mode not active.")
+                        }
                     }
                 }
             }
@@ -2205,16 +2217,24 @@ class AapService : Service() {
                 val launcher = wifiLauncherManager.active as? WifiLauncherNative
                 val attemptInFlight = launcher?.handshakeManager?.isAttemptInFlight()
 
+                val networkComingUp = launcher?.networkComingUp()
+
                 if (BtAutoStartRearmPolicy.shouldRearm(
                         settings.wifiConnectionMode,
                         sessionUp,
                         launcher?.handshakeManager?.isActive(),
                         attemptInFlight,
-                        launcher?.hasLiveNetwork())) {
+                        launcher?.hasLiveNetwork(),
+                        networkComingUp)) {
                     AppLog.i("AapService: Bluetooth auto-start: Native AA cannot accept a connection, re-arming the mode.")
                     userExitedAA = false
                     userExitCooldownUntil = 0L
                     wifiLauncherManager.setActiveFromSettings(force = true)
+                } else if (networkComingUp == true) {
+                    // Nothing to do and nothing safe to do: the group this arrival would rebuild is
+                    // the one already being asked for, and tearing it down starts a second create
+                    // underneath the first.
+                    AppLog.i("AapService: Bluetooth auto-start: the Native AA group is still being created, so it is left to answer.")
                 } else if (settings.wifiConnectionMode == WifiLauncherMode.NATIVE && !sessionUp && attemptInFlight != true) {
                     // The phone dials RFCOMM itself, so there is nothing to do but be there when it
                     // does. The credentials are read again rather than the group remade, which is

@@ -23,7 +23,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = null,
                 attemptInFlight = null,
-                groupUp = true
+                groupUp = true,
+                networkComingUp = false
             )
         )
     }
@@ -37,7 +38,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = null,
                 attemptInFlight = null,
-                groupUp = false
+                groupUp = false,
+                networkComingUp = false
             )
             assertTrue("mode=$mode", expected == actual)
         }
@@ -56,7 +58,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = true,
                 handshakeActive = null,
                 attemptInFlight = null,
-                groupUp = false
+                groupUp = false,
+                networkComingUp = false
             )
         )
     }
@@ -69,7 +72,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = true,
                 attemptInFlight = false,
-                groupUp = null
+                groupUp = null,
+                networkComingUp = false
             )
         )
     }
@@ -82,7 +86,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = false,
                 attemptInFlight = true,
-                groupUp = false
+                groupUp = false,
+                networkComingUp = false
             )
         )
     }
@@ -100,7 +105,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = false,
                 attemptInFlight = false,
-                groupUp = true
+                groupUp = true,
+                networkComingUp = false
             )
         )
     }
@@ -119,7 +125,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = true,
                 attemptInFlight = false,
-                groupUp = true
+                groupUp = true,
+                networkComingUp = false
             )
         )
     }
@@ -133,7 +140,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = true,
                 attemptInFlight = false,
-                groupUp = false
+                groupUp = false,
+                networkComingUp = false
             )
         )
     }
@@ -147,7 +155,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = true,
                 attemptInFlight = false,
-                groupUp = null
+                groupUp = null,
+                networkComingUp = false
             )
         )
     }
@@ -160,7 +169,8 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = false,
                 handshakeActive = false,
                 attemptInFlight = false,
-                groupUp = null
+                groupUp = null,
+                networkComingUp = false
             )
         )
     }
@@ -173,8 +183,44 @@ class BtAutoStartRearmPolicyTest {
                 sessionUp = true,
                 handshakeActive = false,
                 attemptInFlight = false,
-                groupUp = false
+                groupUp = false,
+                networkComingUp = false
             )
         )
     }
+
+    /**
+     * The window this policy could not see: a group has been asked for and has not answered, so
+     * every other question here reads "cannot accept". The arrival that lands in it is usually our
+     * own poke's, and re-arming stops the create it is waiting for and starts another underneath.
+     */
+    @Test
+    fun `a create still in flight is left to answer`() {
+        assertFalse(
+            BtAutoStartRearmPolicy.shouldRearm(
+                mode = WifiLauncherMode.NATIVE,
+                sessionUp = false,
+                handshakeActive = false,
+                attemptInFlight = false,
+                groupUp = false,
+                networkComingUp = true
+            )
+        )
+    }
+
+    /** The hotspot route has no group of ours, so the create question does not apply there. */
+    @Test
+    fun `a route with no network of ours to ask about still re-arms`() {
+        assertTrue(
+            BtAutoStartRearmPolicy.shouldRearm(
+                mode = WifiLauncherMode.NATIVE,
+                sessionUp = false,
+                handshakeActive = null,
+                attemptInFlight = null,
+                groupUp = null,
+                networkComingUp = null
+            )
+        )
+    }
+
 }

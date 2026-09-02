@@ -49,6 +49,9 @@ class NativeAaHandshakeManager(
          *  a handshake. P2P group creation is the slow case. */
         private const val CREDENTIALS_WAIT_MS = 60_000L
 
+        /** Wake-poke retry cadence, matching both reference implementations' 15 to 20 s interval. */
+        private const val POKE_RETRY_GAP_MS = 15_000L
+
         /** How long to wait for the AAP TCP port to be bound before giving up on a handshake. */
         private const val PORT_WAIT_MS = 3_000L
 
@@ -173,6 +176,17 @@ class NativeAaHandshakeManager(
 
     @Volatile
     private var credentials: WifiCredentials? = null
+
+    /**
+     * Whether the user is on a screen the wake poke must not interrupt. Answered by the launcher;
+     * the default is the safe one for anything that builds this class without an opinion.
+     */
+    @Volatile
+    var userConfiguringProvider: () -> Boolean = { false }
+
+    // Said once per run of deferred passes, so a long stay in settings is one line rather than one
+    // every fifteen seconds.
+    @Volatile private var pokeDeferralLogged = false
 
     /**
      * The WPP-over-TCP listener. From Android Auto 17.4 the phone prefers to run the handshake
@@ -940,6 +954,7 @@ class NativeAaHandshakeManager(
         lastPokeTriggerCredentials = pokeKey
 
         pokeJob?.cancel()
+        pokeDeferralLogged = false
         pokeJob = scope.launch(Dispatchers.IO + CoroutineName("NativeAa-Wakeup")) {
             AppLog.d("NativeAA: triggerPoke() delay starting (2s)...")
             delay(2000) // Small safety delay before connecting
@@ -949,12 +964,24 @@ class NativeAaHandshakeManager(
                 val handshaking = isHandshakeInFlight()
                 val sessionUp = commManager.isConnected ||
                     commManager.connectionState.value is CommManager.ConnectionState.Connecting
-                if (!NativeHandoffPolicy.shouldPoke(settling, handshaking, sessionUp)) {
-                    AppLog.i(
-                        "NativeAA: Stopping poke retry loop " +
-                            "(settling=$settling, handshake=$handshaking, session=$sessionUp)."
-                    )
-                    break
+                val userConfiguring = try { userConfiguringProvider() } catch (e: Exception) { false }
+                when (NativeHandoffPolicy.loopStep(settling, handshaking, sessionUp, userConfiguring)) {
+                    NativeHandoffPolicy.LoopStep.STOP -> {
+                        AppLog.i(
+                            "NativeAA: Stopping poke retry loop " +
+                                "(settling=$settling, handshake=$handshaking, session=$sessionUp)."
+                        )
+                        break
+                    }
+                    NativeHandoffPolicy.LoopStep.DEFER -> {
+                        if (!pokeDeferralLogged) {
+                            pokeDeferralLogged = true
+                            AppLog.i("NativeAA: the settings screen is open, so the wake poke waits until it closes.")
+                        }
+                        delay(POKE_RETRY_GAP_MS)
+                        continue
+                    }
+                    NativeHandoffPolicy.LoopStep.POKE -> pokeDeferralLogged = false
                 }
 
                 val lastMacs = settings.autoStartBluetoothDeviceMacs
@@ -1034,7 +1061,7 @@ class NativeAaHandshakeManager(
                     )
                 }
 
-                delay(15000) // retry cadence, matches both reference implementations' 15-20s interval
+                delay(POKE_RETRY_GAP_MS)
             }
         }
     }

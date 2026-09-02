@@ -27,6 +27,11 @@ import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
  * [groupUp] is that last question, null where the route has no group of ours to ask about (the
  * hotspot transport, or no launcher). An armed mode with a live group is left alone: the phone
  * dials the open listeners itself.
+ *
+ * [networkComingUp] is the same question one step earlier. A group that has been asked for and has
+ * not answered yet is not up, so every other question here says "cannot accept" for the whole
+ * create - and the arrival that lands in it is usually our own poke's. Re-arming there stops the
+ * create it was waiting for and starts another underneath it.
  */
 object BtAutoStartRearmPolicy {
 
@@ -35,10 +40,12 @@ object BtAutoStartRearmPolicy {
         sessionUp: Boolean,
         handshakeActive: Boolean?,
         attemptInFlight: Boolean?,
-        groupUp: Boolean?
+        groupUp: Boolean?,
+        networkComingUp: Boolean?
     ): Boolean =
         mode == WifiLauncherMode.NATIVE &&
             !sessionUp &&
             attemptInFlight != true &&
+            networkComingUp != true &&
             (handshakeActive != true || groupUp == false)
 }

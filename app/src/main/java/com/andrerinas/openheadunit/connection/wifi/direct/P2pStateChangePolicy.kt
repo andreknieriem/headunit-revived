@@ -18,10 +18,17 @@ object P2pStateChangePolicy {
     /**
      * Whether an ENABLED broadcast should start a bring-up.
      *
-     * [busy] is the caller's own "a group is being created or already exists".
+     * [busy] is the caller's own "a group is being created or already exists". [createClaimed] is a
+     * create that has been decided on but not yet asked for: standing the station down first cycles
+     * the P2P interface, so the ENABLED that follows arrives in the gap and starts a second chain
+     * that removes the group the first one is about to make.
      */
-    fun shouldStartBringUp(busy: Boolean, nowMs: Long, lastBringUpAtMs: Long): Boolean =
-        !busy && !withinSelfInflictedWindow(nowMs, lastBringUpAtMs)
+    fun shouldStartBringUp(
+        busy: Boolean,
+        createClaimed: Boolean,
+        nowMs: Long,
+        lastBringUpAtMs: Long,
+    ): Boolean = !busy && !createClaimed && !withinSelfInflictedWindow(nowMs, lastBringUpAtMs)
 
     /**
      * Whether a non-ENABLED broadcast should clear the group latches.

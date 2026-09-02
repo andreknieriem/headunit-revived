@@ -439,7 +439,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                             commManager.connectionState.value is CommManager.ConnectionState.Connecting
 
                         val busy = isConnected || isConnectingOrConnected || isGroupCreatingOrCreated
-                        if (P2pStateChangePolicy.shouldStartBringUp(busy, System.currentTimeMillis(), lastP2pRequestAtMs)) {
+                        if (P2pStateChangePolicy.shouldStartBringUp(busy, isCreatingGroup, System.currentTimeMillis(), lastP2pRequestAtMs)) {
                             if (appSettings.wifiConnectionMode == WifiLauncherMode.HELPER && appSettings.helperConnectionStrategy == HelperStrategy.WIFI_DIRECT) {
                                 AppLog.i("WifiDirectManager: P2P enabled, auto-starting WiFi Direct visibility")
                                 makeVisible()

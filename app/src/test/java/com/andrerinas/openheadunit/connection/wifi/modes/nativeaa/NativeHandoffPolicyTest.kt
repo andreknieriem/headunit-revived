@@ -274,4 +274,40 @@ class NativeHandoffPolicyTest {
             )
         )
     }
+
+    /**
+     * The retry loop's third answer. Stopping needs a fresh credential delivery to start it again,
+     * and after a settled group none comes, so a screen the user is working on defers rather than
+     * ends the loop.
+     */
+    @Test
+    fun `the settings screen defers a poke rather than ending the loop`() {
+        assertEquals(
+            NativeHandoffPolicy.LoopStep.DEFER,
+            NativeHandoffPolicy.loopStep(settling = false, handshakeInFlight = false, sessionConnected = false, userConfiguring = true)
+        )
+        assertEquals(
+            NativeHandoffPolicy.LoopStep.POKE,
+            NativeHandoffPolicy.loopStep(settling = false, handshakeInFlight = false, sessionConnected = false, userConfiguring = false)
+        )
+    }
+
+    @Test
+    fun `work in progress ends the loop whatever screen is open`() {
+        for (configuring in listOf(true, false)) {
+            assertEquals(
+                NativeHandoffPolicy.LoopStep.STOP,
+                NativeHandoffPolicy.loopStep(settling = true, handshakeInFlight = false, sessionConnected = false, userConfiguring = configuring)
+            )
+            assertEquals(
+                NativeHandoffPolicy.LoopStep.STOP,
+                NativeHandoffPolicy.loopStep(settling = false, handshakeInFlight = true, sessionConnected = false, userConfiguring = configuring)
+            )
+            assertEquals(
+                NativeHandoffPolicy.LoopStep.STOP,
+                NativeHandoffPolicy.loopStep(settling = false, handshakeInFlight = false, sessionConnected = true, userConfiguring = configuring)
+            )
+        }
+    }
+
 }
