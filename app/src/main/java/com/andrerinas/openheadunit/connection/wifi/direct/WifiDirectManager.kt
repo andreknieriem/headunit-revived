@@ -288,9 +288,11 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      *
      * Those keys are the SSID, which used to change on every create and so reset them for free.
      * A kept identity gives a recreated group the same SSID as the one it replaces, and without
-     * this the join watchdog would not re-arm for it and its BSSID dump would never print.
+     * this the join watchdog would not re-arm for it and its BSSID dump would never print. The
+     * session latch is per group too: a replacement has not carried anything yet.
      */
     private fun forgetPerGroupKeys() {
+        nativeGroupHostedSession = false
         lastBssidDumpSsid = null
         lastIdentityReportSsid = null
         nativeIdentityAssessedSsid = null
@@ -304,6 +306,28 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     // Native AA join recovery state. The watchdog fires if the phone never joins our quiet-host
     // group; nativeRecreateCount bounds how many times we recreate before giving up.
     private var nativeRecreateCount = 0
+
+    /**
+     * True once a projection session has run over the current group. The join watchdog recreates
+     * a group no phone joined, and a recreate is what moves the group's address out from under
+     * the profile the phone saved, so a group that has already worked is never put through it.
+     */
+    private var nativeGroupHostedSession = false
+
+    /** Records that a projection session ran over this group. */
+    fun noteSessionHosted() {
+        if (nativeGroupHostedSession) return
+        nativeGroupHostedSession = true
+        AppLog.i("WifiDirectManager: this group has carried a session, so the join watchdog will not recreate it if the phone leaves.")
+    }
+
+    /**
+     * Whether a P2P group we own is up right now, from the state CONNECTION_CHANGED keeps
+     * current. Answered from memory because the caller has to decide on the spot; the
+     * framework's own answer follows from [refreshNativeCredentials], which the caller asks for.
+     */
+    val hasLiveGroup: Boolean get() = isConnected && isGroupOwner
+
     private val nativeJoinWatchdog = Runnable {
         if (isClientConnected) return@Runnable
         if (isNativeSessionConnected?.invoke() == true) {
@@ -617,7 +641,13 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                     } else {
                         AppLog.i("WifiDirectManager: Client left the Native AA group; staying a quiet host instead of rediscovering.")
                     }
-                    if (isNativeAaMode()) armNativeJoinWatchdog()
+                    if (NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                            nativeAaMode = isNativeAaMode(),
+                            groupHasHostedSession = nativeGroupHostedSession)) {
+                        armNativeJoinWatchdog()
+                    } else if (isNativeAaMode()) {
+                        AppLog.i("WifiDirectManager: the phone left a group that has already carried a session, so it is kept as it is rather than recreated.")
+                    }
                 }
             } else {
                 isClientConnected = true

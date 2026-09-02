@@ -231,4 +231,47 @@ class NativeHandoffPolicyTest {
             )
         )
     }
+
+    /** Today's ladder for a phone that joined and dropped mid-DHCP is kept. */
+    @Test
+    fun `a group that never carried a session re-arms the watchdog when the phone leaves`() {
+        assertTrue(
+            NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                nativeAaMode = true, groupHasHostedSession = false
+            )
+        )
+    }
+
+    /**
+     * The recreate is what moves the group's address, and a phone that comes back looks for the
+     * network it saved. A group that has already worked is left where the phone left it, and on
+     * the native path the discovery loop never restarts either, so nothing touches it.
+     */
+    @Test
+    fun `a group that has carried a session is not recreated when the phone leaves`() {
+        assertFalse(
+            NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                nativeAaMode = true, groupHasHostedSession = true
+            )
+        )
+        assertFalse(
+            NativeHandoffPolicy.shouldRestartDiscovery(
+                nativeAaMode = true, hadClient = true, hasClient = false
+            )
+        )
+    }
+
+    @Test
+    fun `the join watchdog is not a question the Helper path asks`() {
+        assertFalse(
+            NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                nativeAaMode = false, groupHasHostedSession = false
+            )
+        )
+        assertFalse(
+            NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                nativeAaMode = false, groupHasHostedSession = true
+            )
+        )
+    }
 }

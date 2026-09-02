@@ -124,4 +124,14 @@ object NativeHandoffPolicy {
      */
     fun shouldRestartDiscovery(nativeAaMode: Boolean, hadClient: Boolean, hasClient: Boolean): Boolean =
         hadClient && !hasClient && !nativeAaMode
+
+    /**
+     * Whether a client leaving the P2P group should re-arm the join watchdog.
+     *
+     * The watchdog recreates a group no phone ever joined. A group that has carried a session is
+     * proven joinable, and recreating it is what moves its address out from under the profile the
+     * phone saved, so a phone leaving such a group leaves it as it is.
+     */
+    fun shouldRearmJoinWatchdogAfterClientLeft(nativeAaMode: Boolean, groupHasHostedSession: Boolean): Boolean =
+        nativeAaMode && !groupHasHostedSession
 }

@@ -20,6 +20,13 @@ import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
  * [sessionUp] covers the whole life of a working session, during which `isActive()` is false;
  * without it, any later ACL_CONNECTED (the phone's own Bluetooth profiles reconnecting, or one of
  * our own pokes) would tear down a session that is projecting fine.
+ *
+ * A re-arm is a teardown and a recreate of the network, and on a unit that re-addresses its
+ * group that costs the phone the profile it saved. So it is the answer only when Native cannot
+ * accept a connection at all: no launcher, listeners closed or never opened, or no live group.
+ * [groupUp] is that last question, null where the route has no group of ours to ask about (the
+ * hotspot transport, or no launcher). An armed mode with a live group is left alone: the phone
+ * dials the open listeners itself.
  */
 object BtAutoStartRearmPolicy {
 
@@ -27,10 +34,11 @@ object BtAutoStartRearmPolicy {
         mode: WifiLauncherMode,
         sessionUp: Boolean,
         handshakeActive: Boolean?,
-        attemptInFlight: Boolean?
+        attemptInFlight: Boolean?,
+        groupUp: Boolean?
     ): Boolean =
         mode == WifiLauncherMode.NATIVE &&
             !sessionUp &&
-            handshakeActive != true &&
-            attemptInFlight != true
+            attemptInFlight != true &&
+            (handshakeActive != true || groupUp == false)
 }

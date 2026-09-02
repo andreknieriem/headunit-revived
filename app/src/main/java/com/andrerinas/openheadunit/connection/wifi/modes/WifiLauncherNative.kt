@@ -153,6 +153,41 @@ class WifiLauncherNative : WifiLauncher {
     }
 
     /**
+     * Whether the network the phone is told to join is up, or null where the question is not
+     * this route's to answer: the access point on the hotspot strategy is the user's own.
+     */
+    fun hasLiveNetwork(): Boolean? =
+        if (strategy == NativeStrategy.HOTSPOT) null
+        else manager.sharedServices.wifiDirectManager?.hasLiveGroup
+
+    /**
+     * A projection session has landed. The wake poke has nothing left to do, and a P2P group
+     * that carried a wireless session is proven joinable. A wired session proves nothing about
+     * the group.
+     */
+    fun onSessionEstablished() {
+        handshakeManager?.onSessionEstablished()
+        if (strategy != NativeStrategy.HOTSPOT && App.provide(service).commManager.isWirelessSession) {
+            manager.sharedServices.wifiDirectManager?.noteSessionHosted()
+        }
+    }
+
+    /**
+     * Puts the mode back where it was before the session, without taking the network down.
+     *
+     * The network is what the phone saved and rejoins, so it stays; only the Bluetooth side needs
+     * re-arming, because a completed handoff closed its Android Auto listeners. The credentials
+     * are then read again, which restarts the wake poke and confirms the network is still up.
+     * The TCP port is checked first: it is what the phone dials, and nothing else looks at it
+     * between sessions.
+     */
+    fun rearmAfterSessionEnd() {
+        manager.sharedServices.startWirelessServer(this)
+        handshakeManager?.rearmForNextSession()
+        triggerWifiDirectRefresh()
+    }
+
+    /**
      * Triggers a refresh of the WiFi Direct "quiet host" state.
      * Called by NativeAaHandshakeManager if it's waiting for credentials that haven't arrived yet.
      */

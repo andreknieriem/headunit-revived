@@ -364,31 +364,7 @@ class NativeAaHandshakeManager(
         AppLog.i("NativeAA: Starting Bluetooth Handshake Servers (primary radio [$localRadioName])...")
 
         // Start AA RFCOMM Server
-        scope.launch(Dispatchers.IO + CoroutineName("NativeAa-RfcommServer")) {
-            try {
-                aaServerSocket = listenOnAaUuid(adapter)
-                AppLog.i("NativeAA: ACTIVELY LISTENING on Android Auto UUID ($AA_UUID) on radio [$localRadioName]... Waiting for phone to connect back!")
-                while (isRunning && isActive) {
-                    val socket = aaServerSocket?.accept()
-                    if (socket != null) {
-                        AppLog.i("NativeAA: Connection accepted from ${socket.remoteDevice.name} (${socket.remoteDevice.address}) on local radio [$localRadioName]")
-                        if (refuseWhileBackedOff(socket)) continue
-                        // [FIX] Launch handshake in a separate coroutine so the server can accept the next connection!
-                        scope.launch(Dispatchers.IO + CoroutineName("NativeAa-Handshake-${socket.remoteDevice.address}")) {
-                            handleHandshake(socket, localRadioName)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                if (aaListenersClosedForSession) {
-                    AppLog.d("NativeAA: AA Server socket closed after successful handoff.")
-                } else if (isRunning) {
-                    AppLog.e("NativeAA: AA Server socket error: ${e.message}", e)
-                } else {
-                    AppLog.d("NativeAA: AA Server socket closed cleanly.")
-                }
-            }
-        }
+        launchAaAcceptLoop(adapter, localRadioName)
 
         // Start HFP RFCOMM Server (Required by some phones to detect HU)
         standingInForHfp = shouldRegisterDummyHfp(adapter, localRadioName)
@@ -427,18 +403,106 @@ class NativeAaHandshakeManager(
         // returns the fixed placeholder "02:00:00:00:00:00" for any non-privileged app since
         // Android 6.0 (API 23), on every device - primary and secondary always look identical
         // by address alone.
+        val secondaries = secondaryRadioHandles()
+        if (secondaries.isNotEmpty()) {
+            AppLog.i("NativeAA: Opening AA listeners on ${secondaries.size} secondary Bluetooth radio(s) for dual-radio head units: ${secondaries.joinToString { it.serviceName }}")
+            secondaries.forEach { launchExtraServers(it.serviceName, it.adapter) }
+        }
+    }
+
+    /** The Bluetooth radios other than the primary, matched by system service name. */
+    private fun secondaryRadioHandles() = run {
         val handles = try {
             BluetoothHelper.getAllBluetoothAdapterHandles(context)
         } catch (e: Exception) { emptyList() }
-
         val secondaryNames = filterSecondaryServiceNames(
             settings.bluetoothManagerServiceName,
             handles.map { it.serviceName }
         ).toSet()
-        val secondaries = handles.filter { it.serviceName in secondaryNames }
-        if (secondaries.isNotEmpty()) {
-            AppLog.i("NativeAA: Opening AA listeners on ${secondaries.size} secondary Bluetooth radio(s) for dual-radio head units: ${secondaries.joinToString { it.serviceName }}")
-            secondaries.forEach { launchExtraServers(it.serviceName, it.adapter) }
+        handles.filter { it.serviceName in secondaryNames }
+    }
+
+    /**
+     * Opens the Android Auto listener on one radio and serves it until the socket closes. The
+     * primary radio and every secondary one run this same loop; [serviceName] names a secondary.
+     */
+    private fun launchAaAcceptLoop(adapter: BluetoothAdapter, radioName: String, serviceName: String? = null) {
+        val coroutineName = if (serviceName == null) "NativeAa-RfcommServer" else "NativeAa-RfcommServer-2"
+        scope.launch(Dispatchers.IO + CoroutineName(coroutineName)) {
+            val label = if (serviceName == null) "AA Server socket" else "Secondary AA server"
+            val suffix = if (serviceName == null) "" else " ['$serviceName' $radioName]"
+            try {
+                val server = listenOnAaUuid(adapter)
+                if (serviceName == null) {
+                    aaServerSocket = server
+                    AppLog.i("NativeAA: ACTIVELY LISTENING on Android Auto UUID ($AA_UUID) on radio [$radioName]... Waiting for phone to connect back!")
+                } else {
+                    extraAaServerSockets.add(server)
+                    AppLog.i("NativeAA: ACTIVELY LISTENING on Android Auto UUID on secondary radio '$serviceName' [$radioName]")
+                }
+                while (isRunning && isActive) {
+                    val socket = server.accept()
+                    if (socket != null) {
+                        if (serviceName == null) {
+                            AppLog.i("NativeAA: Connection accepted from ${socket.remoteDevice.name} (${socket.remoteDevice.address}) on local radio [$radioName]")
+                        } else {
+                            AppLog.i("NativeAA: Connection accepted (secondary radio '$serviceName' [$radioName]) from ${socket.remoteDevice.name} (${socket.remoteDevice.address})")
+                        }
+                        if (refuseWhileBackedOff(socket)) continue
+                        // [FIX] Launch handshake in a separate coroutine so the server can accept the next connection!
+                        scope.launch(Dispatchers.IO + CoroutineName("NativeAa-Handshake-${socket.remoteDevice.address}")) {
+                            handleHandshake(socket, radioName)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                if (aaListenersClosedForSession) {
+                    AppLog.d("NativeAA: $label closed after successful handoff$suffix.")
+                } else if (isRunning) {
+                    AppLog.e("NativeAA: $label error$suffix: ${e.message}", e)
+                } else {
+                    AppLog.d("NativeAA: $label closed cleanly$suffix.")
+                }
+            }
+        }
+    }
+
+    /**
+     * Puts the Bluetooth side back where it was before the session, without taking it down.
+     *
+     * A completed handoff closes only the Android Auto listeners and leaves the rest running, so
+     * a session that ends on its own needs those back and nothing else. A restart would also
+     * rebind the WPP TCP port the phone may have just dialled, drop the hands-free record the
+     * phone keys its reconnect on, and forget credentials that still name the live network.
+     */
+    @SuppressLint("MissingPermission")
+    fun rearmForNextSession() {
+        if (!isRunning) return
+        // A handshake cannot outlive the session it set up, and its stamps are what hold the wake
+        // poke off and defer the join watchdog. Nothing else clears them once the socket is gone.
+        activeHandshakeJob?.cancel()
+        activeHandshakeJob = null
+        activeHandshakeSocket = null
+        handshakeStartedAt = 0L
+        handoffSettlingSince = 0L
+        resetHandshakeBackoff()
+
+        if (!SessionEndGroupPolicy.shouldReopenAaListeners(isRunning, aaListenersClosedForSession)) {
+            AppLog.i("NativeAA: the Android Auto listeners are still open, so the phone can come straight back.")
+            return
+        }
+        val adapter = BluetoothHelper.getBluetoothAdapter(context)
+        if (adapter == null || !adapter.isEnabled) {
+            AppLog.e("NativeAA: Bluetooth adapter not available or disabled, so the Android Auto listeners stay closed.")
+            return
+        }
+        // Cleared before the launch: the loop reads it to tell a handoff's close from a failure.
+        aaListenersClosedForSession = false
+        AppLog.i("NativeAA: reopening the Android Auto listeners for the phone's return.")
+        launchAaAcceptLoop(adapter, localRadioName)
+        secondaryRadioHandles().forEach {
+            val radioName = try { it.adapter.name ?: "?" } catch (e: Exception) { "?" }
+            launchAaAcceptLoop(it.adapter, radioName, it.serviceName)
         }
     }
 
@@ -451,27 +515,7 @@ class NativeAaHandshakeManager(
         // extra.name, not extra.address - see the comment on localRadioName in start(); the
         // address is always the masked placeholder, the name is the real, useful identifier.
         val radioName = try { extra.name ?: "?" } catch (e: Exception) { "?" }
-        scope.launch(Dispatchers.IO + CoroutineName("NativeAa-RfcommServer-2")) {
-            try {
-                val server = listenOnAaUuid(extra)
-                extraAaServerSockets.add(server)
-                AppLog.i("NativeAA: ACTIVELY LISTENING on Android Auto UUID on secondary radio '$serviceName' [$radioName]")
-                while (isRunning && isActive) {
-                    val socket = server.accept()
-                    if (socket != null) {
-                        AppLog.i("NativeAA: Connection accepted (secondary radio '$serviceName' [$radioName]) from ${socket.remoteDevice.name} (${socket.remoteDevice.address})")
-                        if (refuseWhileBackedOff(socket)) continue
-                        scope.launch(Dispatchers.IO + CoroutineName("NativeAa-Handshake-${socket.remoteDevice.address}")) {
-                            handleHandshake(socket, radioName)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                if (aaListenersClosedForSession) AppLog.d("NativeAA: Secondary AA server closed after successful handoff ['$serviceName' $radioName].")
-                else if (isRunning) AppLog.e("NativeAA: Secondary AA server error ['$serviceName' $radioName]: ${e.message}", e)
-                else AppLog.d("NativeAA: Secondary AA server closed cleanly ['$serviceName' $radioName].")
-            }
-        }
+        launchAaAcceptLoop(extra, radioName, serviceName)
         // Held rather than asked twice: this radio's own answer, because standingInForHfp speaks
         // only for the primary and a secondary stand-in still has to open its link.
         val standingInOnExtra = shouldRegisterDummyHfp(extra, "'$serviceName' $radioName")
