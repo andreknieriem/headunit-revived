@@ -3,6 +3,7 @@ package com.andrerinas.openheadunit.connection.self
 import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy.Action
 import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy.ATTEMPT_CARRY_WINDOW_MS
 import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy.CALL_CONFIRM_WINDOW_MS
+import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy.CoverVerdict
 import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy.Episode
 import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy.FIRST_ATTEMPT_DELAY_MS
 import com.andrerinas.openheadunit.connection.self.SelfModeCallRaisePolicy.IDLE_TICK_MS
@@ -214,4 +215,59 @@ class SelfModeCallRaisePolicyTest {
         val ended = spent.copy(callEndedAtMs = start + 30_000)
         assertEquals(TICK_MS, SelfModeCallRaisePolicy.nextTickDelayMs(ended))
     }
+
+    /**
+     * The reporter's cover: the call screen was up 82 ms after the tap and the audio mode did not
+     * report the call for seconds. The episode has to survive that wait and then still raise.
+     */
+    @Test
+    fun `a cover that becomes a call seconds later still raises`() {
+        var episode = Episode(startedAtMs = start)
+
+        var nowMs = start + TICK_MS
+        while (nowMs < start + 3_000) {
+            val (action, next) = tick(episode, nowMs, callActive = false)
+            assertEquals(Action.WAIT, action)
+            episode = next
+            nowMs += TICK_MS
+        }
+
+        val (raise, after) = tick(episode, nowMs, callActive = true)
+        assertEquals(Action.RAISE, raise)
+        assertEquals(1, after.attempts)
+        assertTrue(after.sawCallActive)
+    }
+
+    @Test
+    fun `a cover is watched unless something says otherwise`() {
+        assertEquals(CoverVerdict.OPEN, coverVerdict())
+        assertEquals(CoverVerdict.USER_LEFT, coverVerdict(userLeft = true))
+        assertEquals(CoverVerdict.NOT_SELF_MODE, coverVerdict(selfMode = false))
+        assertEquals(CoverVerdict.PIP, coverVerdict(pipActive = true))
+        assertEquals(CoverVerdict.DISABLED, coverVerdict(enabled = false))
+        assertEquals(CoverVerdict.ALREADY_OPEN, coverVerdict(episodeOpen = true))
+    }
+
+    /** An episode already running owns the cover, whatever else is true of it. */
+    @Test
+    fun `an open episode is never restarted`() {
+        assertEquals(
+            CoverVerdict.ALREADY_OPEN,
+            coverVerdict(userLeft = true, pipActive = true, episodeOpen = true)
+        )
+    }
+
+    private fun coverVerdict(
+        userLeft: Boolean = false,
+        selfMode: Boolean = true,
+        pipActive: Boolean = false,
+        enabled: Boolean = true,
+        episodeOpen: Boolean = false,
+    ): CoverVerdict = SelfModeCallRaisePolicy.coverVerdict(
+        userLeft = userLeft,
+        selfMode = selfMode,
+        pipActive = pipActive,
+        enabled = enabled,
+        episodeOpen = episodeOpen,
+    )
 }
