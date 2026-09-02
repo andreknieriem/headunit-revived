@@ -7,6 +7,8 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import com.andrerinas.openheadunit.connection.wifi.direct.GroupIdentityStability
+import com.andrerinas.openheadunit.connection.wifi.direct.GroupIdentityStabilityPolicy
 import com.andrerinas.openheadunit.aap.AapService
 
 import com.andrerinas.openheadunit.utils.BluetoothHelper
@@ -157,13 +159,16 @@ class NativeAaHandshakeManager(
      * "Handshake error: null" and named nothing.
      *
      * One immutable snapshot behind one volatile reference: a reader gets all four fields from the
-     * same group or none of them, and reads them once.
+     * same group or none of them, and reads them once. [identity] travels with them for the same
+     * reason: whether this network will still exist under this name and address next time is a
+     * fact about this group, and WppEndpointPolicy reads it beside the address it describes.
      */
     private data class WifiCredentials(
         val ssid: String,
         val psk: String,
         val ip: String,
         val bssid: String,
+        val identity: GroupIdentityStability,
     )
 
     @Volatile
@@ -238,9 +243,15 @@ class NativeAaHandshakeManager(
     /**
      * Updates the WiFi credentials that will be sent to the phone during the next handshake.
      */
-    fun updateWifiCredentials(ssid: String, psk: String, ip: String, bssid: String) {
-        AppLog.i("NativeAA: Credentials updated. SSID=$ssid, IP=$ip, BSSID=$bssid")
-        credentials = WifiCredentials(ssid = ssid, psk = psk, ip = ip, bssid = bssid)
+    fun updateWifiCredentials(
+        ssid: String,
+        psk: String,
+        ip: String,
+        bssid: String,
+        identity: GroupIdentityStability,
+    ) {
+        AppLog.i("NativeAA: Credentials updated. SSID=$ssid, IP=$ip, BSSID=$bssid, identity stable=${GroupIdentityStabilityPolicy.label(identity)}")
+        credentials = WifiCredentials(ssid = ssid, psk = psk, ip = ip, bssid = bssid, identity = identity)
     }
 
     /** Clears cached credentials so an in-progress wait doesn't hand out stale ones for a group

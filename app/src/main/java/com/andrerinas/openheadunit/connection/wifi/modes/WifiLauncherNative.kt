@@ -1,7 +1,10 @@
 package com.andrerinas.openheadunit.connection.wifi.modes
 
+import android.os.Handler
+import android.os.Looper
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.connection.CommManager
+import com.andrerinas.openheadunit.connection.wifi.direct.GroupIdentityStability
 import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDown
 import com.andrerinas.openheadunit.connection.wifi.direct.WifiDirectManager
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeAaHandshakeManager
@@ -73,12 +76,23 @@ class WifiLauncherNative : WifiLauncher {
                 // Before the group, not after: wpa_supplicant only honours a channel while no group
                 // exists, and an associated station is what leaves it none to give. Opt-in, and a
                 // no-op on a unit that is not joined to anything.
-                StationStandDown.standDown(service)
+                val stoodDown = StationStandDown.standDown(service)
 
                 // Start WiFi Direct as a "quiet host" (P2P Group for phone to join)
                 // We let WifiDirectManager handle the WiFi state (enabling if needed)
                 setupWifiDirect(wifiDirect)
-                wifiDirect.startNativeAaQuietHost()
+                if (stoodDown) {
+                    // Give the station its verify window to actually leave first. A group asked
+                    // for while it is still tearing down forms on the channel the stand-down was
+                    // meant to free, and stays there: a refresh no longer remakes a group.
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        if (manager.active === this && manager.sharedServices.wifiDirectManager === wifiDirect) {
+                            wifiDirect.startNativeAaQuietHost()
+                        }
+                    }, StationStandDown.VERIFY_DELAY_MS)
+                } else {
+                    wifiDirect.startNativeAaQuietHost()
+                }
             }
 
             // Start the official Bluetooth handshake servers
@@ -114,7 +128,8 @@ class WifiLauncherNative : WifiLauncher {
      */
     private fun setupSoftAp() {
         softApCredentialsProvider?.setCredentialsListener { ssid, psk, ip, bssid ->
-            onNativeCredentials(ssid, psk, ip, bssid)
+            // An access point's identity is its own; the question is only asked of a P2P group.
+            onNativeCredentials(ssid, psk, ip, bssid, GroupIdentityStability.NOT_MEASURED)
         }
         softApCredentialsProvider?.setInvalidatedListener { handshakeManager?.invalidateCredentials() }
     }
@@ -122,8 +137,8 @@ class WifiLauncherNative : WifiLauncher {
     private fun setupWifiDirect(wifiDirectManager: WifiDirectManager) {
         val commManager = App.provide(service).commManager
 
-        wifiDirectManager.setCredentialsListener { ssid, psk, ip, bssid ->
-            onNativeCredentials(ssid, psk, ip, bssid)
+        wifiDirectManager.setCredentialsListener { ssid, psk, ip, bssid, identity ->
+            onNativeCredentials(ssid, psk, ip, bssid, identity)
         }
 
         // Settling counts as in-flight here: isHandshakeInFlight() goes false the instant Type 3
@@ -147,8 +162,9 @@ class WifiLauncherNative : WifiLauncher {
             softApCredentialsProvider?.refresh()
 
         } else {
-            AppLog.i("AapService: WiFi Direct refresh requested.")
-            manager.sharedServices.wifiDirectManager?.startNativeAaQuietHost()
+            // Read again, not remade: see WifiDirectManager.refreshNativeCredentials.
+            AppLog.i("AapService: WiFi Direct credential refresh requested.")
+            manager.sharedServices.wifiDirectManager?.refreshNativeCredentials()
         }
     }
 
@@ -156,7 +172,13 @@ class WifiLauncherNative : WifiLauncher {
      * Credentials for the network the phone should join, from whichever transport produced them.
      * Both mode-3 transports funnel through here so the poke rules stay in one place.
      */
-    private fun onNativeCredentials(ssid: String, psk: String, ip: String, bssid: String) {
+    private fun onNativeCredentials(
+        ssid: String,
+        psk: String,
+        ip: String,
+        bssid: String,
+        identity: GroupIdentityStability,
+    ) {
         val commManager = App.provide(service).commManager
 
         if (settings.wifiConnectionMode != WifiLauncherMode.NATIVE) {
@@ -165,7 +187,7 @@ class WifiLauncherNative : WifiLauncher {
         }
 
         AppLog.i("AapService: Received WiFi credentials from manager (SSID=$ssid, IP=$ip). Updating and Triggering Poke.")
-        handshakeManager?.updateWifiCredentials(ssid, psk, ip, bssid)
+        handshakeManager?.updateWifiCredentials(ssid, psk, ip, bssid, identity)
 
         if (commManager.isConnected ||
             commManager.connectionState.value is CommManager.ConnectionState.Connecting) {

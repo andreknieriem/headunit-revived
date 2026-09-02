@@ -791,6 +791,12 @@
     <string name="stand_down_station" translatable="false">Leave this unit\'s WiFi network while connecting</string>
     <string name="stand_down_station_description" translatable="false">Disconnects this head unit from its own WiFi network just before the WiFi Direct group is created, and reconnects it when the session ends. On a single-radio unit a joined network leaves the group no free channel, so the group is forced onto that network\'s channel or is refused outright. Try this if your phone never joins. Note that most units measured so far run better with the network joined, so turn it back off if the picture gets worse.</string>
     <string name="stand_down_station_needs_overlay" translatable="false">Needs the \"display over other apps\" permission on this Android version.</string>
+    <string name="wifi_direct_stable_identity" translatable="false">Keep the same WiFi Direct network</string>
+    <string name="wifi_direct_stable_identity_description" translatable="false">Asks for the group with the same name and password every time, so your phone rejoins a network it already knows instead of being set up for a new one on every drive. Turn it off to get a new network on every connection, which is how versions 3.2 and 3.3 worked, if a phone keeps refusing the saved one. Trying a new identity below is the lighter fix.</string>
+    <string name="wifi_direct_new_identity" translatable="false">New WiFi Direct network identity</string>
+    <string name="wifi_direct_new_identity_none" translatable="false">Chosen at the next connection</string>
+    <string name="wifi_direct_new_identity_confirm" translatable="false">Picks a new name and password for the group, used from the next connection on. Your phone will be set up for it over Bluetooth as if this were a new head unit. Do this if the phone keeps trying a network it can no longer join.</string>
+    <string name="wifi_direct_new_identity_done" translatable="false">A new network identity will be used from the next connection.</string>
     <string name="debug_video_low_latency" translatable="false">Request decoder low-latency mode</string>
     <string name="debug_video_low_latency_description" translatable="false">Sets the vendor low-latency MediaFormat key when configuring the video decoder. Falls back automatically if the decoder rejects it.</string>
     <string name="debug_video_feed_hold" translatable="false">Simulate a slow decoder</string>

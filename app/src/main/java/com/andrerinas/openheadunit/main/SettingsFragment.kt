@@ -27,6 +27,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialField
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
+import com.andrerinas.openheadunit.connection.wifi.direct.P2pGroupIdentityPolicy
 import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDownPolicy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeCredentialsPreflightPolicy
 import com.andrerinas.openheadunit.aap.NativeTransport
@@ -1076,6 +1077,8 @@ class SettingsFragment : Fragment() {
                 if (pendingP2pBandPreference() != P2pBandPreference.FORCE_2_4GHZ) {
                     addFiveGhzChannelSetting(items)
                 }
+
+                addWifiDirectIdentitySettings(items)
 
                 // Only where the platform would honour it. Below Android 10 anything may ask; from
                 // 10 to 14 the overlay permission is what gets past the framework's check, so the
@@ -3718,6 +3721,49 @@ class SettingsFragment : Fragment() {
                         dialog.dismiss()
                         updateSettingsList()
                     }
+                    .show()
+            }
+        ))
+    }
+
+    /**
+     * Whether the group keeps its name and passphrase between bring-ups, and a way to draw new ones.
+     *
+     * Only where the group is ours to name: the hotspot's identity is the access point's own. The
+     * switch writes straight through, like the stand-down beside it, because it is read at the next
+     * create and nothing needs re-arming for it. The "new identity" action replaces both halves
+     * together, which is the one rotation a phone's saved profile survives.
+     */
+    private fun addWifiDirectIdentitySettings(items: MutableList<SettingItem>) {
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "wifiDirectStableIdentity",
+            nameResId = R.string.wifi_direct_stable_identity,
+            descriptionResId = R.string.wifi_direct_stable_identity_description,
+            isChecked = settings.wifiDirectStableIdentity,
+            searchKeywords = "persistent group ssid passphrase password same network reconnect faster",
+            onCheckedChanged = { isChecked ->
+                settings.wifiDirectStableIdentity = isChecked
+                updateSettingsList()
+            }
+        ))
+        if (!settings.wifiDirectStableIdentity) return
+        items.add(SettingItem.SettingEntry(
+            stableId = "wifiDirectNewIdentity",
+            nameResId = R.string.wifi_direct_new_identity,
+            value = settings.wifiDirectGroupIdentity?.networkName
+                ?: getString(R.string.wifi_direct_new_identity_none),
+            searchKeywords = "forget reset ssid passphrase password group name",
+            onClick = { _ ->
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.wifi_direct_new_identity)
+                    .setMessage(R.string.wifi_direct_new_identity_confirm)
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        settings.wifiDirectGroupIdentity =
+                            P2pGroupIdentityPolicy.mint(AapService.wifiDirectName.value)
+                        Toast.makeText(requireContext(), R.string.wifi_direct_new_identity_done, Toast.LENGTH_LONG).show()
+                        updateSettingsList()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
                     .show()
             }
         ))

@@ -18,6 +18,8 @@ import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.usb.UsbBlacklistPolicy
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.wifi.direct.ObservedP2pGroup
+import com.andrerinas.openheadunit.connection.wifi.direct.StoredP2pIdentity
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
@@ -537,6 +539,56 @@ class Settings(private val context: Context) {
     var stationStandDownNetworkId: Int
         get() = prefs.getInt("station-stand-down-network-id", -1)
         set(value) { prefs.edit().putInt("station-stand-down-network-id", value).apply() }
+
+    /**
+     * Keeps the Native AA WiFi Direct group's name and passphrase between bring-ups.
+     *
+     * On, the group is asked for as a persistent one with a pair drawn once and kept, so the phone
+     * rejoins a network it already saved instead of being provisioned a new one every session. Off,
+     * every create names a new temporary network, which is what every 3.2.x and 3.3.x build did.
+     * See [com.andrerinas.openheadunit.connection.wifi.direct.P2pGroupIdentityPolicy].
+     */
+    var wifiDirectStableIdentity: Boolean
+        get() = prefs.getBoolean("wifi-direct-stable-identity", true)
+        set(value) { prefs.edit().putBoolean("wifi-direct-stable-identity", value).apply() }
+
+    /**
+     * The kept pair, or null before the first bring-up draws one.
+     *
+     * Written by WifiDirectManager when the policy draws it, and by the settings screen's "new
+     * identity" action. Always both halves together: a name reused with a different passphrase is
+     * the one combination a phone's saved profile cannot recover from on its own.
+     */
+    var wifiDirectGroupIdentity: StoredP2pIdentity?
+        get() {
+            val name = prefs.getString("wifi-direct-group-name", null) ?: return null
+            val passphrase = prefs.getString("wifi-direct-group-passphrase", null) ?: return null
+            return StoredP2pIdentity(name, passphrase)
+        }
+        set(value) {
+            prefs.edit()
+                .putString("wifi-direct-group-name", value?.networkName)
+                .putString("wifi-direct-group-passphrase", value?.passphrase)
+                .apply()
+        }
+
+    /**
+     * The last Native AA group this unit hosted, as the phone saw it, so the next one can be
+     * compared to it. Whether the BSSID repeats is a per-unit fact the platform does not expose,
+     * so it is measured across bring-ups (GroupIdentityStabilityPolicy). Not a user setting.
+     */
+    var wifiDirectLastGroup: ObservedP2pGroup?
+        get() {
+            val ssid = prefs.getString("wifi-direct-last-group-ssid", null) ?: return null
+            val bssid = prefs.getString("wifi-direct-last-group-bssid", null) ?: return null
+            return ObservedP2pGroup(ssid, bssid)
+        }
+        set(value) {
+            prefs.edit()
+                .putString("wifi-direct-last-group-ssid", value?.ssid)
+                .putString("wifi-direct-last-group-bssid", value?.bssid)
+                .apply()
+        }
 
     /**
      * Asks the decoder for low-latency mode, through whichever key its vendor understands.

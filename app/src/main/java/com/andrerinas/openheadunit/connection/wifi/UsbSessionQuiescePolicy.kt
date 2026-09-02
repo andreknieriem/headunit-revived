@@ -37,7 +37,8 @@ object UsbSessionQuiescePolicy {
      * Only when we are the one hosting it. Taking it down is safe here precisely because no phone
      * can be on it: a phone connected over USB is not associated to our group. It is never reused
      * afterwards — [shouldRearmWireless] sends the caller back through `initWifiMode(force = true)`,
-     * which creates a fresh one, so the "never reuse a P2P group" rule holds by construction.
+     * which creates a fresh one, so the "never reuse a P2P group" rule holds by construction. Fresh
+     * group, kept name: the create asks for the same identity, so the phone loses nothing it saved.
      */
     fun shouldStopWifiDirectGroup(sessionIsWireless: Boolean, usesWifiDirect: Boolean): Boolean =
         shouldQuiesce(sessionIsWireless) && usesWifiDirect

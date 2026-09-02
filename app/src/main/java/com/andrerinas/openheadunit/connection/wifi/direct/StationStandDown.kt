@@ -22,28 +22,30 @@ object StationStandDown {
     /**
      * How long to give the supplicant before reading back whether it left.
      *
-     * Reported, never waited for. This runs on the service's main thread on the way to creating the
-     * group, so it cannot sleep; the group is created while the station is still tearing down and
-     * may well see the old state. That is survivable because the handshake asks for a WiFi Direct
-     * refresh every ten seconds until it has credentials, so a bring-up that raced the
-     * disassociation is retried in the state the stand-down produced.
+     * This runs on the service's main thread on the way to creating the group, so it cannot sleep.
+     * The caller delays the group by this much instead when [standDown] says it acted: a group
+     * asked for while the station is still tearing down forms on the channel the stand-down was
+     * meant to free, and a credential refresh reads a group again rather than remaking it, so
+     * nothing later would move it.
      */
-    private const val VERIFY_DELAY_MS = 1_500L
+    const val VERIFY_DELAY_MS = 1_500L
 
     /**
      * Leave the current network, recording it first so it can always be put back.
      *
      * The record is written before the call, not after: a crash between the two would otherwise
      * leave the unit unable to rejoin the owner's home network with nothing anywhere saying why.
+     *
+     * @return true when the unit was asked to leave, so the caller can give it [VERIFY_DELAY_MS].
      */
-    fun standDown(context: Context) {
+    fun standDown(context: Context): Boolean {
         val settings = try {
             App.provide(context).settings
         } catch (e: Exception) {
             AppLog.d("StationStandDown: settings unavailable, not standing down: ${e.message}")
-            return
+            return false
         }
-        if (!settings.standDownStationForWifiDirect) return
+        if (!settings.standDownStationForWifiDirect) return false
 
         try {
             val wm = context.applicationContext
@@ -77,7 +79,7 @@ object StationStandDown {
                             "it readable."
                     )
                 }
-                return
+                return false
             }
 
             settings.stationStandDownNetworkId = networkId
@@ -107,8 +109,10 @@ object StationStandDown {
                     AppLog.d("StationStandDown: could not read the station back: ${e.message}")
                 }
             }, VERIFY_DELAY_MS)
+            return true
         } catch (e: Exception) {
             AppLog.w("StationStandDown: could not stand the station down: ${e.message}")
+            return false
         }
     }
 
