@@ -788,6 +788,9 @@
     <string name="five_ghz_channel" translatable="false">5 GHz channel</string>
     <string name="five_ghz_channel_auto" translatable="false">Automatic</string>
     <string name="five_ghz_channel_option" translatable="false">Channel %1$d (%2$d MHz)</string>
+    <string name="stand_down_station" translatable="false">Leave this unit\'s WiFi network while connecting</string>
+    <string name="stand_down_station_description" translatable="false">Disconnects this head unit from its own WiFi network just before the WiFi Direct group is created, and reconnects it when the session ends. On a single-radio unit a joined network leaves the group no free channel, so the group is forced onto that network\'s channel or is refused outright. Try this if your phone never joins. Note that most units measured so far run better with the network joined, so turn it back off if the picture gets worse.</string>
+    <string name="stand_down_station_needs_overlay" translatable="false">Needs the \"display over other apps\" permission on this Android version.</string>
     <string name="debug_video_low_latency" translatable="false">Request decoder low-latency mode</string>
     <string name="debug_video_low_latency_description" translatable="false">Sets the vendor low-latency MediaFormat key when configuring the video decoder. Falls back automatically if the decoder rejects it.</string>
     <string name="debug_video_feed_hold" translatable="false">Simulate a slow decoder</string>

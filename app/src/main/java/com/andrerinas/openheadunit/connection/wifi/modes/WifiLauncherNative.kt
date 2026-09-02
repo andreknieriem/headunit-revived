@@ -2,6 +2,7 @@ package com.andrerinas.openheadunit.connection.wifi.modes
 
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.connection.CommManager
+import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDown
 import com.andrerinas.openheadunit.connection.wifi.direct.WifiDirectManager
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeAaHandshakeManager
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApCredentialsProvider
@@ -69,6 +70,11 @@ class WifiLauncherNative : WifiLauncher {
                 AppLog.i("AapService: Native AA on the head unit hotspot — resolving access point credentials.")
                 softApCredentialsProvider?.start()
             } else if (wifiDirect != null) {
+                // Before the group, not after: wpa_supplicant only honours a channel while no group
+                // exists, and an associated station is what leaves it none to give. Opt-in, and a
+                // no-op on a unit that is not joined to anything.
+                StationStandDown.standDown(service)
+
                 // Start WiFi Direct as a "quiet host" (P2P Group for phone to join)
                 // We let WifiDirectManager handle the WiFi state (enabling if needed)
                 setupWifiDirect(wifiDirect)
@@ -89,8 +95,12 @@ class WifiLauncherNative : WifiLauncher {
         if (seq.handledAt(WifiLauncherStopSequence.BEFORE_HOTSPOT_DISABLE))
             softApCredentialsProvider?.stop()
 
-        if (seq.handledAt(WifiLauncherStopSequence.LAST))
+        if (seq.handledAt(WifiLauncherStopSequence.LAST)) {
             handshakeManager?.stop()
+            // Whatever the mode is switching to, this unit gets its own network back. AapService
+            // restores as well, because a force-stop never reaches here at all.
+            StationStandDown.restore(service)
+        }
     }
 
     /**

@@ -81,6 +81,8 @@ import com.andrerinas.openheadunit.utils.HotspotManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherStopSequence
+import com.andrerinas.openheadunit.connection.wifi.direct.StationScanMonitor
+import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDown
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherHelper
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherManual
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherNative
@@ -116,6 +118,12 @@ class AapService : Service() {
     private var wifiAutoStartReceiver: WifiAutoStartReceiver? = null
     private var mediaSession: MediaSessionCompat? = null
     private val wifiLauncherManager = WifiLauncherManager(this)
+
+    /**
+     * Counts this unit's own WiFi scans into the log. Nothing acts on it; it exists so a reporter's
+     * capture can carry the one piece of evidence the periodic-outage theory has always lacked.
+     */
+    private val stationScanMonitor = StationScanMonitor()
     private val usbLauncherManager = UsbLauncherManager(this)
     private val selfLauncherManager = SelfLauncherManager(this, wifiLauncherManager)
 
@@ -869,6 +877,10 @@ class AapService : Service() {
             return
         }
         fillBluetoothAddressIfUnset()
+        // A force-stop or a crash runs no teardown, so a station stand-down can outlive the process
+        // that made it. Putting the network back here is what keeps that from stranding the unit off
+        // its own WiFi. No-op unless one is standing.
+        StationStandDown.restore(this)
         setupCarMode()
         setupNightMode()
         observeConnectionState()
@@ -1571,6 +1583,7 @@ class AapService : Service() {
 
     private fun registerReceivers() {
         usbLauncherManager.register()
+        stationScanMonitor.start(this)
         ContextCompat.registerReceiver(
             this, nightModeUpdateReceiver,
             IntentFilter(ACTION_REQUEST_NIGHT_MODE_UPDATE),
@@ -2039,6 +2052,7 @@ class AapService : Service() {
         usbLauncherManager.unregister()
         try { unregisterReceiver(mediaButtonReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(wakeDetectReceiver) } catch (_: Exception) {}
+        stationScanMonitor.stop(this)
         try { App.provide(this).carKeysManager.unregisterReceivers() } catch (e: Exception) { AppLog.w("AapService: Error unregistering carKeysManager: ${e.message}") }
         try { wifiAutoStartReceiver?.let { unregisterReceiver(it) } } catch (_: Exception) {}
         try {

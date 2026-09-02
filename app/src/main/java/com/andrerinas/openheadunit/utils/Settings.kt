@@ -510,6 +510,35 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("keep-dummy-vpn-during-session", value).apply() }
 
     /**
+     * Drops this unit's own WiFi association while the Native AA WiFi Direct group is brought up.
+     *
+     * On a single-radio unit an associated station leaves the group owner no free channel, so
+     * wpa_supplicant forces the group onto the station's channel or refuses to make one at all. That
+     * is the shape of a unit whose group never forms, and of one whose picture stutters because the
+     * group is sharing the home network's channel.
+     *
+     * Off by default, and deliberately not a general remedy: the same association is measured to be
+     * the *better* state once a session is running, on this same class of hardware. It is bounded to
+     * the bring-up and the network is put back on teardown. See
+     * [com.andrerinas.openheadunit.connection.wifi.direct.StationStandDownPolicy], which also holds
+     * the rule for whether the platform will honour it at all.
+     */
+    var standDownStationForWifiDirect: Boolean
+        get() = prefs.getBoolean("stand-down-station-for-wifi-direct", false)
+        set(value) { prefs.edit().putBoolean("stand-down-station-for-wifi-direct", value).apply() }
+
+    /**
+     * The network id disabled by the stand-down above, or -1 for none standing.
+     *
+     * Written before the network is disabled rather than after, so a crash in between still leaves a
+     * record to restore from. Not a user setting; it exists so a force-stop cannot leave the unit
+     * unable to rejoin its own home network.
+     */
+    var stationStandDownNetworkId: Int
+        get() = prefs.getInt("station-stand-down-network-id", -1)
+        set(value) { prefs.edit().putInt("station-stand-down-network-id", value).apply() }
+
+    /**
      * Asks the decoder for low-latency mode, through whichever key its vendor understands.
      *
      * Off by default, and it stays off until a log from a real device shows the key changing the

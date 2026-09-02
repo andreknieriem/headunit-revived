@@ -27,6 +27,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialField
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
+import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDownPolicy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeCredentialsPreflightPolicy
 import com.andrerinas.openheadunit.aap.NativeTransport
 import com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy
@@ -1074,6 +1075,29 @@ class SettingsFragment : Fragment() {
                 // that could say 36 or 149 and nothing between.
                 if (pendingP2pBandPreference() != P2pBandPreference.FORCE_2_4GHZ) {
                     addFiveGhzChannelSetting(items)
+                }
+
+                // Only where the platform would honour it. Below Android 10 anything may ask; from
+                // 10 to 14 the overlay permission is what gets past the framework's check, so the
+                // row stays and says so rather than vanishing into an unanswerable question; from
+                // 15 there is no route at all and offering the switch would be a lie.
+                val overlayGranted = AppPermissions.isOverlayGranted(requireContext())
+                if (StationStandDownPolicy.isAvailable(Build.VERSION.SDK_INT, true)) {
+                    items.add(SettingItem.ToggleSettingEntry(
+                        stableId = "standDownStationForWifiDirect",
+                        nameResId = R.string.stand_down_station,
+                        descriptionResId = R.string.stand_down_station_description,
+                        isChecked = settings.standDownStationForWifiDirect,
+                        isEnabled = overlayGranted,
+                        descriptionOverride = if (overlayGranted) null else
+                            getString(R.string.stand_down_station_needs_overlay) + " " +
+                                getString(R.string.stand_down_station_description),
+                        searchKeywords = "wifi disconnect station home network channel single radio",
+                        onCheckedChanged = { isChecked ->
+                            settings.standDownStationForWifiDirect = isChecked
+                            updateSettingsList()
+                        }
+                    ))
                 }
             }
 
