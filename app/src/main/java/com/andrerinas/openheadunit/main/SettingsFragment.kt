@@ -887,7 +887,7 @@ class SettingsFragment : Fragment() {
             WifiLauncherMode.HELPER -> 0 // Helper
             WifiLauncherMode.NATIVE -> 1 // Native
             WifiLauncherMode.MANUAL, WifiLauncherMode.AUTO -> 2 // Server
-            else -> 2
+            else -> 1
         }
 
         items.add(SettingItem.SegmentedButtonSettingEntry(
@@ -900,7 +900,7 @@ class SettingsFragment : Fragment() {
                     0 -> WifiLauncherMode.HELPER // Helper
                     1 -> WifiLauncherMode.NATIVE // Native
                     2 -> if (pendingWifiConnectionMode == WifiLauncherMode.MANUAL) WifiLauncherMode.MANUAL else WifiLauncherMode.AUTO // Keep manual/auto choice if already in server mode
-                    else -> WifiLauncherMode.AUTO
+                    else -> WifiLauncherMode.NATIVE
                 }
 
                 if (newMode == WifiLauncherMode.NATIVE) {
@@ -1172,14 +1172,15 @@ class SettingsFragment : Fragment() {
         // Sub-setting for Wireless Helper Strategy
         if (pendingWifiConnectionMode == WifiLauncherMode.HELPER) {
             val helperStrategies = resources.getStringArray(R.array.helper_strategies)
+            val currentStrategyId = pendingHelperConnectionStrategy?.id ?: settings.helperConnectionStrategy.id
             items.add(SettingItem.SettingEntry(
                 stableId = "helperStrategy",
                 nameResId = R.string.helper_strategy_label,
-                value = helperStrategies.getOrElse(pendingHelperConnectionStrategy!!.id) { "" },
+                value = helperStrategies.getOrElse(currentStrategyId) { "" },
                 onClick = {
                     MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                         .setTitle(R.string.helper_strategy_label)
-                        .setSingleChoiceItems(helperStrategies, pendingHelperConnectionStrategy!!.id) { dialog, which ->
+                        .setSingleChoiceItems(helperStrategies, currentStrategyId) { dialog, which ->
                             pendingHelperConnectionStrategy = HelperStrategy.byIdOrDefault(which)
                             checkChanges()
                             dialog.dismiss()
@@ -1312,7 +1313,7 @@ class SettingsFragment : Fragment() {
             stableId = "killOnDisconnect",
             nameResId = R.string.kill_on_disconnect,
             descriptionResId = R.string.kill_on_disconnect_description,
-            isChecked = pendingKillOnDisconnect!!,
+            isChecked = pendingKillOnDisconnect ?: settings.killOnDisconnect,
             onCheckedChanged = { isChecked ->
                 if (isChecked) {
                     val conflicts = getKillOnDisconnectConflicts()
@@ -1342,7 +1343,7 @@ class SettingsFragment : Fragment() {
                 stableId = "raiseProjectionDuringCall",
                 nameResId = R.string.raise_projection_during_call,
                 descriptionResId = R.string.raise_projection_during_call_description,
-                isChecked = pendingRaiseProjectionDuringCall!!,
+                isChecked = pendingRaiseProjectionDuringCall ?: settings.raiseProjectionDuringCall,
                 onCheckedChanged = { isChecked ->
                     pendingRaiseProjectionDuringCall = isChecked
                     checkChanges()
@@ -1361,7 +1362,7 @@ class SettingsFragment : Fragment() {
                 stableId = "gpsNavigation",
                 nameResId = R.string.gps_for_navigation,
                 descriptionResId = R.string.gps_for_navigation_description,
-                isChecked = pendingUseGps!!,
+                isChecked = pendingUseGps ?: settings.useGpsForNavigation,
                 onCheckedChanged = { isChecked ->
                     pendingUseGps = isChecked
                     checkChanges()
@@ -1374,7 +1375,7 @@ class SettingsFragment : Fragment() {
             stableId = "showNavigationNotifications",
             nameResId = R.string.show_navigation_notifications,
             descriptionResId = R.string.show_navigation_notifications_description,
-            isChecked = pendingShowNavigationNotifications!!,
+            isChecked = pendingShowNavigationNotifications ?: settings.showNavigationNotifications,
             onCheckedChanged = { isChecked ->
                 pendingShowNavigationNotifications = isChecked
                 checkChanges()
@@ -1386,7 +1387,7 @@ class SettingsFragment : Fragment() {
             stableId = "fakeSpeed",
             nameResId = R.string.fake_speed_title,
             descriptionResId = R.string.fake_speed_description,
-            isChecked = pendingFakeSpeed!!,
+            isChecked = pendingFakeSpeed ?: settings.fakeSpeed,
             onCheckedChanged = { isChecked ->
                 pendingFakeSpeed = isChecked
                 checkChanges()
@@ -1400,7 +1401,7 @@ class SettingsFragment : Fragment() {
         items.add(SettingItem.SettingEntry(
             stableId = "resolution",
             nameResId = R.string.resolution,
-            value = Settings.Resolution.fromId(pendingResolution!!)?.resName ?: "",
+            value = Settings.Resolution.fromId(pendingResolution ?: settings.resolutionId)?.resName ?: "",
             searchKeywords = Settings.Resolution.allRes.joinToString(" "),
             onClick = { showResolutionDialog() }
         ))
@@ -1428,7 +1429,7 @@ class SettingsFragment : Fragment() {
                 showNumericInputDialog(
                     title = getString(R.string.enter_pixel_aspect_ratio_value),
                     message = null,
-                    initialValue = if ((pendingPixelAspectRatioE4 ?: 10000) <= 0) 10000 else pendingPixelAspectRatioE4!!,
+                    initialValue = if ((pendingPixelAspectRatioE4 ?: 10000) <= 0) 10000 else (pendingPixelAspectRatioE4 ?: 10000),
                     onConfirm = { newVal ->
                         pendingPixelAspectRatioE4 = if (newVal <= 0) 10000 else newVal
                         checkChanges()
@@ -1498,11 +1499,11 @@ class SettingsFragment : Fragment() {
             },
             onClick = { _ ->
                 val viewModes = arrayOf(getString(R.string.surface_view), getString(R.string.texture_view), getString(R.string.gles_view))
-                val currentIdx = pendingViewMode!!.value
+                val currentIdx = pendingViewMode?.value ?: settings.viewMode.value
                 MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                     .setTitle(R.string.change_view_mode)
                     .setSingleChoiceItems(viewModes, currentIdx) { dialog, which ->
-                        pendingViewMode = Settings.ViewMode.fromInt(which)!!
+                        Settings.ViewMode.fromInt(which)?.let { pendingViewMode = it }
                         checkChanges()
                         dialog.dismiss()
                         updateSettingsList()
@@ -1511,14 +1512,15 @@ class SettingsFragment : Fragment() {
             }
         ))
 
+        val orientationOptions = resources.getStringArray(R.array.screen_orientation)
+        val currentOrientationIdx = pendingScreenOrientation?.value ?: settings.screenOrientation.value
         items.add(SettingItem.SettingEntry(
             stableId = "screenOrientation",
             nameResId = R.string.screen_orientation,
-            value = resources.getStringArray(R.array.screen_orientation)[pendingScreenOrientation!!.value],
-            searchKeywords = resources.getStringArray(R.array.screen_orientation).joinToString(" "),
+            value = orientationOptions.getOrElse(currentOrientationIdx) { "" },
+            searchKeywords = orientationOptions.joinToString(" "),
             onClick = { _ ->
-                val orientationOptions = resources.getStringArray(R.array.screen_orientation)
-                val currentIdx = pendingScreenOrientation!!.value
+                val currentIdx = pendingScreenOrientation?.value ?: settings.screenOrientation.value
                 MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                     .setTitle(R.string.change_screen_orientation)
                     .setSingleChoiceItems(orientationOptions, currentIdx) { dialog, whiches ->
@@ -1547,7 +1549,7 @@ class SettingsFragment : Fragment() {
             stableId = "stretchToFill",
             nameResId = R.string.pref_stretch_screen_title,
             descriptionResId = R.string.pref_stretch_screen_summary,
-            isChecked = pendingStretchToFill!!,
+            isChecked = pendingStretchToFill ?: settings.stretchToFill,
             onCheckedChanged = { isChecked ->
                 pendingStretchToFill = isChecked
                 requiresRestart = true // Requires a reconnect to apply the new rendering bounds
@@ -1585,7 +1587,7 @@ class SettingsFragment : Fragment() {
                 stableId = "forcedScale",
                 nameResId = R.string.forced_scale,
                 descriptionResId = R.string.forced_scale_description,
-                isChecked = pendingForcedScale!!,
+                isChecked = pendingForcedScale ?: settings.forcedScale,
                 onCheckedChanged = { isChecked ->
                     pendingForcedScale = isChecked
                     requiresRestart = true
@@ -1648,7 +1650,7 @@ class SettingsFragment : Fragment() {
             stableId = "forceSoftwareDecoding",
             nameResId = R.string.force_software_decoding,
             descriptionResId = R.string.force_software_decoding_description,
-            isChecked = pendingForceSoftware!!,
+            isChecked = pendingForceSoftware ?: settings.forceSoftwareDecoding,
             onCheckedChanged = { isChecked ->
                 pendingForceSoftware = isChecked
                 checkChanges()
@@ -1691,7 +1693,7 @@ class SettingsFragment : Fragment() {
         items.add(SettingItem.SettingEntry(
             stableId = "videoCodec",
             nameResId = R.string.video_codec,
-            value = pendingVideoCodec!!,
+            value = pendingVideoCodec ?: settings.videoCodec,
             searchKeywords = "Auto H.264 H.265",
             onClick = { _ ->
                 val codecs = arrayOf("Auto", "H.264", "H.265")
@@ -1820,7 +1822,7 @@ class SettingsFragment : Fragment() {
             stableId = "enableAudioSink",
             nameResId = R.string.enable_audio_sink,
             descriptionResId = R.string.enable_audio_sink_description,
-            isChecked = pendingEnableAudioSink!!,
+            isChecked = pendingEnableAudioSink ?: settings.enableAudioSink,
             onCheckedChanged = { isChecked ->
                 pendingEnableAudioSink = isChecked
                 checkChanges()
@@ -1904,7 +1906,7 @@ class SettingsFragment : Fragment() {
             stableId = "useAacAudio",
             nameResId = R.string.use_aac_audio,
             descriptionResId = R.string.use_aac_audio_description,
-            isChecked = pendingUseAacAudio!!,
+            isChecked = pendingUseAacAudio ?: settings.useAacAudio,
             onCheckedChanged = { isChecked ->
                 pendingUseAacAudio = isChecked
                 checkChanges()
@@ -1929,7 +1931,7 @@ class SettingsFragment : Fragment() {
             stableId = "syncMediaSessionAaMetadata",
             nameResId = R.string.sync_media_session_aa_metadata,
             descriptionResId = R.string.sync_media_session_aa_metadata_description,
-            isChecked = pendingSyncMediaSessionAaMetadata!!,
+            isChecked = pendingSyncMediaSessionAaMetadata ?: settings.syncMediaSessionWithAaMetadata,
             onCheckedChanged = { isChecked ->
                 pendingSyncMediaSessionAaMetadata = isChecked
                 checkChanges()
@@ -1941,7 +1943,7 @@ class SettingsFragment : Fragment() {
             stableId = "autoResumePlaybackOnReconnect",
             nameResId = R.string.auto_resume_playback_on_reconnect,
             descriptionResId = R.string.auto_resume_playback_on_reconnect_description,
-            isChecked = pendingAutoResumePlaybackOnReconnect!!,
+            isChecked = pendingAutoResumePlaybackOnReconnect ?: settings.autoResumePlaybackOnReconnect,
             onCheckedChanged = { isChecked ->
                 pendingAutoResumePlaybackOnReconnect = isChecked
                 checkChanges()
@@ -2095,7 +2097,7 @@ class SettingsFragment : Fragment() {
             stableId = "showFpsCounter",
             nameResId = R.string.show_fps_counter,
             descriptionResId = R.string.show_fps_counter_description,
-            isChecked = pendingShowFpsCounter!!,
+            isChecked = pendingShowFpsCounter ?: settings.showFpsCounter,
             onCheckedChanged = { isChecked ->
                 pendingShowFpsCounter = isChecked
                 checkChanges()
