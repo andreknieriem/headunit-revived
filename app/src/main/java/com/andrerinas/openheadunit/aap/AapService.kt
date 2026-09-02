@@ -29,6 +29,8 @@ import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.app.ActivityLaunchPolicy
 import com.andrerinas.openheadunit.app.BootCompleteReceiver
 import com.andrerinas.openheadunit.app.BootLoopPolicy
+import com.andrerinas.openheadunit.app.BtAutoDisconnectArm
+import com.andrerinas.openheadunit.app.BtAutoDisconnectPolicy
 import com.andrerinas.openheadunit.app.BtAutoStartRearmPolicy
 import com.andrerinas.openheadunit.app.ForegroundServiceTypePolicy
 import com.andrerinas.openheadunit.app.WifiAutoStartReceiver
@@ -290,6 +292,23 @@ class AapService : Service() {
     var userExitedAA = false
     @Volatile
     var userExitCooldownUntil = 0L
+
+    /** elapsedRealtime when the current session reached Connected, or 0 when nothing is up. */
+    @Volatile
+    private var sessionConnectedAt = 0L
+
+    /**
+     * Pending "a watched Bluetooth device went away" timers, one per address. Touched only from
+     * the main thread, where the receiver and the timer bodies both run, so it needs no locking.
+     */
+    private val btAutoDisconnectJobs = mutableMapOf<String, kotlinx.coroutines.Job>()
+
+    /**
+     * Set just before a Bluetooth auto-disconnect ends the session: the stack must stay down
+     * afterwards, which for Helper and Auto means undoing their user-exit discovery restart.
+     */
+    @Volatile
+    private var btAutoDisconnectStandDown = false
 
     private val commManager get() = App.provide(this).commManager
 
@@ -963,7 +982,10 @@ class AapService : Service() {
         serviceScope.launch {
             commManager.connectionState.collect { state ->
                 when (state) {
-                    is CommManager.ConnectionState.Connected -> onConnected()
+                    is CommManager.ConnectionState.Connected -> {
+                        sessionConnectedAt = SystemClock.elapsedRealtime()
+                        onConnected()
+                    }
                     is CommManager.ConnectionState.HandshakeComplete -> {
                         launchAapProjectionActivity()
                     }
@@ -1347,6 +1369,8 @@ class AapService : Service() {
      * 4. Scheduling a reconnect attempt if applicable (see [scheduleReconnectIfNeeded])
      */
     private fun onDisconnected(state: CommManager.ConnectionState.Disconnected) {
+        sessionConnectedAt = 0L
+        cancelAllBtAutoDisconnects()
         usbLauncherManager.setSwitchingToProjection(false)
         releaseWifiLock()
         stopDummyVpn(DummyVpnPolicy.Reason.SESSION_ENDED)
@@ -1497,6 +1521,18 @@ class AapService : Service() {
                     )
                     HotspotExitAction.NONE -> {}
                 }
+            }
+
+            if (btAutoDisconnectStandDown) {
+                btAutoDisconnectStandDown = false
+                // Every mode, not only Native: Helper's user-exit branch above restarts discovery
+                // and Auto's loop keeps running, which would re-advertise to the phone right after
+                // its Bluetooth ended the session. Something has to ask for the stack back: the
+                // Bluetooth auto-start, the Home screen, or a service restart.
+                commManager.awaitDisconnectComplete()
+                AppLog.i("AapService: Bluetooth auto-disconnect: keeping the wireless bring-up down until something re-arms it.")
+                wifiLauncherManager.stop(WifiLauncherStopSequence.LAST)
+                userExitedAA = true
             }
 
             App.provide(this@AapService).audioDecoder.stop()
@@ -1672,6 +1708,92 @@ class AapService : Service() {
             ContextCompat.RECEIVER_EXPORTED
         )
         AppLog.i("Registered wake detection receiver (${wakeFilter.countActions()} actions)")
+
+        // Registered whether or not a device is chosen: the list can change while the service
+        // runs, and the handler returns on its first line when it is empty.
+        ContextCompat.registerReceiver(
+            this, btAutoDisconnectReceiver,
+            IntentFilter().apply {
+                addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED)
+                addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED)
+            },
+            ContextCompat.RECEIVER_EXPORTED
+        )
+        AppLog.i("Registered Bluetooth auto-disconnect receiver")
+    }
+
+    /**
+     * Watches the links chosen under "Auto-disconnect on Bluetooth". Runtime-registered so it
+     * cannot outlive the session, and on ACL because the selection is addresses, not profiles.
+     */
+    private val btAutoDisconnectReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val connected = when (intent.action) {
+                android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED -> true
+                android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED -> false
+                else -> return
+            }
+            val watched = App.provide(this@AapService).settings.autoDisconnectBluetoothDeviceMacs
+            if (watched.isEmpty()) return
+
+            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(android.bluetooth.BluetoothDevice.EXTRA_DEVICE, android.bluetooth.BluetoothDevice::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(android.bluetooth.BluetoothDevice.EXTRA_DEVICE)
+            }
+            val mac = device?.address
+
+            when (BtAutoDisconnectPolicy.onAclEvent(watched, mac, connected)) {
+                BtAutoDisconnectArm.IGNORE -> {}
+                BtAutoDisconnectArm.CANCEL -> {
+                    if (btAutoDisconnectJobs.remove(mac)?.also { it.cancel() } != null) {
+                        AppLog.i("AapService: Bluetooth auto-disconnect: $mac is back; the pending disconnect is cancelled.")
+                    }
+                }
+                BtAutoDisconnectArm.ARM -> armBtAutoDisconnect(mac!!)
+            }
+        }
+    }
+
+    private fun isSessionUp(): Boolean =
+        commManager.isConnected || commManager.connectionState.value is CommManager.ConnectionState.Connecting
+
+    private fun armBtAutoDisconnect(mac: String) {
+        if (!isSessionUp()) {
+            // Deliberately not a stand-down of the wireless stack. Native AA's wake poke holds a
+            // socket to the phone and closes it every cycle while it waits, which raises exactly
+            // this event; standing down here would silence the poke while the phone is answering.
+            AppLog.i("AapService: Bluetooth auto-disconnect: $mac went away, but nothing is projecting; leaving the connection stack alone.")
+            return
+        }
+        val delayMs = BtAutoDisconnectPolicy.graceDelayMs(App.provide(this).settings.autoDisconnectBtDelaySeconds)
+        btAutoDisconnectJobs.remove(mac)?.cancel()
+        AppLog.i("AapService: Bluetooth auto-disconnect: $mac went away; ending the session in ${delayMs}ms unless it comes back.")
+        btAutoDisconnectJobs[mac] = serviceScope.launch {
+            delay(delayMs)
+            btAutoDisconnectJobs.remove(mac)
+            fireBtAutoDisconnect(mac)
+        }
+    }
+
+    private fun fireBtAutoDisconnect(mac: String) {
+        val sessionUp = isSessionUp()
+        val ageMs = if (sessionConnectedAt == 0L) 0L else SystemClock.elapsedRealtime() - sessionConnectedAt
+        // The device coming back cancels the job on this same thread, so a job that runs never
+        // saw it return; the parameter exists so the rule is complete where it is tested.
+        if (!BtAutoDisconnectPolicy.shouldEndSession(sessionUp, ageMs, deviceCameBack = false)) {
+            AppLog.i("AapService: Bluetooth auto-disconnect: not ending the session for $mac (up=$sessionUp, age=${ageMs}ms).")
+            return
+        }
+        AppLog.i("AapService: Bluetooth auto-disconnect: $mac stayed away; ending the session the way the Exit button does.")
+        btAutoDisconnectStandDown = true
+        commManager.disconnect(sendByeBye = true, isUserExit = true)
+    }
+
+    private fun cancelAllBtAutoDisconnects() {
+        btAutoDisconnectJobs.values.forEach { it.cancel() }
+        btAutoDisconnectJobs.clear()
     }
 
     private fun registerNetworkMonitor() {
@@ -2066,6 +2188,10 @@ class AapService : Service() {
         usbLauncherManager.unregister()
         try { unregisterReceiver(mediaButtonReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(wakeDetectReceiver) } catch (_: Exception) {}
+        try { unregisterReceiver(btAutoDisconnectReceiver) } catch (_: Exception) {}
+        cancelAllBtAutoDisconnects()
+        btAutoDisconnectStandDown = false
+        sessionConnectedAt = 0L
         stationScanMonitor.stop(this)
         try { App.provide(this).carKeysManager.unregisterReceivers() } catch (e: Exception) { AppLog.w("AapService: Error unregistering carKeysManager: ${e.message}") }
         try { wifiAutoStartReceiver?.let { unregisterReceiver(it) } } catch (_: Exception) {}

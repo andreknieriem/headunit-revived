@@ -1345,7 +1345,8 @@ class SettingsFragment : Fragment() {
             value = getString(R.string.auto_start_settings_description),
             searchKeywords = kw(
                 R.string.auto_start_on_boot_label, R.string.auto_start_screen_on_label,
-                R.string.auto_start_usb_label, R.string.auto_start_bt_label, R.string.auto_start_wifi_label
+                R.string.auto_start_usb_label, R.string.auto_start_bt_label, R.string.auto_start_wifi_label,
+                R.string.auto_disconnect_bt_label
             ),
             onClick = {
                 try {

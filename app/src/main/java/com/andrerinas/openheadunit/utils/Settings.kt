@@ -1076,6 +1076,19 @@ class Settings(private val context: Context) {
             autoStartBluetoothDeviceMacs = current
         }
 
+    /**
+     * Devices whose Bluetooth link going away ends a session. Deliberately not the auto-start list,
+     * which doubles as the wake-poke targets. Read after unlock only, so no device-protected mirror.
+     */
+    var autoDisconnectBluetoothDeviceMacs: Set<String>
+        get() = prefs.getStringSet("auto-disconnect-bt-macs", null) ?: emptySet()
+        set(value) { prefs.edit().putStringSet("auto-disconnect-bt-macs", value).apply() }
+
+    /** Grace period before a watched device's absence counts. 0 ends the session at once. */
+    var autoDisconnectBtDelaySeconds: Int
+        get() = prefs.getInt("auto-disconnect-bt-delay-seconds", 5)
+        set(value) { prefs.edit().putInt("auto-disconnect-bt-delay-seconds", value).apply() }
+
     var appLanguage: String
         get() = prefs.getString("app-language", "")!!
         set(value) { prefs.edit().putString("app-language", value).apply() }

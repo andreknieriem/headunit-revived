@@ -409,6 +409,15 @@
     <string name="auto_start_screen_on_description">Open the app every time the screen turns on. Ideal for head units that never fully shut down or use fast boot modes where the other auto-start options don\'t work. Not recommended for phones or tablets.</string>
     <string name="select_bt_device">Select Bluetooth Device</string>
     <string name="bt_device_not_set">Not set</string>
+    <string name="no_paired_bt_devices" translatable="false">No paired Bluetooth devices found</string>
+    <string name="auto_disconnect_bt_label" translatable="false">Auto-disconnect on Bluetooth</string>
+    <string name="select_bt_disconnect_device" translatable="false">Select the Bluetooth device to watch</string>
+    <string name="auto_disconnect_bt_delay_label" translatable="false">Wait before disconnecting</string>
+    <string name="auto_disconnect_bt_delay_value" translatable="false">%1$d s</string>
+    <string name="auto_disconnect_bt_delay_immediate" translatable="false">Immediately</string>
+    <string name="enter_auto_disconnect_bt_delay" translatable="false">Seconds to wait before ending the session</string>
+    <string name="auto_disconnect_bt_delay_hint" translatable="false">A Bluetooth link can drop for a moment while profiles reconnect. The session only ends if the device is still gone after this long.</string>
+    <string name="auto_disconnect_bt_kill_hint" translatable="false">Ends the session the way the Exit button does when a chosen device\'s Bluetooth goes away, for example the car being switched off. Pick the car\'s Bluetooth if this unit is paired with it. To also close the app and show the home screen, turn on \"Close app on disconnect\" under Automation.</string>
     <string name="auto_start_wifi_label">Auto-start on WiFi</string>
     <string name="auto_start_wifi_description">Automatically open Open Headunit when connected to a specific WiFi SSID.</string>
     <string name="auto_start_wifi_ssid_label">WiFi SSID</string>

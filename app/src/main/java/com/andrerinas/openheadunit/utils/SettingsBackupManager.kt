@@ -136,6 +136,8 @@ object SettingsBackupManager {
         "auto-connect-priority-order" to ValueType.STRING,
         "auto-start-bt-macs" to ValueType.STRING_SET,
         "auto-start-bt-name" to ValueType.STRING,
+        "auto-disconnect-bt-macs" to ValueType.STRING_SET,
+        "auto-disconnect-bt-delay-seconds" to ValueType.INT,
         "app-language" to ValueType.STRING,
         "media-volume-offset" to ValueType.INT,
         "assistant-volume-offset" to ValueType.INT,
