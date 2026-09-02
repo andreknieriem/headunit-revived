@@ -29,7 +29,9 @@ import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialFiel
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeCredentialsPreflightPolicy
 import com.andrerinas.openheadunit.aap.NativeTransport
+import com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy
 import com.andrerinas.openheadunit.connection.wifi.direct.P2pBandPreference
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.HotspotBandPreference
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.PreflightReport
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBssidPolicy
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
@@ -99,6 +101,9 @@ class SettingsFragment : Fragment() {
         // thing to try when a wireless session connects and shows no picture, and a user sent to
         // Advanced to find it is a user who never finds it.
         "wifiDirectBand", "wifiDirectBandHint",
+        // And the channel within the band, which is the same kind of first thing to try: a
+        // network on a channel the phone's regulatory domain forbids is one it never lists.
+        "fiveGhzChannel", "fiveGhzChannelHint",
         "hotspotSsidOverride", "hotspotPasswordOverride",
         "hotspotInterfaceOverride",
         // Dark mode
@@ -166,6 +171,7 @@ class SettingsFragment : Fragment() {
     private var pendingNativeApTransport: NativeStrategy? = null
     private var pendingWifiDirectBand: Int? = null
     private var pendingHotspotBand: Int? = null
+    private var pendingFiveGhzChannel: Int? = null
     private var pendingHotspotSsid: String? = null
     private var pendingHotspotPassword: String? = null
     private var pendingHotspotInterface: String? = null
@@ -322,6 +328,7 @@ class SettingsFragment : Fragment() {
         pendingNativeApTransport = settings.nativeApStrategy
         pendingWifiDirectBand = settings.wifiDirectBand
         pendingHotspotBand = settings.hotspotBand
+        pendingFiveGhzChannel = settings.fiveGhzChannel
         pendingHotspotSsid = settings.hotspotSsid
         pendingHotspotPassword = settings.hotspotPassword
         pendingHotspotInterface = settings.hotspotInterface
@@ -437,6 +444,7 @@ class SettingsFragment : Fragment() {
         pendingNativeApTransport = settings.nativeApStrategy
         pendingWifiDirectBand = settings.wifiDirectBand
         pendingHotspotBand = settings.hotspotBand
+        pendingFiveGhzChannel = settings.fiveGhzChannel
         pendingHotspotSsid = settings.hotspotSsid
         pendingHotspotPassword = settings.hotspotPassword
         pendingHotspotInterface = settings.hotspotInterface
@@ -587,6 +595,7 @@ class SettingsFragment : Fragment() {
         pendingNativeApTransport?.let { settings.nativeApStrategy = it }
         pendingWifiDirectBand?.let { settings.wifiDirectBand = it }
         pendingHotspotBand?.let { settings.hotspotBand = it }
+        pendingFiveGhzChannel?.let { settings.fiveGhzChannel = it }
         pendingHotspotSsid?.let { settings.hotspotSsid = it }
         pendingHotspotPassword?.let { settings.hotspotPassword = it }
         pendingHotspotInterface?.let { settings.hotspotInterface = it }
@@ -704,6 +713,7 @@ class SettingsFragment : Fragment() {
                         pendingNativeApTransport != settings.nativeApStrategy ||
                         pendingWifiDirectBand != settings.wifiDirectBand ||
                         pendingHotspotBand != settings.hotspotBand ||
+                        pendingFiveGhzChannel != settings.fiveGhzChannel ||
                         pendingHotspotSsid != settings.hotspotSsid ||
                         pendingHotspotPassword != settings.hotspotPassword ||
                         pendingHotspotInterface != settings.hotspotInterface ||
@@ -953,6 +963,9 @@ class SettingsFragment : Fragment() {
                 // the setting governing this route unreachable from the screen that selects it.
                 addHotspotToggle(items)
                 addHotspotBandSetting(items)
+                if (pendingHotspotBandPreference() != HotspotBandPreference.FORCE_2_4GHZ) {
+                    addFiveGhzChannelSetting(items)
+                }
 
                 // The automatic read goes through the same non-public API that a locked-down
                 // device refuses outright, so on those units this override is the only way the
@@ -1040,20 +1053,10 @@ class SettingsFragment : Fragment() {
             if (pendingNativeTransport() == NativeTransport.WIFI_DIRECT) {
                 addWifiDirectBandSetting(items)
 
-                // The 5 GHz rung has two non-DFS ranges and a regulatory domain can refuse the
-                // lower one, so this only means anything where a 5 GHz channel is asked for at all.
+                // Only where a 5 GHz channel is asked for at all. Replaces a two-position toggle
+                // that could say 36 or 149 and nothing between.
                 if (pendingP2pBandPreference() != P2pBandPreference.FORCE_2_4GHZ) {
-                    items.add(SettingItem.ToggleSettingEntry(
-                        stableId = "p2pLegacyFiveGhzUpperBand",
-                        nameResId = R.string.p2p_legacy_5ghz_upper,
-                        descriptionResId = R.string.p2p_legacy_5ghz_upper_description,
-                        isChecked = settings.p2pLegacyFiveGhzUpperBand,
-                        searchKeywords = "channel 149 upper 5 ghz unii region",
-                        onCheckedChanged = { isChecked ->
-                            settings.p2pLegacyFiveGhzUpperBand = isChecked
-                            updateSettingsList()
-                        }
-                    ))
+                    addFiveGhzChannelSetting(items)
                 }
             }
 
@@ -1196,6 +1199,9 @@ class SettingsFragment : Fragment() {
                 // Strategy 4 reaches the same HotspotManager sweep as the Native AA hotspot
                 // transport, so the band choice applies here too and would otherwise be invisible.
                 addHotspotBandSetting(items)
+                if (pendingHotspotBandPreference() != HotspotBandPreference.FORCE_2_4GHZ) {
+                    addFiveGhzChannelSetting(items)
+                }
             }
 
             if (pendingHelperConnectionStrategy == HelperStrategy.WIFI_DIRECT) { // WiFi Direct (P2P)
@@ -3620,6 +3626,55 @@ class SettingsFragment : Fragment() {
     /** The WiFi Direct band the block is currently showing settings for. */
     private fun pendingP2pBandPreference(): P2pBandPreference =
         P2pBandPreference.fromSetting(pendingWifiDirectBand ?: 0)
+
+    /** The hotspot band the block is currently showing settings for. */
+    private fun pendingHotspotBandPreference(): HotspotBandPreference =
+        HotspotBandPreference.fromSetting(pendingHotspotBand ?: 0)
+
+    /**
+     * Which 5 GHz channel to ask for, on whichever transport this block is showing.
+     *
+     * One setting shown in three places rather than one per transport: which channels a phone will
+     * join is decided by its own regulatory domain, so the answer follows the user's phone and
+     * country and not the transport, and somebody who switches transport to work around the problem
+     * must not silently lose the choice.
+     *
+     * A dialog rather than the segmented buttons the two band settings use, because there are five
+     * channels and that layout holds three.
+     */
+    private fun addFiveGhzChannelSetting(items: MutableList<SettingItem>) {
+        val current = FiveGhzChannelPolicy.pinnedChannel(pendingFiveGhzChannel ?: 0)
+        val values = listOf(FiveGhzChannelPolicy.AUTOMATIC) + FiveGhzChannelPolicy.CHANNELS
+        val labels = values.map { channel ->
+            if (channel == FiveGhzChannelPolicy.AUTOMATIC) getString(R.string.five_ghz_channel_auto)
+            else getString(
+                R.string.five_ghz_channel_option,
+                channel,
+                FiveGhzChannelPolicy.frequencyMhz(channel),
+            )
+        }.toTypedArray()
+        items.add(SettingItem.SettingEntry(
+            stableId = "fiveGhzChannel",
+            nameResId = R.string.five_ghz_channel,
+            value = labels[values.indexOf(current)],
+            searchKeywords = "channel 36 40 44 48 149 unii 5ghz region country band",
+            onClick = { _ ->
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.five_ghz_channel)
+                    .setSingleChoiceItems(labels, values.indexOf(current)) { dialog, which ->
+                        pendingFiveGhzChannel = values[which]
+                        checkChanges()
+                        dialog.dismiss()
+                        updateSettingsList()
+                    }
+                    .show()
+            }
+        ))
+        items.add(SettingItem.InfoBanner(
+            stableId = "fiveGhzChannelHint",
+            textResId = R.string.five_ghz_channel_hint
+        ))
+    }
 
     /**
      * The band to ask for when this app creates the WiFi Direct group, plus what that choice costs.

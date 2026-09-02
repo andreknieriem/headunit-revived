@@ -184,6 +184,9 @@ object SettingsBackupManager {
         // settings.
         "hotspot-band" to ValueType.INT,
         "wifi-direct-band" to ValueType.INT,
+        // And which channel within the 5 GHz band, which is a property of the user's phone and
+        // regulatory domain rather than of this unit, so it is worth even more across a reinstall.
+        "wifi-5ghz-channel" to ValueType.INT,
         "static-bssid" to ValueType.STRING,
         // Touch calibration fix and toast visibility.
         "use_measured_touch_surface" to ValueType.BOOLEAN,

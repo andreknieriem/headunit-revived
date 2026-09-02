@@ -454,17 +454,36 @@ class Settings(private val context: Context) {
         set(value) = prefs.edit().putInt("wifi-direct-band", value).apply()
 
     /**
-     * Asks for UNII-3 (channel 149) instead of UNII-1 (channel 36) on the 5 GHz rung of the pre-Q
-     * operating-channel ladder.
+     * Which 5 GHz channel to ask for, on whichever transport is hosting the network.
+     * 0 = automatic, otherwise the channel number: 36, 40, 44 or 48 (UNII-1), or 149 (UNII-3).
      *
-     * Both are non-DFS and channel 36 is what the reference implementations use, so this exists only
-     * for a regulatory domain that refuses the lower range. Ignored when [wifiDirectBand] is 2.4 GHz
-     * only, which never reaches that rung, and from API 29 up, where the band request replaces the
-     * whole ladder.
+     * A phone's regulatory domain decides which 5 GHz channels it will join, and a network on a
+     * channel that domain forbids is one the phone never lists at all - not a weak connection, an
+     * invisible one. Several domains refuse UNII-3, and asking Android for "the 5 GHz band" is
+     * answered by picking a random one of eight candidates, four of which are UNII-3. That is what
+     * this setting takes out of the hands of chance.
+     *
+     * One setting for both transports because the answer belongs to the user's phone and country
+     * rather than to WiFi Direct or the access point. What each transport can do with it is not
+     * equal: WiFi Direct asks for it through supported API and gets it, while the access point's
+     * configuration call is refused outright on most head units, so there it is a request the unit
+     * is free to ignore. See
+     * [com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy].
+     *
+     * Ignored when the matching band setting is 2.4 GHz only. Replaces `p2p-legacy-5ghz-upper`,
+     * whose value migrates in the getter below. Applies to the next bring-up, so it needs a
+     * reconnect rather than only a write.
      */
-    var p2pLegacyFiveGhzUpperBand: Boolean
-        get() = prefs.getBoolean("p2p-legacy-5ghz-upper", false)
-        set(value) { prefs.edit().putBoolean("p2p-legacy-5ghz-upper", value).apply() }
+    var fiveGhzChannel: Int
+        get() {
+            if (prefs.contains("wifi-5ghz-channel")) return prefs.getInt("wifi-5ghz-channel", 0)
+            // The boolean this replaces said only "UNII-3 rather than UNII-1", which is exactly
+            // channel 149, and it only ever applied below API 29. Nothing is lost by widening it.
+            val migrated = if (prefs.getBoolean("p2p-legacy-5ghz-upper", false)) 149 else 0
+            prefs.edit().putInt("wifi-5ghz-channel", migrated).apply()
+            return migrated
+        }
+        set(value) = prefs.edit().putInt("wifi-5ghz-channel", value).apply()
 
     /**
      * Keeps this app's dummy VPN up for the life of a Native AA session, not only offline Self Mode.

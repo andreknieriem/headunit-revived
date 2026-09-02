@@ -1984,10 +1984,12 @@ class AapService : Service() {
         releaseBootWakeLock()
 
         wifiLauncherManager.stop(WifiLauncherStopSequence.BEFORE_HOTSPOT_DISABLE)
-        if (App.provide(this).settings.autoEnableHotspot) {
-            AppLog.i("AapService: Auto-disabling hotspot...")
-            HotspotManager.setHotspotEnabled(this, false)
-        }
+        // The access point is left up here. Taking it down serves one purpose, putting the phone
+        // off the network, and onDisconnected already decides that through UserExitHotspotPolicy:
+        // it restarts the access point rather than leaving it down, and remembers a device that
+        // cannot bring one back. Switching it off again here undid that restart and stranded an
+        // access point most unrooted units cannot switch on again, measured on a UNISOC unit where
+        // every start path then failed.
 
         wifiReadyTimeoutJob?.cancel()
         wifiReadyTimeoutJob = null

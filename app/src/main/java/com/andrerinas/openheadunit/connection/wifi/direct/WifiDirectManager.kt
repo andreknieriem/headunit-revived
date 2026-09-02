@@ -28,6 +28,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeHandoffPolicy
 import com.andrerinas.openheadunit.connection.CommManager
+import com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBssidPolicy
@@ -167,6 +168,28 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      * at all. Reset by [stop] rather than by a bring-up, so one refusal is reported per mode.
      */
     private var lastGroupRefusalReportAtMs = 0L
+
+    /**
+     * Set once a pinned 5 GHz channel has failed its whole retry budget on API 29+.
+     *
+     * A pinned frequency is forced all the way down to wpa_supplicant, which fails the group rather
+     * than choosing elsewhere, so a channel this unit will not host costs the connection and not
+     * just the channel. From here on the bring-up asks for the band instead. Cleared by [stop] and
+     * not by [startNativeAaQuietHost], for the same reason [legacyChannelAttempt] is: the handshake
+     * refreshes every ten seconds and each refresh lands back in that method.
+     */
+    @Volatile
+    private var pinnedChannelAbandoned = false
+
+    /**
+     * The frequency this group was asked for, or 0 where the band was asked for instead.
+     *
+     * The request rather than the setting, because the setting can be changed mid-session and the
+     * line that reports it sits beside the frequency the group actually came up on - which is the
+     * one comparison this whole choice exists to let a reader make.
+     */
+    @Volatile
+    private var nativeRequestedFrequency = 0
 
     /**
      * Bumped by [stop]. Every P2P callback that continues into another framework call captures this
@@ -671,7 +694,11 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
             val band = if (frequency > 4000) "5GHz" else if (frequency > 0) "2.4GHz" else "unknown"
             val channelLabel = if (WifiP2pChannelPolicy.is24GHz(frequency)) ", ${WifiP2pChannelPolicy.describe(frequency)}" else ""
-            AppLog.i("WifiDirectManager: onGroupInfoAvailable: SSID: $ssid, BSSID: $bssid, GO: $isOwner, IFACE: ${iface ?: "null"}, Freq: $frequency MHz ($band$channelLabel)")
+            // Names the request beside the result: a group that came up on 5745 after the user asked
+            // for 5180 is the whole failure this setting exists for, and one line has to answer it.
+            val requestedLabel =
+                if (nativeRequestedFrequency > 0) ", $nativeRequestedFrequency MHz was asked for" else ""
+            AppLog.i("WifiDirectManager: onGroupInfoAvailable: SSID: $ssid, BSSID: $bssid, GO: $isOwner, IFACE: ${iface ?: "null"}, Freq: $frequency MHz ($band$channelLabel)$requestedLabel")
 
             // Runs before the channel report below, which is the order the Native AA branch used to
             // impose from inside itself: a group that is about to be torn down and remade on 5GHz
@@ -1222,6 +1249,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         lastNativeGroupStatusMessage = null
         native5GhzBandMismatchRetries = 0
         nativeRequestedBand = NativeGroupBandPolicy.Band.UNSPECIFIED
+        nativeRequestedFrequency = 0
         // legacyChannelAttempt is deliberately not reset here. The handshake calls
         // triggerWifiDirectRefresh() every ten seconds while it waits for credentials, and each one
         // lands back in this method - so resetting made rung 1 the only rung the ladder ever tried.
@@ -1253,6 +1281,13 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         val supports5Ghz = WifiBandCapability.supports5Ghz(context)
         val band = NativeGroupBandPolicy.bandFor(preference, supports5Ghz)
         val bandLabel = NativeGroupBandPolicy.label(band)
+        val chosenChannel = appSettings.fiveGhzChannel
+        // Asking for the 5 GHz *band* is answered by picking a random one of eight frequencies,
+        // four of them in UNII-3, which several regulatory domains forbid phones from joining - so
+        // on those phones half of all bring-ups are invisible. A pinned channel replaces the band
+        // request with a frequency, which the platform treats as forced. 0 means ask for the band.
+        val requestedFrequency = if (pinnedChannelAbandoned) 0
+            else NativeGroupBandPolicy.requestedFrequencyMhz(band, chosenChannel)
 
         AppLog.i("WifiDirectManager: Attempting createGroup for Native AA (Attempt $retryCount)...")
         // Said on every bring-up, including the default one: a line that only appears in the unusual
@@ -1266,20 +1301,32 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 // Builder.build() requires networkName+passphrase (or a peer address) or it
                 // throws IllegalStateException — onGroupInfoAvailable() reads the real values
                 // back afterwards, same as the standard-fallback path.
-                val config = WifiP2pConfig.Builder()
-                    .setGroupOperatingBand(
+                val builder = WifiP2pConfig.Builder()
+                    .setNetworkName(generateP2pNetworkName())
+                    .setPassphrase(generateP2pPassphrase())
+                // Exactly one of the two: build() throws IllegalStateException if both are set.
+                if (requestedFrequency > 0) {
+                    builder.setGroupOperatingFrequency(requestedFrequency)
+                } else {
+                    builder.setGroupOperatingBand(
                         if (band == NativeGroupBandPolicy.Band.GHZ_2_4) WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
                         else WifiP2pConfig.GROUP_OWNER_BAND_5GHZ
                     )
-                    .setNetworkName(generateP2pNetworkName())
-                    .setPassphrase(generateP2pPassphrase())
-                    .build()
+                }
+                val config = builder.build()
 
                 // Recorded here and not before the gate: this is the only branch that asks for a
                 // band, so it is the only one whose answer can be mismatched. Below Q the request
                 // does not exist and standardCreateGroup leaves the field UNSPECIFIED.
                 nativeRequestedBand = band
+                nativeRequestedFrequency = requestedFrequency
                 AppLog.i("WifiDirectManager: Requesting Native AA P2P group on $bandLabel band.${if (preference != P2pBandPreference.AUTO) " Chosen by the user." else ""}")
+                AppLog.i(
+                    "WifiDirectManager: 5 GHz channel is ${FiveGhzChannelPolicy.describe(chosenChannel)}" +
+                        if (requestedFrequency > 0) ", asked for as a fixed $requestedFrequency MHz."
+                        else if (pinnedChannelAbandoned) ", already refused by this unit, so the band decides."
+                        else ", so the driver picks within the band."
+                )
                 markP2pRequest()
                 mgr.createGroup(ch, config, object : WifiP2pManager.ActionListener {
                     override fun onSuccess() {
@@ -1294,47 +1341,14 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                         }, 1000L)
                     }
                     override fun onFailure(reason: Int) {
-                        val reasonStr = getP2pErrorString(reason)
-                        if (retryCount < MAX_NATIVE_5GHZ_CREATE_RETRIES) {
-                            AppLog.w("WifiDirectManager: $bandLabel createGroup failed ($reasonStr), removing group and retrying $bandLabel in 2s (retry ${retryCount + 1}/$MAX_NATIVE_5GHZ_CREATE_RETRIES)...")
-                            markP2pRequest()
-                            mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
-                                override fun onSuccess() { handler.postDelayed({ createQuietGroup(retryCount + 1) }, 2000L) }
-                                override fun onFailure(r: Int) { handler.postDelayed({ createQuietGroup(retryCount + 1) }, 2000L) }
-                            })
-                        } else if (NativeGroupBandPolicy.fallsBackToPlatformChoice(preference)) {
-                            AppLog.w("WifiDirectManager: $bandLabel createGroup retries exhausted ($reasonStr). Falling back to standard createGroup.")
-                            standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_FALLBACK)
-                        } else {
-                            // "5 GHz only" means it. A group on 2.4 GHz can connect, look entirely
-                            // healthy and show nothing, which is harder to diagnose than no group,
-                            // and the user asked not to be given one.
-                            AppLog.e(
-                                "WifiDirectManager: $bandLabel createGroup retries exhausted ($reasonStr) and the " +
-                                    "band is set to 5 GHz only, so no group is created. Set the WiFi Direct band " +
-                                    "to Auto if this unit cannot host one."
-                            )
-                            isGroupCreatingOrCreated = false
-                        }
+                        onQuietGroupFailed(mgr, ch, retryCount, preference, chosenChannel,
+                            requestedFrequency, bandLabel, getP2pErrorString(reason), null)
                     }
                 })
                 return
             } catch (t: Throwable) {
-                if (retryCount < MAX_NATIVE_5GHZ_CREATE_RETRIES) {
-                    AppLog.e("WifiDirectManager: $bandLabel createGroup crashed before async result. Retrying $bandLabel.", t)
-                    handler.postDelayed({ createQuietGroup(retryCount + 1) }, 2000L)
-                    return
-                }
-                if (!NativeGroupBandPolicy.fallsBackToPlatformChoice(preference)) {
-                    AppLog.e(
-                        "WifiDirectManager: 5GHz createGroup crashed, retries are exhausted and the band is set " +
-                            "to 5 GHz only, so no group is created.", t
-                    )
-                    isGroupCreatingOrCreated = false
-                    return
-                }
-                AppLog.e("WifiDirectManager: 5GHz createGroup crashed and retries are exhausted. Falling back to standard.", t)
-                standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_FALLBACK)
+                onQuietGroupFailed(mgr, ch, retryCount, preference, chosenChannel,
+                    requestedFrequency, bandLabel, "crashed before any async result", t)
                 return
             }
         }
@@ -1350,7 +1364,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         val ladder = WifiP2pOperatingChannelPolicy.attemptChannels(
             sdkInt = Build.VERSION.SDK_INT,
             preference = preference,
-            useUpperBand = appSettings.p2pLegacyFiveGhzUpperBand,
+            chosenChannel = FiveGhzChannelPolicy.pinnedChannel(chosenChannel),
             supports5Ghz = supports5Ghz,
         )
         val ladderLabel = ladder.joinToString { channel ->
@@ -1409,6 +1423,94 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         }
     }
 
+    /**
+     * What a failed Native AA group request does next.
+     *
+     * The ordering is [NativeGroupBandPolicy.nextStepAfterFailure]'s; this only carries it out and
+     * says so in the log. A crash before the async result lands here too, because a request the
+     * platform rejects outright and one it accepts and then fails need the same ladder.
+     */
+    private fun onQuietGroupFailed(
+        mgr: WifiP2pManager,
+        ch: WifiP2pManager.Channel,
+        retryCount: Int,
+        preference: P2pBandPreference,
+        chosenChannel: Int,
+        requestedFrequency: Int,
+        bandLabel: String,
+        reasonStr: String,
+        crash: Throwable?,
+    ) {
+        val requestLabel =
+            if (requestedFrequency > 0) "$bandLabel ${FiveGhzChannelPolicy.describe(chosenChannel)}"
+            else bandLabel
+        when (NativeGroupBandPolicy.nextStepAfterFailure(
+            preference = preference,
+            channelPinned = requestedFrequency > 0,
+            retriesSoFar = retryCount,
+            maxRetries = MAX_NATIVE_5GHZ_CREATE_RETRIES,
+        )) {
+            NativeGroupBandPolicy.NextStep.RETRY -> {
+                val message = "WifiDirectManager: $requestLabel createGroup failed ($reasonStr), " +
+                    "removing group and retrying in 2s " +
+                    "(retry ${retryCount + 1}/$MAX_NATIVE_5GHZ_CREATE_RETRIES)..."
+                if (crash != null) AppLog.e(message, crash) else AppLog.w(message)
+                retryQuietGroup(mgr, ch, retryCount + 1, removeFirst = crash == null)
+            }
+
+            NativeGroupBandPolicy.NextStep.DROP_PINNED_CHANNEL -> {
+                pinnedChannelAbandoned = true
+                AppLog.w(
+                    "WifiDirectManager: $requestLabel createGroup retries exhausted ($reasonStr). This unit " +
+                        "will not host a group on that channel, so the request goes back to the $bandLabel band " +
+                        "and the driver picks the channel. If the phone still cannot see the head unit, that " +
+                        "is why - the channel you chose is not the one it is on."
+                )
+                retryQuietGroup(mgr, ch, 0, removeFirst = crash == null)
+            }
+
+            NativeGroupBandPolicy.NextStep.STANDARD_FALLBACK -> {
+                AppLog.w("WifiDirectManager: $requestLabel createGroup retries exhausted ($reasonStr). Falling back to standard createGroup.")
+                standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_FALLBACK)
+            }
+
+            NativeGroupBandPolicy.NextStep.GIVE_UP -> {
+                // "5 GHz only" means it. A group on 2.4 GHz can connect, look entirely healthy and
+                // show nothing, which is harder to diagnose than no group, and the user asked not
+                // to be given one.
+                AppLog.e(
+                    "WifiDirectManager: $requestLabel createGroup retries exhausted ($reasonStr) and the " +
+                        "band is set to 5 GHz only, so no group is created. Set the WiFi Direct band " +
+                        "to Auto if this unit cannot host one."
+                )
+                isGroupCreatingOrCreated = false
+            }
+        }
+    }
+
+    /**
+     * Ask again in 2 s, clearing any group the platform made first.
+     *
+     * Not after a crash: the request never reached the framework, so there is nothing to remove and
+     * asking would spend a bring-up on the rate instrument for nothing.
+     */
+    private fun retryQuietGroup(
+        mgr: WifiP2pManager,
+        ch: WifiP2pManager.Channel,
+        nextRetry: Int,
+        removeFirst: Boolean,
+    ) {
+        if (!removeFirst) {
+            handler.postDelayed({ createQuietGroup(nextRetry) }, 2000L)
+            return
+        }
+        markP2pRequest()
+        mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() { handler.postDelayed({ createQuietGroup(nextRetry) }, 2000L) }
+            override fun onFailure(r: Int) { handler.postDelayed({ createQuietGroup(nextRetry) }, 2000L) }
+        })
+    }
+
     private fun generateP2pNetworkName(): String {
         val suffix = AapService.wifiDirectName.value
             ?.filter { it.isLetterOrDigit() }
@@ -1441,8 +1543,10 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 // The one thing that disproves the record: this unit just hosted a group.
                 ConnectionIssues.clear(context, ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED)
                 nativeGroupCreationMode = groupMode
-                // The platform chose the band here, so there is no mismatch to correct.
+                // The platform chose the band here, so there is no mismatch to correct, and no
+                // frequency was named either.
                 nativeRequestedBand = NativeGroupBandPolicy.Band.UNSPECIFIED
+                nativeRequestedFrequency = 0
                 isGroupOwner = true
                 // The restriction is a whitelist of one frequency and it applies to the whole P2P
                 // interface, not just to group creation - while it stands, the 2.4 GHz social
@@ -1763,6 +1867,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         // Unconditional, and not gated on legacyChannelRestrictionApplied: a request that never
         // answered may still have been applied, and the restriction is supplicant state that
         // outlives this process.
+        pinnedChannelAbandoned = false
         manager?.let { mgr -> channel?.let { ch -> releaseLegacyChannelRestriction(mgr, ch) } }
         AapService.scanningState.value = false
         try { context.unregisterReceiver(receiver) } catch (e: Exception) {}

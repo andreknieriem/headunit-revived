@@ -3,6 +3,7 @@ package com.andrerinas.openheadunit.utils
 import android.content.Context
 import android.net.wifi.WifiManager
 import android.os.Build
+import com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.ApBand
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBandPolicy
 
@@ -83,13 +84,24 @@ object SoftApConfigCompat {
                     .invoke(builder, password, 1)
             }
 
-            // Ask for the band the link needs. Not fatal if the platform refuses the call: the
-            // caller confirms the access point afterwards and retries on the other band, so a
-            // failure here just means this attempt runs on whatever the framework picks.
+            // Ask for the band the link needs, and for a channel within it where the user picked
+            // one. Exactly one of the two calls: setBand rebuilds the builder's whole band/channel
+            // map, so calling it after setChannel would silently discard the channel.
+            //
+            // Not fatal if the platform refuses either: the caller confirms the access point
+            // afterwards and retries on the other band, so a failure here just means this attempt
+            // runs on whatever the framework picks.
+            val apChannel = SoftApBandPolicy.softApChannel(settings.fiveGhzChannel, band)
             try {
-                builderClass.getMethod("setBand", Int::class.javaPrimitiveType)
-                    .invoke(builder, SoftApBandPolicy.softApConfigurationBand(band))
-                AppLog.i("SoftApConfigCompat: requesting ${SoftApBandPolicy.describe(band)} for the access point.")
+                if (apChannel != FiveGhzChannelPolicy.AUTOMATIC) {
+                    builderClass.getMethod("setChannel", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+                        .invoke(builder, apChannel, SoftApBandPolicy.softApConfigurationBand(band))
+                    AppLog.i("SoftApConfigCompat: requesting ${SoftApBandPolicy.describe(band)} channel $apChannel for the access point.")
+                } else {
+                    builderClass.getMethod("setBand", Int::class.javaPrimitiveType)
+                        .invoke(builder, SoftApBandPolicy.softApConfigurationBand(band))
+                    AppLog.i("SoftApConfigCompat: requesting ${SoftApBandPolicy.describe(band)} for the access point.")
+                }
             } catch (e: Exception) {
                 AppLog.w("SoftApConfigCompat: could not request ${SoftApBandPolicy.describe(band)} (${e.message}); the framework will choose the band.")
             }
@@ -124,8 +136,9 @@ object SoftApConfigCompat {
     }
 
     /**
-     * Sets the band on pre-Android-11 devices, where the access point is described by a
-     * `WifiConfiguration` and its band lives in the hidden `apBand` field.
+     * Sets the band, and the channel where the user chose one, on pre-Android-11 devices, where the
+     * access point is described by a
+     * `WifiConfiguration` and both live in hidden fields (`apBand`, `apChannel`).
      *
      * Reads the current configuration and writes it back with only that field changed, so the
      * SSID and passphrase the user (or the vendor) set stay as they are — this path never owned
@@ -140,10 +153,24 @@ object SoftApConfigCompat {
         } else {
             val field = config.javaClass.getField("apBand")
             field.setInt(config, SoftApBandPolicy.legacyApBand(band))
+            // The channel beside it, where the user picked one. Its own try/catch because some
+            // vendors drop the field: losing the band request over a missing channel field would
+            // be a regression, and this path is the one that still works below API 28, where
+            // setWifiApConfiguration needed nothing more than CHANGE_WIFI_STATE.
+            val channelLabel = try {
+                val apChannel = SoftApBandPolicy.softApChannel(Settings(context).fiveGhzChannel, band)
+                if (apChannel == FiveGhzChannelPolicy.AUTOMATIC) "" else {
+                    config.javaClass.getField("apChannel").setInt(config, apChannel)
+                    " on channel $apChannel"
+                }
+            } catch (e: Exception) {
+                AppLog.w("SoftApConfigCompat: could not ask for a channel here (${e.message}), so it stays the framework's choice.")
+                ""
+            }
             val applied = wifiManager.javaClass.getMethod(
                 "setWifiApConfiguration", android.net.wifi.WifiConfiguration::class.java
             ).invoke(wifiManager, config) as? Boolean ?: false
-            AppLog.i("SoftApConfigCompat: requested ${SoftApBandPolicy.describe(band)} via WifiConfiguration.apBand. Success=$applied")
+            AppLog.i("SoftApConfigCompat: requested ${SoftApBandPolicy.describe(band)}$channelLabel via WifiConfiguration.apBand. Success=$applied")
             applied
         }
     } catch (e: Exception) {
