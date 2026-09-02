@@ -48,6 +48,7 @@ import com.andrerinas.openheadunit.aap.protocol.messages.NightModeEvent
 import com.andrerinas.openheadunit.aap.protocol.proto.MediaPlayback
 import com.andrerinas.openheadunit.decoder.audio.MicRecorder
 import com.andrerinas.openheadunit.connection.CommManager
+import com.andrerinas.openheadunit.connection.carkey.CarKeysManager
 import com.andrerinas.openheadunit.connection.wifi.NetworkDiscovery
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.MediaMetadataCompat
@@ -117,6 +118,7 @@ class AapService : Service() {
     private val wifiLauncherManager = WifiLauncherManager(this)
     private val usbLauncherManager = UsbLauncherManager(this)
     private val selfLauncherManager = SelfLauncherManager(this, wifiLauncherManager)
+    private val carKeysManager = CarKeysManager()
 
     /**
      * Set when a link-loss teardown closed the session because station WiFi was going away.
@@ -869,6 +871,7 @@ class AapService : Service() {
         setupNightMode()
         observeConnectionState()
         registerReceivers()
+        carKeysManager.registerReceivers(this)
 
         MicRecorder.foregroundClaim = object : MicRecorder.ForegroundMicrophoneClaim {
             override fun claim() = promoteForMicrophone()
@@ -1115,9 +1118,6 @@ class AapService : Service() {
 
         // Silent audio hack removed to prevent mixing/resampling stuttering issues
 
-        // Register the comprehensive steering wheel key receiver
-        App.provide(this).carKeysManager.registerReceivers(this)
-
         // Reactivate the existing MediaSession (created in onCreate, kept alive across disconnects)
         safeMediaSessionCall { it.isActive = true }
         updateMediaSessionState(true)
@@ -1288,7 +1288,6 @@ class AapService : Service() {
 
         // Release any permanent audio focus we may have requested when connected
         releasePermanentAudioFocus()
-        App.provide(this).carKeysManager.unregisterReceivers()
 
         if (!isDestroying) updateNotification()
         mediaMetadataDecodeJob?.cancel()
@@ -1974,7 +1973,7 @@ class AapService : Service() {
         usbLauncherManager.unregister()
         try { unregisterReceiver(mediaButtonReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(wakeDetectReceiver) } catch (_: Exception) {}
-        try { App.provide(this).carKeysManager.unregisterReceivers() } catch (e: Exception) { AppLog.w("AapService: Error unregistering carKeysManager: ${e.message}") }
+        try { carKeysManager.unregisterReceivers() } catch (e: Exception) { AppLog.w("AapService: Error unregistering carKeysManager: ${e.message}") }
         try { wifiAutoStartReceiver?.let { unregisterReceiver(it) } } catch (_: Exception) {}
         try {
             if (::uiModeManager.isInitialized) {
