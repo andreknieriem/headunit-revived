@@ -2,6 +2,7 @@ package com.andrerinas.openheadunit.connection.wifi.modes.nativeaa
 
 import android.content.Context
 import android.os.SystemClock
+import com.andrerinas.openheadunit.connection.wifi.direct.GroupIdentityStability
 import com.andrerinas.openheadunit.aap.protocol.proto.Wireless
 import com.andrerinas.openheadunit.ssl.SslContextFactory
 import com.andrerinas.openheadunit.utils.AppLog
@@ -50,6 +51,9 @@ class WppTcpServer(
 
         /** Which access point we are running, deciding the credentials' access-point type. */
         fun strategy(): NativeStrategy
+
+        /** Whether the network's name and address are known to repeat, from the credentials. */
+        fun identity(): GroupIdentityStability
 
         /** Our identity, built once by the owner so both transports announce the same thing. */
         fun carInfo(): Wireless.WppCarInfo
@@ -211,7 +215,7 @@ class WppTcpServer(
                     // The same rule as the Bluetooth path: an endpoint outlives the connection that
                     // carried it, so it only goes out for a network that will still be there.
                     val endpoint = when (val decision =
-                        WppEndpointPolicy.decide(callbacks.strategy(), listeningPort ?: PORT)) {
+                        WppEndpointPolicy.decide(callbacks.strategy(), listeningPort ?: PORT, callbacks.identity())) {
                         is WppEndpointDecision.Withhold -> {
                             AppLog.i("WppTcpServer: not advertising WPP over TCP: ${decision.reason}")
                             null

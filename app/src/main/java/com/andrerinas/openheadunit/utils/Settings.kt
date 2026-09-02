@@ -1853,9 +1853,9 @@ class Settings(private val context: Context) {
     //
     // Off by default: it is the one change on this route that alters what a unit with a working
     // setup puts on the wire, so it stays opt-in. What it buys is the WPP-over-TCP endpoint, which
-    // from Android Auto 17.4 is how a reconnect happens with nothing running on the phone, and that
-    // endpoint only goes out on the hotspot transport (see WppEndpointPolicy). On WiFi Direct the
-    // message carries nothing we read back today, and is kept available because fields 3 and 4 of
+    // from Android Auto 17.4 is how a reconnect happens with nothing running on the phone. That
+    // endpoint goes out on the hotspot transport, and on WiFi Direct once this unit's group has been
+    // seen to keep its name and address across bring-ups (see WppEndpointPolicy). Fields 3 and 4 of
     // the request are still undecoded and are the shape a channel hint would take.
     var nativeWifiVersionExchange: Boolean
         get() = prefs.getBoolean("native-wifi-version-exchange", false)

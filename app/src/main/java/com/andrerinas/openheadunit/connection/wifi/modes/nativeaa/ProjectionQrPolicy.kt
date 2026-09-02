@@ -20,9 +20,10 @@ data class ProjectionQrSnapshot(
  *
  * Scanning the QR writes this head unit's network and TCP endpoint into the phone's known-car
  * record, which outlives the session and is only cleared by forgetting the head unit. So it is
- * offered under the same two conditions [WppEndpointPolicy] puts on advertising the endpoint over
- * Bluetooth: our own access point, whose name and address survive the record, and a server that is
- * actually listening on the port the record will name.
+ * offered only for our own access point, whose name and address survive the record, and only while
+ * a server is actually listening on the port the record will name. [WppEndpointPolicy] lets a WiFi
+ * Direct group through once its identity has been seen to repeat; the QR does not follow it there,
+ * because it is asked for from the settings screen, before any group is up to be measured.
  *
  * The refusals are separate values because each one names a different thing for the user to do.
  */
@@ -32,7 +33,7 @@ object ProjectionQrPolicy {
         /** Native AA is not running, so nothing has resolved a network or a port yet. */
         NOT_RUNNING,
 
-        /** WiFi Direct: the group is renamed and re-keyed on every create, so the record goes stale. */
+        /** WiFi Direct: nothing is up to measure from the settings screen, so the record could go stale. */
         NOT_HOTSPOT,
 
         /** No WPP TCP server is listening, so the record would name a port nothing answers. */

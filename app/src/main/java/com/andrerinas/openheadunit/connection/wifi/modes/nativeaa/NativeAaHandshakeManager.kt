@@ -1643,11 +1643,16 @@ class NativeAaHandshakeManager(
      *
      * [WppEndpointPolicy] holds the endpoint back on a network the phone would later fail to find,
      * which is worse than staying quiet: it stores what we advertise and dials it in preference to
-     * running this handshake again.
+     * running this handshake again. On WiFi Direct that is decided by whether this unit's group has
+     * been seen to keep its name and address, which travels with the credentials.
      */
     private fun sendWifiVersionRequest(output: OutputStream, transport: NativeStrategy) {
         val endpoint = when (val decision =
-            WppEndpointPolicy.decide(transport, wppTcpServer?.listeningPort)) {
+            WppEndpointPolicy.decide(
+                transport,
+                wppTcpServer?.listeningPort,
+                credentials?.identity ?: GroupIdentityStability.UNPROVEN,
+            )) {
             is WppEndpointDecision.Withhold -> {
                 AppLog.i("NativeAA: not advertising WPP over TCP: ${decision.reason}")
                 null
@@ -1675,6 +1680,9 @@ class NativeAaHandshakeManager(
                 ?.let { NativeNetworkCredentials(it.ssid, it.psk, it.ip, it.bssid) }
 
             override fun strategy(): NativeStrategy = settings.nativeApStrategy
+
+            override fun identity(): GroupIdentityStability =
+                this@NativeAaHandshakeManager.credentials?.identity ?: GroupIdentityStability.UNPROVEN
 
             override fun carInfo(): Wireless.WppCarInfo = this@NativeAaHandshakeManager.carInfo()
 
