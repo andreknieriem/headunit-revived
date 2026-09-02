@@ -930,6 +930,8 @@ class MainActivity : BaseActivity() {
                 ConnectionIssue.HOTSPOT_NOT_RUNNING -> R.string.connection_issue_banner_hotspot_off
                 ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED ->
                     R.string.connection_issue_banner_wifi_direct_refused
+                ConnectionIssue.WIFI_DIRECT_STACK_CYCLED ->
+                    R.string.connection_issue_banner_wifi_direct_cycled
             }
         )
         banner.setOnClickListener { openRemedyFor(issue) }
@@ -970,6 +972,7 @@ class MainActivity : BaseActivity() {
                 getString(R.string.connection_issue_remedy_hotspot_query)
             ConnectionIssue.HOTSPOT_NOT_RUNNING -> getString(R.string.auto_enable_hotspot)
             ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> getString(R.string.native_ap_transport)
+            ConnectionIssue.WIFI_DIRECT_STACK_CYCLED -> getString(R.string.native_ap_transport)
         }
         startActivity(
             Intent(this, SettingsActivity::class.java)

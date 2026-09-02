@@ -1901,6 +1901,11 @@ class Settings(private val context: Context) {
         get() = prefs.getLong("connection-issue-p2p-refused", 0L)
         set(value) = prefs.edit().putLong("connection-issue-p2p-refused", value).apply()
 
+    /** Something else on this unit kept switching WiFi Direct off and on, so no group could form. */
+    var connectionIssueWifiDirectCycledAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-p2p-cycled", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-p2p-cycled", value).apply()
+
     /**
      * When the user last dismissed the failure banner.
      *

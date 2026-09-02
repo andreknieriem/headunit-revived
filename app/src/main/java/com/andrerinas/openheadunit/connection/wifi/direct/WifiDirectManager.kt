@@ -87,6 +87,14 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private val burstTriggerCount = 5
     @Volatile private var isGroupCreatingOrCreated = false
 
+    // Fields for the P2P interface churn check in the state receiver below: how many
+    // DISABLED/ENABLED edges arrived in the current window, and how many of those landed while
+    // nothing of ours was outstanding. See P2pInterfaceChurnPolicy.
+    private var churnWindowStartedAtMs = 0L
+    private var churnEventsInWindow = 0
+    private var churnForeignEventsInWindow = 0
+    private var lastChurnReportAtMs = 0L
+
     /**
      * When we last asked the P2P framework for something that can reload the interface, so
      * [P2pStateChangePolicy] can tell the DISABLED/ENABLED pair that follows from the user really
@@ -234,6 +242,10 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      */
     fun claimNativeCreateWindow(why: String) {
         nativeCreateRequestedAtMs = SystemClock.elapsedRealtime()
+        // Standing the station down reloads the P2P interface just as our own group work does, and
+        // it is claimed here before anything is asked of the framework. Without this stamp the
+        // edges it provokes look like they came from another app.
+        markP2pRequest()
         AppLog.i("WifiDirectManager: a Native AA group create is claimed ($why); a refresh in the next ${NativeRefreshPolicy.CREATE_GRACE_MS / 1000}s waits for it.")
     }
 
@@ -425,13 +437,62 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         lastP2pRequestAtMs = System.currentTimeMillis()
     }
 
+    /**
+     * Retire both group records: this unit just hosted a group, which disproves each of them.
+     *
+     * Shared by the two createGroup success paths because only the standard one used to clear, so a
+     * unit that succeeded on a banded request kept a standing record and its banner for good.
+     */
+    private fun noteGroupFormed() {
+        ConnectionIssues.clear(context, ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED)
+        ConnectionIssues.clear(context, ConnectionIssue.WIFI_DIRECT_STACK_CYCLED)
+    }
+
+    /**
+     * Count this state change, and say so once a minute when something else is cycling the stack.
+     *
+     * Edges arriving while a request of ours could still be bouncing the interface are counted but
+     * not attributed, so this can only ever accuse somebody else. The window is closed and judged
+     * on the first edge after it expires rather than on a timer: there is no churn to report when
+     * no broadcasts are arriving.
+     */
+    private fun noteP2pStateChange() {
+        val now = System.currentTimeMillis()
+        val elapsed = now - churnWindowStartedAtMs
+        if (churnWindowStartedAtMs == 0L || elapsed >= P2pInterfaceChurnPolicy.WINDOW_MS || elapsed < 0L) {
+            if (P2pInterfaceChurnPolicy.isForeignChurn(churnForeignEventsInWindow) &&
+                P2pInterfaceChurnPolicy.shouldReport(now, lastChurnReportAtMs)
+            ) {
+                lastChurnReportAtMs = now
+                AppLog.w(
+                    "WifiDirectManager: this unit's WiFi Direct reported " +
+                        "$churnForeignEventsInWindow off/on state changes in the last " +
+                        "${P2pInterfaceChurnPolicy.WINDOW_MS / 1000}s with no request of ours " +
+                        "outstanding, so another app on this unit is cycling it. No group can be " +
+                        "created while that continues."
+                )
+                ConnectionIssues.raise(context, ConnectionIssue.WIFI_DIRECT_STACK_CYCLED)
+            }
+            churnWindowStartedAtMs = now
+            churnEventsInWindow = 0
+            churnForeignEventsInWindow = 0
+        }
+        churnEventsInWindow++
+        if (P2pInterfaceChurnPolicy.countsAsForeign(now, lastP2pRequestAtMs)) {
+            churnForeignEventsInWindow++
+        }
+    }
+
     private val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
                     val state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1)
-                    AppLog.i("WifiDirectManager: WIFI_P2P_STATE_CHANGED_ACTION state=$state")
+                    noteP2pStateChange()
+                    if (P2pInterfaceChurnPolicy.shouldLogEachBroadcast(churnEventsInWindow)) {
+                        AppLog.i("WifiDirectManager: WIFI_P2P_STATE_CHANGED_ACTION state=$state")
+                    }
                     if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
                         val appSettings = App.provide(context).settings
                         val commManager = App.provide(context).commManager
@@ -1611,6 +1672,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 mgr.createGroup(ch, config, object : WifiP2pManager.ActionListener {
                     override fun onSuccess() {
                         AppLog.i("WifiDirectManager: $bandLabel createGroup SUCCESS!")
+                        noteGroupFormed()
                         nativeGroupCreationMode =
                             if (band == NativeGroupBandPolicy.Band.GHZ_2_4) NATIVE_GROUP_MODE_24GHZ_REQUESTED
                             else NATIVE_GROUP_MODE_5GHZ_REQUESTED
@@ -1930,8 +1992,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
     private fun onStandardCreateSucceeded(mgr: WifiP2pManager, ch: WifiP2pManager.Channel, groupMode: String) {
         AppLog.i("WifiDirectManager: Standard createGroup SUCCESS!")
-        // The one thing that disproves the record: this unit just hosted a group.
-        ConnectionIssues.clear(context, ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED)
+        noteGroupFormed()
         nativeGroupCreationMode = groupMode
         // The platform chose the band here, so there is no mismatch to correct, and no
         // frequency was named either.
@@ -2264,6 +2325,10 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         legacyChannelAttempt = 0
         legacyChannelRequestUnanswered = false
         lastGroupRefusalReportAtMs = 0L
+        churnWindowStartedAtMs = 0L
+        churnEventsInWindow = 0
+        churnForeignEventsInWindow = 0
+        lastChurnReportAtMs = 0L
         // Unconditional, and not gated on legacyChannelRestrictionApplied: a request that never
         // answered may still have been applied, and the restriction is supplicant state that
         // outlives this process.

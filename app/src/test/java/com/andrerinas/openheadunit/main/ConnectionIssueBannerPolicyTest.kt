@@ -196,6 +196,28 @@ class ConnectionIssueBannerPolicyTest {
     }
 
     @Test
+    fun `only the WiFi Direct route can be blocked by a cycled stack`() {
+        // Raised in the same manager's state receiver, and the hotspot transport never registers it.
+        assertTrue(
+            ConnectionIssue.WIFI_DIRECT_STACK_CYCLED in
+                ConnectionIssueBannerPolicy.relevantNow(3, NativeTransport.WIFI_DIRECT)
+        )
+        assertFalse(
+            ConnectionIssue.WIFI_DIRECT_STACK_CYCLED in
+                ConnectionIssueBannerPolicy.relevantNow(3, NativeTransport.HOTSPOT)
+        )
+    }
+
+    @Test
+    fun `no setting is a remedy for a cycled stack`() {
+        // The remedy is another app on the unit, which nothing in these settings reaches.
+        assertFalse(
+            ConnectionIssue.WIFI_DIRECT_STACK_CYCLED in
+                ConnectionIssueBannerPolicy.remedyApplied("OHU-TEST", "testtest1234", "AA:BB:CC:DD:EE:FF")
+        )
+    }
+
+    @Test
     fun `no setting is a remedy for a refused group`() {
         // A group forming disproves it outright, so the record retires itself. Nothing the user can
         // type reaches the radio's refusal, so hiding the banner on a typed value would hide a
