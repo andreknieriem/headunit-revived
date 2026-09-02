@@ -2,6 +2,8 @@ package com.andrerinas.openheadunit.connection.wifi.direct
 
 import com.andrerinas.openheadunit.connection.wifi.direct.NativeRefreshPolicy.Action
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NativeRefreshPolicyTest {
@@ -22,6 +24,15 @@ class NativeRefreshPolicyTest {
     @Test
     fun `a create that has gone unanswered past the grace is remade`() {
         assertEquals(Action.RECREATE, NativeRefreshPolicy.decide(groupExists = false, isGroupOwner = false, createInFlightForMs = NativeRefreshPolicy.CREATE_GRACE_MS))
+    }
+
+    @Test
+    fun `a create is in flight from the moment it is claimed until its grace runs out`() {
+        // Zero is "nothing was claimed", not "claimed at time zero".
+        assertFalse(NativeRefreshPolicy.createInFlight(requestedAtMs = 0L, nowMs = 5_000L))
+        assertTrue(NativeRefreshPolicy.createInFlight(requestedAtMs = 1_000L, nowMs = 1_000L))
+        assertTrue(NativeRefreshPolicy.createInFlight(requestedAtMs = 1_000L, nowMs = 1_000L + NativeRefreshPolicy.CREATE_GRACE_MS - 1))
+        assertFalse(NativeRefreshPolicy.createInFlight(requestedAtMs = 1_000L, nowMs = 1_000L + NativeRefreshPolicy.CREATE_GRACE_MS))
     }
 
     @Test

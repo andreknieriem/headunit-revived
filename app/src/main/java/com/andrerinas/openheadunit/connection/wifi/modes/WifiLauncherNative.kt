@@ -82,6 +82,11 @@ class WifiLauncherNative : WifiLauncher {
                 // We let WifiDirectManager handle the WiFi state (enabling if needed)
                 setupWifiDirect(wifiDirect)
                 if (stoodDown) {
+                    // Claimed before the wait, not inside startNativeAaQuietHost: the poke's
+                    // pre-flight refresh lands well inside this window, and with nothing marked
+                    // in flight it remade a group underneath the one about to be asked for, and
+                    // skipped the stand-down doing it.
+                    wifiDirect.claimNativeCreateWindow("waiting for this unit to leave its own network")
                     // Give the station its verify window to actually leave first. A group asked
                     // for while it is still tearing down forms on the channel the stand-down was
                     // meant to free, and stays there: a refresh no longer remakes a group.

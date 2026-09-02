@@ -16,9 +16,21 @@ object NativeRefreshPolicy {
 
     enum class Action { REDELIVER, WAIT, RECREATE }
 
+    /** Whether a create asked for this long ago is still owed an answer. */
+    fun withinCreateGrace(elapsedMs: Long?): Boolean =
+        elapsedMs != null && elapsedMs in 0 until CREATE_GRACE_MS
+
+    /**
+     * The same question read off the stamp, for callers that have to decide before the group can
+     * answer. A create is several async hops from the call that asked for it, and anything that
+     * tears the mode down in between starts a second one underneath the first.
+     */
+    fun createInFlight(requestedAtMs: Long, nowMs: Long): Boolean =
+        requestedAtMs != 0L && withinCreateGrace(nowMs - requestedAtMs)
+
     fun decide(groupExists: Boolean, isGroupOwner: Boolean, createInFlightForMs: Long?): Action = when {
         groupExists && isGroupOwner -> Action.REDELIVER
-        createInFlightForMs != null && createInFlightForMs in 0 until CREATE_GRACE_MS -> Action.WAIT
+        withinCreateGrace(createInFlightForMs) -> Action.WAIT
         else -> Action.RECREATE
     }
 }
