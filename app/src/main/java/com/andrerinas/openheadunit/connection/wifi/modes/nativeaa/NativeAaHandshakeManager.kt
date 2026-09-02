@@ -1059,6 +1059,10 @@ class NativeAaHandshakeManager(
             resetHandshakeBackoff()
 
             pokeJob?.cancel()
+            // The manual job takes the slot the retry loop uses, so forget what the loop last poked
+            // for. Left set, a redelivery of unchanged credentials during this poke reads as "the
+            // loop is already running for these" and the loop is never started again.
+            lastPokeTriggerCredentials = null
             pokeJob = scope.launch(Dispatchers.IO + CoroutineName("NativeAa-ManualWakeup")) {
                 // Pre-flight: Ensure WiFi credentials (SSID/IP) are ready before connecting RFCOMM to phone.
                 if (credentials == null) {
@@ -1236,6 +1240,11 @@ class NativeAaHandshakeManager(
             // Whether the credentials went out with no BSSID at all. A join failure means something
             // different when they did — see the Fail action below.
             var bssidOmitted = false
+            // What the credentials looked like when this exchange captured them, kept as resolved
+            // so the re-read before Type 3 compares like with like.
+            var capturedCreds = NativeNetworkCredentials("", "", "", "")
+            // Set when the network named above stopped existing before Type 3 could go out.
+            var credentialsWentStale = false
 
             suspend fun runAction(action: WppAction, source: ProtobufMessage?) {
                 when (action) {
@@ -1253,6 +1262,44 @@ class NativeAaHandshakeManager(
                         AppLog.i("NativeAA: Phone ready for WiFi association. Delivering credentials...")
                         AppLog.i("NativeAA: [TX] Sending WifiInfoResponse (Type 3) with full credentials in 1000ms...")
                         delay(1000) // [FIX] Increased delay to give phone more processing time
+                        // Read again here rather than trusting the snapshot this exchange started
+                        // with. A group removed inside the pause above leaves the phone hunting an
+                        // SSID that is gone, which it cannot recover from without a new handshake.
+                        val live = credentials
+                        when (CredentialFreshnessPolicy.decide(
+                            captured = capturedCreds,
+                            live = live?.let { NativeNetworkCredentials(it.ssid, it.psk, it.ip, it.bssid.uppercase()) },
+                        )) {
+                            CredentialFreshnessPolicy.Action.SEND_AS_CAPTURED ->
+                                AppLog.d("NativeAA: the live credentials still match the ones this handshake captured.")
+
+                            CredentialFreshnessPolicy.Action.SEND_LIVE -> {
+                                val freshBssid = live!!.bssid.uppercase()
+                                val usable = NativeCredentialsPolicy.isUsableBssid(freshBssid)
+                                if (!usable && transport == NativeTransport.WIFI_DIRECT) {
+                                    AppLog.e("NativeAA: the group changed while Type 3 was pending and the new one has no readable address yet, so nothing is sent; the phone retries once a group is up.")
+                                    credentialsWentStale = true
+                                } else {
+                                    AppLog.w("NativeAA: the group changed while Type 3 was pending (was $credSsid/$credBssid, now ${live.ssid}/$freshBssid); sending the live credentials instead.")
+                                    credSsid = live.ssid
+                                    credPsk = live.psk
+                                    credBssid = if (usable) freshBssid else ""
+                                    bssidOmitted = credBssid.isEmpty()
+                                }
+                            }
+
+                            CredentialFreshnessPolicy.Action.ABORT -> {
+                                AppLog.e("NativeAA: the network these credentials name was taken down while Type 3 was pending, so nothing is sent; the phone retries once a group is up.")
+                                credentialsWentStale = true
+                            }
+                        }
+                        if (credentialsWentStale) {
+                            // Not fed to the session: an abort here is ours, and counting it as a
+                            // phone that never answered would spend the handshake backoff on it.
+                            abortedLocally = true
+                            launcher.triggerWifiDirectRefresh()
+                            return
+                        }
                         sendWifiSecurityResponse(output, credSsid, credPsk, credBssid, transport)
                         // Set after the write returns, not before the delay above: this marks that
                         // we put bytes on the channel, and a phone that opened the exchange itself
@@ -1454,6 +1501,7 @@ class NativeAaHandshakeManager(
             credSsid = snapshot.ssid
             credPsk = snapshot.psk
             credBssid = snapshot.bssid.uppercase()
+            capturedCreds = NativeNetworkCredentials(credSsid, credPsk, credIp, credBssid)
 
             // [FIX] Ensure BSSID is uppercase and not zeroed if possible
             if (!NativeCredentialsPolicy.isUsableBssid(credBssid)) {
@@ -1545,7 +1593,7 @@ class NativeAaHandshakeManager(
             // not a grace period, since the phone needs however long it needs. Association has
             // been measured at 21 s on hardware where the 3 s close killed it dead. Wait for the
             // session, and where the phone reports its own progress, let it.
-            while (isRunning && isActive && !session.isTerminal()) {
+            while (isRunning && isActive && !session.isTerminal() && !credentialsWentStale) {
                 tick(250)
             }
 
@@ -1842,6 +1890,10 @@ class NativeAaHandshakeManager(
         // needs.
         handshakeStartedAt = 0L
         handoffSettlingSince = 0L
+        // Same reason, worse consequence: a poke stranded in the blocking socket.connect() outlives
+        // this manager, and isAttemptInFlight() answers both arms of the Bluetooth arrival path, so
+        // leaving it set makes the phone coming back do nothing at all.
+        pokeAttemptInFlight = false
         // Cancel before dropping the reference, for the same reason a supersede does: the socket
         // this manager just closed does not necessarily end the coroutine reading from it.
         activeHandshakeJob?.cancel()
