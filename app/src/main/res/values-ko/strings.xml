@@ -440,6 +440,8 @@
     <string name="media_session_aa_status_placeholder">연결됨</string>
     <string name="sync_media_session_aa_metadata">Android Auto 재생 정보를 미디어 세션에 표시</string>
     <string name="sync_media_session_aa_metadata_description">휴대폰의 곡 제목, 아티스트, 재생 시간, 앨범 아트를 시스템 미디어 세션과 미디어 알림에 표시합니다.</string>
+    <string name="auto_resume_playback_on_reconnect">재연결 시 재생 자동 재개</string>
+    <string name="auto_resume_playback_on_reconnect_description">연결이 일시적으로 끊어지기 전에 음악이 재생 중이었던 경우 자동으로 재생을 재개합니다(60초 이내 재연결 시).</string>
     <string name="nav_notification_channel_name">내비게이션</string>
     <string name="nav_notification_channel_description">Android Auto의 길 안내 업데이트</string>
     <string name="nav_notification_title_format">%1$d m 후 %2$s</string>

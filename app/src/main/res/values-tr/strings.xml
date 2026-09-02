@@ -378,6 +378,8 @@
     <string name="media_session_aa_status_placeholder">Bağlı</string>
     <string name="sync_media_session_aa_metadata">AA çalıyor bilgisi medya oturumunda</string>
     <string name="sync_media_session_aa_metadata_description">Telefondan gelen parça adı, sanatçı, süre ve albüm kapağını sistem medya oturumunda ve bildiriminde göster</string>
+    <string name="auto_resume_playback_on_reconnect">Yeniden bağlandığında oynatmaya devam et</string>
+    <string name="auto_resume_playback_on_reconnect_description">Kısa süreli bağlantı kopmasından önce müzik çalıyorsa otomatik olarak devam ettirir (60 saniye içinde)</string>
     <string name="nav_notification_channel_name">Navigasyon</string>
     <string name="nav_notification_channel_description">Android Auto\'dan adım adım navigasyon güncellemeleri</string>
     <string name="nav_notification_title_format">%1$d m içinde — %2$s</string>

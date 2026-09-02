@@ -638,7 +638,7 @@ class CommManager(
         // Only media keys can be held back, so nothing else pays for the Bluetooth probe.
         if (isMedia) {
             val routing = settings.mediaKeyRouting
-            if (!MediaKeyRoutingPolicy.shouldForward(routing, true, btMediaLinkForKeys())) {
+            if (source != "auto-resume" && !MediaKeyRoutingPolicy.shouldForward(routing, true, btMediaLinkForKeys())) {
                 AppLog.v("CommManager: Not sending media key $logicalCode to Android Auto " +
                         "(routing=$routing, src=$source)")
                 return

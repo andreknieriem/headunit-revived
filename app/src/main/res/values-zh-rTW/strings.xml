@@ -511,6 +511,8 @@
     <string name="media_session_aa_status_placeholder">已連線</string>
     <string name="sync_media_session_aa_metadata">在媒體工作階段顯示 AA 目前播放</string>
     <string name="sync_media_session_aa_metadata_description">在系統媒體工作階段與媒體通知中顯示來自手機的歌曲名稱、演出者、時長與專輯封面</string>
+    <string name="auto_resume_playback_on_reconnect">重新連線時繼續播放</string>
+    <string name="auto_resume_playback_on_reconnect_description">若在短暫斷線前正在播放音樂，將於重新連線後自動繼續播放（60秒內）</string>
     <string name="error_usb_permission_failed">系統錯誤：無法要求 USB 權限對話框。</string>
 
     <!-- Custom loading screen -->

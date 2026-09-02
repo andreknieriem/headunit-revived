@@ -511,6 +511,8 @@
     <string name="media_session_aa_status_placeholder">Verbonden</string>
     <string name="sync_media_session_aa_metadata">Huidig AA-nummer in mediasessie</string>
     <string name="sync_media_session_aa_metadata_description">Toon titel, artiest, duur en albumhoes van de telefoon in de mediasessie van het systeem en in de mediamelding</string>
+    <string name="auto_resume_playback_on_reconnect">Afspelen hervatten bij opnieuw verbinden</string>
+    <string name="auto_resume_playback_on_reconnect_description">Hervat automatisch de muziek als deze actief speelde voor een korte verbindingsonderbreking (binnen 60 seconden)</string>
     <string name="error_usb_permission_failed">Systeemfout: Aanvragen van USB-toestemmingsvenster mislukt.</string>
 
     <!-- Custom loading screen -->

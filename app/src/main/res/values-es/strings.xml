@@ -511,6 +511,8 @@
     <string name="media_session_aa_status_placeholder">Conectado</string>
     <string name="sync_media_session_aa_metadata">Pista actual de AA en la sesión multimedia</string>
     <string name="sync_media_session_aa_metadata_description">Mostrar título, artista, duración y portada del teléfono en la sesión multimedia del sistema y en la notificación multimedia</string>
+    <string name="auto_resume_playback_on_reconnect">Reanudar reproducción al reconectar</string>
+    <string name="auto_resume_playback_on_reconnect_description">Reanuda automáticamente la música si se estaba reproduciendo antes de una breve desconexión (en un lapso de 60 segundos)</string>
     <string name="error_usb_permission_failed">Error del sistema: Fallo al solicitar el cuadro de diálogo de permiso USB.</string>
 
         <!-- Custom loading screen -->

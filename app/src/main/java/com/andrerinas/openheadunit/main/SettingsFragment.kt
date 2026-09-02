@@ -126,6 +126,7 @@ class SettingsFragment : Fragment() {
     private var pendingUseGps: Boolean? = null
     private var pendingShowNavigationNotifications: Boolean? = null
     private var pendingSyncMediaSessionAaMetadata: Boolean? = null
+    private var pendingAutoResumePlaybackOnReconnect: Boolean? = null
     private var pendingResolution: Int? = null
     private var pendingDpi: Int? = null
     private var pendingPixelAspectRatioE4: Int? = null
@@ -272,6 +273,7 @@ class SettingsFragment : Fragment() {
         pendingUseGps = settings.useGpsForNavigation
         pendingShowNavigationNotifications = settings.showNavigationNotifications
         pendingSyncMediaSessionAaMetadata = settings.syncMediaSessionWithAaMetadata
+        pendingAutoResumePlaybackOnReconnect = settings.autoResumePlaybackOnReconnect
         pendingResolution = settings.resolutionId
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
@@ -392,6 +394,7 @@ class SettingsFragment : Fragment() {
         pendingUseGps = settings.useGpsForNavigation
         pendingShowNavigationNotifications = settings.showNavigationNotifications
         pendingSyncMediaSessionAaMetadata = settings.syncMediaSessionWithAaMetadata
+        pendingAutoResumePlaybackOnReconnect = settings.autoResumePlaybackOnReconnect
         pendingResolution = settings.resolutionId
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
@@ -518,6 +521,7 @@ class SettingsFragment : Fragment() {
         pendingUseGps?.let { settings.useGpsForNavigation = it }
         pendingShowNavigationNotifications?.let { settings.showNavigationNotifications = it }
         pendingSyncMediaSessionAaMetadata?.let { settings.syncMediaSessionWithAaMetadata = it }
+        pendingAutoResumePlaybackOnReconnect?.let { settings.autoResumePlaybackOnReconnect = it }
         pendingResolution?.let { settings.resolutionId = it }
         pendingDpi?.let { settings.dpiPixelDensity = it }
         pendingPixelAspectRatioE4?.let { settings.pixelAspectRatioE4 = it }
@@ -649,6 +653,7 @@ class SettingsFragment : Fragment() {
                         pendingUseGps != settings.useGpsForNavigation ||
                         pendingShowNavigationNotifications != settings.showNavigationNotifications ||
                         pendingSyncMediaSessionAaMetadata != settings.syncMediaSessionWithAaMetadata ||
+                        pendingAutoResumePlaybackOnReconnect != settings.autoResumePlaybackOnReconnect ||
                         pendingResolution != settings.resolutionId ||
                         pendingDpi != settings.dpiPixelDensity ||
                         pendingPixelAspectRatioE4 != settings.pixelAspectRatioE4 ||
@@ -1927,6 +1932,18 @@ class SettingsFragment : Fragment() {
             isChecked = pendingSyncMediaSessionAaMetadata!!,
             onCheckedChanged = { isChecked ->
                 pendingSyncMediaSessionAaMetadata = isChecked
+                checkChanges()
+                updateSettingsList()
+            }
+        ))
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "autoResumePlaybackOnReconnect",
+            nameResId = R.string.auto_resume_playback_on_reconnect,
+            descriptionResId = R.string.auto_resume_playback_on_reconnect_description,
+            isChecked = pendingAutoResumePlaybackOnReconnect!!,
+            onCheckedChanged = { isChecked ->
+                pendingAutoResumePlaybackOnReconnect = isChecked
                 checkChanges()
                 updateSettingsList()
             }

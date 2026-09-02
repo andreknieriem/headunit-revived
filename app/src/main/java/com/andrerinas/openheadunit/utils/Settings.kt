@@ -147,6 +147,13 @@ class Settings(private val context: Context) {
             prefs.edit().putBoolean(KEY_SYNC_MEDIA_SESSION_AA_METADATA, value).apply()
         }
 
+    /** Auto-resume media playback on quick reconnect if music was playing before disconnect. */
+    var autoResumePlaybackOnReconnect: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_RESUME_PLAYBACK_ON_RECONNECT, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_AUTO_RESUME_PLAYBACK_ON_RECONNECT, value).apply()
+        }
+
     /**
      * In Self Mode, put the projection back on top when a call covers it.
      *
@@ -1235,6 +1242,7 @@ class Settings(private val context: Context) {
 
         /** SharedPreferences key; also used by [com.andrerinas.openheadunit.aap.AapService] for change listener. */
         const val KEY_SYNC_MEDIA_SESSION_AA_METADATA = "sync-media-session-aa-metadata"
+        const val KEY_AUTO_RESUME_PLAYBACK_ON_RECONNECT = "auto-resume-playback-on-reconnect"
 
         /** SharedPreferences key; also used by [com.andrerinas.openheadunit.aap.AapService] for change listener. */
         const val KEY_LOG_LEVEL = "log-level"

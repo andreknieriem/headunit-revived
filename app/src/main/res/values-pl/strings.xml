@@ -512,6 +512,8 @@
     <string name="media_session_aa_status_placeholder">Połączono</string>
     <string name="sync_media_session_aa_metadata">Aktualny utwór AA w sesji multimedialnej</string>
     <string name="sync_media_session_aa_metadata_description">Pokazuj tytuł, wykonawcę, czas trwania i okładkę albumu z telefonu w systemowej sesji multimedialnej oraz powiadomieniu multimedialnym</string>
+    <string name="auto_resume_playback_on_reconnect">Wznów odtwarzanie po ponownym połączeniu</string>
+    <string name="auto_resume_playback_on_reconnect_description">Automatycznie wznawia muzykę, jeśli była odtwarzana przed krótkim przerwaniem połączenia (w ciągu 60 sekund)</string>
     <string name="error_usb_permission_failed">Błąd systemu: Nie udało się wywołać okna uprawnień USB.</string>
 
     <!-- Custom loading screen -->

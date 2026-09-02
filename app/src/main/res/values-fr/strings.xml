@@ -663,6 +663,8 @@
     <string name="media_session_aa_status_placeholder">Connecté</string>
     <string name="sync_media_session_aa_metadata">AA en cours de lecture sur la session média</string>
     <string name="sync_media_session_aa_metadata_description">Afficher le titre de la piste, l\'artiste, la durée et la pochette du téléphone dans la session média du système et la notification média</string>
+    <string name="auto_resume_playback_on_reconnect">Reprendre la lecture lors de la reconnexion</string>
+    <string name="auto_resume_playback_on_reconnect_description">Reprend automatiquement la lecture si de la musique était en cours avant une brève coupure de connexion (moins de 60 secondes)</string>
     <string name="nav_notification_channel_name">Navigation</string>
     <string name="nav_notification_channel_description">Mises à jour de navigation pas à pas d\'Android Auto</string>
     <string name="nav_notification_title_format">Dans %1$d m — %2$s</string>

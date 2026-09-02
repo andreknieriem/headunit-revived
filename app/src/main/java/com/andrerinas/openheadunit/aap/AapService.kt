@@ -149,6 +149,8 @@ class AapService : Service() {
     private var lastAaMediaMetadata: MediaPlayback.MediaMetaData? = null
     private var lastAaPlaybackPositionMs: Long = 0L
     private var lastAaPlaybackIsPlaying: Boolean? = null
+    private var wasPlayingBeforeDisconnect = false
+    private var lastDisconnectTimestampMs = 0L
     private var mediaSessionIsPlaying = false
     private var mediaMetadataDecodeJob: Job? = null
     /** Decoded on a background thread in [scheduleApplyAaMediaMetadata]; reused for notification updates on position ticks. */
@@ -956,6 +958,7 @@ class AapService : Service() {
                         sendBroadcast(Intent(ACTION_REQUEST_NIGHT_MODE_UPDATE).apply {
                             setPackage(packageName)
                         })
+                        maybeAutoResumePlaybackOnReconnect()
                     }
                     is CommManager.ConnectionState.Error -> {
                         // Nothing may be counted here, and nothing new may be hung off this branch.
@@ -976,6 +979,29 @@ class AapService : Service() {
                     else -> {}
                 }
             }
+        }
+    }
+
+    private fun maybeAutoResumePlaybackOnReconnect() {
+        val settings = App.provide(this).settings
+        if (!settings.autoResumePlaybackOnReconnect) return
+        val now = SystemClock.elapsedRealtime()
+        val elapsedSinceDisconnect = now - lastDisconnectTimestampMs
+        val wasPlaying = wasPlayingBeforeDisconnect
+        wasPlayingBeforeDisconnect = false // Consume once so it doesn't fire again on subsequent events
+
+        // Only resume if music was actively playing and the disconnect happened within the last 60 seconds
+        if (wasPlaying && elapsedSinceDisconnect in 1..60_000L) {
+            AppLog.i("AapService: Auto-resuming playback on reconnect (${elapsedSinceDisconnect}ms since disconnect)")
+            serviceScope.launch {
+                delay(1500L)
+                if (commManager.connectionState.value is CommManager.ConnectionState.TransportStarted) {
+                    commManager.sendKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY, true, null, "auto-resume")
+                    commManager.sendKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY, false, null, "auto-resume")
+                }
+            }
+        } else {
+            AppLog.d("AapService: Skipping auto-resume playback (wasPlaying=$wasPlaying, elapsed=${elapsedSinceDisconnect}ms)")
         }
     }
 
@@ -1295,6 +1321,9 @@ class AapService : Service() {
         mediaMetadataDecodeJob = null
         lastAaMediaMetadata = null
         lastAaPlaybackPositionMs = 0L
+        wasPlayingBeforeDisconnect = (lastAaPlaybackIsPlaying == true)
+        lastDisconnectTimestampMs = SystemClock.elapsedRealtime()
+        AppLog.i("AapService: Disconnected. wasPlayingBeforeDisconnect=$wasPlayingBeforeDisconnect")
         lastAaPlaybackIsPlaying = null
         cachedAaAlbumArtBitmap = null
         mediaNotification.cancel()
