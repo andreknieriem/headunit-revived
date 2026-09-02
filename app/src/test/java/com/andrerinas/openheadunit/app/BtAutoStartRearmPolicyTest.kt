@@ -1,226 +1,178 @@
 package com.andrerinas.openheadunit.app
 
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BtAutoStartRearmPolicyTest {
 
+    private fun actions(
+        mode: WifiLauncherMode = WifiLauncherMode.NATIVE,
+        wirelessSelected: Boolean = true,
+        sessionUp: Boolean = false,
+        wirelessArmed: Boolean = false,
+        handshakeActive: Boolean? = null,
+        attemptInFlight: Boolean? = null,
+        groupUp: Boolean? = null,
+        networkComingUp: Boolean? = false
+    ) = BtAutoStartRearmPolicy.actionsFor(
+        mode = mode,
+        wirelessSelected = wirelessSelected,
+        sessionUp = sessionUp,
+        wirelessArmed = wirelessArmed,
+        handshakeActive = handshakeActive,
+        attemptInFlight = attemptInFlight,
+        groupUp = groupUp,
+        networkComingUp = networkComingUp
+    )
+
+    private val otherWirelessModes = WifiLauncherMode.entries.filter { it != WifiLauncherMode.NATIVE }
+
     /**
-     * The state this policy exists for: a Native user exit stopped the launcher and nulled it,
-     * and the phone has come back over Bluetooth. A null launcher answers null to both handshake
-     * questions, and that must read as "nothing running", not as a veto. The regression this pins
-     * read the mode off the null launcher and answered no in exactly this state, so the mode
-     * stayed dead for the life of the process however often the phone reconnected. A group left
-     * behind by a force-stop must not block it either.
+     * The state this policy exists for: a Native user exit nulled the launcher and the phone is
+     * back. Null must read as "nothing running", not as a veto, or the mode stays dead for good.
      */
     @Test
     fun `a user exit with the launcher nulled still re-arms when the phone comes back`() {
-        assertTrue(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = null,
-                attemptInFlight = null,
-                groupUp = true,
-                networkComingUp = false
-            )
-        )
+        val actions = actions(mode = WifiLauncherMode.NATIVE, wirelessArmed = false, groupUp = true)
+        assertTrue(actions.forceRearmWireless)
+        assertTrue(actions.clearUserExit)
     }
 
     @Test
-    fun `only the Native mode setting re-arms`() {
+    fun `only the Native mode setting forces a re-arm`() {
         for (mode in WifiLauncherMode.entries) {
             val expected = mode == WifiLauncherMode.NATIVE
-            val actual = BtAutoStartRearmPolicy.shouldRearm(
-                mode = mode,
-                sessionUp = false,
-                handshakeActive = null,
-                attemptInFlight = null,
-                groupUp = false,
-                networkComingUp = false
-            )
-            assertTrue("mode=$mode", expected == actual)
+            assertEquals("mode=$mode", expected, actions(mode = mode).forceRearmWireless)
         }
     }
 
     /**
-     * A successful handoff closes the AA listeners, so the handshake reads inactive for the whole
-     * life of a working session. Any later ACL_CONNECTED - the phone's own profiles reconnecting,
-     * or one of our own pokes - must not tear the session down to re-arm.
+     * A handoff closes the AA listeners, so the handshake reads inactive all session. A later
+     * ACL_CONNECTED must not tear a working session down to re-arm it, in any mode.
      */
     @Test
     fun `a live or connecting session is never torn down by an ACL_CONNECTED`() {
-        assertFalse(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = true,
-                handshakeActive = null,
-                attemptInFlight = null,
-                groupUp = false,
-                networkComingUp = false
-            )
-        )
+        for (mode in WifiLauncherMode.entries) {
+            assertTrue("mode=$mode", actions(mode = mode, sessionUp = true).doesNothing)
+        }
     }
 
     @Test
-    fun `an active handshake is left alone`() {
-        assertFalse(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = true,
-                attemptInFlight = false,
-                groupUp = null,
-                networkComingUp = false
-            )
-        )
+    fun `a live session is never torn down even with no group`() {
+        assertTrue(actions(sessionUp = true, handshakeActive = false, groupUp = false).doesNothing)
+    }
+
+    @Test
+    fun `an active handshake with a live group is left alone`() {
+        assertTrue(actions(handshakeActive = true, attemptInFlight = false, groupUp = true).doesNothing)
     }
 
     @Test
     fun `an attempt in flight is left alone`() {
-        assertFalse(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = false,
-                attemptInFlight = true,
-                groupUp = false,
-                networkComingUp = false
-            )
-        )
+        assertTrue(actions(handshakeActive = false, attemptInFlight = true).doesNothing)
     }
 
     /**
-     * A launcher that exists but is fully quiet re-arms too: on a genuine cold start the running
-     * handshake reads active and blocks this, so the quiet case only arises when something has
-     * already stopped, which is the case the re-arm is for.
-     */
-    @Test
-    fun `a present but quiet launcher does not block the re-arm`() {
-        assertTrue(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = false,
-                attemptInFlight = false,
-                groupUp = true,
-                networkComingUp = false
-            )
-        )
-    }
-
-    /**
-     * The state every reconnect used to pay for: the mode is armed, its listeners are open and
-     * its group is up, and the phone's arrival tore all of it down to build the same thing again.
-     * On a unit that re-addresses the group that also invalidated the profile the phone saved.
-     * Our own poke's ACL echo lands here too, which is the self-wake loop.
+     * The state every reconnect used to pay for: armed, listening and a group up, and the phone's
+     * arrival rebuilt all of it. Our own poke's ACL echo lands here too, which is the self-wake loop.
      */
     @Test
     fun `an armed Native mode with a live group is left alone`() {
-        assertFalse(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = true,
-                attemptInFlight = false,
-                groupUp = true,
-                networkComingUp = false
-            )
-        )
+        assertTrue(actions(handshakeActive = true, attemptInFlight = false, groupUp = true).doesNothing)
     }
 
     /** The join watchdog gave up, or WiFi went off: the listeners are open with nothing to join. */
     @Test
     fun `an armed Native mode whose group is gone is re-armed`() {
-        assertTrue(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = true,
-                attemptInFlight = false,
-                groupUp = false,
-                networkComingUp = false
-            )
-        )
+        assertTrue(actions(handshakeActive = true, attemptInFlight = false, groupUp = false).forceRearmWireless)
     }
 
     /** The hotspot transport has no group of ours to ask about, so the listeners decide. */
     @Test
-    fun `a route with no group to ask about is left alone when it is armed`() {
-        assertFalse(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = true,
-                attemptInFlight = false,
-                groupUp = null,
-                networkComingUp = false
-            )
-        )
+    fun `a route with no group to ask about is left alone when its handshake is active`() {
+        assertTrue(actions(handshakeActive = true, attemptInFlight = false, groupUp = null).doesNothing)
     }
 
     @Test
-    fun `a route with no group to ask about is re-armed when it is not`() {
-        assertTrue(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = false,
-                attemptInFlight = false,
-                groupUp = null,
-                networkComingUp = false
-            )
-        )
-    }
-
-    @Test
-    fun `a live session is never torn down even with no group`() {
-        assertFalse(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = true,
-                handshakeActive = false,
-                attemptInFlight = false,
-                groupUp = false,
-                networkComingUp = false
-            )
-        )
+    fun `a route with no group to ask about is re-armed when its handshake is quiet`() {
+        assertTrue(actions(handshakeActive = false, attemptInFlight = false, groupUp = null).forceRearmWireless)
     }
 
     /**
-     * The window this policy could not see: a group has been asked for and has not answered, so
-     * every other question here reads "cannot accept". The arrival that lands in it is usually our
-     * own poke's, and re-arming stops the create it is waiting for and starts another underneath.
+     * A launcher that exists but is fully quiet re-arms too: on a cold start the running handshake
+     * blocks this, so a quiet one means something already stopped.
      */
     @Test
-    fun `a create still in flight is left to answer`() {
-        assertFalse(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = false,
-                attemptInFlight = false,
-                groupUp = false,
-                networkComingUp = true
-            )
-        )
+    fun `a present but quiet launcher does not block the Native re-arm`() {
+        val actions = actions(wirelessArmed = true, handshakeActive = false, attemptInFlight = false)
+        assertTrue(actions.forceRearmWireless)
     }
 
-    /** The hotspot route has no group of ours, so the create question does not apply there. */
+    @Test
+    fun `the other wireless modes arm only when nothing is armed`() {
+        for (mode in otherWirelessModes) {
+            val actions = actions(mode = mode, wirelessArmed = false)
+            assertTrue("mode=$mode", actions.armWirelessIfIdle)
+            assertFalse("mode=$mode", actions.forceRearmWireless)
+        }
+    }
+
+    @Test
+    fun `a healthy group is never torn down to re-arm it`() {
+        for (mode in otherWirelessModes) {
+            val actions = actions(mode = mode, wirelessArmed = true)
+            assertFalse("mode=$mode", actions.armWirelessIfIdle)
+            assertFalse("mode=$mode", actions.forceRearmWireless)
+            assertTrue("mode=$mode", actions.clearUserExit)
+        }
+    }
+
+    /** The default wireless mode is Helper; a Self-only user must not get a Helper group armed. */
+    @Test
+    fun `a Self-only user gets no wireless launcher armed`() {
+        for (mode in otherWirelessModes) {
+            val actions = actions(mode = mode, wirelessSelected = false)
+            assertFalse("mode=$mode", actions.armWirelessIfIdle)
+            assertTrue("mode=$mode", actions.clearUserExit)
+        }
+    }
+
+    /** Native's forced re-arm is not gated on the transport selection, so today's behaviour holds. */
+    @Test
+    fun `Native re-arms regardless of the transport selection`() {
+        assertTrue(actions(wirelessSelected = false).forceRearmWireless)
+    }
+
+    @Test
+    fun `Self Mode launches only with Self selected and no session`() {
+        assertTrue(BtAutoStartRearmPolicy.launchesSelfMode(selfSelected = true, sessionUp = false))
+        assertFalse(BtAutoStartRearmPolicy.launchesSelfMode(selfSelected = true, sessionUp = true))
+        assertFalse(BtAutoStartRearmPolicy.launchesSelfMode(selfSelected = false, sessionUp = false))
+    }
+
+    /**
+     * The window this policy could not see: a network asked for and not yet answered reads as
+     * "cannot accept" everywhere else, and rebuilding there starts a second create underneath.
+     */
+    @Test
+    fun `a network still being created is left to answer`() {
+        for (mode in WifiLauncherMode.entries) {
+            assertTrue(
+                "mode=$mode",
+                actions(mode = mode, handshakeActive = false, attemptInFlight = false, groupUp = false, networkComingUp = true).doesNothing
+            )
+        }
+    }
+
+    /** The hotspot route has no network of ours, so the create question does not apply there. */
     @Test
     fun `a route with no network of ours to ask about still re-arms`() {
-        assertTrue(
-            BtAutoStartRearmPolicy.shouldRearm(
-                mode = WifiLauncherMode.NATIVE,
-                sessionUp = false,
-                handshakeActive = null,
-                attemptInFlight = null,
-                groupUp = null,
-                networkComingUp = null
-            )
-        )
+        val actions = actions(mode = WifiLauncherMode.NATIVE, groupUp = null, networkComingUp = null)
+        assertTrue(actions.forceRearmWireless)
+        assertTrue(actions.clearUserExit)
     }
 
 }

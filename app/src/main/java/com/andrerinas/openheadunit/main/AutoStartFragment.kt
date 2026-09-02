@@ -374,13 +374,16 @@ class AutoStartFragment : Fragment() {
             }
         }
 
-        // Hide options that do not apply to the chosen connection types. Bluetooth bridges
-        // WiFi, so it is treated as WiFi scope.
+        // Hide options that do not apply to the chosen connection types. The Bluetooth rows decide
+        // when a wireless or Self Mode session starts; USB has its own attach trigger, so a
+        // USB-only unit does not see them.
         val usbIds = setOf("listenForUsbDevices", "autoStartUsb", "reopenOnReconnection")
-        val wifiIds = setOf("autoStartBt", "autoStartWifiWarning", "autoStartWifi", "autoStartWifiSsid")
+        val wifiIds = setOf("autoStartWifiWarning", "autoStartWifi", "autoStartWifiSsid")
+        val btIds = setOf("autoStartBt")
         val filtered = items.filterNot { item ->
             (item.stableId in usbIds && !settings.showsUsb()) ||
-                (item.stableId in wifiIds && !settings.showsWifi())
+                (item.stableId in wifiIds && !settings.showsWifi()) ||
+                (item.stableId in btIds && !settings.showsWifi() && !settings.showsSelf())
         }
 
         settingsAdapter.submitList(filtered) {

@@ -2207,11 +2207,10 @@ class AapService : Service() {
                 }
             }
             ACTION_BT_AUTO_START          -> {
-                // AutoStartReceiver fires this on ACL_CONNECTED from a trusted device, including
-                // the one our own poke raises. A re-arm is a teardown and a recreate of the
-                // network, so it is the answer only when nothing is listening or no network is up,
-                // which is how a mode stopped by a user exit comes back. The rest of the rule
-                // lives on BtAutoStartRearmPolicy.
+                // A Native mode stopped by a user exit stays dead unless something re-arms it, but
+                // a re-arm recreates the network and costs the phone its saved profile. So Native is
+                // forced only when it cannot accept at all. The rule is on BtAutoStartRearmPolicy;
+                // Self Mode's half runs in MainActivity, which the receiver brings forward too.
                 val sessionUp = commManager.isConnected ||
                     commManager.connectionState.value is CommManager.ConnectionState.Connecting
                 val launcher = wifiLauncherManager.active as? WifiLauncherNative
@@ -2219,28 +2218,36 @@ class AapService : Service() {
 
                 val networkComingUp = launcher?.networkComingUp()
 
-                if (BtAutoStartRearmPolicy.shouldRearm(
-                        settings.wifiConnectionMode,
-                        sessionUp,
-                        launcher?.handshakeManager?.isActive(),
-                        attemptInFlight,
-                        launcher?.hasLiveNetwork(),
-                        networkComingUp)) {
-                    AppLog.i("AapService: Bluetooth auto-start: Native AA cannot accept a connection, re-arming the mode.")
+                val actions = BtAutoStartRearmPolicy.actionsFor(
+                    mode = settings.wifiConnectionMode,
+                    wirelessSelected = settings.showsWifi(),
+                    sessionUp = sessionUp,
+                    wirelessArmed = wifiLauncherManager.isActive,
+                    handshakeActive = launcher?.handshakeManager?.isActive(),
+                    attemptInFlight = attemptInFlight,
+                    groupUp = launcher?.hasLiveNetwork(),
+                    networkComingUp = networkComingUp
+                )
+                if (!actions.doesNothing) {
+                    AppLog.i("AapService: Bluetooth auto-start: $actions")
+                }
+                if (actions.clearUserExit) {
                     userExitedAA = false
                     userExitCooldownUntil = 0L
+                }
+                if (actions.forceRearmWireless) {
                     wifiLauncherManager.setActiveFromSettings(force = true)
                 } else if (networkComingUp == true) {
-                    // Nothing to do and nothing safe to do: the group this arrival would rebuild is
-                    // the one already being asked for, and tearing it down starts a second create
-                    // underneath the first.
+                    // Nothing to do and nothing safe to do: the network this arrival would rebuild
+                    // is the one already being asked for, and tearing it down starts a second
+                    // create underneath the first.
                     AppLog.i("AapService: Bluetooth auto-start: the Native AA group is still being created, so it is left to answer.")
+                } else if (actions.armWirelessIfIdle) {
+                    wifiLauncherManager.setActiveFromSettings()
                 } else if (settings.wifiConnectionMode == WifiLauncherMode.NATIVE && !sessionUp && attemptInFlight != true) {
-                    // The phone dials RFCOMM itself, so there is nothing to do but be there when it
-                    // does. The credentials are read again rather than the group remade, which is
-                    // also what notices a group that died while nobody was watching: the refresh
-                    // creates one only when there is none. Skipped while an attempt is in flight,
-                    // because that ACL is our own poke's.
+                    // Armed with a live group, so the phone dials RFCOMM itself. Re-read the
+                    // credentials rather than remake the group; that also catches a group that died.
+                    // Skipped while an attempt is in flight, because that ACL is our own poke's.
                     AppLog.i("AapService: Bluetooth auto-start: Native AA is armed with a live group, leaving it alone.")
                     launcher?.triggerWifiDirectRefresh()
                 }
