@@ -1132,4 +1132,22 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$ds delay)</string>
     <string name="failed_aa_not_system">Failed: Android Auto isn\'t installed as a system app!</string>
     <string name="failed_aa_not_installed">Failed: Android Auto is not installed!</string>
+    <string name="native_driver_selection_title">Driver Selection</string>
+    <string name="native_driver_selection_summary">Choose which phone to connect with when multiple paired drivers are in the vehicle</string>
+    <string name="native_driver_selection_mode_off">Disabled</string>
+    <string name="native_driver_selection_mode_auto">Auto</string>
+    <string name="native_driver_selection_mode_always">Always Ask</string>
+    <string name="native_driver_selection_timeout">Auto-Connect Countdown</string>
+    <string name="native_driver_preferred_device">Preferred Phone</string>
+    <string name="switch_driver">Switch Phone</string>
+    <string name="driver_device_connected">In vehicle / Connected</string>
+    <string name="driver_device_paired">Paired</string>
+    <string name="driver_device_preferred">Preferred</string>
+    <string name="driver_device_last_used">Last Connected</string>
+    <string name="driver_selection_auto_in">Auto-connecting to %2$s in %1$ds...</string>
+    <string name="driver_selection_dialog_title">Select Driver Phone</string>
+    <string name="connecting_to_device">Connecting to %s...</string>
+    <string name="driver_none">None</string>
+    <string name="show_all_devices">Show all Bluetooth devices</string>
+    <string name="show_only_phones">Show only phones</string>
 </resources>

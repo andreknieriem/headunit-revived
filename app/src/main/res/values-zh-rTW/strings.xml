@@ -1039,4 +1039,22 @@
     <string name="onb_audio_title">音訊</string>
     <string name="onb_audio_help">選擇每個 Android Auto 頻道要在哪個系統串流上播放，並輕觸喇叭試聽。如果某個頻道在車上一直沒有聲音，改到另一個串流通常就能解決。</string>
     <string name="onb_audio_more_hint">之後可以在「設定 → 音訊串流」中再修改。</string>
+    <string name="native_driver_selection_title">駕駛選擇</string>
+    <string name="native_driver_selection_summary">當車內有多位已配對駕駛時，選擇要連接的手機</string>
+    <string name="native_driver_selection_mode_off">已停用</string>
+    <string name="native_driver_selection_mode_auto">自動</string>
+    <string name="native_driver_selection_mode_always">每次詢問</string>
+    <string name="native_driver_selection_timeout">自動連線倒數</string>
+    <string name="native_driver_preferred_device">偏好手機</string>
+    <string name="switch_driver">切換手機</string>
+    <string name="driver_device_connected">車內 / 已連線</string>
+    <string name="driver_device_paired">已配對</string>
+    <string name="driver_device_preferred">偏好</string>
+    <string name="driver_device_last_used">上次連線</string>
+    <string name="driver_selection_auto_in">將在 %1$d 秒後自動連線至 %2$s...</string>
+    <string name="driver_selection_dialog_title">選擇駕駛手機</string>
+    <string name="connecting_to_device">正在連線至 %s...</string>
+    <string name="driver_none">無</string>
+    <string name="show_all_devices">顯示所有藍牙裝置</string>
+    <string name="show_only_phones">僅顯示手機</string>
 </resources>

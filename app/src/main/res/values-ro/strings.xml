@@ -1037,4 +1037,22 @@
     <string name="onb_audio_title">Audio</string>
     <string name="onb_audio_help">Alege fluxul de sistem pe care se redă fiecare canal Android Auto și atinge difuzorul ca să îl auzi. Dacă un canal rămâne mut în mașină, mutarea lui pe alt flux rezolvă de obicei problema.</string>
     <string name="onb_audio_more_hint">Poți schimba acestea mai târziu din Setări → Fluxuri audio.</string>
+    <string name="native_driver_selection_title">Selectare șofer</string>
+    <string name="native_driver_selection_summary">Alegeți ce telefon să se conecteze când în vehicul sunt mai mulți șoferi asociați</string>
+    <string name="native_driver_selection_mode_off">Dezactivat</string>
+    <string name="native_driver_selection_mode_auto">Automat</string>
+    <string name="native_driver_selection_mode_always">Întreabă întotdeauna</string>
+    <string name="native_driver_selection_timeout">Numărătoare inversă conectare automată</string>
+    <string name="native_driver_preferred_device">Telefon preferat</string>
+    <string name="switch_driver">Schimbă telefonul</string>
+    <string name="driver_device_connected">În vehicul / Conectat</string>
+    <string name="driver_device_paired">Asociat</string>
+    <string name="driver_device_preferred">Preferat</string>
+    <string name="driver_device_last_used">Ultimul conectat</string>
+    <string name="driver_selection_auto_in">Conectare automată la %2$s în %1$ds...</string>
+    <string name="driver_selection_dialog_title">Selectați telefonul șoferului</string>
+    <string name="connecting_to_device">Se conectează la %s...</string>
+    <string name="driver_none">Niciunul</string>
+    <string name="show_all_devices">Afișează toate dispozitivele Bluetooth</string>
+    <string name="show_only_phones">Afișează doar telefoanele</string>
 </resources>

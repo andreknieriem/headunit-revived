@@ -1038,4 +1038,22 @@
     <string name="onb_audio_title">الصوت</string>
     <string name="onb_audio_help">اختر تدفق النظام الذي تُشغَّل عليه كل قناة من قنوات Android Auto، والمس السماعة لسماعه. إذا ظلت قناة صامتة في السيارة، فنقلها إلى تدفق آخر هو الحل عادةً.</string>
     <string name="onb_audio_more_hint">يمكنك تغيير ذلك لاحقًا من الإعدادات ← تدفقات الصوت.</string>
+    <string name="native_driver_selection_title">اختيار السائق</string>
+    <string name="native_driver_selection_summary">اختر الهاتف المراد الاتصال به عند وجود عدة هواتف مقترنة داخل السيارة</string>
+    <string name="native_driver_selection_mode_off">معطّل</string>
+    <string name="native_driver_selection_mode_auto">تلقائي</string>
+    <string name="native_driver_selection_mode_always">السؤال دائماً</string>
+    <string name="native_driver_selection_timeout">العد التنازلي للاتصال التلقائي</string>
+    <string name="native_driver_preferred_device">الهاتف المفضل</string>
+    <string name="switch_driver">تبديل الهاتف</string>
+    <string name="driver_device_connected">داخل السيارة / متصل</string>
+    <string name="driver_device_paired">مقترن</string>
+    <string name="driver_device_preferred">مفضل</string>
+    <string name="driver_device_last_used">آخر اتصال</string>
+    <string name="driver_selection_auto_in">الاتصال التلقائي بـ %2$s خلال %1$d ثوانٍ...</string>
+    <string name="driver_selection_dialog_title">اختر هاتف السائق</string>
+    <string name="connecting_to_device">جارٍ الاتصال بـ %s...</string>
+    <string name="driver_none">لا يوجد</string>
+    <string name="show_all_devices">عرض جميع أجهزة البلوتوث</string>
+    <string name="show_only_phones">عرض الهواتف فقط</string>
 </resources>

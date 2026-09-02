@@ -1043,4 +1043,22 @@
     <string name="onb_audio_title">Audio</string>
     <string name="onb_audio_help">Scegli il flusso di sistema su cui riprodurre ogni canale di Android Auto e tocca l\'altoparlante per ascoltarlo. Se un canale resta muto in auto, spostarlo su un altro flusso di solito risolve.</string>
     <string name="onb_audio_more_hint">Puoi modificare queste impostazioni in seguito da Impostazioni → Flussi audio.</string>
+    <string name="native_driver_selection_title">Selezione conducente</string>
+    <string name="native_driver_selection_summary">Scegli quale telefono connettere quando più conducenti associati sono nel veicolo</string>
+    <string name="native_driver_selection_mode_off">Disattivato</string>
+    <string name="native_driver_selection_mode_auto">Auto</string>
+    <string name="native_driver_selection_mode_always">Chiedi sempre</string>
+    <string name="native_driver_selection_timeout">Conto alla rovescia connessione auto</string>
+    <string name="native_driver_preferred_device">Telefono preferito</string>
+    <string name="switch_driver">Cambia telefono</string>
+    <string name="driver_device_connected">Nel veicolo / Connesso</string>
+    <string name="driver_device_paired">Associato</string>
+    <string name="driver_device_preferred">Preferito</string>
+    <string name="driver_device_last_used">Ultimo connesso</string>
+    <string name="driver_selection_auto_in">Connessione automatica a %2$s in %1$ds...</string>
+    <string name="driver_selection_dialog_title">Seleziona telefono conducente</string>
+    <string name="connecting_to_device">Connessione a %s...</string>
+    <string name="driver_none">Nessuno</string>
+    <string name="show_all_devices">Mostra tutti i dispositivi Bluetooth</string>
+    <string name="show_only_phones">Mostra solo telefoni</string>
 </resources>

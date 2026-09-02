@@ -1035,4 +1035,22 @@
     <string name="onb_audio_title">Ses</string>
     <string name="onb_audio_help">Her Android Auto kanalının hangi sistem akışında çalacağını seçin ve duymak için hoparlöre dokunun. Araçta bir kanal sessiz kalıyorsa, onu başka bir akışa taşımak genellikle sorunu çözer.</string>
     <string name="onb_audio_more_hint">Bunları daha sonra Ayarlar → Ses akışları bölümünden değiştirebilirsiniz.</string>
+    <string name="native_driver_selection_title">Sürücü Seçimi</string>
+    <string name="native_driver_selection_summary">Araçta birden fazla eşleşmiş sürücü olduğunda hangi telefonun bağlanacağını seçin</string>
+    <string name="native_driver_selection_mode_off">Devre Dışı</string>
+    <string name="native_driver_selection_mode_auto">Otomatik</string>
+    <string name="native_driver_selection_mode_always">Her Zaman Sor</string>
+    <string name="native_driver_selection_timeout">Otomatik Bağlantı Geri Sayımı</string>
+    <string name="native_driver_preferred_device">Tercih Edilen Telefon</string>
+    <string name="switch_driver">Telefonu Değiştir</string>
+    <string name="driver_device_connected">Araçta / Bağlı</string>
+    <string name="driver_device_paired">Eşleşmiş</string>
+    <string name="driver_device_preferred">Tercih Edilen</string>
+    <string name="driver_device_last_used">Son Bağlanan</string>
+    <string name="driver_selection_auto_in">%2$s cihazına %1$ds içinde otomatik bağlanılıyor...</string>
+    <string name="driver_selection_dialog_title">Sürücü Telefonunu Seçin</string>
+    <string name="connecting_to_device">%s cihazına bağlanılıyor...</string>
+    <string name="driver_none">Yok</string>
+    <string name="show_all_devices">Tüm Bluetooth cihazlarını göster</string>
+    <string name="show_only_phones">Yalnızca telefonları göster</string>
 </resources>

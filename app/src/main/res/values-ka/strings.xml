@@ -1021,4 +1021,22 @@
     <string name="onb_audio_title">აუდიო</string>
     <string name="onb_audio_help">აირჩიეთ სისტემური ნაკადი, რომელზეც უკრავს Android Auto-ს თითოეული არხი, და შეეხეთ დინამიკს მოსასმენად. თუ არხი მანქანაში დუმს, ჩვეულებრივ სხვა ნაკადზე გადატანა შველის.</string>
     <string name="onb_audio_more_hint">ამის შეცვლა მოგვიანებით შეგიძლიათ: პარამეტრები → აუდიონაკადები.</string>
+    <string name="native_driver_selection_title">მძღოლის არჩევა</string>
+    <string name="native_driver_selection_summary">აირჩიეთ დასაკავშირებელი ტელეფონი, როდესაც ავტომობილში რამდენიმე დაწყვილებული მძღოლია</string>
+    <string name="native_driver_selection_mode_off">გამორთული</string>
+    <string name="native_driver_selection_mode_auto">ავტო</string>
+    <string name="native_driver_selection_mode_always">ყოველთვის კითხვა</string>
+    <string name="native_driver_selection_timeout">ავტო-დაკავშირების ათვლა</string>
+    <string name="native_driver_preferred_device">რჩეული ტელეფონი</string>
+    <string name="switch_driver">ტელეფონის შეცვლა</string>
+    <string name="driver_device_connected">მანქანაში / დაკავშირებული</string>
+    <string name="driver_device_paired">დაწყვილებული</string>
+    <string name="driver_device_preferred">რჩეული</string>
+    <string name="driver_device_last_used">ბოლოს დაკავშირებული</string>
+    <string name="driver_selection_auto_in">ავტომატური დაკავშირება %2$s-თან %1$d წამში...</string>
+    <string name="driver_selection_dialog_title">აირჩიეთ მძღოლის ტელეფონი</string>
+    <string name="connecting_to_device">%s-თან დაკავშირება...</string>
+    <string name="driver_none">არცერთი</string>
+    <string name="show_all_devices">ყველა Bluetooth მოწყობილობის ჩვენება</string>
+    <string name="show_only_phones">მხოლოდ ტელეფონების ჩვენება</string>
 </resources>

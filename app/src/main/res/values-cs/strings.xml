@@ -1040,4 +1040,22 @@
     <string name="onb_audio_title">Zvuk</string>
     <string name="onb_audio_help">Vyberte systémový stream, na kterém hraje každý kanál Android Auto, a klepnutím na reproduktor si jej poslechněte. Pokud některý kanál v autě mlčí, obvykle pomůže přesunout jej na jiný stream.</string>
     <string name="onb_audio_more_hint">Toto můžete později změnit v Nastavení → Zvukové streamy.</string>
+    <string name="native_driver_selection_title">Výběr řidiče</string>
+    <string name="native_driver_selection_summary">Vyberte, který telefon se má připojit, když je ve vozidle více spárovaných řidičů</string>
+    <string name="native_driver_selection_mode_off">Vypnuto</string>
+    <string name="native_driver_selection_mode_auto">Automaticky</string>
+    <string name="native_driver_selection_mode_always">Vždy se ptát</string>
+    <string name="native_driver_selection_timeout">Odpočet automatického připojení</string>
+    <string name="native_driver_preferred_device">Preferovaný telefon</string>
+    <string name="switch_driver">Přepnout telefon</string>
+    <string name="driver_device_connected">Ve vozidle / Připojeno</string>
+    <string name="driver_device_paired">Spárováno</string>
+    <string name="driver_device_preferred">Preferovaný</string>
+    <string name="driver_device_last_used">Naposledy připojeno</string>
+    <string name="driver_selection_auto_in">Automatické připojení k %2$s za %1$ds...</string>
+    <string name="driver_selection_dialog_title">Vyberte telefon řidiče</string>
+    <string name="connecting_to_device">Připojování k %s...</string>
+    <string name="driver_none">Žádný</string>
+    <string name="show_all_devices">Zobrazit všechna zařízení Bluetooth</string>
+    <string name="show_only_phones">Zobrazit pouze telefony</string>
 </resources>

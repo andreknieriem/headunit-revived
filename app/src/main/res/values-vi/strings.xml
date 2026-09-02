@@ -1043,4 +1043,22 @@
     <string name="onb_audio_title">Âm thanh</string>
     <string name="onb_audio_help">Chọn luồng hệ thống mà mỗi kênh Android Auto sẽ phát trên đó, rồi chạm vào loa để nghe thử. Nếu một kênh vẫn im lặng trong xe, chuyển nó sang luồng khác thường là cách khắc phục.</string>
     <string name="onb_audio_more_hint">Bạn có thể thay đổi lại sau trong Cài đặt → Luồng âm thanh.</string>
+    <string name="native_driver_selection_title">Chọn người lái</string>
+    <string name="native_driver_selection_summary">Chọn điện thoại để kết nối khi có nhiều người lái đã ghép đôi trong xe</string>
+    <string name="native_driver_selection_mode_off">Tắt</string>
+    <string name="native_driver_selection_mode_auto">Tự động</string>
+    <string name="native_driver_selection_mode_always">Luôn hỏi</string>
+    <string name="native_driver_selection_timeout">Đếm ngược tự động kết nối</string>
+    <string name="native_driver_preferred_device">Điện thoại ưu tiên</string>
+    <string name="switch_driver">Chuyển điện thoại</string>
+    <string name="driver_device_connected">Trong xe / Đã kết nối</string>
+    <string name="driver_device_paired">Đã ghép đôi</string>
+    <string name="driver_device_preferred">Ưu tiên</string>
+    <string name="driver_device_last_used">Kết nối gần nhất</string>
+    <string name="driver_selection_auto_in">Tự động kết nối với %2$s sau %1$ds...</string>
+    <string name="driver_selection_dialog_title">Chọn điện thoại người lái</string>
+    <string name="connecting_to_device">Đang kết nối với %s...</string>
+    <string name="driver_none">Không có</string>
+    <string name="show_all_devices">Hiển thị tất cả thiết bị Bluetooth</string>
+    <string name="show_only_phones">Chỉ hiển thị điện thoại</string>
 </resources>

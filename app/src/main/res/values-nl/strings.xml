@@ -1040,4 +1040,22 @@
     <string name="onb_audio_title">Audio</string>
     <string name="onb_audio_help">Kies via welke systeemstream elk Android Auto-kanaal wordt afgespeeld en tik op de luidspreker om het te horen. Blijft een kanaal stil in de auto, dan helpt het meestal om het naar een andere stream te verplaatsen.</string>
     <string name="onb_audio_more_hint">Je kunt dit later aanpassen bij Instellingen → Audiostreams.</string>
+    <string name="native_driver_selection_title">Bestuurdersselectie</string>
+    <string name="native_driver_selection_summary">Kies welke telefoon verbinding maakt wanneer meerdere gekoppelde bestuurders in het voertuig zijn</string>
+    <string name="native_driver_selection_mode_off">Uitgeschakeld</string>
+    <string name="native_driver_selection_mode_auto">Auto</string>
+    <string name="native_driver_selection_mode_always">Altijd vragen</string>
+    <string name="native_driver_selection_timeout">Afteltimer voor automatische verbinding</string>
+    <string name="native_driver_preferred_device">Voorkeurstelefoon</string>
+    <string name="switch_driver">Telefoon wisselen</string>
+    <string name="driver_device_connected">In voertuig / Verbonden</string>
+    <string name="driver_device_paired">Gekoppeld</string>
+    <string name="driver_device_preferred">Voorkeur</string>
+    <string name="driver_device_last_used">Laatst verbonden</string>
+    <string name="driver_selection_auto_in">Automatisch verbinden met %2$s over %1$ds...</string>
+    <string name="driver_selection_dialog_title">Selecteer bestuurderstelefoon</string>
+    <string name="connecting_to_device">Verbinden met %s...</string>
+    <string name="driver_none">Geen</string>
+    <string name="show_all_devices">Toon alle Bluetooth-apparaten</string>
+    <string name="show_only_phones">Toon alleen telefoons</string>
 </resources>

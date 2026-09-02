@@ -1039,4 +1039,22 @@
     <string name="onb_audio_title">Звук</string>
     <string name="onb_audio_help">Выберите системный поток, через который воспроизводится каждый канал Android Auto, и нажмите на динамик, чтобы услышать его. Если канал молчит в машине, обычно помогает перевести его на другой поток.</string>
     <string name="onb_audio_more_hint">Это можно изменить позже в «Настройки → Аудиопотоки».</string>
+    <string name="native_driver_selection_title">Выбор водителя</string>
+    <string name="native_driver_selection_summary">Выберите, какой телефон подключать, когда в автомобиле несколько сопряжённых водителей</string>
+    <string name="native_driver_selection_mode_off">Отключено</string>
+    <string name="native_driver_selection_mode_auto">Авто</string>
+    <string name="native_driver_selection_mode_always">Всегда спрашивать</string>
+    <string name="native_driver_selection_timeout">Таймер автоподключения</string>
+    <string name="native_driver_preferred_device">Предпочитаемый телефон</string>
+    <string name="switch_driver">Переключить телефон</string>
+    <string name="driver_device_connected">В автомобиле / Подключен</string>
+    <string name="driver_device_paired">Сопряжён</string>
+    <string name="driver_device_preferred">Предпочитаемый</string>
+    <string name="driver_device_last_used">Последний подключенный</string>
+    <string name="driver_selection_auto_in">Автоподключение к %2$s через %1$dс...</string>
+    <string name="driver_selection_dialog_title">Выберите телефон водителя</string>
+    <string name="connecting_to_device">Подключение к %s...</string>
+    <string name="driver_none">Нет</string>
+    <string name="show_all_devices">Показать все Bluetooth-устройства</string>
+    <string name="show_only_phones">Показать только телефоны</string>
 </resources>

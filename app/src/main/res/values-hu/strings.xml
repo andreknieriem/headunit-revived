@@ -1036,4 +1036,22 @@
     <string name="onb_audio_title">Hang</string>
     <string name="onb_audio_help">Válaszd ki, melyik rendszerfolyamon szóljon az egyes Android Auto-csatornák hangja, és koppints a hangszóróra a meghallgatásához. Ha egy csatorna néma marad az autóban, általában segít másik folyamra tenni.</string>
     <string name="onb_audio_more_hint">Ezeket később a Beállítások → Hangfolyamok alatt módosíthatod.</string>
+    <string name="native_driver_selection_title">Vezetőválasztás</string>
+    <string name="native_driver_selection_summary">Válassza ki, melyik telefon csatlakozzon, ha több párosított vezető tartózkodik a járműben</string>
+    <string name="native_driver_selection_mode_off">Kikapcsolva</string>
+    <string name="native_driver_selection_mode_auto">Automatikus</string>
+    <string name="native_driver_selection_mode_always">Mindig kérdezzen</string>
+    <string name="native_driver_selection_timeout">Automatikus csatlakozás visszaszámlálás</string>
+    <string name="native_driver_preferred_device">Előnyben részesített telefon</string>
+    <string name="switch_driver">Telefon váltása</string>
+    <string name="driver_device_connected">A járműben / Csatlakoztatva</string>
+    <string name="driver_device_paired">Párosítva</string>
+    <string name="driver_device_preferred">Előnyben részesített</string>
+    <string name="driver_device_last_used">Utoljára csatlakoztatva</string>
+    <string name="driver_selection_auto_in">Automatikus csatlakozás ide: %2$s %1$d mp múlva...</string>
+    <string name="driver_selection_dialog_title">Válassza ki a vezető telefonját</string>
+    <string name="connecting_to_device">Csatlakozás ide: %s...</string>
+    <string name="driver_none">Nincs</string>
+    <string name="show_all_devices">Összes Bluetooth-eszköz megjelenítése</string>
+    <string name="show_only_phones">Csak telefonok megjelenítése</string>
 </resources>
