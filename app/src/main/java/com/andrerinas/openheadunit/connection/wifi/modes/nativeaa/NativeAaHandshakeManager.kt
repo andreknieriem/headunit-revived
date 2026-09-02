@@ -164,6 +164,14 @@ class NativeAaHandshakeManager(
 
     @Volatile
     private var credentials: WifiCredentials? = null
+
+    /**
+     * The WPP-over-TCP listener. From Android Auto 17.4 the phone prefers to run the handshake
+     * over TCP once it knows where to dial, and it learns that from the endpoint we advertise in
+     * WifiVersionRequest. Started with the Bluetooth listeners so the endpoint we advertise is
+     * always one something answers on.
+     */
+    private var wppTcpServer: WppTcpServer? = null
     private var pokeJob: Job? = null
     // Last (ssid, ip, bssid) triggerPoke() restarted for - dedupes redundant restarts when
     // WifiDirectManager redelivers the same credentials, which was starving the poke before it
@@ -270,6 +278,13 @@ class NativeAaHandshakeManager(
     @SuppressLint("MissingPermission")
     fun start() {
         if (isRunning) return
+
+        // Ahead of every Bluetooth check below, because this listener does not need Bluetooth. A
+        // unit whose adapter the phone cannot reach returns early from all of them, and that is
+        // exactly the unit for which TCP is the only route left. isRunning stays the answer to
+        // "are the RFCOMM listeners up", which is what isActive() callers are asking; stop() takes
+        // this down either way.
+        startWppTcpServer()
 
         // Leave isRunning false, like the "adapter disabled" case below: isActive() callers must
         // see this as genuinely stopped. Nothing here is retryable, but a listener that was never
@@ -985,7 +1000,7 @@ class NativeAaHandshakeManager(
                 when (action) {
                     WppAction.SendVersionRequest -> {
                         AppLog.i("NativeAA: [TX] Sending WifiVersionRequest (Type 4) v${WppHandshakeSession.WPP_VERSION_MAJOR}.${WppHandshakeSession.WPP_VERSION_MINOR}")
-                        sendWifiVersionRequest(output)
+                        sendWifiVersionRequest(output, transport)
                         spokeToPhone = true
                     }
                     WppAction.SendStartRequest -> {
@@ -1397,15 +1412,21 @@ class NativeAaHandshakeManager(
             when (msg.type) {
                 WppMessageType.VERSION_RESPONSE -> {
                     val v = Wireless.WifiVersionResponse.parseFrom(msg.payload)
-                    AppLog.i("NativeAA: [RX] WifiVersionResponse v${v.major}.${v.minor} status=${if (v.hasStatus()) v.status else "-"}")
+                    val device = if (v.hasDeviceInfo()) {
+                        " device=${v.deviceInfo.deviceId} lifetime=${v.deviceInfo.connectivityLifetimeId}"
+                    } else ""
+                    AppLog.i("NativeAA: [RX] WifiVersionResponse v${v.major}.${v.minor} status=${WppStatus.describe(if (v.hasStatus()) v.status else null)}$device")
                 }
                 WppMessageType.CONNECT_STATUS -> {
                     val s = Wireless.WifiConnectStatus.parseFrom(msg.payload)
-                    AppLog.i("NativeAA: [RX] WifiConnectStatus status=${if (s.hasStatus()) s.status else "-"} (0 = the phone got onto our network)")
+                    // The hint is the phone's own words for a refusal, and the only one it sends.
+                    val hint = if (s.hasErrorMessageHint()) " hint=\"${s.errorMessageHint}\"" else ""
+                    AppLog.i("NativeAA: [RX] WifiConnectStatus status=${WppStatus.describe(if (s.hasStatus()) s.status else null)}$hint (SUCCESS = the phone got onto our network)")
                 }
                 WppMessageType.START_RESPONSE -> {
                     val r = Wireless.WifiStartResponse.parseFrom(msg.payload)
-                    AppLog.i("NativeAA: [RX] WifiStartResponse ip=${r.ipAddress} status=${if (r.hasStatus()) r.status else "-"}")
+                    val port = if (r.hasPort()) ":${r.port}" else ""
+                    AppLog.i("NativeAA: [RX] WifiStartResponse ip=${r.ipAddress}$port status=${WppStatus.describe(if (r.hasStatus()) r.status else null)}")
                 }
             }
         } catch (e: Exception) {
@@ -1414,28 +1435,70 @@ class NativeAaHandshakeManager(
     }
 
     private fun sendWifiStartRequest(output: OutputStream, ip: String, port: Int) {
-        val request = Wireless.WifiStartRequest.newBuilder()
-            .setIpAddress(ip)
-            .setPort(port)
-            .setStatus(0)
-            .build()
+        val request = WppMessages.startRequest(ip, port)
         sendProtobuf(output, request.toByteArray(), WppMessageType.START_REQUEST)
     }
 
     /**
-     * Declares our protocol version, opening the modern exchange. Real head units send this first
-     * — the OEM ZLink app does — while aa-proxy-rs's own dongle does not, which is why it sits
-     * behind [Settings.nativeWifiVersionExchange].
+     * Declares our protocol version and who we are, and where the phone can reach us over TCP when
+     * that is safe to say. Real head units send this first, as does the OEM ZLink app; aa-proxy-rs's
+     * dongle does not, which is why it sits behind [Settings.nativeWifiVersionExchange].
      *
-     * The version numbers are a guess and known to be one; see [WppHandshakeSession].
+     * [WppEndpointPolicy] holds the endpoint back on a network the phone would later fail to find,
+     * which is worse than staying quiet: it stores what we advertise and dials it in preference to
+     * running this handshake again.
      */
-    private fun sendWifiVersionRequest(output: OutputStream) {
-        val request = Wireless.WifiVersionRequest.newBuilder()
-            .setMajor(WppHandshakeSession.WPP_VERSION_MAJOR)
-            .setMinor(WppHandshakeSession.WPP_VERSION_MINOR)
-            .build()
+    private fun sendWifiVersionRequest(output: OutputStream, transport: NativeStrategy) {
+        val endpoint = when (val decision =
+            WppEndpointPolicy.decide(transport, wppTcpServer?.listeningPort)) {
+            is WppEndpointDecision.Withhold -> {
+                AppLog.i("NativeAA: not advertising WPP over TCP: ${decision.reason}")
+                null
+            }
+            is WppEndpointDecision.Advertise ->
+                WppMessages.endpoint(credentials?.ip.orEmpty(), decision.port).also {
+                    AppLog.i("NativeAA: advertising WPP over TCP at ${it.ip}:${it.port}")
+                }
+        }
+        val request = WppMessages.versionRequest(carInfo(), endpoint)
         sendProtobuf(output, request.toByteArray(), WppMessageType.VERSION_REQUEST)
     }
+
+    /**
+     * Opens the WPP-over-TCP listener.
+     *
+     * Everything it needs is read through callbacks rather than handed over once: the credentials
+     * resolve after this runs and are redelivered several times per group, so a snapshot taken here
+     * would be stale by the time a phone dialled in.
+     */
+    private fun startWppTcpServer() {
+        if (wppTcpServer != null) return
+        val server = WppTcpServer(context, scope, object : WppTcpServer.Callbacks {
+            override fun credentials(): NativeNetworkCredentials? = this@NativeAaHandshakeManager.credentials
+                ?.let { NativeNetworkCredentials(it.ssid, it.psk, it.ip, it.bssid) }
+
+            override fun strategy(): NativeStrategy = settings.nativeApStrategy
+
+            override fun carInfo(): Wireless.WppCarInfo = this@NativeAaHandshakeManager.carInfo()
+
+            override fun projectionSessionUp(): Boolean = commManager.isConnected
+
+            override fun projectionEndpoint(): Pair<String, Int>? =
+                this@NativeAaHandshakeManager.credentials?.ip?.takeIf { it.isNotBlank() }?.let { it to 5288 }
+        })
+        wppTcpServer = server
+        server.start()
+    }
+
+    /** Our identity, from the same settings ServiceDiscoveryResponse announces. */
+    private fun carInfo(): Wireless.WppCarInfo = WppMessages.carInfo(
+        vehicleMake = settings.vehicleMake,
+        vehicleModel = settings.vehicleModel,
+        vehicleYear = settings.vehicleYear,
+        vehicleId = settings.vehicleId,
+        headUnitMake = settings.headUnitMake,
+        headUnitModel = settings.headUnitModel
+    )
 
     /**
      * Sends the credentials.
@@ -1456,16 +1519,7 @@ class NativeAaHandshakeManager(
         bssid: String?,
         strategy: NativeStrategy
     ) {
-        val response = Wireless.WifiInfoResponse.newBuilder()
-            .setSsid(ssid)
-            .setKey(key)
-            .setSecurityMode(Wireless.SecurityMode.WPA2_PERSONAL)
-            .setAccessPointType(
-                if (strategy == NativeStrategy.HOTSPOT) Wireless.AccessPointType.DYNAMIC
-                else Wireless.AccessPointType.STATIC
-            )
-            .setBssid(bssid.orEmpty())
-            .build()
+        val response = WppMessages.infoResponse(ssid, key, bssid, strategy)
         sendProtobuf(output, response.toByteArray(), WppMessageType.INFO_RESPONSE)
     }
 
@@ -1515,6 +1569,8 @@ class NativeAaHandshakeManager(
 
     fun stop() {
         isRunning = false
+        wppTcpServer?.stop()
+        wppTcpServer = null
         try { aaServerSocket?.close() } catch (e: Exception) {}
         try { hfpServerSocket?.close() } catch (e: Exception) {}
         synchronized(extraAaServerSockets) {

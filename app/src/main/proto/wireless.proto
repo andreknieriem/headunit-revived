@@ -60,13 +60,49 @@ message WifiInfoResponse {
     optional AccessPointType access_point_type = 5;
 }
 
-// Type 4, head unit -> phone. Opens the modern handshake by declaring our protocol version. Real
-// head units send this first, aa-proxy-rs's dongle does not, hence the setting — which is off by
-// default, the version below being a guess. Only major/minor are defined; the rest is revision
-// dependent and we never have to read one.
+// Where the phone should open the WPP session when it runs over TCP instead of RFCOMM. Carried on
+// WifiVersionRequest; the phone stores it against our Bluetooth address and dials it on later
+// connections. Both fields are copied out without a presence check, so an omitted one becomes ""
+// or 0 and fails later at socket creation - always set both. An ip_address of "0.0.0.0" is a
+// supported "use the gateway" signal rather than an error.
+message WifiProjectionProtocolInfo {
+    optional string ip_address = 1;
+    optional int32 port = 2;
+}
+
+// Who we say we are, on WifiVersionRequest. The same identity ServiceDiscoveryResponse announces,
+// and not decorative: at protocol 4.1 the phone accepts the WPP-over-TCP endpoint only for a make
+// on its own allowlist, which is why we announce 4.2 instead and clear that check.
+//
+// Fields 5-8 are matched by position against the ServiceDiscoveryResponse layout rather than read
+// from a capture, so they are the least certain part of this message. body_type is 2 for a model
+// name ending in "truck" and 1 otherwise, which is the same rule ServiceDiscoveryResponse notes.
+message WppCarInfo {
+    optional string make = 1;
+    optional string model = 2;
+    optional string model_year = 3;
+    optional string vehicle_id = 4;
+    optional string head_unit_make = 5;
+    optional string head_unit_model = 6;
+    optional string head_unit_software_build = 7;
+    optional string head_unit_software_version = 8;
+    // Declared so a capture can be read; never sent. It is absent from the schema the phone
+    // parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+    // already the least certain part of this message.
+    optional int32 body_type = 9;
+}
+
+// Type 4, head unit -> phone. Opens the modern handshake by declaring our protocol version, and
+// carries the two things the phone needs to reach us over TCP later: where to dial, and who we
+// are. Below protocol 4.1 the phone skips wpp_info entirely, which is why the version matters.
+//
+// Fields 3 and 4 exist in the phone's schema (an enum and a packed int32 list) and are left
+// undefined here: we never send them and an absent field costs nothing.
 message WifiVersionRequest {
     optional int32 major = 1;
     optional int32 minor = 2;
+    optional WppCarInfo car_info = 5;
+    optional WifiProjectionProtocolInfo wpp_info = 6;
 }
 
 // Type 5, phone -> head unit. Parsed for the log only; nothing branches on it. status is int32:
@@ -77,6 +113,14 @@ message WifiVersionResponse {
     optional string device_serial = 3;
     optional int32 status = 4;
     optional int32 selected_wifi_channel_type = 5;
+    optional WppWifiDeviceInfo device_info = 6;
+}
+
+// Field 6 of WifiVersionResponse. Named from the schema's own descriptor rather than guessed at.
+// Logged only; nothing branches on it.
+message WppWifiDeviceInfo {
+    optional string device_id = 1;
+    optional string connectivity_lifetime_id = 2;
 }
 
 // Type 6, phone -> head unit: did it get onto our network. The only join feedback that works on
@@ -86,12 +130,17 @@ message WifiVersionResponse {
 // branched on either way, so that was a wrong log number rather than a wrong decision.
 message WifiConnectStatus {
     optional int32 status = 1;
+    // The phone's own words for why it did not join, where it sends any. The one free diagnostic
+    // on the one message that reports whether it got onto our network.
+    optional string error_message_hint = 2;
 }
 
 // Type 7, phone -> head unit. Acknowledges type 1 and reports the address it will connect from.
-// Field 2 is unclaimed on purpose — it is not observed and guessing at it would mis-parse.
+// Field 2 was left unclaimed while it was unobserved; the schema's own descriptor names it as the
+// port, so it is claimed rather than guessed at.
 message WifiStartResponse {
     optional string ip_address = 1;
+    optional int32 port = 2;
     optional int32 status = 3;
 }
 
@@ -109,4 +158,25 @@ message WifiPingResponse {
 message WifiSetupInfo {
     optional int32 major = 1;
     optional int32 minor = 2;
+}
+
+// The payload of Android Auto's own wireless-setup QR code, url-safe base64 encoded into the
+// `data` query parameter of https://androidauto.com/projection/... . Scanning one writes these
+// straight into the phone's list of known cars and starts a WPP session.
+//
+// It is the only way to seed the TCP endpoint on a head unit whose Bluetooth adapter the phone
+// cannot reach: with no RFCOMM channel there is no WifiVersionRequest to carry it. bluetooth_mac
+// is the identity the phone keys the record on and must be a device it is actually connected to;
+// nothing checks that it is this head unit.
+//
+// Every field is validated on the phone before any of it is stored, each with its own error, so a
+// malformed one is refused outright rather than half-applied.
+message ProjectionDeepLinkData {
+    optional string ssid = 1;
+    optional string bssid = 2;
+    optional string passkey = 3;
+    optional string wpp_tcp_ip = 4;
+    optional int32 wpp_tcp_port = 5;
+    optional string bluetooth_mac = 6;
+    optional SecurityMode security_mode = 7;
 }

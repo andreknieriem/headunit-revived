@@ -986,7 +986,7 @@
     <string name="preflight_later">Later</string>
     <string name="preflight_invalid_bssid">That is not a WiFi address. Enter six pairs of hex digits, like 02:1A:11:FF:3C:4D.</string>
     <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
+    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. On the hotspot transport it also tells the phone where to reach this head unit directly, which is how a later connection can start on its own. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <!-- QR Code Generator -->
     <string name="share_hotspot_qr_title">Configure Wireless Helper</string>
     <string name="share_hotspot_qr_desc">Show QR Code for phone auto-connection</string>
