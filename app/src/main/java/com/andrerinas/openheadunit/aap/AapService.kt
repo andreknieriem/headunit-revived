@@ -1000,17 +1000,23 @@ class AapService : Service() {
             AppLog.i("AapService: Auto-resuming playback on reconnect (${elapsedSinceDisconnect}ms since disconnect)")
             autoResumePlaybackJob?.cancel()
             autoResumePlaybackJob = serviceScope.launch {
-                // Allow Android Auto on the phone time to settle and attach its media player session
-                delay(1500L)
-                if (!isActive || isDestroying) return@launch
+                try {
+                    // Allow Android Auto on the phone time to settle and attach its media player session
+                    delay(1500L)
+                    if (!isActive || isDestroying) return@launch
 
-                // Confirm that the connection is still alive and in TransportStarted before sending keys
-                if (commManager.connectionState.value is CommManager.ConnectionState.TransportStarted) {
-                    AppLog.i("AapService: Dispatching auto-resume play key")
-                    commManager.sendKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY, true, null, "auto-resume")
-                    commManager.sendKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY, false, null, "auto-resume")
-                } else {
-                    AppLog.w("AapService: Connection state changed before auto-resume could dispatch")
+                    // Confirm that the connection is still alive and in TransportStarted before sending keys
+                    if (commManager.connectionState.value is CommManager.ConnectionState.TransportStarted) {
+                        AppLog.i("AapService: Dispatching auto-resume play key")
+                        commManager.sendKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY, true, null, "auto-resume")
+                        commManager.sendKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY, false, null, "auto-resume")
+                    } else {
+                        AppLog.w("AapService: Connection state changed before auto-resume could dispatch")
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    AppLog.e("AapService: Error while auto-resuming playback: ${e.message}", e)
                 }
             }
         } else {
