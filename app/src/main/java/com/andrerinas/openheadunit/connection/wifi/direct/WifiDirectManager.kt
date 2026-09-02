@@ -37,6 +37,7 @@ import com.andrerinas.openheadunit.utils.ToastUtils
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.ConnectionIssue
 import com.andrerinas.openheadunit.utils.ConnectionIssues
+import com.andrerinas.openheadunit.utils.InterfaceMacReader
 import java.io.File
 import java.net.Inet4Address
 import java.net.InetSocketAddress
@@ -118,6 +119,16 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private val handler = Handler(Looper.getMainLooper())
     private var localDeviceAddress: String? = null
     private var lastKnownBssid: String? = null
+
+    /**
+     * The interface [lastKnownBssid] was read from. A P2P interface's MAC changes with the group on
+     * plenty of devices, so a cached address from a different interface describes a network that no
+     * longer exists and no beacon carries.
+     */
+    private var lastKnownBssidIface: String? = null
+
+    /** The last SSID the BSSID source dump was printed for; group info arrives several times each. */
+    private var lastBssidDumpSsid: String? = null
     private var isReceiverRegistered = false
     private var discoveredInterface: String? = null
     private var nativeGroupCreationMode = NATIVE_GROUP_MODE_UNKNOWN
@@ -591,7 +602,42 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             val overrideBssid = SoftApBssidPolicy.choose(rawOverride, null, null)
             val isBssidSet = overrideBssid.isNotEmpty()
 
-            var bssid: String = if (isBssidSet) overrideBssid else getWifiDirectMac(iface)
+            logBssidSourceDump(group, iface, ssid, rawOverride)
+
+            // Two sources ahead of the framework's own MAC, because both survive on a device where
+            // getHardwareAddress() is masked: the group owner's BSSID where the vendor exposes it,
+            // and the MAC the kernel encoded in the interface's IPv6 link-local address. Which one
+            // answered is carried in bssidSource so the log can say so.
+            var bssidSource = "static override"
+            var bssid: String = overrideBssid
+            if (!isBssidSet) {
+                val ownerBssid = SoftApBssidPolicy.choose(null, getGroupOwnerBssid(group), null)
+                val linkLocalBssid =
+                    SoftApBssidPolicy.choose(null, InterfaceMacReader.fromIpv6LinkLocal(iface), null)
+                when {
+                    ownerBssid.isNotEmpty() -> {
+                        bssid = ownerBssid
+                        bssidSource = "getGroupOwnerBssid()"
+                    }
+                    linkLocalBssid.isNotEmpty() -> {
+                        bssid = linkLocalBssid
+                        bssidSource = "IPv6 link-local"
+                        AppLog.i(
+                            "WifiDirectManager: BSSID read from the IPv6 link-local address of " +
+                                "${iface ?: "an access point interface"} (EUI-64): $bssid"
+                        )
+                    }
+                    else -> {
+                        bssid = getWifiDirectMac(iface)
+                        bssidSource = "NetworkInterface.hardwareAddress"
+                        AppLog.i(
+                            "WifiDirectManager: ${iface ?: "no interface"} carries no EUI-64 IPv6 " +
+                                "link-local address, so no MAC can be derived from it - this " +
+                                "interface uses RFC 7217 stable-privacy addressing."
+                        )
+                    }
+                }
+            }
             if (isBssidSet) {
                 AppLog.i("WifiDirectManager: Initial BSSID from App settings: $bssid")
             } else {
@@ -605,46 +651,56 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                             "(XX:XX:XX:XX:XX:XX) or clear it to detect one automatically."
                     )
                 }
-                AppLog.i("WifiDirectManager: Initial BSSID from scan: $bssid")
+                AppLog.i("WifiDirectManager: Initial BSSID from $bssidSource: $bssid")
             }
 
 
 
             // [FIX] Robust BSSID detection for masked MACs (00:00 or 02:00)
-            if (bssid == "00:00:00:00:00:00" || bssid == "02:00:00:00:00:00") {
+            //
+            // The tests below ask SoftApBssidPolicy rather than comparing against the two masking
+            // placeholders: it checks the shape, so a source that answers with something that is
+            // not an address at all - an empty string, a status word, a hostname - is rejected here
+            // instead of winning the chain and being published verbatim.
+            if (!SoftApBssidPolicy.isUsable(bssid)) {
                 AppLog.i("WifiDirectManager: BSSID is masked. Starting fallbacks...")
 
-                // Fallback 1: Use last known valid BSSID
-                if (!lastKnownBssid.isNullOrEmpty() && lastKnownBssid != "00:00:00:00:00:00" && lastKnownBssid != "02:00:00:00:00:00") {
+                // Fallback 1: Use last known valid BSSID, but only from this same interface.
+                if (SoftApBssidPolicy.isUsable(lastKnownBssid) && lastKnownBssidIface == iface) {
                     AppLog.i("WifiDirectManager: Fallback 1 - Using lastKnownBssid: $lastKnownBssid")
                     bssid = lastKnownBssid!!
+                    bssidSource = "lastKnownBssid cache"
                 }
                 // Fallback 2: Use captured localDeviceAddress
-                else if (!localDeviceAddress.isNullOrEmpty() && localDeviceAddress != "00:00:00:00:00:00" && localDeviceAddress != "02:00:00:00:00:00") {
+                else if (SoftApBssidPolicy.isUsable(localDeviceAddress)) {
                     AppLog.i("WifiDirectManager: Fallback 2 - Using localDeviceAddress: $localDeviceAddress")
                     bssid = localDeviceAddress!!
+                    bssidSource = "requestDeviceInfo"
                 }
                 // Fallback 3: Use group.owner.deviceAddress
                 else {
                     val ownerAddr = group.owner?.deviceAddress
                     AppLog.i("WifiDirectManager: Fallback 3 - group.owner.deviceAddress: $ownerAddr")
-                    if (!ownerAddr.isNullOrEmpty() && ownerAddr != "00:00:00:00:00:00" && ownerAddr != "02:00:00:00:00:00") {
+                    if (SoftApBssidPolicy.isUsable(ownerAddr)) {
                         AppLog.i("WifiDirectManager: Fallback 3 - Selected group.owner.deviceAddress: $ownerAddr")
-                        bssid = ownerAddr
+                        bssid = ownerAddr!!
+                        bssidSource = "group.owner.deviceAddress"
                     } else {
                         AppLog.i("WifiDirectManager: Fallback 4 - Attempting shell/sysfs for $iface...")
                         val shellMac = getMacFromShell(iface)
-                        if (shellMac != null) {
+                        if (SoftApBssidPolicy.isUsable(shellMac)) {
                             AppLog.i("WifiDirectManager: Fallback 4 - Selected shell/sysfs MAC: $shellMac")
-                            bssid = shellMac
+                            bssid = shellMac!!
+                            bssidSource = "sysfs / ip link"
                         } else {
                             // Fallback 5: Try Settings.Secure (Samsung/Pixel trick)
                             var resolved = false
                             try {
                                 val secureMac = Settings.Secure.getString(context.contentResolver, "wifi_p2p_device_address")
-                                if (!secureMac.isNullOrEmpty() && secureMac != "00:00:00:00:00:00" && secureMac != "02:00:00:00:00:00") {
+                                if (SoftApBssidPolicy.isUsable(secureMac)) {
                                     AppLog.i("WifiDirectManager: Fallback 5 - Selected MAC from Settings.Secure: $secureMac")
                                     bssid = secureMac
+                                    bssidSource = "Settings.Secure"
                                     resolved = true
                                 }
                             } catch (e: Exception) {
@@ -657,9 +713,10 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                             // internal fields populated).
                             if (!resolved) {
                                 val reflectedMac = getMacFromReflection(group)
-                                if (reflectedMac != null) {
+                                if (SoftApBssidPolicy.isUsable(reflectedMac)) {
                                     AppLog.i("WifiDirectManager: Fallback 6 - Selected MAC via reflection: $reflectedMac")
-                                    bssid = reflectedMac
+                                    bssid = reflectedMac!!
+                                    bssidSource = "field reflection"
                                 } else {
                                     AppLog.w("WifiDirectManager: All fallbacks failed! BSSID is still zeroed.")
                                 }
@@ -669,8 +726,12 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 }
             }
 
-            if (bssid != "00:00:00:00:00:00" && bssid != "02:00:00:00:00:00") {
+            if (SoftApBssidPolicy.isUsable(bssid)) {
+                // Normalised once, here, so every consumer and the cache see the same upper-case
+                // colon form the hotspot route already hands over.
+                bssid = SoftApBssidPolicy.choose(null, bssid, null)
                 lastKnownBssid = bssid
+                lastKnownBssidIface = iface
             }
 
             // Below API 29 there is nothing to read. WifiP2pGroup gained getFrequency() in Q, and
@@ -698,7 +759,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             // for 5180 is the whole failure this setting exists for, and one line has to answer it.
             val requestedLabel =
                 if (nativeRequestedFrequency > 0) ", $nativeRequestedFrequency MHz was asked for" else ""
-            AppLog.i("WifiDirectManager: onGroupInfoAvailable: SSID: $ssid, BSSID: $bssid, GO: $isOwner, IFACE: ${iface ?: "null"}, Freq: $frequency MHz ($band$channelLabel)$requestedLabel")
+            AppLog.i("WifiDirectManager: onGroupInfoAvailable: SSID: $ssid, BSSID: $bssid (source=$bssidSource), GO: $isOwner, IFACE: ${iface ?: "null"}, Freq: $frequency MHz ($band$channelLabel)$requestedLabel")
 
             // Runs before the channel report below, which is the order the Native AA branch used to
             // impose from inside itself: a group that is about to be torn down and remade on 5GHz
@@ -944,7 +1005,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                     sb.toString()
                 } else "null"
 
-                AppLog.i("WifiDirectManager: Found interface: ${iface.name}, MAC: $macStr")
+                AppLog.d("WifiDirectManager: Found interface: ${iface.name}, MAC: $macStr")
 
                 // If we have a name, it must match.
                 if (ifaceName != null && iface.name != ifaceName) continue
@@ -1068,6 +1129,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             // MAC — a cached BSSID from the group we're tearing down is now stale and must never
             // be delivered for the new one.
             lastKnownBssid = null
+            lastKnownBssidIface = null
             manager?.removeGroup(channel, object : WifiP2pManager.ActionListener {
                 override fun onSuccess() {
                     checkGroupAndCreateInFlight = false
@@ -1095,6 +1157,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         }
 
         lastKnownBssid = null
+        lastKnownBssidIface = null
 
         mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
@@ -1635,6 +1698,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         // MAC — a cached BSSID from the group we're tearing down is now stale and must never
         // be delivered for the new one.
         lastKnownBssid = null
+        lastKnownBssidIface = null
         // The group this replaces is gone; any credential delivery still waiting on it describes a
         // network that will not exist by the time it lands.
         credentialsEpoch++
@@ -1665,6 +1729,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         val mgr = manager ?: return
         val ch = channel ?: return
         lastKnownBssid = null
+        lastKnownBssidIface = null
         // Let an in-progress credential wait pick up the fresh group's creds, not stale ones.
         credentialsEpoch++
         onNativeGroupInvalidated?.invoke()
@@ -1753,6 +1818,53 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
     private val macRegex = Regex("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
     private val maskedMacs = setOf("00:00:00:00:00:00", "02:00:00:00:00:00")
+
+    /**
+     * The group owner's BSSID as the framework knows it. `getGroupOwnerBssid()` is not in the
+     * public SDK but some vendor trees carry it, and where it exists it is a direct answer rather
+     * than a derivation, so it is asked first.
+     */
+    private fun getGroupOwnerBssid(group: WifiP2pGroup): String? = try {
+        group.javaClass.getMethod("getGroupOwnerBssid").invoke(group)?.toString()
+    } catch (e: Throwable) {
+        null
+    }
+
+    /**
+     * Every BSSID source and what each answered, printed once per group.
+     *
+     * With nine of them in the chain, "all fallbacks failed" tells a reporter's log nothing about
+     * which hardware refused what. This is the block to ask for, and it turns a second test build
+     * into a paste.
+     */
+    private fun logBssidSourceDump(
+        group: WifiP2pGroup,
+        iface: String?,
+        ssid: String?,
+        staticOverride: String?
+    ) {
+        if (ssid != null && ssid == lastBssidDumpSsid) return
+        lastBssidDumpSsid = ssid
+        fun report(label: String, value: String?) =
+            AppLog.i("WifiDirectManager:   ${label.padEnd(32)} = ${value ?: "null"}")
+        AppLog.i("WifiDirectManager: == BSSID source dump (iface=${iface ?: "unknown"}) ==")
+        report("static override (Settings)", staticOverride)
+        report("getGroupOwnerBssid()", getGroupOwnerBssid(group))
+        report("IPv6 link-local ($iface)", InterfaceMacReader.fromIpv6LinkLocal(iface))
+        report("IPv6 link-local (any p2p/ap)", InterfaceMacReader.fromIpv6LinkLocal(null))
+        report("NetworkInterface.hardwareAddress", getWifiDirectMac(iface))
+        report("lastKnownBssid ($lastKnownBssidIface)", lastKnownBssid)
+        report("requestDeviceInfo", localDeviceAddress)
+        report("group.owner.deviceAddress", group.owner?.deviceAddress)
+        report("sysfs / ip link", getMacFromShell(iface))
+        report("Settings.Secure p2p address", try {
+            Settings.Secure.getString(context.contentResolver, "wifi_p2p_device_address")
+        } catch (e: Exception) {
+            "err: ${e.message}"
+        })
+        report("reflection over WifiP2pGroup", getMacFromReflection(group))
+        AppLog.i("WifiDirectManager: == end BSSID source dump ==")
+    }
 
     /**
      * Last-resort BSSID lookup: reflect over every declared field (including inherited ones) of

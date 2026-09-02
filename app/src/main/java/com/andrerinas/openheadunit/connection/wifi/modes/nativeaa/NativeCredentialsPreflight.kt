@@ -161,7 +161,9 @@ object NativeCredentialsPreflight {
         File("/sys/class/net").listFiles()
             ?.filter { it.name.startsWith("p2p") }
             ?.firstNotNullOfOrNull { dir ->
-                InterfaceMacReader.fromSysfs(dir.name)?.takeIf { SoftApBssidPolicy.isUsable(it) }
+                val mac = InterfaceMacReader.fromSysfs(dir.name)
+                    ?: InterfaceMacReader.fromIpv6LinkLocal(dir.name)
+                mac?.takeIf { SoftApBssidPolicy.isUsable(it) }
             }
     } catch (e: Exception) {
         AppLog.d("NativeCredentialsPreflight: sysfs sweep for a p2p interface failed: ${e.message}")

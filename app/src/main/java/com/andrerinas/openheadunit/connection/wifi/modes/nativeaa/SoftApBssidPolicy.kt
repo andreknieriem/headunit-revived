@@ -26,7 +26,14 @@ object SoftApBssidPolicy {
      * transport — see [NativeCredentialsPolicy].
      */
     fun choose(staticOverride: String?, shellMac: String?, hardwareAddress: String?): String =
-        listOf(staticOverride, shellMac, hardwareAddress)
+        choose(staticOverride, listOf(shellMac, hardwareAddress))
+
+    /**
+     * The same rule over an arbitrary list of detected addresses, for a route with more than two of
+     * them. [staticOverride] still outranks every one: a hand-typed address is a specific claim.
+     */
+    fun choose(staticOverride: String?, detected: List<String?>): String =
+        (listOf(staticOverride) + detected)
             .firstOrNull { isUsable(it) }
             ?.let { normalise(it) }
             ?: ""
