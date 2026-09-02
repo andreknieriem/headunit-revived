@@ -386,7 +386,7 @@
 
     <string name="static_bssid_title">BSSID statique</string>
     <string name="static_bssid_enter_value">Entrer BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Définir manuellement le BSSID pour la poignée de main sans fil si la détection auto est bloquée par les permissions du système</string>
+    <string name="static_bssid_desc">Définir la BSSID de la connexion sans fil à la main. Utile uniquement si aucune source de cet appareil n\'en donne ; le journal indique chaque source interrogée.</string>
 
     <string name="custom_insets">Encarts personnalisés (Marges)</string>
     <string name="inset_top">Haut</string>
@@ -996,7 +996,7 @@
     <string name="wifi_direct_band_24ghz">2,4 GHz uniquement</string>
     <string name="wifi_direct_band_hint">Auto demande 5 GHz avec repli sur 2,4 GHz. Le 2,4 GHz est fiable jusqu\'à 720p, choisissez 5 GHz au-delà.</string>
     <string name="connection_issue_banner_bt_silent">Votre téléphone s\'est connecté en Bluetooth, mais n\'a reçu aucun paquet. Touchez pour passer en USB, Wireless Helper ou Auto.</string>
-    <string name="connection_issue_banner_bssid">Cet appareil n\'a pas pu lire son adresse MAC Wi-Fi (BSSID). Touchez pour activer la localisation ou entrer l\'adresse manuellement.</string>
+    <string name="connection_issue_banner_bssid">Aucune source de cet appareil n\'a donné sa propre adresse MAC WiFi (BSSID), votre téléphone n\'a donc jamais su à quel réseau se connecter. Toutes les sources ont été essayées, dont une qui ne demande aucune autorisation. Touchez pour activer la localisation, ce qui débloque les autres, ou pour saisir l\'adresse à la main.</string>
     <string name="connection_issue_banner_hotspot_off">Le point d\'accès de cet appareil est désactivé, aucun réseau n\'était donc disponible pour votre téléphone. Activez le point d\'accès avant de vous connecter ou touchez pour laisser l\'application l\'activer pour vous.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Le Wi-Fi de cet appareil n\'a pas pu créer le réseau Wi-Fi Direct que votre téléphone devait rejoindre, et l\'application ne peut pas le forcer. Si cet appareil est connecté à un autre réseau Wi-Fi, essayez de le déconnecter. Touchez pour utiliser le point d\'accès de cet appareil à la place.</string>
     <string name="connection_issue_banner_hotspot_config">Cet appareil ne peut pas transmettre le nom et le mot de passe du point d\'accès. Touchez pour les saisir manuellement.</string>
@@ -1006,7 +1006,7 @@
     <string name="preflight_intro">Cet appareil ne peut pas fournir tous les éléments requis pour Android Auto :</string>
     <string name="preflight_item_hotspot_name">Nom du point d\'accès : cet appareil empêche les applications de le lire.</string>
     <string name="preflight_item_hotspot_password">Mot de passe du point d\'accès requis.</string>
-    <string name="preflight_item_bssid">Adresse Wi-Fi (BSSID) introuvable.</string>
+    <string name="preflight_item_bssid">Adresse WiFi (BSSID). Aucune source n\'en a donné, pas même celle déduite de l\'interface réseau de cet appareil.</string>
     <string name="preflight_item_location">La localisation est désactivée, masquant l\'adresse Wi-Fi.</string>
     <string name="preflight_enter_now">Saisir maintenant</string>
     <string name="preflight_open_location">Localisation</string>

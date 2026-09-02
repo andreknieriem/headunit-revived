@@ -429,7 +429,7 @@
 
     <string name="static_bssid_title">Static BSSID (MAC Address)</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Set the BSSID for the wireless handshake by hand. Only needed where nothing on this device reports one; the log names every source that was asked.</string>
 
     <string name="custom_insets">Custom Insets (Margins)</string>
     <string name="inset_top">Top</string>
@@ -965,7 +965,7 @@
 
     <!-- The failure banner on the main screen. One per condition, shown after a failed attempt. -->
     <string name="connection_issue_banner_bt_silent">Your phone connected over Bluetooth, but nothing this unit sent ever reached it. This is a fault in the head unit\'s Bluetooth that this app cannot work around. Tap to switch to USB, Wireless Helper or Auto, which do not need the Bluetooth handshake.</string>
-    <string name="connection_issue_banner_bssid">This unit could not read its own WiFi MAC address (BSSID), so your phone was never told which network to join. Tap to turn on Location, or to enter the address by hand.</string>
+    <string name="connection_issue_banner_bssid">No source on this unit named its own WiFi MAC address (BSSID), so your phone was never told which network to join. Every source was tried, including one that needs no permission. Tap to turn on Location, which unblocks the rest, or to enter the address by hand.</string>
     <string name="connection_issue_banner_hotspot_off">This unit\'s hotspot is off, so there was no network to send your phone to. Turn the hotspot on before connecting, or tap to let the app switch it on for you.</string>
     <string name="connection_issue_banner_hotspot_config">This unit will not tell the app its hotspot name and password, so your phone had nothing to join. Tap to enter them by hand.</string>
     <string name="connection_issue_banner_wifi_direct_refused">This unit\'s WiFi would not create the WiFi Direct network your phone was going to join, and the app cannot make it. If this unit is joined to another WiFi network, disconnecting it is worth trying. Tap to use this unit\'s own hotspot instead.</string>
@@ -978,7 +978,7 @@
     <string name="preflight_intro">This device cannot supply everything Android Auto needs, so the phone will not be able to join:</string>
     <string name="preflight_item_hotspot_name">Hotspot name. This device will not let apps read it.</string>
     <string name="preflight_item_hotspot_password">Hotspot password. Without one the phone is offered an open network and refuses it.</string>
-    <string name="preflight_item_bssid">WiFi address (BSSID). No source on this device reports one.</string>
+    <string name="preflight_item_bssid">WiFi address (BSSID). Nothing reported one, not even the address derived from this device\'s own network interface.</string>
     <string name="preflight_item_location">Location is off, so Android hides this device\'s WiFi address from apps and the phone will refuse to join. Turning Location on is the fix; typing an address by hand is only needed if it stays hidden afterwards.</string>
     <string name="preflight_enter_now">Enter now</string>
     <string name="preflight_open_location">Location</string>

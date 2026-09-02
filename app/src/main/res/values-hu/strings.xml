@@ -859,7 +859,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">A vezeték nélküli kapcsolat BSSID-jének kézi megadása. Csak akkor kell, ha az eszközön egyetlen forrás sem ad meg egyet; a napló felsorolja az összes megkérdezett forrást.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -945,7 +945,7 @@
     <string name="wifi_direct_band_24ghz">Csak 2,4 GHz</string>
     <string name="wifi_direct_band_hint">Az Automatikus 5 GHz-et kér, és 2,4 GHz-re vált vissza.</string>
     <string name="connection_issue_banner_bt_silent">A telefon Bluetooth-on csatlakozott, de nem érkezett adat. Érintse meg az USB, Wireless Helper vagy Auto módra váltáshoz.</string>
-    <string name="connection_issue_banner_bssid">Az egység nem tudta beolvasni a WiFi MAC-címét (BSSID). Érintse meg a Helymeghatározás bekapcsolásához vagy a cím kézi megadásához.</string>
+    <string name="connection_issue_banner_bssid">Az egységen egyetlen forrás sem adta meg a saját WiFi MAC-címét (BSSID), így a telefon soha nem tudta meg, melyik hálózathoz csatlakozzon. Mindegyiket megpróbáltuk, azt is, amelyik nem igényel engedélyt. Koppintson a helymeghatározás bekapcsolásához, ami a többit feloldja, vagy a cím kézi megadásához.</string>
     <string name="connection_issue_banner_hotspot_off">Az egység hotspotja ki van kapcsolva, így a telefonnak nem volt mihez csatlakoznia. Kapcsolja be a hotspotot a csatlakozás előtt, vagy érintse meg, hogy az alkalmazás bekapcsolja Ön helyett.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Az egység Wi-Fi-je nem tudta létrehozni a Wi-Fi Direct hálózatot, amelyhez a telefon csatlakozott volna, és az alkalmazás nem tudja ezt kényszeríteni. Ha az egység másik Wi-Fi-hálózathoz csatlakozik, próbálja meg lecsatlakoztatni. Érintse meg az egység saját hotspotjának használatához.</string>
     <string name="connection_issue_banner_hotspot_config">A készülék nem adta meg a hotspot nevét és jelszavát. Érintse meg a kézi megadáshoz.</string>
@@ -955,7 +955,7 @@
     <string name="preflight_intro">Ez a készülék nem tud minden szükséges adatot biztosítani az Android Auto számára:</string>
     <string name="preflight_item_hotspot_name">Hotspot neve: ez az eszköz nem engedi az alkalmazásoknak a kiolvasást.</string>
     <string name="preflight_item_hotspot_password">Hotspot jelszó szükséges.</string>
-    <string name="preflight_item_bssid">WiFi cím (BSSID) nem érhető el.</string>
+    <string name="preflight_item_bssid">WiFi-cím (BSSID). Semmi nem adott meg egyet sem, még az eszköz saját hálózati csatolójából származtatott cím sem.</string>
     <string name="preflight_item_location">A Helymeghatározás ki van kapcsolva, elrejtve a WiFi címet.</string>
     <string name="preflight_enter_now">Megadás most</string>
     <string name="preflight_open_location">Helymeghatározás</string>

@@ -254,7 +254,7 @@
     <string name="wireless_connection_settings">Kabellose Verbindung</string>
     <string name="category_graphic">Grafik</string>
 
-    <string name="static_bssid_desc">Trage das BSSID für das Handshake der kabellosen Verbindung ein, falls die automatisierte Identifizierung aufgrund von fehlenden Systemrechten fehlschlägt.</string>
+    <string name="static_bssid_desc">Die BSSID für den kabellosen Handshake von Hand setzen. Nur nötig, wenn keine Quelle auf diesem Gerät eine nennt; das Protokoll listet jede befragte Quelle auf.</string>
     <string name="custom_insets">Benutzerdefinierte Ränder</string>
     <string name="inset_top">Oben</string>
     <string name="inset_bottom">Unten</string>
@@ -955,7 +955,7 @@
     <string name="wifi_direct_band_24ghz">Nur 2,4 GHz</string>
     <string name="wifi_direct_band_hint">Automatisch fordert 5 GHz an und weicht auf 2,4 GHz aus (auf Android 9 und älter wird zuerst ein 5-GHz-Kanal angefordert). 2,4 GHz reicht bis 720p, darüber wird 5 GHz empfohlen.</string>
     <string name="connection_issue_banner_bt_silent">Dein Telefon hat sich über Bluetooth verbunden, aber nichts von diesem Gerät gesendetes kam an. Dies ist ein Bluetooth-Problem des Headunits. Tippe hier, um auf USB, Wireless Helper oder Auto zu wechseln.</string>
-    <string name="connection_issue_banner_bssid">Dieses Gerät konnte seine eigene WLAN-MAC-Adresse (BSSID) nicht ermitteln. Tippe hier, um den Standort zu aktivieren oder die Adresse manuell einzugeben.</string>
+    <string name="connection_issue_banner_bssid">Keine Quelle auf diesem Gerät hat dessen eigene WLAN-MAC-Adresse (BSSID) genannt, deshalb erfuhr dein Telefon nie, mit welchem Netzwerk es sich verbinden soll. Alle Quellen wurden versucht, auch eine, die keine Berechtigung braucht. Tippe hier, um den Standort einzuschalten, was die übrigen freigibt, oder um die Adresse von Hand einzugeben.</string>
     <string name="connection_issue_banner_hotspot_off">Der Hotspot dieses Geräts ist ausgeschaltet, sodass kein Netzwerk vorhanden war, mit dem sich dein Telefon verbinden konnte. Schalte den Hotspot vor dem Verbinden ein oder tippe hier, damit die App ihn für dich einschaltet.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Das WLAN dieses Geräts konnte das WiFi-Direct-Netzwerk nicht erstellen, mit dem sich dein Telefon verbinden sollte, und die App kann es nicht erzwingen. Wenn dieses Gerät mit einem anderen WLAN verbunden ist, trenne die Verbindung testweise. Tippe hier, um stattdessen den eigenen Hotspot dieses Geräts zu nutzen.</string>
     <string name="connection_issue_banner_hotspot_config">Dieses Gerät kann Hotspot-Name und -Passwort nicht an die App übergeben. Tippe hier, um sie manuell einzugeben.</string>
@@ -965,7 +965,7 @@
     <string name="preflight_intro">Dieses Gerät kann nicht alle erforderlichen Daten bereitstellen, sodass das Telefon nicht beitreten kann:</string>
     <string name="preflight_item_hotspot_name">Hotspot-Name: Dieses Gerät erlaubt Apps das Auslesen nicht.</string>
     <string name="preflight_item_hotspot_password">Hotspot-Passwort: Ohne Passwort wird dem Telefon ein offenes Netzwerk angeboten, das es ablehnt.</string>
-    <string name="preflight_item_bssid">WLAN-Adresse (BSSID): Keine Quelle auf diesem Gerät meldet eine Adresse.</string>
+    <string name="preflight_item_bssid">WLAN-Adresse (BSSID). Nichts hat eine genannt, auch nicht die aus der eigenen Netzwerkschnittstelle dieses Geräts abgeleitete Adresse.</string>
     <string name="preflight_item_location">Standort ist deaktiviert, daher blendet Android die WLAN-Adresse für Apps aus. Standort aktivieren behebt das Problem.</string>
     <string name="preflight_enter_now">Jetzt eingeben</string>
     <string name="preflight_open_location">Standort</string>

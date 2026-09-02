@@ -858,7 +858,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Kablosuz bağlantı için BSSID\'yi elle ayarlayın. Yalnızca bu cihazdaki hiçbir kaynak bildirmediğinde gerekir; günlük, sorulan her kaynağı listeler.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -944,7 +944,7 @@
     <string name="wifi_direct_band_24ghz">Yalnızca 2.4 GHz</string>
     <string name="wifi_direct_band_hint">Otomatik 5 GHz ister ve 2.4 GHz\'e geri döner.</string>
     <string name="connection_issue_banner_bt_silent">Telefonunuz Bluetooth ile bağlandı ancak veri alamadı. USB, Wireless Helper veya Auto moduna geçmek için dokunun.</string>
-    <string name="connection_issue_banner_bssid">Cihaz kendi WiFi MAC adresini (BSSID) okuyamadı. Konumu açmak veya adresi manuel girmek için dokunun.</string>
+    <string name="connection_issue_banner_bssid">Bu cihazdaki hiçbir kaynak kendi WiFi MAC adresini (BSSID) bildirmedi, bu yüzden telefonunuz hangi ağa katılacağını hiç öğrenemedi. Hepsi denendi, izin gerektirmeyen biri de dahil. Diğerlerinin önünü açan konumu açmak ya da adresi elle girmek için dokunun.</string>
     <string name="connection_issue_banner_hotspot_off">Bu cihazın erişim noktası kapalı olduğundan telefonun bağlanacağı bir ağ yoktu. Bağlanmadan önce erişim noktasını açın veya uygulamanın sizin için açması için dokunun.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Bu cihazın Wi-Fi\'ı, telefonunuzun katılacağı Wi-Fi Direct ağını oluşturamadı ve uygulama bunu zorlayamaz. Cihaz başka bir Wi-Fi ağına bağlıysa bağlantısını kesmeyi deneyin. Bunun yerine bu cihazın kendi erişim noktasını kullanmak için dokunun.</string>
     <string name="connection_issue_banner_hotspot_config">Erişim noktası adı ve şifresi alınamadı. Manuel girmek için dokunun.</string>
@@ -954,7 +954,7 @@
     <string name="preflight_intro">Bu cihaz Android Auto için gereken tüm bilgileri sağlayamıyor:</string>
     <string name="preflight_item_hotspot_name">Erişim noktası adı uygulamalar tarafından okunamıyor.</string>
     <string name="preflight_item_hotspot_password">Erişim noktası şifresi gerekiyor.</string>
-    <string name="preflight_item_bssid">WiFi adresi (BSSID) bulunamadı.</string>
+    <string name="preflight_item_bssid">WiFi adresi (BSSID). Hiçbir kaynak bildirmedi; cihazın kendi ağ arayüzünden türetilen adres bile.</string>
     <string name="preflight_item_location">Konum kapalı olduğu için WiFi adresi gizleniyor.</string>
     <string name="preflight_enter_now">Şimdi girin</string>
     <string name="preflight_open_location">Konum</string>

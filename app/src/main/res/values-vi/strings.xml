@@ -866,7 +866,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Đặt BSSID cho kết nối không dây thủ công. Chỉ cần khi không nguồn nào trên thiết bị này cho biết; nhật ký nêu tên từng nguồn đã hỏi.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -952,7 +952,7 @@
     <string name="wifi_direct_band_24ghz">Chỉ 2.4 GHz</string>
     <string name="wifi_direct_band_hint">Tự động yêu cầu 5 GHz và chuyển về 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Điện thoại đã kết nối qua Bluetooth nhưng không nhận được dữ liệu. Nhấn để chuyển sang USB, Wireless Helper hoặc Auto.</string>
-    <string name="connection_issue_banner_bssid">Không thể đọc địa chỉ MAC WiFi (BSSID). Nhấn để bật Vị trí hoặc nhập địa chỉ thủ công.</string>
+    <string name="connection_issue_banner_bssid">Không nguồn nào trên thiết bị này cho biết địa chỉ MAC WiFi (BSSID) của chính nó, nên điện thoại không bao giờ biết cần tham gia mạng nào. Tất cả đều đã được thử, kể cả một nguồn không cần quyền nào. Chạm để bật Vị trí, thứ mở khóa các nguồn còn lại, hoặc để nhập địa chỉ thủ công.</string>
     <string name="connection_issue_banner_hotspot_off">Điểm phát sóng của thiết bị này đang tắt nên không có mạng để điện thoại kết nối. Hãy bật điểm phát sóng trước khi kết nối hoặc nhấn để ứng dụng tự bật giúp bạn.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi của thiết bị này không thể tạo mạng Wi-Fi Direct để điện thoại kết nối và ứng dụng không thể ép buộc. Nếu thiết bị đang kết nối với mạng Wi-Fi khác, hãy thử ngắt kết nối. Nhấn để sử dụng điểm phát sóng của thiết bị này.</string>
     <string name="connection_issue_banner_hotspot_config">Không thể lấy tên và mật khẩu điểm phát sóng. Nhấn để nhập thủ công.</string>
@@ -962,7 +962,7 @@
     <string name="preflight_intro">Thiết bị này không thể cung cấp tất cả thông tin cần thiết cho Android Auto:</string>
     <string name="preflight_item_hotspot_name">Tên điểm phát sóng: thiết bị không cho phép ứng dụng đọc.</string>
     <string name="preflight_item_hotspot_password">Cần có mật khẩu điểm phát sóng.</string>
-    <string name="preflight_item_bssid">Địa chỉ WiFi (BSSID) không khả dụng.</string>
+    <string name="preflight_item_bssid">Địa chỉ WiFi (BSSID). Không có gì cho biết, kể cả địa chỉ suy ra từ chính giao diện mạng của thiết bị này.</string>
     <string name="preflight_item_location">Vị trí đang tắt nên địa chỉ WiFi bị ẩn.</string>
     <string name="preflight_enter_now">Nhập ngay</string>
     <string name="preflight_open_location">Vị trí</string>

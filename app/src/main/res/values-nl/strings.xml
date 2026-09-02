@@ -863,7 +863,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Stel de BSSID voor de draadloze handshake handmatig in. Alleen nodig als geen enkele bron op dit apparaat er een noemt; het logboek noemt elke bevraagde bron.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -949,7 +949,7 @@
     <string name="wifi_direct_band_24ghz">Alleen 2,4 GHz</string>
     <string name="wifi_direct_band_hint">Automatisch vraagt 5 GHz aan en valt terug op 2,4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Je telefoon is via Bluetooth verbonden, maar ontving geen gegevens. Tik om over te schakelen naar USB, Wireless Helper of Auto.</string>
-    <string name="connection_issue_banner_bssid">Dit apparaat kon zijn eigen WiFi MAC-adres (BSSID) niet lezen. Tik om Locatie in te schakelen of het adres handmatig in te voeren.</string>
+    <string name="connection_issue_banner_bssid">Geen enkele bron op dit apparaat noemde het eigen WiFi-MAC-adres (BSSID), dus je telefoon hoorde nooit met welk netwerk hij moest verbinden. Alle bronnen zijn geprobeerd, ook een die geen toestemming nodig heeft. Tik om locatie aan te zetten, wat de rest vrijgeeft, of om het adres met de hand in te voeren.</string>
     <string name="connection_issue_banner_hotspot_off">De hotspot van dit apparaat staat uit, dus er was geen netwerk om je telefoon mee te verbinden. Schakel de hotspot in voordat je verbinding maakt, of tik om de app deze voor je te laten inschakelen.</string>
     <string name="connection_issue_banner_wifi_direct_refused">De wifi van dit apparaat kon het Wi-Fi Direct-netwerk niet aanmaken waarmee je telefoon verbinding wilde maken, en de app kan dit niet forceren. Als dit apparaat verbonden is met een ander wifi-netwerk, verbreek dan die verbinding om te testen. Tik om in plaats daarvan de hotspot van dit apparaat te gebruiken.</string>
     <string name="connection_issue_banner_hotspot_config">Hotspot-naam en wachtwoord konden niet worden gelezen. Tik om handmatig in te voeren.</string>
@@ -959,7 +959,7 @@
     <string name="preflight_intro">Dit apparaat kan niet alle gegevens leveren die Android Auto nodig heeft:</string>
     <string name="preflight_item_hotspot_name">Hotspot-naam: dit apparaat staat apps niet toe deze te lezen.</string>
     <string name="preflight_item_hotspot_password">Hotspot-wachtwoord vereist.</string>
-    <string name="preflight_item_bssid">WiFi-adres (BSSID) niet beschikbaar.</string>
+    <string name="preflight_item_bssid">WiFi-adres (BSSID). Niets noemde er een, ook niet het adres dat uit de eigen netwerkinterface van dit apparaat is afgeleid.</string>
     <string name="preflight_item_location">Locatie staat uit waardoor het WiFi-adres verborgen blijft.</string>
     <string name="preflight_enter_now">Nu invoeren</string>
     <string name="preflight_open_location">Locatie</string>

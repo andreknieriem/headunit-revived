@@ -866,7 +866,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Imposta a mano il BSSID per l\'handshake wireless. Serve solo se nessuna fonte su questo dispositivo ne indica uno; il log elenca ogni fonte interrogata.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -952,7 +952,7 @@
     <string name="wifi_direct_band_24ghz">Solo 2.4 GHz</string>
     <string name="wifi_direct_band_hint">Automatico richiede 5 GHz e ripiega su 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Il telefono si è connesso tramite Bluetooth, ma non ha ricevuto dati. Tocca per passare a USB, Wireless Helper o Auto.</string>
-    <string name="connection_issue_banner_bssid">Questa unità non è riuscita a leggere il proprio MAC WiFi (BSSID). Tocca per attivare la posizione o inserire l\'indirizzo a mano.</string>
+    <string name="connection_issue_banner_bssid">Nessuna fonte su questa unità ha indicato il suo indirizzo MAC WiFi (BSSID), quindi il telefono non ha mai saputo a quale rete collegarsi. Sono state provate tutte, compresa una che non richiede alcun permesso. Tocca per attivare la posizione, che sblocca le altre, o per inserire l\'indirizzo a mano.</string>
     <string name="connection_issue_banner_hotspot_off">L\'hotspot di questa unità è disattivato, quindi non c\'era alcuna rete a cui connettere il telefono. Attiva l\'hotspot prima di connetterti o tocca per consentire all\'app di attivarlo automaticamente.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Il Wi-Fi di questa unità non è riuscito a creare la rete Wi-Fi Direct a cui il telefono doveva connettersi e l\'app non può forzarlo. Se l\'unità è connessa a un\'altra rete Wi-Fi, prova a disconnetterla. Tocca per utilizzare invece l\'hotspot di questa unità.</string>
     <string name="connection_issue_banner_hotspot_config">Questa unità non ha fornito nome e password dell\'hotspot. Tocca per inserirli a mano.</string>
@@ -962,7 +962,7 @@
     <string name="preflight_intro">Questo dispositivo non può fornire tutti i dati necessari per Android Auto:</string>
     <string name="preflight_item_hotspot_name">Nome hotspot: questo dispositivo non ne consente la lettura alle app.</string>
     <string name="preflight_item_hotspot_password">Password hotspot richiesta.</string>
-    <string name="preflight_item_bssid">Indirizzo WiFi (BSSID) non disponibile.</string>
+    <string name="preflight_item_bssid">Indirizzo WiFi (BSSID). Nessuna fonte ne ha indicato uno, nemmeno quello ricavato dall\'interfaccia di rete di questo dispositivo.</string>
     <string name="preflight_item_location">La posizione è disattivata, nascondendo l\'indirizzo WiFi.</string>
     <string name="preflight_enter_now">Inserisci ora</string>
     <string name="preflight_open_location">Posizione</string>

@@ -718,7 +718,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                                     bssid = reflectedMac!!
                                     bssidSource = "field reflection"
                                 } else {
-                                    AppLog.w("WifiDirectManager: All fallbacks failed! BSSID is still zeroed.")
+                                    AppLog.w("WifiDirectManager: every source has been tried and none named an address, including the IPv6 link-local derivation, which needs no permission. The per-source dump above says what each one answered.")
                                 }
                             }
                         }

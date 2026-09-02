@@ -4,9 +4,11 @@ package com.andrerinas.openheadunit.connection.wifi.modes.nativeaa
  * Picks the BSSID to advertise for our own access point, best source first.
  *
  * A chain rather than one source because `NetworkInterface.getHardwareAddress()` returns null or a
- * placeholder on plenty of devices since Android 6.0, while `/sys/class/net/<iface>/address` still
- * works on most head units. Pure and tested: case, placeholder detection and empty-vs-null are
- * easy to get subtly wrong and impossible to check by reading a log.
+ * placeholder on plenty of devices since Android 6.0. What answers instead varies by unit:
+ * `/sys/class/net/<iface>/address` on most head units, and on a device that blocks even that, the
+ * address the kernel built the interface's own IPv6 link-local from. Pure and tested: case,
+ * placeholder detection and empty-vs-null are easy to get subtly wrong and impossible to check by
+ * reading a log.
  */
 object SoftApBssidPolicy {
 
@@ -58,7 +60,7 @@ object SoftApBssidPolicy {
      * the user typed.
      *
      * [choose] takes [staticOverride] ahead of every automatic source, and `WifiDirectManager`
-     * skips its whole six-deep fallback chain when the override is usable, so a run behind one
+     * skips every one of its rungs when the override is usable, so a run behind one
      * never asks the hardware the question `ConnectionIssue.BSSID_UNAVAILABLE` is about. The record
      * therefore survives an override, and `ConnectionIssueBannerPolicy.remedyApplied` is what keeps
      * it off the screen meanwhile.

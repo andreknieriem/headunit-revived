@@ -404,7 +404,7 @@ class SoftApCredentialsProvider(
         )
         if (bssid.isEmpty()) {
             // Not fatal on this route — see NativeCredentialsPolicy. The handshake decides.
-            AppLog.w("SoftApCredentials: Could not resolve a real BSSID for ${iface.name}; the credentials will go out without one.")
+            AppLog.w("SoftApCredentials: no source named an address for ${iface.name} - not sysfs, not the interface itself, and not its IPv6 link-local; the credentials will go out without one.")
         }
 
         AppLog.i("SoftApCredentials: SUCCESS - Providing credentials from ${iface.name}: SSID=$ssid, IP=$ip, BSSID=${bssid.ifEmpty { "<none>" }}")

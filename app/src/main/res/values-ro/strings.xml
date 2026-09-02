@@ -860,7 +860,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Setați manual BSSID-ul pentru conexiunea wireless. Necesar doar când nicio sursă de pe acest dispozitiv nu indică una; jurnalul numește fiecare sursă interogată.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -946,7 +946,7 @@
     <string name="wifi_direct_band_24ghz">Doar 2.4 GHz</string>
     <string name="wifi_direct_band_hint">Automat solicită 5 GHz și recurge la 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Telefonul s-a conectat prin Bluetooth, dar nu a primit date. Atingeți pentru a comuta pe USB, Wireless Helper sau Auto.</string>
-    <string name="connection_issue_banner_bssid">Unitatea nu a putut citi adresa MAC WiFi (BSSID). Atingeți pentru a porni Locația sau a introduce adresa manual.</string>
+    <string name="connection_issue_banner_bssid">Nicio sursă de pe această unitate nu a indicat propria adresă MAC WiFi (BSSID), așa că telefonul nu a aflat niciodată la ce rețea să se conecteze. Au fost încercate toate, inclusiv una care nu are nevoie de nicio permisiune. Atingeți pentru a activa Locația, ceea ce deblochează restul, sau pentru a introduce adresa manual.</string>
     <string name="connection_issue_banner_hotspot_off">Hotspotul acestei unități este oprit, astfel că telefonul nu a avut la ce rețea să se conecteze. Porniți hotspotul înainte de conectare sau atingeți pentru ca aplicația să îl pornească pentru dvs.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi-ul acestei unități nu a putut crea rețeaua Wi-Fi Direct la care urma să se conecteze telefonul, iar aplicația nu poate forța acest lucru. Dacă unitatea este conectată la altă rețea Wi-Fi, încercați să o deconectați. Atingeți pentru a utiliza hotspotul acestei unități.</string>
     <string name="connection_issue_banner_hotspot_config">Unitatea nu a furnizat numele și parola hotspotului. Atingeți pentru a le introduce manual.</string>
@@ -956,7 +956,7 @@
     <string name="preflight_intro">Acest dispozitiv nu poate furniza toate datele necesare pentru Android Auto:</string>
     <string name="preflight_item_hotspot_name">Numele hotspotului nu poate fi citit de aplicații.</string>
     <string name="preflight_item_hotspot_password">Este necesară parola hotspotului.</string>
-    <string name="preflight_item_bssid">Adresa WiFi (BSSID) nu este disponibilă.</string>
+    <string name="preflight_item_bssid">Adresă WiFi (BSSID). Nimic nu a indicat una, nici măcar cea dedusă din propria interfață de rețea a acestui dispozitiv.</string>
     <string name="preflight_item_location">Locația este oprită, ascunzând adresa WiFi.</string>
     <string name="preflight_enter_now">Introdu acum</string>
     <string name="preflight_open_location">Locație</string>

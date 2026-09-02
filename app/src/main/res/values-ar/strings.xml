@@ -861,7 +861,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">اضبط BSSID للاتصال اللاسلكي يدويًا. لا يلزم إلا عندما لا يذكره أي مصدر في هذا الجهاز؛ يسرد السجل كل مصدر تم سؤاله.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -947,7 +947,7 @@
     <string name="wifi_direct_band_24ghz">2.4 غيغاهرتز فقط</string>
     <string name="wifi_direct_band_hint">يطلب التلقائي 5 غيغاهرتز ويرجع إلى 2.4 غيغاهرتز.</string>
     <string name="connection_issue_banner_bt_silent">اتصل هاتفك عبر البلوتوث، لكن لم تصله أي بيانات من هذه الوحدة. انقر للتبديل إلى USB أو Wireless Helper أو Auto.</string>
-    <string name="connection_issue_banner_bssid">تعذر قراءة عنوان MAC لشبكة WiFi (BSSID). انقر لتشغيل الموقع أو إدخال العنوان يدويًا.</string>
+    <string name="connection_issue_banner_bssid">لم يذكر أي مصدر في هذا الجهاز عنوان MAC الخاص بشبكة WiFi‏ (BSSID)، لذا لم يعرف هاتفك أبدًا بأي شبكة يتصل. جُرّبت كل المصادر، بما فيها مصدر لا يحتاج أي إذن. اضغط لتشغيل الموقع، وهو ما يفتح بقية المصادر، أو لإدخال العنوان يدويًا.</string>
     <string name="connection_issue_banner_hotspot_off">نقطة اتصال هذا الجهاز متوقفة، لذا لم تكن هناك شبكة ليتصل بها هاتفك. قم بتشغيل نقطة الاتصال قبل الاتصال، أو انقر للسماح للتطبيق بتشغيلها نيابة عنك.</string>
     <string name="connection_issue_banner_wifi_direct_refused">تعذر على شبكة WiFi في هذا الجهاز إنشاء شبكة WiFi Direct التي كان هاتفك سينضم إليها، ولا يمكن للتطبيق فرض ذلك. إذا كان هذا الجهاز متصلاً بشبكة WiFi أخرى، فيُرجى محاولة فصلها. انقر لاستخدام نقطة اتصال هذا الجهاز بدلاً من ذلك.</string>
     <string name="connection_issue_banner_hotspot_config">تعذر الحصول على اسم نقطة الاتصال وكلمة المرور. انقر لإدخالهما يدويًا.</string>
@@ -957,7 +957,7 @@
     <string name="preflight_intro">لا يمكن لهذا الجهاز توفير جميع متطلبات Android Auto:</string>
     <string name="preflight_item_hotspot_name">اسم نقطة الاتصال: لا يسمح هذا الجهاز للتطبيقات بقراءته.</string>
     <string name="preflight_item_hotspot_password">كلمة مرور نقطة الاتصال مطلوبة.</string>
-    <string name="preflight_item_bssid">عنوان WiFi (BSSID) غير متوفر.</string>
+    <string name="preflight_item_bssid">عنوان WiFi‏ (BSSID). لم يذكره أي مصدر، ولا حتى العنوان المشتق من واجهة الشبكة الخاصة بهذا الجهاز.</string>
     <string name="preflight_item_location">خدمة الموقع معطلة مما يخفي عنوان WiFi.</string>
     <string name="preflight_enter_now">إدخال الآن</string>
     <string name="preflight_open_location">الموقع</string>

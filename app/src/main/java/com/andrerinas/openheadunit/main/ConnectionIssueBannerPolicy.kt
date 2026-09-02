@@ -61,8 +61,8 @@ object ConnectionIssueBannerPolicy {
      * that has already been done.
      *
      * These records are cleared only by something that *disproves* them, which the user typing a
-     * value never does: the device that would not name its own access point still will not, and the
-     * unit that could not read its own address still cannot. So a user who typed the hotspot name
+     * value never does: the device that would not name its own access point still will not, and a
+     * unit whose every source came back empty is not made to read one by a value typed into a box. So a user who typed the hotspot name
      * the banner asked for, and whose access point then happens to be off at the next launch, would
      * be told again to enter it by hand. The record stays; the instruction stops.
      *

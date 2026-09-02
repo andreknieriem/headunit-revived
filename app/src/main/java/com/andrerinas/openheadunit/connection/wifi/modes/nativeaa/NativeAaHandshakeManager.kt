@@ -1405,12 +1405,12 @@ class NativeAaHandshakeManager(
                 when (NativeCredentialsPolicy.onUnusableBssid(transport)) {
                     UnusableBssidAction.ABORT -> {
                         AppLog.e("NativeAA: BSSID is still masked/empty ($credBssid) at Type 3 time — phone WILL reject these credentials. Aborting handshake. PLEASE CHECK IF LOCATION (GPS) IS ENABLED ON THIS DEVICE!")
-                        // Location is the usual cause and the one worth naming first, but it is not
-                        // the only one: where this head unit is an ordinary phone rather than
-                        // purpose-built hardware, every source in the chain is blocked by permission
-                        // and no setting will unblock them. Say so, or the log sends the reader back
-                        // to a location toggle that is already on.
-                        AppLog.e("NativeAA: If location is already on, this device cannot read its own WiFi Direct MAC at all. Read it from the system (P2P device address) and set it as the static BSSID under Wireless connection in Settings.")
+                        // Location is the usual cause and the one worth naming first. What follows
+                        // it has to be exact: every rung was tried, including the one that needs no
+                        // permission at all, and the dump above says what each answered. Telling
+                        // the reader the address cannot be read here would send them to type one
+                        // in when the log has already shown which source refused.
+                        AppLog.e("NativeAA: If location is already on, no source on this unit answered - not the interface's own address, not sysfs, and not the address derived from its IPv6 link-local. The dump above says what each one returned. A group that has not come up yet is the common reason; where it has, read the P2P device address from the system and set it as the static BSSID under Wireless connection in Settings.")
                         // The loudest failure on this route: two error lines in a log, and a phone
                         // that simply never arrives. Recorded so the main screen can say so later,
                         // because nobody is reading a log from the driver's seat.
@@ -1428,7 +1428,7 @@ class NativeAaHandshakeManager(
                         // ships without a real BSSID, see NativeCredentialsPolicy. The point is that
                         // a refusal is a message we can explain; this line is the first to look at
                         // when one arrives.
-                        AppLog.w("NativeAA: No usable BSSID for this access point — sending the credentials without one, which most phones refuse. Set a BSSID by hand under Wireless connection in Settings if the phone does not join.")
+                        AppLog.w("NativeAA: No usable BSSID for this access point — every source was tried, including the address derived from the interface's IPv6 link-local. Sending the credentials without one, which most phones refuse. Set a BSSID by hand under Wireless connection in Settings if the phone does not join.")
                         credBssid = ""
                         bssidOmitted = true
                     }

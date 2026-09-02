@@ -862,7 +862,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">手動設定無線連線的 BSSID。只有在本機沒有任何來源回報時才需要；記錄檔會列出詢問過的每個來源。</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -948,7 +948,7 @@
     <string name="wifi_direct_band_24ghz">僅 2.4 GHz</string>
     <string name="wifi_direct_band_hint">自動會優先要求 5 GHz，必要時降至 2.4 GHz。</string>
     <string name="connection_issue_banner_bt_silent">手機已透過藍牙連線，但未收到任何資料。請輕觸以切換至 USB、Wireless Helper 或 Auto 模式。</string>
-    <string name="connection_issue_banner_bssid">無法讀取 WiFi MAC 位址（BSSID）。輕觸以開啟定位或手動輸入位址。</string>
+    <string name="connection_issue_banner_bssid">此主機沒有任何來源回報自己的 WiFi MAC 位址（BSSID），因此手機始終不知道該加入哪個網路。所有來源都已嘗試，包括一個不需要權限的來源。輕觸以開啟定位（可解除其餘來源的封鎖），或手動輸入位址。</string>
     <string name="connection_issue_banner_hotspot_off">此主機的熱點已關閉，因此沒有可供手機加入的網路。連線前請先開啟熱點，或輕觸讓應用程式為您開啟。</string>
     <string name="connection_issue_banner_wifi_direct_refused">此主機的 WiFi 無法建立手機要加入的 WiFi Direct 網路，且應用程式無法強制建立。若此主機已連線至其他 WiFi 網路，建議嘗試中斷連線。輕觸以改用此主機本身的熱點。</string>
     <string name="connection_issue_banner_hotspot_config">無法取得熱點名稱與密碼。輕觸以手動輸入。</string>
@@ -958,7 +958,7 @@
     <string name="preflight_intro">此裝置無法提供 Android Auto 所需的所有資訊：</string>
     <string name="preflight_item_hotspot_name">熱點名稱：此裝置不允許應用程式讀取。</string>
     <string name="preflight_item_hotspot_password">需要熱點密碼。</string>
-    <string name="preflight_item_bssid">無法取得 WiFi 位址（BSSID）。</string>
+    <string name="preflight_item_bssid">WiFi 位址（BSSID）。沒有任何來源回報，連從本機網路介面推導出的位址也沒有。</string>
     <string name="preflight_item_location">定位服務已關閉，導致 WiFi 位址被隱藏。</string>
     <string name="preflight_enter_now">立即輸入</string>
     <string name="preflight_open_location">定位服務</string>

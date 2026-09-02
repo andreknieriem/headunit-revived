@@ -791,7 +791,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">დააყენეთ BSSID უსადენო კავშირისთვის ხელით. საჭიროა მხოლოდ მაშინ, როცა ამ მოწყობილობის არცერთი წყარო არ ასახელებს მას; ჟურნალი ჩამოთვლის ყველა გამოკითხულ წყაროს.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -930,7 +930,7 @@
     <string name="wifi_direct_band_24ghz">მხოლოდ 2.4 GHz</string>
     <string name="wifi_direct_band_hint">ავტომატური ითხოვს 5 GHz-ს და გადადის 2.4 GHz-ზე.</string>
     <string name="connection_issue_banner_bt_silent">ტელეფონი დაუკავშირდა Bluetooth-ით, მაგრამ მონაცემები ვერ მიიღო. დააჭირეთ USB, Wireless Helper ან Auto რეჟიმზე გადასართავად.</string>
-    <string name="connection_issue_banner_bssid">მოწყობილობამ ვერ წაიკითხა WiFi MAC (BSSID). ჩართეთ მდებარეობა ან შეიყვანეთ ხელით.</string>
+    <string name="connection_issue_banner_bssid">ამ მოწყობილობის არცერთმა წყარომ არ დაასახელა მისივე WiFi MAC მისამართი (BSSID), ამიტომ ტელეფონმა ვერასდროს გაიგო, რომელ ქსელს უნდა დაუკავშირდეს. ყველა წყარო შემოწმდა, მათ შორის ის, რომელსაც ნებართვა არ სჭირდება. შეეხეთ, რომ ჩართოთ მდებარეობა, რაც დანარჩენებს გახსნის, ან რომ მისამართი ხელით შეიყვანოთ.</string>
     <string name="connection_issue_banner_hotspot_off">ამ მოწყობილობის Hotspot გამორთულია, ამიტომ ქსელი არ იყო ხელმისაწვდომი ტელეფონის დასაკავშირებლად. ჩართეთ Hotspot დაკავშირებამდე ან შეეხეთ, რათა აპმა ჩართოს თქვენ ნაცვლად.</string>
     <string name="connection_issue_banner_wifi_direct_refused">ამ მოწყობილობის WiFi-მ ვერ შექმნა WiFi Direct ქსელი, რომელსაც თქვენი ტელეფონი უნდა შეერთებოდა, და აპლიკაციას არ შეუძლია ამის იძულება. თუ მოწყობილობა სხვა WiFi-ს უკავშირდება, სცადეთ მისი გათიშვა. შეეხეთ, რათა გამოიყენოთ ამ მოწყობილობის საკუთარი Hotspot.</string>
     <string name="connection_issue_banner_hotspot_config">Hotspot-ის სახელი და პაროლი ვერ მოიძებნა. შეიყვანეთ ხელით.</string>
@@ -940,7 +940,7 @@
     <string name="preflight_intro">ამ მოწყობილობას არ შეუძლია Android Auto-სთვის საჭირო ყველა მონაცემის მიწოდება:</string>
     <string name="preflight_item_hotspot_name">Hotspot-ის სახელი მიუწვდომელია.</string>
     <string name="preflight_item_hotspot_password">საჭიროა Hotspot-ის პაროლი.</string>
-    <string name="preflight_item_bssid">WiFi მისამართი (BSSID) მიუწვდომელია.</string>
+    <string name="preflight_item_bssid">WiFi მისამართი (BSSID). ვერცერთმა წყარომ დაასახელა, მათ შორის ამ მოწყობილობის საკუთარი ქსელური ინტერფეისიდან მიღებულმაც.</string>
     <string name="preflight_item_location">მდებარეობა გამორთულია.</string>
     <string name="preflight_enter_now">შეიყვანეთ ახლა</string>
     <string name="preflight_open_location">მდებარეობა</string>

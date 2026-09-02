@@ -867,7 +867,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">ワイヤレス接続のBSSIDを手動で設定します。この端末のどのソースも返さない場合にのみ必要です。ログには問い合わせたすべてのソースが記録されます。</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -953,7 +953,7 @@
     <string name="wifi_direct_band_24ghz">2.4GHzのみ</string>
     <string name="wifi_direct_band_hint">自動は5GHzを要求し、2.4GHzにフォールバックします。</string>
     <string name="connection_issue_banner_bt_silent">Bluetoothで接続されましたがデータを受信できませんでした。タップしてUSB、Wireless Helper、またはAutoに切り替えてください。</string>
-    <string name="connection_issue_banner_bssid">WiFi MACアドレス（BSSID）を読み取れませんでした。タップして位置情報をオンにするか手動で入力してください。</string>
+    <string name="connection_issue_banner_bssid">このユニットのどのソースも自身のWiFi MACアドレス（BSSID）を返さなかったため、スマートフォンはどのネットワークに接続すべきか分かりませんでした。権限が不要なものも含め、すべてのソースを試しています。タップすると、他のソースの取得を可能にする位置情報をオンにするか、アドレスを手動で入力できます。</string>
     <string name="connection_issue_banner_hotspot_off">このユニットのホットスポットがオフになっているため、スマートフォンが接続するネットワークがありませんでした。接続する前にホットスポットをオンにするか、タップしてアプリにオンにさせてください。</string>
     <string name="connection_issue_banner_wifi_direct_refused">このユニットのWiFiはスマートフォンが接続しようとしたWiFi Directネットワークを作成できず、アプリ側で強制することもできません。このユニットが別のWiFiネットワークに接続されている場合は、切断してみてください。タップしてこのユニット独自のホットスポットを代わりに使用します。</string>
     <string name="connection_issue_banner_hotspot_config">ホットスポット名とパスワードを取得できませんでした。タップして手動で入力してください。</string>
@@ -963,7 +963,7 @@
     <string name="preflight_intro">このデバイスはAndroid Autoに必要な一部の情報を提供できません：</string>
     <string name="preflight_item_hotspot_name">ホットスポット名：このデバイスはアプリによる読み取りを許可していません。</string>
     <string name="preflight_item_hotspot_password">ホットスポットのパスワードが必要です。</string>
-    <string name="preflight_item_bssid">WiFiアドレス（BSSID）がありません。</string>
+    <string name="preflight_item_bssid">WiFiアドレス（BSSID）。この端末自身のネットワークインターフェースから導き出したアドレスも含め、どのソースも返しませんでした。</string>
     <string name="preflight_item_location">位置情報がオフになっているため、WiFiアドレスが非表示になっています。</string>
     <string name="preflight_enter_now">今すぐ入力</string>
     <string name="preflight_open_location">位置情報</string>

@@ -863,7 +863,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Nastavte BSSID pro bezdrátové spojení ručně. Potřeba jen tam, kde ji žádný zdroj v tomto zařízení neuvádí; protokol vypíše každý dotázaný zdroj.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -949,7 +949,7 @@
     <string name="wifi_direct_band_24ghz">Pouze 2,4 GHz</string>
     <string name="wifi_direct_band_hint">Automaticky požaduje 5 GHz a přechází na 2,4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Telefon se připojil přes Bluetooth, ale nepřijal žádná data. Klepnutím přepněte na USB, Wireless Helper nebo Auto.</string>
-    <string name="connection_issue_banner_bssid">Jednotka nemohla přečíst svou MAC adresu WiFi (BSSID). Klepnutím zapněte Polohu nebo zadejte adresu ručně.</string>
+    <string name="connection_issue_banner_bssid">Žádný zdroj v této jednotce neuvedl její vlastní WiFi MAC adresu (BSSID), takže se telefon nikdy nedozvěděl, k jaké síti se má připojit. Vyzkoušeny byly všechny, včetně jednoho, který nepotřebuje žádné oprávnění. Klepnutím zapněte polohu, což odemkne ostatní, nebo zadejte adresu ručně.</string>
     <string name="connection_issue_banner_hotspot_off">Hotspot této jednotky je vypnutý, takže telefon neměl síť, ke které by se připojil. Před připojením hotspot zapněte nebo klepněte, aby jej aplikace zapnula za vás.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi této jednotky nemohla vytvořit síť Wi-Fi Direct, ke které se měl telefon připojit, a aplikace to nemůže vynutit. Pokud je jednotka připojena k jiné síti Wi-Fi, zkuste ji odpojit. Klepnutím použijte vlastní hotspot této jednotky.</string>
     <string name="connection_issue_banner_hotspot_config">Jednotka neposkytla název a heslo hotspotu. Klepnutím je zadejte ručně.</string>
@@ -959,7 +959,7 @@
     <string name="preflight_intro">Toto zařízení nemůže poskytnout vše potřebné pro Android Auto:</string>
     <string name="preflight_item_hotspot_name">Název hotspotu: Toto zařízení neumožňuje aplikacím jej číst.</string>
     <string name="preflight_item_hotspot_password">Heslo hotspotu: Bez hesla telefon otevřenou síť odmítne.</string>
-    <string name="preflight_item_bssid">Adresa WiFi (BSSID): Není k dispozici žádný zdroj.</string>
+    <string name="preflight_item_bssid">WiFi adresa (BSSID). Neuvedl ji nikdo, ani odvození z vlastního síťového rozhraní tohoto zařízení.</string>
     <string name="preflight_item_location">Poloha je vypnutá, takže Android skrývá adresu WiFi.</string>
     <string name="preflight_enter_now">Zadat nyní</string>
     <string name="preflight_open_location">Poloha</string>

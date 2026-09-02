@@ -88,7 +88,9 @@ object NativeCredentialsPreflight {
     private data class BssidProbe(val address: String?, val conclusive: Boolean)
 
     /**
-     * The access point's own MAC, read exactly the way `SoftApCredentialsProvider` will read it.
+     * The access point's own MAC, read exactly the way `SoftApCredentialsProvider` will read it:
+     * the same three sources in the same order, ending with the address derived from the
+     * interface's own EUI-64 IPv6 link-local address.
      *
      * Only answerable while an access point is up: the address lives on an interface that does not
      * exist until then. With the hotspot off this is inconclusive, which is the honest answer and
@@ -116,19 +118,24 @@ object NativeCredentialsPreflight {
         return BssidProbe(
             address = SoftApBssidPolicy.choose(
                 staticOverride = null,
-                shellMac = InterfaceMacReader.read(iface.name),
-                hardwareAddress = hardwareAddressOf(iface.name)
+                detected = listOf(
+                    InterfaceMacReader.read(iface.name),
+                    hardwareAddressOf(iface.name),
+                    // Last, in the provider's own order. Left out, this reported no address on
+                    // every unit where the derivation is the rung that answers, and told the user
+                    // to type one the route would have read for itself.
+                    InterfaceMacReader.fromIpv6LinkLocal(iface.name)
+                )
             ).ifEmpty { null },
             conclusive = true
         )
     }
 
     /**
-     * The P2P device address, from the sources in `WifiDirectManager`'s fallback chain that do not
-     * need a group.
+     * The P2P device address, from the rungs of `WifiDirectManager`'s chain that do not need a
+     * group: `Settings.Secure`, the sysfs sweep and its IPv6 derivation, and `requestDeviceInfo`.
      *
-     * Three of its six do: `Settings.Secure`, the sysfs sweep, and `requestDeviceInfo`. The three
-     * left out all read a live `WifiP2pGroup`. So a hit here is real, and a miss is only ever
+     * Every other rung reads a live `WifiP2pGroup`. So a hit here is real, and a miss is only ever
      * reported as inconclusive - a group might still produce one, and a MAC typed to answer a
      * question this could not ask would then outrank every automatic source for good.
      */

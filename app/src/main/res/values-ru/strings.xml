@@ -862,7 +862,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Задайте BSSID для беспроводного подключения вручную. Нужно только там, где ни один источник на устройстве его не называет; в журнале перечислен каждый опрошенный источник.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -948,7 +948,7 @@
     <string name="wifi_direct_band_24ghz">Только 2.4 ГГц</string>
     <string name="wifi_direct_band_hint">Авто запрашивает 5 ГГц и переключается на 2.4 ГГц.</string>
     <string name="connection_issue_banner_bt_silent">Телефон подключился по Bluetooth, но не получил данных. Нажмите для переключения на USB, Wireless Helper или Auto.</string>
-    <string name="connection_issue_banner_bssid">Устройство не смогло прочитать свой WiFi MAC-адрес (BSSID). Нажмите для включения Геолокации или ввода вручную.</string>
+    <string name="connection_issue_banner_bssid">Ни один источник на этом устройстве не назвал его собственный MAC-адрес WiFi (BSSID), поэтому телефон так и не узнал, к какой сети подключаться. Проверены все, включая тот, которому не нужны разрешения. Нажмите, чтобы включить геолокацию, которая разблокирует остальные, или чтобы ввести адрес вручную.</string>
     <string name="connection_issue_banner_hotspot_off">Точка доступа этого устройства выключена, поэтому телефону не к чему подключиться. Включите точку доступа перед подключением или нажмите, чтобы приложение включило ее за вас.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi этого устройства не смог создать сеть Wi-Fi Direct для подключения телефона, и приложение не может сделать это принудительно. Если устройство подключено к другой сети Wi-Fi, попробуйте отключить ее. Нажмите, чтобы использовать точку доступа этого устройства.</string>
     <string name="connection_issue_banner_hotspot_config">Не удалось получить имя и пароль точки доступа. Нажмите для ввода вручную.</string>
@@ -958,7 +958,7 @@
     <string name="preflight_intro">Это устройство не может предоставить все данные, необходимые для Android Auto:</string>
     <string name="preflight_item_hotspot_name">Имя точки доступа: устройство блокирует чтение приложениями.</string>
     <string name="preflight_item_hotspot_password">Требуется пароль точки доступа.</string>
-    <string name="preflight_item_bssid">WiFi адрес (BSSID) недоступен.</string>
+    <string name="preflight_item_bssid">Адрес WiFi (BSSID). Его не назвал никто, даже адрес, выведенный из собственного сетевого интерфейса устройства.</string>
     <string name="preflight_item_location">Геолокация отключена, из-за чего скрыт WiFi адрес.</string>
     <string name="preflight_enter_now">Ввести сейчас</string>
     <string name="preflight_open_location">Геолокация</string>
