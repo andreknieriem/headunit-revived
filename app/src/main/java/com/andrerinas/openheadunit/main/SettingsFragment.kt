@@ -49,6 +49,7 @@ import com.andrerinas.openheadunit.utils.LogExporter
 import com.andrerinas.openheadunit.utils.SettingsBackupManager
 import com.andrerinas.openheadunit.utils.VpnControl
 import com.andrerinas.openheadunit.utils.DialogUtils
+import com.andrerinas.openheadunit.utils.ProjectionSetupQrDialog
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -103,7 +104,7 @@ class SettingsFragment : Fragment() {
         "wifiDirectBand", "wifiDirectBandHint",
         // And the channel within the band, which is the same kind of first thing to try: a
         // network on a channel the phone's regulatory domain forbids is one it never lists.
-        "fiveGhzChannel", "fiveGhzChannelHint",
+        "fiveGhzChannel",
         "hotspotSsidOverride", "hotspotPasswordOverride",
         "hotspotInterfaceOverride",
         // Dark mode
@@ -166,8 +167,9 @@ class SettingsFragment : Fragment() {
     private var pendingWaitForWifi: Boolean? = null
     private var pendingWaitForWifiTimeout: Int? = null
     private var pendingBluetoothManagerServiceName: String? = null
-    private var pendingManualSecondaryBluetoothServiceName: String? = null
+    private var pendingNativeAaIgnoreExternalBt: Boolean? = null
     private var pendingNativeWifiVersionExchange: Boolean? = null
+    private var pendingNativeAaCompleteHfpSlc: Boolean? = null
     private var pendingNativeApTransport: NativeStrategy? = null
     private var pendingWifiDirectBand: Int? = null
     private var pendingHotspotBand: Int? = null
@@ -323,8 +325,9 @@ class SettingsFragment : Fragment() {
         pendingWaitForWifi = settings.waitForWifiBeforeWifiDirect
         pendingWaitForWifiTimeout = settings.waitForWifiTimeout
         pendingBluetoothManagerServiceName = settings.bluetoothManagerServiceName
-        pendingManualSecondaryBluetoothServiceName = settings.manualSecondaryBluetoothServiceName
+        pendingNativeAaIgnoreExternalBt = settings.nativeAaIgnoreExternalBt
         pendingNativeWifiVersionExchange = settings.nativeWifiVersionExchange
+        pendingNativeAaCompleteHfpSlc = settings.nativeAaCompleteHfpSlc
         pendingNativeApTransport = settings.nativeApStrategy
         pendingWifiDirectBand = settings.wifiDirectBand
         pendingHotspotBand = settings.hotspotBand
@@ -439,8 +442,9 @@ class SettingsFragment : Fragment() {
         pendingWaitForWifi = settings.waitForWifiBeforeWifiDirect
         pendingWaitForWifiTimeout = settings.waitForWifiTimeout
         pendingBluetoothManagerServiceName = settings.bluetoothManagerServiceName
-        pendingManualSecondaryBluetoothServiceName = settings.manualSecondaryBluetoothServiceName
+        pendingNativeAaIgnoreExternalBt = settings.nativeAaIgnoreExternalBt
         pendingNativeWifiVersionExchange = settings.nativeWifiVersionExchange
+        pendingNativeAaCompleteHfpSlc = settings.nativeAaCompleteHfpSlc
         pendingNativeApTransport = settings.nativeApStrategy
         pendingWifiDirectBand = settings.wifiDirectBand
         pendingHotspotBand = settings.hotspotBand
@@ -590,8 +594,9 @@ class SettingsFragment : Fragment() {
         pendingWaitForWifi?.let { settings.waitForWifiBeforeWifiDirect = it }
         pendingWaitForWifiTimeout?.let { settings.waitForWifiTimeout = it }
         pendingBluetoothManagerServiceName?.let { settings.bluetoothManagerServiceName = it }
-        pendingManualSecondaryBluetoothServiceName?.let { settings.manualSecondaryBluetoothServiceName = it }
+        pendingNativeAaIgnoreExternalBt?.let { settings.nativeAaIgnoreExternalBt = it }
         pendingNativeWifiVersionExchange?.let { settings.nativeWifiVersionExchange = it }
+        pendingNativeAaCompleteHfpSlc?.let { settings.nativeAaCompleteHfpSlc = it }
         pendingNativeApTransport?.let { settings.nativeApStrategy = it }
         pendingWifiDirectBand?.let { settings.wifiDirectBand = it }
         pendingHotspotBand?.let { settings.hotspotBand = it }
@@ -708,8 +713,9 @@ class SettingsFragment : Fragment() {
                         pendingWaitForWifi != settings.waitForWifiBeforeWifiDirect ||
                         pendingWaitForWifiTimeout != settings.waitForWifiTimeout ||
                         pendingBluetoothManagerServiceName != settings.bluetoothManagerServiceName ||
-                        pendingManualSecondaryBluetoothServiceName != settings.manualSecondaryBluetoothServiceName ||
+                        pendingNativeAaIgnoreExternalBt != settings.nativeAaIgnoreExternalBt ||
                         pendingNativeWifiVersionExchange != settings.nativeWifiVersionExchange ||
+                        pendingNativeAaCompleteHfpSlc != settings.nativeAaCompleteHfpSlc ||
                         pendingNativeApTransport != settings.nativeApStrategy ||
                         pendingWifiDirectBand != settings.wifiDirectBand ||
                         pendingHotspotBand != settings.hotspotBand ||
@@ -1035,6 +1041,17 @@ class SettingsFragment : Fragment() {
                         )
                     }
                 ))
+
+                // The one route onto a unit whose Bluetooth cannot carry the handshake: the phone
+                // reads the network and our TCP endpoint straight off the screen. Only on this
+                // transport, and only from here, because the QR is worth showing exactly where the
+                // network it names is configured.
+                items.add(SettingItem.SettingEntry(
+                    stableId = "projectionSetupQr",
+                    nameResId = R.string.native_aa_setup_qr_title,
+                    value = getString(R.string.native_aa_setup_qr_description),
+                    onClick = { _ -> ProjectionSetupQrDialog.show(requireContext()) }
+                ))
             }
 
             // The band choice lives here rather than under Debug because it is read in exactly
@@ -1085,26 +1102,23 @@ class SettingsFragment : Fragment() {
                 }
             ))
 
-            val manualSecondary = pendingManualSecondaryBluetoothServiceName
-            items.add(SettingItem.SettingEntry(
-                stableId = "manualSecondaryBluetoothService",
-                nameResId = R.string.manual_secondary_bt_service_title,
-                value = if (manualSecondary.isNullOrEmpty()) getString(R.string.auto)
-                         else BluetoothHelper.getAdapterDescription(requireContext(), manualSecondary),
-                onClick = { _ ->
-                    DialogUtils.showTextInputDialogWithMessage(
-                        requireContext(),
-                        R.string.manual_secondary_bt_service_title,
-                        R.string.manual_secondary_bt_service_message,
-                        manualSecondary ?: "",
-                        { newVal ->
-                            pendingManualSecondaryBluetoothServiceName = newVal.trim()
-                            checkChanges()
-                            updateSettingsList()
-                        }
-                    )
-                }
-            ))
+            // Only where the detection has fired: everywhere else this governs a gate that never
+            // closes, and a switch that changes nothing is what sends people down a wrong
+            // diagnosis. The evidence is a lazy, so asking on every rebuild costs one field read.
+            if (BluetoothHelper.externalBtEvidence != null) {
+                items.add(SettingItem.ToggleSettingEntry(
+                    stableId = "nativeAaIgnoreExternalBt",
+                    nameResId = R.string.native_aa_ignore_external_bt,
+                    descriptionResId = R.string.native_aa_ignore_external_bt_description,
+                    isChecked = pendingNativeAaIgnoreExternalBt ?: settings.nativeAaIgnoreExternalBt,
+                    searchKeywords = "external bluetooth module rfcomm override compatibility anyway",
+                    onCheckedChanged = { isChecked ->
+                        pendingNativeAaIgnoreExternalBt = isChecked
+                        checkChanges()
+                        updateSettingsList()
+                    }
+                ))
+            }
 
             items.add(SettingItem.ToggleSettingEntry(
                 stableId = "nativeWifiVersionExchange",
@@ -1113,6 +1127,19 @@ class SettingsFragment : Fragment() {
                 isChecked = pendingNativeWifiVersionExchange ?: false,
                 onCheckedChanged = { isChecked ->
                     pendingNativeWifiVersionExchange = isChecked
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "nativeAaCompleteHfpSlc",
+                nameResId = R.string.native_aa_complete_hfp_slc,
+                descriptionResId = R.string.native_aa_complete_hfp_slc_description,
+                isChecked = pendingNativeAaCompleteHfpSlc ?: settings.nativeAaCompleteHfpSlc,
+                searchKeywords = "bluetooth hfp hands-free handsfree calls profile wireless",
+                onCheckedChanged = { isChecked ->
+                    pendingNativeAaCompleteHfpSlc = isChecked
                     checkChanges()
                     updateSettingsList()
                 }
@@ -3670,10 +3697,6 @@ class SettingsFragment : Fragment() {
                     .show()
             }
         ))
-        items.add(SettingItem.InfoBanner(
-            stableId = "fiveGhzChannelHint",
-            textResId = R.string.five_ghz_channel_hint
-        ))
     }
 
     /**
@@ -3895,9 +3918,9 @@ class SettingsFragment : Fragment() {
             MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                 .setTitle(R.string.external_bt_nativeaa)
                 .setMessage(getString(R.string.external_bt_nativeaa_desc, externalBtEvidence))
-                // Selecting the mode is still allowed: on a unit with a second, reachable radio
-                // the user can name it under the secondary-Bluetooth setting, and Native mode
-                // will then run. Without that it stays switched off, and the log says why.
+                // Selecting the mode is still allowed: the detection marks a class of hardware
+                // rather than measuring this one, and the Advanced settings carry a switch that
+                // starts the route anyway. Without it the mode stays off, and the log says why.
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
                     acceptNativeAaMode()
                     dialog.dismiss()

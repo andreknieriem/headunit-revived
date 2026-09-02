@@ -1830,12 +1830,6 @@ class Settings(private val context: Context) {
         get() = prefs.getLong("connection-issue-dismissed-at", 0L)
         set(value) = prefs.edit().putLong("connection-issue-dismissed-at", value).apply()
 
-    // Manual fallback for dual-radio head units whose second radio isn't discoverable via
-    // ServiceManager.listServices() at all. Empty = disabled (rely on automatic discovery only).
-    var manualSecondaryBluetoothServiceName: String
-        get() = prefs.getString("manual-secondary-bt-service-name", "")!!
-        set(value) = prefs.edit().putString("manual-secondary-bt-service-name", value).apply()
-
     // Which interface hosts the head unit's access point. Empty = work it out from the interface
     // list. Worth having because every other implementation of this protocol either creates the AP
     // itself or is told the name: aa-proxy-rs has an `iface` setting, the Pi dongles pin wlan0 in
@@ -1888,5 +1882,43 @@ class Settings(private val context: Context) {
     var useLibusb: Boolean
         get() = prefs.getBoolean("use-libusb", false)
         set(value) = prefs.edit().putBoolean("use-libusb", value).apply()
+
+    // Publish the Android Auto RFCOMM record as insecure, so a phone can open it without the link
+    // having been authenticated first. It changes nothing where the two devices are already bonded,
+    // which is every setup that has ever reached wireless Android Auto; it is for the case where
+    // the bond or its link key has been dropped on one side, which a phone standing in for a head
+    // unit reaches more easily than a car does.
+    //
+    // Off by default, and a security trade rather than a free win: the handshake behind that record
+    // hands the peer this network's name, passphrase and BSSID, so anything in radio range can ask
+    // for them. The bond check on accept is what still refuses an unknown device.
+    var insecureAaRfcommListener: Boolean
+        get() = prefs.getBoolean("insecure-aa-rfcomm-listener", false)
+        set(value) = prefs.edit().putBoolean("insecure-aa-rfcomm-listener", value).apply()
+
+    // Open a hands-free service level connection instead of holding a silent channel. Android Auto
+    // will not start wireless setup unless the head unit is connected with a Bluetooth profile, and
+    // a silent channel leaves the phone's hands-free state machine half-open until it times out, so
+    // it never counts. Measured on hardware: a full wireless session with this on, none with it off.
+    //
+    // On by default, because it only runs where this app stands in for a radio with no hands-free
+    // stack of its own, and stands down again where a real hands-free link is already up.
+    //
+    // What a completed stand-in link does to call routing is not measured: no round has placed or
+    // taken a call with this on, and the responder negotiates neither a codec nor a SCO link, so it
+    // could not carry one. The switch is here for the user who would rather not find out.
+    var nativeAaCompleteHfpSlc: Boolean
+        get() = prefs.getBoolean("native-aa-complete-hfp-slc", true)
+        set(value) = prefs.edit().putBoolean("native-aa-complete-hfp-slc", value).apply()
+
+    // Run the Native AA Bluetooth route on a unit ExternalBtPolicy has flagged, instead of refusing
+    // to start it. The detection marks a class of hardware rather than measuring the unit in front
+    // of us, so it must not be the one refusal a user cannot argue with.
+    //
+    // Off by default, and unlikely to help: on the one such unit examined closely the Android radio
+    // accepted every write, flushed, and put nothing on the air.
+    var nativeAaIgnoreExternalBt: Boolean
+        get() = prefs.getBoolean("native-aa-ignore-external-bt", false)
+        set(value) = prefs.edit().putBoolean("native-aa-ignore-external-bt", value).apply()
 
 }

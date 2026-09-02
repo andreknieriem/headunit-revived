@@ -893,8 +893,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -904,8 +902,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -972,6 +968,25 @@
     <string name="preflight_open_location">Vị trí</string>
     <string name="preflight_later">Để sau</string>
     <string name="preflight_invalid_bssid">Địa chỉ WiFi không hợp lệ. Nhập 6 cặp ký tự thập lục phân (vd: 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Kết nối qua mạng (bắt tay AA mới)</string>
+    <string name="native_wifi_version_exchange_description">Cho phép điện thoại kết nối lại qua WiFi thay vì Bluetooth, sử dụng điểm phát sóng của thiết bị này. Hữu ích với các thiết bị mà Bluetooth không thể truyền bắt tay, và với các phiên bản Android Auto mới hơn. Tắt theo mặc định, và lần kết nối đầu tiên vẫn đi qua Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Hoàn tất kết nối Bluetooth</string>
+    <string name="native_aa_complete_hfp_slc_description">Một số điện thoại chỉ khởi động Android Auto không dây khi Bluetooth của thiết bị này được tính là đã kết nối, chứ không chỉ đã ghép đôi. Bật theo mặc định; hãy tắt nếu cuộc gọi trên thiết bị này ngừng hoạt động.</string>
+    <string name="native_aa_ignore_external_bt">Bỏ qua kiểm tra tương thích Bluetooth</string>
+    <string name="native_aa_ignore_external_bt_description">Thiết bị này có vẻ giữ Bluetooth trên một mô-đun riêng mà Android không tiếp cận được, nên Android Auto không dây bị tắt tự động. Tắt theo mặc định. Chỉ bật nếu bạn cho rằng điều đó là sai: nếu phát hiện đúng, kết nối sẽ thất bại trong im lặng và nhật ký trông vẫn bình thường.</string>
+    <string name="native_aa_setup_qr_title">Thiết lập bằng mã QR</string>
+    <string name="native_aa_setup_qr_description">Hiển thị mã để điện thoại quét</string>
+    <string name="native_aa_setup_qr_content_description">Mã QR để thiết lập Android Auto không dây</string>
+    <string name="native_aa_setup_qr_instruction">Quét bằng camera của điện thoại rồi xác nhận trên điện thoại. Chỉ cần làm một lần: sau đó điện thoại tự kết nối.</string>
+    <string name="native_aa_setup_qr_not_drawn">Không tạo được mã.</string>
+    <string name="native_aa_setup_qr_not_running">Hãy bắt đầu kết nối trước. Mã chứa mạng hiện tại của thiết bị này, vốn chưa tồn tại trước đó.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Chỉ dùng được với điểm phát sóng. Mạng WiFi Direct được đổi tên mỗi lần tạo, nên điện thoại sẽ nhớ một mạng không còn tồn tại.</string>
+    <string name="native_aa_setup_qr_not_listening">Thiết bị này chưa chờ điện thoại. Hãy thử lại sau giây lát.</string>
+    <string name="native_aa_setup_qr_no_credentials">Chưa biết tên hoặc mật khẩu của mạng. Hãy bật điểm phát sóng hoặc nhập thủ công ở trên.</string>
+    <string name="native_aa_setup_qr_no_bssid">Không đọc được địa chỉ WiFi (BSSID) của thiết bị này. Android Auto từ chối mạng mà nó không gắn được với một địa chỉ.</string>
+    <string name="native_aa_setup_qr_no_address">Chưa biết địa chỉ của thiết bị này trên mạng đó.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">Không đọc được địa chỉ Bluetooth của thiết bị này, mà điện thoại cần địa chỉ đó để nhận ra đầu phát này về sau.</string>
+    <string name="native_aa_setup_qr_dongle">Tên Bluetooth của thiết bị này giống một bộ chuyển đổi không dây, thứ mà điện thoại xem là loại thiết bị khác. Hãy đổi tên Bluetooth trên thiết bị này rồi thử lại.</string>
     <string name="category_ui">Giao diện người dùng</string>
     <string name="hide_phone_signal_label">Ẩn cột sóng điện thoại</string>
     <string name="hide_battery_level_label">Ẩn mức pin điện thoại</string>

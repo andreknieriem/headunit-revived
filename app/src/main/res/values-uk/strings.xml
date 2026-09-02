@@ -891,8 +891,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -902,8 +900,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -970,6 +966,25 @@
     <string name="preflight_open_location">Геолокація</string>
     <string name="preflight_later">Пізніше</string>
     <string name="preflight_invalid_bssid">Недійсна адреса WiFi. Введіть 6 пар шістнадцяткових цифр (наприклад, 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Підключення через мережу (нове рукостискання AA)</string>
+    <string name="native_wifi_version_exchange_description">Дозволяє телефону перепідключатися через WiFi замість Bluetooth, використовуючи точку доступу цього пристрою. Допомагає на пристроях, Bluetooth яких не може передати рукостискання, та в новіших версіях Android Auto. Типово вимкнено, і перше підключення все одно відбувається через Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Завершувати підключення Bluetooth</string>
+    <string name="native_aa_complete_hfp_slc_description">Деякі телефони не запускають бездротовий Android Auto, доки Bluetooth цього пристрою не вважатиметься підключеним, а не лише спареним. Типово увімкнено; вимкніть, якщо дзвінки на цьому пристрої перестануть працювати.</string>
+    <string name="native_aa_ignore_external_bt">Ігнорувати перевірку сумісності Bluetooth</string>
+    <string name="native_aa_ignore_external_bt_description">Схоже, цей пристрій тримає Bluetooth на окремому модулі, недоступному для Android, тому бездротовий Android Auto вимикається автоматично. Типово вимкнено. Вмикайте, лише якщо вважаєте це помилкою: якщо визначення правильне, підключення тихо не вдасться, а журнал виглядатиме нормально.</string>
+    <string name="native_aa_setup_qr_title">Налаштування за QR-кодом</string>
+    <string name="native_aa_setup_qr_description">Показати код, який може зчитати телефон</string>
+    <string name="native_aa_setup_qr_content_description">QR-код для налаштування бездротового Android Auto</string>
+    <string name="native_aa_setup_qr_instruction">Відскануйте його камерою телефона та підтвердьте на телефоні. Це потрібно лише один раз: далі телефон під\'єднується сам.</string>
+    <string name="native_aa_setup_qr_not_drawn">Не вдалося створити код.</string>
+    <string name="native_aa_setup_qr_not_running">Спершу запустіть з\'єднання. Код містить поточну мережу цього пристрою, якої до того немає.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Доступно лише через точку доступу. Мережа WiFi Direct перейменовується щоразу під час створення, тож телефон запам\'ятав би ту, якої вже немає.</string>
+    <string name="native_aa_setup_qr_not_listening">Цей пристрій ще не очікує на телефон. Спробуйте ще раз за мить.</string>
+    <string name="native_aa_setup_qr_no_credentials">Назва або пароль мережі поки невідомі. Увімкніть точку доступу або введіть їх вручну вище.</string>
+    <string name="native_aa_setup_qr_no_bssid">Не вдалося прочитати WiFi-адресу (BSSID) цього пристрою. Android Auto відхиляє мережу, яку не може з нею пов\'язати.</string>
+    <string name="native_aa_setup_qr_no_address">Власна адреса цього пристрою в цій мережі поки невідома.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">Не вдалося прочитати Bluetooth-адресу цього пристрою, а телефону вона потрібна, щоб згодом упізнати цей головний пристрій.</string>
+    <string name="native_aa_setup_qr_dongle">Назва Bluetooth цього пристрою схожа на бездротовий адаптер, який телефон вважає іншим типом пристрою. Перейменуйте Bluetooth на цьому пристрої та спробуйте ще раз.</string>
     <string name="category_ui">Інтерфейс користувача</string>
     <string name="hide_phone_signal_label">Приховати рівень сигналу телефону</string>
     <string name="hide_battery_level_label">Приховати рівень заряду телефону</string>

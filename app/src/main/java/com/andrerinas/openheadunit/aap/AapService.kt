@@ -76,6 +76,7 @@ import com.andrerinas.openheadunit.connection.wifi.LinkLossTeardownPolicy
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTrigger
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.ProjectionQrSnapshot
 import com.andrerinas.openheadunit.utils.HotspotManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
@@ -1144,6 +1145,16 @@ class AapService : Service() {
      * ready (via [CommManager.ConnectionState.HandshakeComplete] observer), guaranteeing
      * that [VideoDecoder.setSurface] is always called before the first video frame arrives.
      */
+    /**
+     * What a Native AA setup QR would carry, or null while that mode is not running.
+     *
+     * The settings screen asks through [instance], because the network, the port and the Bluetooth
+     * identity only exist once the launcher has resolved them, and a QR built from anything else
+     * would write a record the phone keeps and cannot use.
+     */
+    fun projectionQrSnapshot(): ProjectionQrSnapshot? =
+        (wifiLauncherManager.active as? WifiLauncherNative)?.handshakeManager?.projectionQrSnapshot()
+
     private fun onConnected() {
         usbLauncherManager.setSwitchingToProjection(false)
         updateNotification()

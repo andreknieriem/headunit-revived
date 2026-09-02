@@ -165,6 +165,13 @@ object SettingsBackupManager {
         // The Native AA handshake opt-in: a reporter who found they need it wants it to survive a
         // reinstall, which is exactly when they are asked to export their settings.
         "native-wifi-version-exchange" to ValueType.BOOLEAN,
+        // On by default, so what is worth carrying is the opt-out: a user who turned it off should
+        // not have to find it again after a reinstall.
+        "native-aa-complete-hfp-slc" to ValueType.BOOLEAN,
+        // The mode itself is carried, so leaving this behind would restore Native AA onto a
+        // flagged unit in the one state where it refuses to start, and the row that turns it back
+        // on renders only on flagged units.
+        "native-aa-ignore-external-bt" to ValueType.BOOLEAN,
         // Selectable from the Android Auto mode block now that the route is wired.
         "native-ap-transport" to ValueType.INT,
         "hotspot-interface" to ValueType.STRING,

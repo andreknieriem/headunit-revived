@@ -888,8 +888,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -899,8 +897,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -966,6 +962,25 @@
     <string name="preflight_open_location">위치</string>
     <string name="preflight_later">나중에</string>
     <string name="preflight_invalid_bssid">유효하지 않은 WiFi 주소입니다. 6쌍의 16진수(예: 02:1A:11:FF:3C:4D)를 입력하세요.</string>
+    <string name="native_wifi_version_exchange">네트워크로 연결 (새 AA 핸드셰이크)</string>
+    <string name="native_wifi_version_exchange_description">이 기기의 핫스팟을 사용해 휴대전화가 Bluetooth 대신 WiFi로 다시 연결하도록 합니다. Bluetooth가 핸드셰이크를 전달하지 못하는 기기와 최신 Android Auto 버전에서 도움이 됩니다. 기본값은 꺼짐이며, 첫 연결은 여전히 Bluetooth로 이루어집니다.</string>
+    <string name="native_aa_complete_hfp_slc">Bluetooth 연결 완료하기</string>
+    <string name="native_aa_complete_hfp_slc_description">일부 휴대전화는 이 기기의 Bluetooth가 페어링만이 아니라 연결됨으로 인식될 때까지 무선 Android Auto를 시작하지 않습니다. 기본값은 켜짐이며, 이 기기에서 통화가 되지 않으면 끄세요.</string>
+    <string name="native_aa_ignore_external_bt">Bluetooth 호환성 검사 무시</string>
+    <string name="native_aa_ignore_external_bt_description">이 기기는 Android가 접근할 수 없는 별도 모듈에 Bluetooth를 두고 있는 것으로 보여 무선 Android Auto가 자동으로 꺼집니다. 기본값은 꺼짐입니다. 그 판단이 틀렸다고 생각할 때만 켜세요. 판단이 맞다면 연결은 아무 표시 없이 실패하고 로그는 정상으로 보입니다.</string>
+    <string name="native_aa_setup_qr_title">QR 코드로 설정</string>
+    <string name="native_aa_setup_qr_description">휴대전화로 스캔할 수 있는 코드 표시</string>
+    <string name="native_aa_setup_qr_content_description">무선 Android Auto 설정을 위한 QR 코드</string>
+    <string name="native_aa_setup_qr_instruction">휴대전화 카메라로 스캔한 뒤 휴대전화에서 확인하세요. 한 번만 하면 되며, 이후에는 휴대전화가 알아서 연결합니다.</string>
+    <string name="native_aa_setup_qr_not_drawn">코드를 생성하지 못했습니다.</string>
+    <string name="native_aa_setup_qr_not_running">먼저 연결을 시작하세요. 코드에는 이 기기의 현재 네트워크가 담기며, 그전에는 존재하지 않습니다.</string>
+    <string name="native_aa_setup_qr_not_hotspot">핫스팟에서만 사용할 수 있습니다. WiFi Direct 네트워크는 만들 때마다 이름이 바뀌므로 휴대전화가 더 이상 없는 네트워크를 기억하게 됩니다.</string>
+    <string name="native_aa_setup_qr_not_listening">이 기기가 아직 휴대전화를 기다리고 있지 않습니다. 잠시 후 다시 시도하세요.</string>
+    <string name="native_aa_setup_qr_no_credentials">네트워크 이름이나 비밀번호를 아직 알 수 없습니다. 핫스팟을 켜거나 위에서 직접 입력하세요.</string>
+    <string name="native_aa_setup_qr_no_bssid">이 기기의 WiFi 주소(BSSID)를 읽지 못했습니다. Android Auto는 주소를 특정할 수 없는 네트워크를 거부합니다.</string>
+    <string name="native_aa_setup_qr_no_address">해당 네트워크에서 이 기기의 주소를 아직 알 수 없습니다.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">이 기기의 블루투스 주소를 읽지 못했습니다. 휴대전화는 나중에 이 헤드유닛을 알아보기 위해 이 주소가 필요합니다.</string>
+    <string name="native_aa_setup_qr_dongle">이 기기의 블루투스 이름이 무선 동글처럼 보이며, 휴대전화는 이를 다른 종류의 기기로 취급합니다. 이 기기의 블루투스 이름을 바꾼 뒤 다시 시도하세요.</string>
     <string name="category_ui">사용자 인터페이스 (UI)</string>
     <string name="hide_phone_signal_label">휴대전화 신호 세기 숨기기</string>
     <string name="hide_battery_level_label">휴대전화 배터리 잔량 숨기기</string>

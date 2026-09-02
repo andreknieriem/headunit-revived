@@ -34,6 +34,15 @@ object BluetoothWakePolicy {
      */
     val POKE_TARGETS: List<UUID> = listOf(HFP_AG_UUID, HSP_AG_UUID)
 
+    /**
+     * Whether a hands-free service level connection can be opened over [uuid].
+     *
+     * Only Hands-Free. Headset speaks `AT+CKPD` and knows nothing of `BRSF` or `CIND`, so the walk
+     * would answer every command with an error, reach a false "established" on those errors alone,
+     * and then poll a channel that cannot answer it every two seconds.
+     */
+    fun carriesServiceLevelConnection(uuid: UUID): Boolean = uuid == HFP_AG_UUID
+
     /** Reader-facing name for a target, so a log says what was touched rather than a UUID. */
     fun profileName(uuid: UUID): String = when (uuid) {
         HFP_AG_UUID -> "HFP-AG"

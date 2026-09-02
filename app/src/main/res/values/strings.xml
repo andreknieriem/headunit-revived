@@ -788,7 +788,6 @@
     <string name="five_ghz_channel" translatable="false">5 GHz channel</string>
     <string name="five_ghz_channel_auto" translatable="false">Automatic</string>
     <string name="five_ghz_channel_option" translatable="false">Channel %1$d (%2$d MHz)</string>
-    <string name="five_ghz_channel_hint" translatable="false">Phones only join 5 GHz channels their country allows, and a network on a channel yours forbids never appears in its WiFi list at all. Left on Automatic the channel is picked at random, so try 36 if your phone cannot see the head unit, or 149 if 36 does not work. WiFi Direct can set this; most head units ignore it for their own hotspot.</string>
     <string name="debug_video_low_latency" translatable="false">Request decoder low-latency mode</string>
     <string name="debug_video_low_latency_description" translatable="false">Sets the vendor low-latency MediaFormat key when configuring the video decoder. Falls back automatically if the decoder rejects it.</string>
     <string name="debug_video_feed_hold" translatable="false">Simulate a slow decoder</string>
@@ -941,8 +940,6 @@
     <string name="bluetooth_adapter_label">Bluetooth Adapter</string>
     <string name="bluetooth_adapter_description">Select the Bluetooth adapter/controller to use for the handshake. Useful for dual Bluetooth systems.</string>
     <string name="select_bt_adapter">Select Bluetooth Adapter</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -987,8 +984,25 @@
     <string name="preflight_open_location">Location</string>
     <string name="preflight_later">Later</string>
     <string name="preflight_invalid_bssid">That is not a WiFi address. Enter six pairs of hex digits, like 02:1A:11:FF:3C:4D.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. On the hotspot transport it also tells the phone where to reach this head unit directly, which is how a later connection can start on its own. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
+    <string name="native_wifi_version_exchange">Connect over network (new AA handshake)</string>
+    <string name="native_wifi_version_exchange_description">Lets the phone reconnect over WiFi instead of Bluetooth, using this head unit\'s hotspot. Helps on units whose Bluetooth cannot carry the handshake, and on newer Android Auto versions. Off by default, and the first connection still goes over Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Complete the Bluetooth connection</string>
+    <string name="native_aa_complete_hfp_slc_description">Some phones will not start wireless Android Auto until this unit\'s Bluetooth counts as connected, not just paired. On by default; turn it off if calls on this device stop working.</string>
+    <string name="native_aa_ignore_external_bt">Ignore the Bluetooth compatibility check</string>
+    <string name="native_aa_ignore_external_bt_description">This unit looks like it keeps Bluetooth on a separate module that Android cannot reach, so wireless Android Auto is switched off automatically. Off by default. Turn it on only if you think that is wrong: where it is right, the connection fails silently and the log looks healthy.</string>
+    <string name="native_aa_setup_qr_title">Set up by QR code</string>
+    <string name="native_aa_setup_qr_description">Show a code the phone can scan</string>
+    <string name="native_aa_setup_qr_content_description">QR code for setting up wireless Android Auto</string>
+    <string name="native_aa_setup_qr_instruction">Scan this with the phone\'s camera and confirm on the phone. It only has to be done once: after that the phone connects on its own.</string>
+    <string name="native_aa_setup_qr_not_drawn">The code could not be drawn.</string>
+    <string name="native_aa_setup_qr_not_running">Start the connection first. The code carries this unit\'s live network, which does not exist until then.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Only available on the hotspot transport. A WiFi Direct network is renamed every time it is created, so the phone would remember one that no longer exists.</string>
+    <string name="native_aa_setup_qr_not_listening">This unit is not listening for the phone yet. Try again in a moment.</string>
+    <string name="native_aa_setup_qr_no_credentials">This unit\'s network name or password is not known yet. Switch the hotspot on, or enter them by hand above.</string>
+    <string name="native_aa_setup_qr_no_bssid">This unit\'s WiFi address (BSSID) could not be read. Android Auto refuses a network it cannot pin to one.</string>
+    <string name="native_aa_setup_qr_no_address">This unit\'s own address on that network is not known yet.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">This unit\'s Bluetooth address could not be read, and the phone needs one to recognise this head unit later.</string>
+    <string name="native_aa_setup_qr_dongle">This unit\'s Bluetooth name reads as a wireless dongle, which the phone treats as a different kind of device. Rename Bluetooth on this unit and try again.</string>
     <!-- QR Code Generator -->
     <string name="share_hotspot_qr_title">Configure Wireless Helper</string>
     <string name="share_hotspot_qr_desc">Show QR Code for phone auto-connection</string>

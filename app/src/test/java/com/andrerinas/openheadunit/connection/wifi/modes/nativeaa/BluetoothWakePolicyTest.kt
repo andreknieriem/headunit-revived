@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.UUID
 
 class BluetoothWakePolicyTest {
 
@@ -133,5 +134,18 @@ class BluetoothWakePolicyTest {
                 BluetoothWakePolicy.mayPoke(reading) && BluetoothWakePolicy.shouldForget(reading)
             )
         }
+    }
+
+    @Test
+    fun `only the hands-free record can carry a service level connection`() {
+        // Headset speaks AT+CKPD, not BRSF or CIND, so walking it would error its way to a false
+        // "established" and then poll a channel that cannot answer.
+        assertTrue(BluetoothWakePolicy.carriesServiceLevelConnection(BluetoothWakePolicy.HFP_AG_UUID))
+        assertFalse(BluetoothWakePolicy.carriesServiceLevelConnection(BluetoothWakePolicy.HSP_AG_UUID))
+        assertFalse(
+            BluetoothWakePolicy.carriesServiceLevelConnection(
+                UUID.fromString("0000110b-0000-1000-8000-00805f9b34fb")
+            )
+        )
     }
 }
