@@ -73,6 +73,10 @@ class WppTcpServer(
          */
         const val PORT = 5299
 
+        /** Bounded, because the port frees itself in seconds or the previous server is still up. */
+        private const val BIND_ATTEMPTS = 3
+        private const val BIND_RETRY_DELAY_MS = 700L
+
         /** How long the TLS handshake gets before we drop the socket. */
         private const val TLS_HANDSHAKE_TIMEOUT_MS = 15_000
 
@@ -109,7 +113,29 @@ class WppTcpServer(
         acceptJob = scope.launch(Dispatchers.IO + CoroutineName("WppTcp-Accept")) {
             try {
                 val factory = SslContextFactory.create(context).socketFactory
-                val server = ServerSocket(PORT)
+                // Unbound first, then the option, then bind: ServerSocket(int) binds inside the
+                // constructor. holdOpen() keeps the control channel up all session, so this port is
+                // in TIME_WAIT at the next bring-up and a plain constructor threw EADDRINUSE - after
+                // which listeningPort stayed null and the endpoint was withheld for good.
+                var bound: ServerSocket? = null
+                var attempt = 0
+                while (running && isActive && bound == null) {
+                    attempt++
+                    try {
+                        bound = ServerSocket().apply {
+                            reuseAddress = true
+                            bind(java.net.InetSocketAddress(PORT))
+                        }
+                    } catch (e: Exception) {
+                        if (attempt >= BIND_ATTEMPTS) throw e
+                        AppLog.w("WppTcpServer: port $PORT did not bind on attempt $attempt of $BIND_ATTEMPTS (${e.javaClass.simpleName}: ${e.message}). Retrying in ${BIND_RETRY_DELAY_MS}ms.")
+                        delay(BIND_RETRY_DELAY_MS)
+                    }
+                }
+                val server = bound ?: run {
+                    AppLog.i("WppTcpServer: stopped before port $PORT could be bound.")
+                    return@launch
+                }
                 serverSocket = server
                 AppLog.i("WppTcpServer: listening for Android Auto on TCP $PORT")
                 while (running && isActive) {
@@ -215,7 +241,7 @@ class WppTcpServer(
                     // The same rule as the Bluetooth path: an endpoint outlives the connection that
                     // carried it, so it only goes out for a network that will still be there.
                     val endpoint = when (val decision =
-                        WppEndpointPolicy.decide(callbacks.strategy(), listeningPort ?: PORT, callbacks.identity())) {
+                        WppEndpointPolicy.decide(callbacks.strategy(), listeningPort, callbacks.identity())) {
                         is WppEndpointDecision.Withhold -> {
                             AppLog.i("WppTcpServer: not advertising WPP over TCP: ${decision.reason}")
                             null
