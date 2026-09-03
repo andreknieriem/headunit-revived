@@ -393,6 +393,8 @@
     <string name="media_session_aa_status_placeholder">Đã kết nối</string>
     <string name="sync_media_session_aa_metadata">Bài đang phát trên AA hiển thị ở media session</string>
     <string name="sync_media_session_aa_metadata_description">Hiển thị tên bài, nghệ sĩ, thời lượng và ảnh album từ điện thoại trong media session và thông báo media của hệ thống</string>
+    <string name="auto_resume_playback_on_reconnect">Tiếp tục phát khi kết nối lại</string>
+    <string name="auto_resume_playback_on_reconnect_description">Tự động tiếp tục phát nhạc nếu nhạc đang phát trước khi mất kết nối ngắn (trong vòng 60 giây)</string>
     <string name="nav_notification_channel_name">Điều hướng</string>
     <string name="nav_notification_channel_description">Cập nhật chỉ đường từng đoạn từ Android Auto</string>
     <string name="nav_notification_title_format">Trong %1$d m — %2$s</string>

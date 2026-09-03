@@ -427,6 +427,8 @@
     <string name="media_session_aa_status_placeholder">დაკავშირებულია</string>
     <string name="sync_media_session_aa_metadata">AA მუსიკის სინქრონიზაცია მედიასესიასთან</string>
     <string name="sync_media_session_aa_metadata_description">ტელეფონიდან ტრეკის დასახელების, შემსრულებლის, ხანგრძლივობისა და ალბომის ყდის ჩვენება სისტემურ მედიასესიაში და მედიაშეტყობინებაში</string>
+    <string name="auto_resume_playback_on_reconnect">დაკვრის გაგრძელება ხელახალი დაკავშირებისას</string>
+    <string name="auto_resume_playback_on_reconnect_description">ავტომატურად აგრძელებს მუსიკის დაკვრას, თუ ის უკრავდა ხანმოკლე გათიშვამდე (60 წამის განმავლობაში)</string>
     <string name="nav_notification_channel_name">ნავიგაცია</string>
     <string name="nav_notification_channel_description">ნაბიჯ-ნაბიჯ ნავიგაციის განახლებები Android Auto-დან</string>
     <string name="nav_notification_title_format">%1$d მეტრში — %2$s</string>

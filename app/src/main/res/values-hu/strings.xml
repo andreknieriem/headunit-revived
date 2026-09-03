@@ -510,6 +510,8 @@
     <string name="media_session_aa_status_placeholder">Csatlakoztatva</string>
     <string name="sync_media_session_aa_metadata">AA aktuális szám a médialejátszási munkamenetben</string>
     <string name="sync_media_session_aa_metadata_description">A telefonról származó számcímet, előadót, időtartamot és borítót jelenítse meg a rendszer médialejátszási munkamenetében és médiás értesítésben</string>
+    <string name="auto_resume_playback_on_reconnect">Lejátszás folytatása újrakapcsolódáskor</string>
+    <string name="auto_resume_playback_on_reconnect_description">Automatikusan folytatja a zenét, ha az aktívan szólt egy rövid kapcsolatszakadás előtt (60 másodpercen belül)</string>
     <string name="error_usb_permission_failed">Rendszerhiba: Nem sikerült lekérni az USB engedélykérő ablakot.</string>
 
     <!-- Custom loading screen -->

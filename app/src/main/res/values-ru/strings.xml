@@ -384,6 +384,8 @@
     <string name="media_session_aa_status_placeholder">Подключено</string>
     <string name="sync_media_session_aa_metadata">Текущий трек AA в медиасессии</string>
     <string name="sync_media_session_aa_metadata_description">Показывать с телефона название, исполнителя, длительность и обложку в системной медиасессии и медиа-уведомлении</string>
+    <string name="auto_resume_playback_on_reconnect">Возобновлять воспроизведение при переподключении</string>
+    <string name="auto_resume_playback_on_reconnect_description">Автоматически продолжает воспроизведение, если музыка играла перед кратковременным разрывом связи (до 60 секунд)</string>
     <string name="nav_notification_channel_name">Навигация</string>
     <string name="nav_notification_channel_description">Подсказки маршрута от Android Auto</string>
     <string name="nav_notification_title_format">Через %1$d м — %2$s</string>

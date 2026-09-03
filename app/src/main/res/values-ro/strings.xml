@@ -512,6 +512,8 @@
     <string name="media_session_aa_status_placeholder">Conectat</string>
     <string name="sync_media_session_aa_metadata">Piesa curentă AA în sesiunea media</string>
     <string name="sync_media_session_aa_metadata_description">Afișează titlul piesei, artistul, durata și coperta albumului de pe telefon în sesiunea media a sistemului și în notificarea media</string>
+    <string name="auto_resume_playback_on_reconnect">Reia redarea la reconectare</string>
+    <string name="auto_resume_playback_on_reconnect_description">Reia automat muzica dacă rula înainte de o scurtă deconectare (în decurs de 60 de secunde)</string>
     <string name="error_usb_permission_failed">Eroare de sistem: Nu s-a putut solicita caseta de dialog pentru permisiunea USB.</string>
 
     <!-- Custom loading screen -->

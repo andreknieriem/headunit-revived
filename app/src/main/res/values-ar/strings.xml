@@ -511,6 +511,8 @@
     <string name="media_session_aa_status_placeholder">متصل</string>
     <string name="sync_media_session_aa_metadata">المسار الجاري من AA في جلسة الوسائط</string>
     <string name="sync_media_session_aa_metadata_description">عرض عنوان المسار والفنان والمدة وغلاف الألبوم من الهاتف في جلسة الوسائط بالنظام وإشعار الوسائط</string>
+    <string name="auto_resume_playback_on_reconnect">استئناف التشغيل عند إعادة الاتصال</string>
+    <string name="auto_resume_playback_on_reconnect_description">استئناف تشغيل الموسيقى تلقائيًا إذا كانت قيد التشغيل قبل انقطاع قصير في الاتصال (خلال 60 ثانية)</string>
     <string name="error_usb_permission_failed">خطأ في النظام: فشل طلب مربع حوار إذن USB.</string>
 
     <!-- Custom loading screen -->

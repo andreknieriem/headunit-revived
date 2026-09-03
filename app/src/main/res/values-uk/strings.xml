@@ -512,6 +512,8 @@
     <string name="media_session_aa_status_placeholder">Підключено</string>
     <string name="sync_media_session_aa_metadata">Поточний трек AA у медіасесії</string>
     <string name="sync_media_session_aa_metadata_description">Показувати з телефона назву треку, виконавця, тривалість і обкладинку в системній медіасесії та медіа-сповіщенні</string>
+    <string name="auto_resume_playback_on_reconnect">Відновлювати відтворення при перепідключенні</string>
+    <string name="auto_resume_playback_on_reconnect_description">Автоматично продовжує відтворення, якщо музика грала перед короткочасним розривом зв\'язку (до 60 секунд)</string>
     <string name="error_usb_permission_failed">Системна помилка: Не вдалося запитати діалогове вікно дозволу USB.</string>
 
     <!-- Custom loading screen -->

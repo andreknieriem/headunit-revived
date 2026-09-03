@@ -570,6 +570,8 @@
     <string name="media_session_aa_status_placeholder">Verbunden</string>
     <string name="sync_media_session_aa_metadata">AA-Now-Playing in der Mediensitzung</string>
     <string name="sync_media_session_aa_metadata_description">Titel, Interpret, Dauer und Albumcover vom Telefon in der System-Mediensitzung und in der Medienbenachrichtigung anzeigen</string>
+    <string name="auto_resume_playback_on_reconnect">Wiedergabe bei Reconnect fortsetzen</string>
+    <string name="auto_resume_playback_on_reconnect_description">Setzt die Musikwiedergabe nach einem kurzen Verbindungsabbruch (innerhalb von 60 Sekunden) automatisch fort, falls zuvor Musik lief</string>
     <string name="error_usb_permission_failed">Systemfehler: Anforderung des USB-Berechtigungsdialogs fehlgeschlagen.</string>
 
     <!-- Custom loading screen -->

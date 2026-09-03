@@ -754,6 +754,8 @@
     <string name="media_session_aa_status_placeholder">Connected</string>
     <string name="sync_media_session_aa_metadata">AA now playing on media session</string>
     <string name="sync_media_session_aa_metadata_description">Show track title, artist, duration and album art from the phone in the system media session and media notification</string>
+    <string name="auto_resume_playback_on_reconnect">Auto-resume playback on reconnect</string>
+    <string name="auto_resume_playback_on_reconnect_description">Automatically resume music if it was actively playing before a brief connection drop (within 60 seconds)</string>
     <string name="nav_notification_channel_name">Navigation</string>
     <string name="nav_notification_channel_description">Turn-by-turn navigation updates from Android Auto</string>
     <string name="nav_notification_title_format">In %1$d m — %2$s</string>

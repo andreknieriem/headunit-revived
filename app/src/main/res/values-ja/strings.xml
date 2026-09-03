@@ -519,6 +519,8 @@
     <string name="media_session_aa_status_placeholder">接続済み</string>
     <string name="sync_media_session_aa_metadata">メディアセッションにAAの再生中トラックを表示</string>
     <string name="sync_media_session_aa_metadata_description">スマートフォンの曲名、アーティスト、再生時間、アルバムアートをシステムのメディアセッションとメディア通知に表示します</string>
+    <string name="auto_resume_playback_on_reconnect">再接続時に再生を再開</string>
+    <string name="auto_resume_playback_on_reconnect_description">接続が一時的に切断される前に音楽を再生していた場合、自動的に再生を再開します（60秒以内の再接続）</string>
     <string name="error_usb_permission_failed">システムエラー: USBパーミッションダイアログの要求に失敗しました。</string>
 
     <!-- Custom loading screen -->
