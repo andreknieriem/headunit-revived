@@ -56,7 +56,22 @@ object BtAutoStartRearmPolicy {
     /**
      * The Self Mode half of an auto-start. It runs in MainActivity rather than the service, which
      * owns neither the VPN consent dialog nor a foreground window for the projection activity.
+     *
+     * The two vetoes are the same hazard [actionsFor] guards against, one step later: the ACL may be
+     * our own wake poke, and in Native mode the phone that just arrived is the *source* of a
+     * wireless session, so its head unit server is not running and Self Mode cannot win. Launching
+     * it anyway arms [com.andrerinas.openheadunit.connection.self.SelfLauncherManager], whose
+     * failure then tears the wireless launcher down and latches a user exit that was never one.
      */
-    fun launchesSelfMode(selfSelected: Boolean, sessionUp: Boolean): Boolean =
-        selfSelected && !sessionUp
+    fun launchesSelfMode(
+        selfSelected: Boolean,
+        wirelessSelected: Boolean,
+        mode: WifiLauncherMode,
+        sessionUp: Boolean,
+        nativeAttemptInFlight: Boolean?
+    ): Boolean {
+        if (!selfSelected || sessionUp) return false
+        if (nativeAttemptInFlight == true) return false
+        return !(mode == WifiLauncherMode.NATIVE && wirelessSelected)
+    }
 }

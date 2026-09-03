@@ -146,11 +146,60 @@ class BtAutoStartRearmPolicyTest {
         assertTrue(actions(wirelessSelected = false).forceRearmWireless)
     }
 
+    private fun launchesSelfMode(
+        selfSelected: Boolean = true,
+        wirelessSelected: Boolean = false,
+        mode: WifiLauncherMode = WifiLauncherMode.MANUAL,
+        sessionUp: Boolean = false,
+        nativeAttemptInFlight: Boolean? = null
+    ) = BtAutoStartRearmPolicy.launchesSelfMode(
+        selfSelected = selfSelected,
+        wirelessSelected = wirelessSelected,
+        mode = mode,
+        sessionUp = sessionUp,
+        nativeAttemptInFlight = nativeAttemptInFlight
+    )
+
     @Test
     fun `Self Mode launches only with Self selected and no session`() {
-        assertTrue(BtAutoStartRearmPolicy.launchesSelfMode(selfSelected = true, sessionUp = false))
-        assertFalse(BtAutoStartRearmPolicy.launchesSelfMode(selfSelected = true, sessionUp = true))
-        assertFalse(BtAutoStartRearmPolicy.launchesSelfMode(selfSelected = false, sessionUp = false))
+        assertTrue(launchesSelfMode(selfSelected = true, sessionUp = false))
+        assertFalse(launchesSelfMode(selfSelected = true, sessionUp = true))
+        assertFalse(launchesSelfMode(selfSelected = false, sessionUp = false))
+    }
+
+    /**
+     * The field failure: in Native mode the phone whose Bluetooth arrived is the source of the
+     * wireless session, so its head unit server is not running and the launch cannot win. It armed
+     * Self Mode anyway, and the failure stopped the wireless launcher mid-bring-up.
+     */
+    @Test
+    fun `a Native wireless unit never launches Self Mode on a Bluetooth auto-start`() {
+        assertFalse(launchesSelfMode(mode = WifiLauncherMode.NATIVE, wirelessSelected = true))
+    }
+
+    /** Native stored but wireless not selected leaves Self Mode as the only thing that could serve. */
+    @Test
+    fun `Native without the wireless transport selected still launches Self Mode`() {
+        assertTrue(launchesSelfMode(mode = WifiLauncherMode.NATIVE, wirelessSelected = false))
+    }
+
+    /** Every other mode is unchanged: none of them dials our own loopback out from under itself. */
+    @Test
+    fun `the other wireless modes are unaffected by the Native veto`() {
+        for (mode in otherWirelessModes) {
+            assertTrue("mode=$mode", launchesSelfMode(mode = mode, wirelessSelected = true))
+        }
+    }
+
+    /**
+     * The poke's own socket.connect() raises the ACL_CONNECTED that brought us here, and
+     * isAttemptInFlight() is the one signal that says so. Null means Native is not armed.
+     */
+    @Test
+    fun `an attempt in flight never launches Self Mode`() {
+        assertFalse(launchesSelfMode(nativeAttemptInFlight = true))
+        assertTrue(launchesSelfMode(nativeAttemptInFlight = false))
+        assertTrue(launchesSelfMode(nativeAttemptInFlight = null))
     }
 
     /**

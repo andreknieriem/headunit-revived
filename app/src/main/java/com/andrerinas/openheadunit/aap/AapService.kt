@@ -314,6 +314,13 @@ class AapService : Service() {
 
     fun isSelfModeActive() = selfLauncherManager.isActive
 
+    /**
+     * Whether a Native AA poke or handshake is in flight, for callers outside the service that
+     * cannot reach the launcher. Null when Native is not the armed mode.
+     */
+    fun nativeAttemptInFlight(): Boolean? =
+        (wifiLauncherManager.active as? WifiLauncherNative)?.handshakeManager?.isAttemptInFlight()
+
     fun updateMediaSessionState(isPlaying: Boolean) {
         mediaSessionIsPlaying = isPlaying
         var actions = PlaybackStateCompat.ACTION_STOP or

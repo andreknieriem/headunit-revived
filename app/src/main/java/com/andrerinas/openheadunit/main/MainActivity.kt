@@ -811,9 +811,18 @@ class MainActivity : BaseActivity() {
             if (!commManager.isConnected) {
                 beginAutoConnect(LAUNCH_SOURCE_BLUETOOTH, ConnectionUiMode.PILL)
             }
-            if (BtAutoStartRearmPolicy.launchesSelfMode(settings.showsSelf(), commManager.isConnected)) {
+            val launchesSelfMode = BtAutoStartRearmPolicy.launchesSelfMode(
+                selfSelected = settings.showsSelf(),
+                wirelessSelected = settings.showsWifi(),
+                mode = settings.wifiConnectionMode,
+                sessionUp = commManager.isConnected,
+                nativeAttemptInFlight = AapService.instance?.nativeAttemptInFlight()
+            )
+            if (launchesSelfMode) {
                 AppLog.i("MainActivity: Bluetooth auto-start: forcing a Self Mode launch")
                 forceSelfModeLaunch()
+            } else {
+                AppLog.i("MainActivity: Bluetooth auto-start: leaving Self Mode alone")
             }
         }
 
