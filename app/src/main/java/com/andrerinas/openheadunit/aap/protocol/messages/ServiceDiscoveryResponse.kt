@@ -3,7 +3,6 @@ package com.andrerinas.openheadunit.aap.protocol.messages
 import android.content.Context
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.AapMessage
-import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.aap.NarrowBandProfilePolicy
 import com.andrerinas.openheadunit.aap.VehicleIdentityPolicy
 import com.andrerinas.openheadunit.aap.VehicleTypePolicy
@@ -162,33 +161,31 @@ class ServiceDiscoveryResponse(private val context: Context)
             }.build()
             services.add(audio2)
 
-            if (settings.enableAudioSink) {
-                val isSelfMode = AapService.instance?.isSelfModeActive() ?: false
-
-                if (!isSelfMode) {
-                    val audio1 = Control.Service.newBuilder().also { service ->
-                        service.id = Channel.ID_AU1
-                        service.mediaSinkService = Control.Service.MediaSinkService.newBuilder().also {
-                            it.availableType = audioType
-                            it.audioType = Media.AudioStreamType.SPEECH
-                            it.addAudioConfigs(AudioConfigs.get(Channel.ID_AU1))
-                        }.build()
+            // Asked of the session, not of SelfLauncherManager.isActive: that flag is set before
+            // the launchers run and a failed launch left it set, so a Native AA session announced
+            // system sounds only and had no audio at all. See AudioSinkAnnouncementPolicy.
+            val isSelfModeSession = App.provide(context).commManager.isLoopbackSession
+            if (AudioSinkAnnouncementPolicy.announcesMediaAndSpeech(settings.enableAudioSink, isSelfModeSession)) {
+                val audio1 = Control.Service.newBuilder().also { service ->
+                    service.id = Channel.ID_AU1
+                    service.mediaSinkService = Control.Service.MediaSinkService.newBuilder().also {
+                        it.availableType = audioType
+                        it.audioType = Media.AudioStreamType.SPEECH
+                        it.addAudioConfigs(AudioConfigs.get(Channel.ID_AU1))
                     }.build()
-                    services.add(audio1)
-                }
+                }.build()
+                services.add(audio1)
 
-                if (!isSelfMode) {
-                    val audio0 = Control.Service.newBuilder().also { service ->
-                        service.id = Channel.ID_AUD
-                        service.mediaSinkService = Control.Service.MediaSinkService.newBuilder().also {
-                            it.availableType = audioType
-                            it.audioType = Media.AudioStreamType.MEDIA
-                            it.addAudioConfigs(AudioConfigs.get(Channel.ID_AUD))
-                        }.build()
+                val audio0 = Control.Service.newBuilder().also { service ->
+                    service.id = Channel.ID_AUD
+                    service.mediaSinkService = Control.Service.MediaSinkService.newBuilder().also {
+                        it.availableType = audioType
+                        it.audioType = Media.AudioStreamType.MEDIA
+                        it.addAudioConfigs(AudioConfigs.get(Channel.ID_AUD))
                     }.build()
-                    services.add(audio0)
-                }
-            } else {
+                }.build()
+                services.add(audio0)
+            } else if (!settings.enableAudioSink) {
                 // Without this line a muted head unit is indistinguishable from a broken one. The
                 // channels are never declared, so the phone never opens them, so nothing about the
                 // silence appears anywhere in the log and every audio instrument reads zero. It
@@ -196,6 +193,9 @@ class ServiceDiscoveryResponse(private val context: Context)
                 // on it, the same way the Bluetooth service does below.
                 AppLog.i("Audio sink is off in Settings. Skipping the media and speech audio " +
                         "channels - the phone will not send audio and this is not a fault")
+            } else {
+                AppLog.i("Self Mode is projecting this device to itself, so the media and speech " +
+                        "audio channels are skipped - this is not a fault")
             }
 
             // Microphone Service (Channel 7), announced only when this head unit will record.

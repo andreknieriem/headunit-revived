@@ -231,6 +231,16 @@ class CommManager(
         get() = _connection is SocketProjectionConnection
 
     /**
+     * `true` when this session's peer is this device itself — Self Mode, on either of its routes.
+     *
+     * Asked instead of `SelfLauncherManager.isActive`, which is set before the launchers run and
+     * outlives a launch that never connected. A socket session alone cannot answer it: Self Mode
+     * is one too, and only the endpoint separates them.
+     */
+    val isLoopbackSession: Boolean
+        get() = isWirelessSession && lastAttemptedEndpoint?.startsWith("127.0.0.1:") == true
+
+    /**
      * Returns `true` if the current USB connection is to [device].
      * Used by AapService to decide whether a USB detach event should trigger a disconnect.
      */
