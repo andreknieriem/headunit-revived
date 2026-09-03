@@ -412,6 +412,10 @@
     <string name="no_paired_bt_devices" translatable="false">No paired Bluetooth devices found</string>
     <string name="auto_disconnect_bt_label" translatable="false">Auto-disconnect on Bluetooth</string>
     <string name="select_bt_disconnect_device" translatable="false">Select the Bluetooth device to watch</string>
+    <string name="native_poke_bt_label" translatable="false">Device to wake for wireless Android Auto</string>
+    <string name="select_bt_poke_device" translatable="false">Select the Bluetooth device to wake</string>
+    <string name="native_poke_all_paired_label" translatable="false">Wake every paired device</string>
+    <string name="native_poke_all_paired_description" translatable="false">With no device chosen above, connect briefly to every paired device to start Android Auto. Turn this off to wake nothing until you choose one.</string>
     <string name="auto_disconnect_bt_delay_label" translatable="false">Wait before disconnecting</string>
     <string name="auto_disconnect_bt_delay_value" translatable="false">%1$d s</string>
     <string name="auto_disconnect_bt_delay_immediate" translatable="false">Immediately</string>

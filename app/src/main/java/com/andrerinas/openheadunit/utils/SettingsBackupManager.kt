@@ -137,6 +137,8 @@ object SettingsBackupManager {
         "auto-start-bt-macs" to ValueType.STRING_SET,
         "auto-start-bt-name" to ValueType.STRING,
         "auto-disconnect-bt-macs" to ValueType.STRING_SET,
+        "native-poke-bt-macs" to ValueType.STRING_SET,
+        "native-poke-all-paired" to ValueType.BOOLEAN,
         "auto-disconnect-bt-delay-seconds" to ValueType.INT,
         "app-language" to ValueType.STRING,
         "media-volume-offset" to ValueType.INT,

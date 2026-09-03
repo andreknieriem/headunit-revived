@@ -44,20 +44,25 @@ object BluetoothDevicePicker {
         if (adapter == null || !adapter.isEnabled) return false
 
         val bondedDevices = adapter.bondedDevices.toList()
-        if (bondedDevices.isEmpty()) {
+        // A stored address whose device is no longer paired still gets a row, by address, or the
+        // only way to clear it would be to pair the device again.
+        val bondedMacs = bondedDevices.map { it.address }.toSet()
+        val orphanMacs = selectedMacs.filterNot { it in bondedMacs }
+        if (bondedDevices.isEmpty() && orphanMacs.isEmpty()) {
             Toast.makeText(context, R.string.no_paired_bt_devices, Toast.LENGTH_LONG).show()
             return false
         }
 
-        val deviceNames = bondedDevices.map { labelFor(it) }.toTypedArray()
-        val checkedItems = bondedDevices.map { selectedMacs.contains(it.address) }.toBooleanArray()
+        val rowMacs = bondedDevices.map { it.address } + orphanMacs
+        val deviceNames = (bondedDevices.map { labelFor(it) } + orphanMacs).toTypedArray()
+        val checkedItems = rowMacs.map { selectedMacs.contains(it) }.toBooleanArray()
         val working = selectedMacs.toMutableSet()
 
         MaterialAlertDialogBuilder(context, R.style.DarkAlertDialog)
             .setTitle(titleResId)
             .setMultiChoiceItems(deviceNames, checkedItems) { _, which, isChecked ->
-                val device = bondedDevices[which]
-                if (isChecked) working.add(device.address) else working.remove(device.address)
+                val mac = rowMacs[which]
+                if (isChecked) working.add(mac) else working.remove(mac)
             }
             .setPositiveButton(android.R.string.ok) { _, _ -> onCommit(working.toSet()) }
             .setNeutralButton(R.string.remove) { _, _ -> onCommit(emptySet()) }
@@ -82,7 +87,11 @@ object BluetoothDevicePicker {
             try { adapter!!.bondedDevices.map { it.address }.toSet() } catch (e: SecurityException) { null }
         } else null
 
-        val valid = if (bondedAddresses != null) macs.filter { it in bondedAddresses } else macs.toList()
+        // Unpaired addresses still count. A row that reads "not set" while both stores hold a MAC
+        // is how a user concludes the setting will not clear.
+        val valid = if (bondedAddresses != null) {
+            macs.filter { it in bondedAddresses }.ifEmpty { macs.toList() }
+        } else macs.toList()
         if (valid.isEmpty()) return null
         if (valid.size > 1) return "${valid.size} ${context.getString(R.string.bt_devices_selected)}"
 

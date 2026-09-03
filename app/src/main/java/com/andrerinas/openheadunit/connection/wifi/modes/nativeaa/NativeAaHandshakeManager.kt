@@ -984,30 +984,36 @@ class NativeAaHandshakeManager(
                     NativeHandoffPolicy.LoopStep.POKE -> pokeDeferralLogged = false
                 }
 
-                val lastMacs = settings.autoStartBluetoothDeviceMacs
-                val devicesToPoke = if (lastMacs.isNotEmpty()) {
-                    // Two questions, two answers. Skipping a poke is retried seconds later;
-                    // forgetting a MAC is permanent, so it needs evidence the device is really gone
-                    // rather than an adapter that happened to be off. Both rules are in the policy.
-                    val bonded = mutableListOf<BluetoothDevice>()
-                    val staleMacs = mutableSetOf<String>()
-                    lastMacs.forEach { mac ->
-                        val reading = bondReadingFor(adapter, mac)
-                        if (BluetoothWakePolicy.mayPoke(reading)) {
-                            try { bonded.add(adapter.getRemoteDevice(mac)) } catch (e: Exception) {}
+                val selectedMacs = settings.nativePokeBtMacs
+                val devicesToPoke = when (val target =
+                    PokeTargetPolicy.targets(selectedMacs, settings.nativePokeAllPairedDevices)) {
+                    is PokeTargets.Selected -> {
+                        // Two questions, two answers. Skipping a poke is retried seconds later;
+                        // forgetting a MAC is permanent, so it needs evidence the device is really
+                        // gone rather than an adapter that happened to be off. Both are in the policy.
+                        val bonded = mutableListOf<BluetoothDevice>()
+                        val staleMacs = mutableSetOf<String>()
+                        target.macs.forEach { mac ->
+                            val reading = bondReadingFor(adapter, mac)
+                            if (BluetoothWakePolicy.mayPoke(reading)) {
+                                try { bonded.add(adapter.getRemoteDevice(mac)) } catch (e: Exception) {}
+                            }
+                            if (BluetoothWakePolicy.shouldForget(reading)) staleMacs.add(mac)
                         }
-                        if (BluetoothWakePolicy.shouldForget(reading)) staleMacs.add(mac)
+                        if (staleMacs.isNotEmpty()) {
+                            AppLog.w("NativeAA: Dropping wake poke MAC(s) no longer paired: $staleMacs")
+                            settings.nativePokeBtMacs = target.macs - staleMacs
+                        }
+                        bonded
                     }
-                    if (staleMacs.isNotEmpty()) {
-                        AppLog.w("NativeAA: Dropping Auto Start BT MAC(s) no longer paired: $staleMacs")
-                        val remaining = lastMacs - staleMacs
-                        settings.autoStartBluetoothDeviceMacs = remaining
-                        Settings.syncAutoStartBtMacsToDeviceStorage(context, remaining)
+                    PokeTargets.AllPaired -> {
+                        AppLog.w("NativeAA: No wake poke device selected, and poking all paired devices is on. Poking all of them...")
+                        adapter.bondedDevices.toList()
                     }
-                    bonded
-                } else {
-                    AppLog.w("NativeAA: No 'Auto Start BT Device' selected in settings. Poking all paired devices as fallback...")
-                    adapter.bondedDevices.toList()
+                    PokeTargets.None -> {
+                        AppLog.w("NativeAA: No wake poke device selected, so nothing is poked. Choose one in Auto Start settings.")
+                        emptyList()
+                    }
                 }
 
                 if (devicesToPoke.isEmpty()) {
@@ -1226,13 +1232,11 @@ class NativeAaHandshakeManager(
                 return@withContext
             }
 
-            val macs = settings.autoStartBluetoothDeviceMacs
-            if (!macs.contains(device.address)) {
-                AppLog.i("NativeAA: Saving ${device.address} (${device.name}) to the list of auto-start devices.")
-                val newMacs = macs + device.address
-                settings.autoStartBluetoothDeviceMacs = newMacs
-                settings.autoStartBluetoothDeviceName = device.name ?: "Unknown Device"
-                Settings.syncAutoStartBtMacsToDeviceStorage(context, newMacs)
+            // The wake poke target only, and only when there is none. Writing the auto-start list
+            // here turned Bluetooth auto-start on for a user who never asked, and undid a clear.
+            if (PokeTargetPolicy.adoptsHandshakedDevice(settings.nativePokeBtMacs)) {
+                AppLog.i("NativeAA: Saving ${device.address} (${device.name}) as the wake poke device.")
+                settings.nativePokeBtMacs = setOf(device.address)
             }
 
             val input = DataInputStream(socket.inputStream)
