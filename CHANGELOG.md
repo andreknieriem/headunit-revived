@@ -1,6 +1,7 @@
 # Changelog
-### v.3.3.1-beta1
+### v.3.3.1-alpha
 - Added: Option to auto-resume media playback on quick reconnect if music was playing before disconnect
+- Fixed: Errors shown in playconsole
 
 ### v.3.3.0
 - Begin for theming of the App.
