@@ -73,6 +73,7 @@ import android.view.View
 import android.view.WindowManager
 import android.media.AudioManager
 import com.andrerinas.openheadunit.connection.self.SelfLauncherManager
+import com.andrerinas.openheadunit.connection.self.SelfModeDisconnectPolicy
 import com.andrerinas.openheadunit.connection.usb.UsbLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTeardownPolicy
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTrigger
@@ -1568,12 +1569,21 @@ class AapService : Service() {
      */
     private fun scheduleReconnectIfNeeded(state: CommManager.ConnectionState.Disconnected) {
         if (selfLauncherManager.isActive) {
-            AppLog.i("AapService: Self Mode disconnected. Not restarting.")
+            // A launcher's own failed dial is not a session ending, and stopping the wireless
+            // launcher there tore down a P2P group that was still coming up.
+            val stopsWireless = SelfModeDisconnectPolicy.stopsWirelessLauncher(
+                selfModeActive = true,
+                launchInFlight = selfLauncherManager.isLaunchInFlight()
+            )
+            AppLog.i(
+                "AapService: Self Mode disconnected. Not restarting" +
+                    (if (stopsWireless) "" else "; the launch is still in flight, so the wireless launcher stays") + "."
+            )
             selfLauncherManager.isActive = false
             // Beside isActive, so a disconnect that lands mid-launch cannot leave Self Mode
             // refusing every later request.
             selfLauncherManager.clearLaunchInFlight()
-            wifiLauncherManager.stop()
+            if (stopsWireless) wifiLauncherManager.stop()
             return
         }
 
