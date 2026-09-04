@@ -82,10 +82,11 @@ adb shell am start -a android.intent.action.VIEW -d "headunit://connect?ip=192.1
 - more customization options for the UI and the app itself
 
 ## Changelog
-### v.3.3.1-alpha
+### v.3.3.1
 - Added: Option to auto-resume media playback on quick reconnect if music was playing before disconnect
 - Fixed: Errors shown in playconsole
-
+- Big Improvements to native mode. Huge Thanks to @o-jcardenass for this!
+-
 ### v.3.3.0
 - Begin for theming of the App.
 - Refactor WiFi-Code from AapService into their own classes for better maintenance, thanks to @MrEAlderson
