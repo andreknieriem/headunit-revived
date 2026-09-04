@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.IBinder
 import com.andrerinas.openheadunit.App
 import java.lang.reflect.Constructor
+import java.lang.reflect.Method
 
 object BluetoothHelper {
 
@@ -214,6 +215,14 @@ object BluetoothHelper {
         return false
     }
 
+    private val isConnectedMethod: Method? by lazy {
+        try {
+            BluetoothDevice::class.java.getMethod("isConnected")
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     /**
      * Checks whether a specific Bluetooth device is currently connected to this unit.
      *
@@ -223,8 +232,7 @@ object BluetoothHelper {
      */
     fun isDeviceConnected(device: BluetoothDevice): Boolean {
         return try {
-            val isConnectedMethod = device.javaClass.getMethod("isConnected")
-            isConnectedMethod.invoke(device) as? Boolean ?: false
+            isConnectedMethod?.invoke(device) as? Boolean ?: false
         } catch (e: Exception) {
             false
         }

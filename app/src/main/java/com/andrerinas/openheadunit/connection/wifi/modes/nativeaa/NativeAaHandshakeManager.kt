@@ -1014,7 +1014,7 @@ class NativeAaHandshakeManager(
         val likelyPhones = bonded.filter {
             BluetoothHelper.isLikelyPhone(it, settings.nativePreferredDeviceMac, settings.lastConnectedNativeMac)
         }
-        val targetList = if (likelyPhones.isNotEmpty()) likelyPhones else bonded
+        val targetList = likelyPhones.ifEmpty { bonded }
         val hasHistory = settings.lastConnectedNativeMac.isNotEmpty() ||
             settings.nativePreferredDeviceMac.isNotEmpty() ||
             settings.autoStartBluetoothDeviceMacs.isNotEmpty()

@@ -814,6 +814,7 @@ class HomeFragment : Fragment() {
             countdownProgress.progressTintList = ColorStateList.valueOf(brandTeal)
         }
 
+        val connectedMacSet = connectedMacs.toSet()
         val listAdapter = object : ArrayAdapter<BluetoothDevice>(requireContext(), R.layout.list_item_driver_device, currentDevices) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_driver_device, parent, false)
@@ -831,7 +832,7 @@ class HomeFragment : Fragment() {
 
                 nameView.text = device.name ?: "Unknown Device"
 
-                val isConnected = device.address in connectedMacs
+                val isConnected = device.address in connectedMacSet
                 if (isConnected) {
                     statusView.text = "🟢 " + context.getString(R.string.driver_device_connected)
                     statusView.setTextColor(ContextCompat.getColor(context, R.color.brand_teal))
@@ -966,13 +967,17 @@ class HomeFragment : Fragment() {
             countdownProgress.max = timeoutSec * 1000
             countdownProgress.progress = timeoutSec * 1000
 
+            var lastSecondsRemaining = -1
             driverCountdownTimer?.cancel()
-            driverCountdownTimer = object : CountDownTimer(timeoutSec * 1000L, 50L) {
+            driverCountdownTimer = object : CountDownTimer(timeoutSec * 1000L, 100L) {
                 override fun onTick(millisUntilFinished: Long) {
                     if (!isAdded || dialog.isShowing != true) return
                     countdownProgress.progress = millisUntilFinished.toInt()
                     val secondsRemaining = ((millisUntilFinished + 999) / 1000).toInt()
-                    countdownSubtitle.text = getString(R.string.driver_selection_auto_in, secondsRemaining, targetName)
+                    if (secondsRemaining != lastSecondsRemaining) {
+                        lastSecondsRemaining = secondsRemaining
+                        countdownSubtitle.text = getString(R.string.driver_selection_auto_in, secondsRemaining, targetName)
+                    }
                 }
 
                 override fun onFinish() {
@@ -997,11 +1002,6 @@ class HomeFragment : Fragment() {
             }
         }
 
-        val notifyShownIntent = Intent(requireContext(), AapService::class.java).apply {
-            action = AapService.ACTION_NATIVE_AA_PROMPT_SHOWN
-        }
-        ContextCompat.startForegroundService(requireContext(), notifyShownIntent)
-        (activity as? MainActivity)?.dismissSplashImmediately()
         activeDialog = dialog
         dialog.show()
     }

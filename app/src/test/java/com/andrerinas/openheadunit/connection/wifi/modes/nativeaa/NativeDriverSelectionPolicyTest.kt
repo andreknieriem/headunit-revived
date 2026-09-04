@@ -145,12 +145,16 @@ class NativeDriverSelectionPolicyTest {
     }
 
     @Test
-    fun `sanitizeTimeout clamps values between 3 and 20 seconds`() {
+    fun `sanitizeTimeout clamps values between 3 and 30 seconds`() {
+        assertEquals(3, NativeDriverSelectionPolicy.sanitizeTimeout(-10))
+        assertEquals(3, NativeDriverSelectionPolicy.sanitizeTimeout(-1))
+        assertEquals(3, NativeDriverSelectionPolicy.sanitizeTimeout(0))
         assertEquals(3, NativeDriverSelectionPolicy.sanitizeTimeout(1))
         assertEquals(3, NativeDriverSelectionPolicy.sanitizeTimeout(3))
         assertEquals(10, NativeDriverSelectionPolicy.sanitizeTimeout(10))
-        assertEquals(20, NativeDriverSelectionPolicy.sanitizeTimeout(20))
-        assertEquals(20, NativeDriverSelectionPolicy.sanitizeTimeout(60))
+        assertEquals(30, NativeDriverSelectionPolicy.sanitizeTimeout(30))
+        assertEquals(30, NativeDriverSelectionPolicy.sanitizeTimeout(31))
+        assertEquals(30, NativeDriverSelectionPolicy.sanitizeTimeout(60))
     }
 
     @Test

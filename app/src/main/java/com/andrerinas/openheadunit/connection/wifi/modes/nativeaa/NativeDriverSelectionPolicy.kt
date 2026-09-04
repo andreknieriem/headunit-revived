@@ -20,7 +20,7 @@ object NativeDriverSelectionPolicy {
 
     const val DEFAULT_TIMEOUT_SEC = 10
     const val MIN_TIMEOUT_SEC = 3
-    const val MAX_TIMEOUT_SEC = 20
+    const val MAX_TIMEOUT_SEC = 30
 
     /**
      * Determines whether the driver/device selection dialog should be displayed.
