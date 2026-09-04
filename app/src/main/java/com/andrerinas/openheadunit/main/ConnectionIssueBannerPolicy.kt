@@ -35,6 +35,8 @@ object ConnectionIssueBannerPolicy {
      *   group creation, which only the Native AA WiFi Direct transport reaches. The helper's own
      *   WiFi Direct strategy shares that manager but hands the phone no credentials, so a refused
      *   group there is not the reason a connection failed.
+     * - `WIFI_DIRECT_STACK_CYCLED` is raised in the same manager's state receiver and is the cause
+     *   the refusal above is usually the symptom of, so it is keyed the same way.
      *
      * A record is not deleted when it stops applying. It describes what the hardware did, and the
      * user may well be back on that route tomorrow; it is only hidden while it cannot be the
@@ -46,12 +48,15 @@ object ConnectionIssueBannerPolicy {
             NativeTransport.WIFI_DIRECT -> setOf(
                 ConnectionIssue.BLUETOOTH_SENT_NO_DATA,
                 ConnectionIssue.BSSID_UNAVAILABLE,
-                ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED
+                ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED,
+                ConnectionIssue.WIFI_DIRECT_STACK_CYCLED,
+                ConnectionIssue.VIDEO_LINK_TOO_SLOW
             )
             NativeTransport.HOTSPOT -> setOf(
                 ConnectionIssue.BLUETOOTH_SENT_NO_DATA,
                 ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE,
-                ConnectionIssue.HOTSPOT_NOT_RUNNING
+                ConnectionIssue.HOTSPOT_NOT_RUNNING,
+                ConnectionIssue.VIDEO_LINK_TOO_SLOW
             )
         }
     }
@@ -61,8 +66,8 @@ object ConnectionIssueBannerPolicy {
      * that has already been done.
      *
      * These records are cleared only by something that *disproves* them, which the user typing a
-     * value never does: the device that would not name its own access point still will not, and the
-     * unit that could not read its own address still cannot. So a user who typed the hotspot name
+     * value never does: the device that would not name its own access point still will not, and a
+     * unit whose every source came back empty is not made to read one by a value typed into a box. So a user who typed the hotspot name
      * the banner asked for, and whose access point then happens to be off at the next launch, would
      * be told again to enter it by hand. The record stays; the instruction stops.
      *
@@ -73,9 +78,12 @@ object ConnectionIssueBannerPolicy {
      * that every state one of them declines to retire is one this function hides.
      *
      * `BLUETOOTH_SENT_NO_DATA` has no entry because its remedy is leaving Native AA, which
-     * [relevantNow] already answers. `HOTSPOT_NOT_RUNNING` and `WIFI_DIRECT_GROUP_REFUSED` have none
-     * either: no setting fixes them, and an access point coming up or a group forming disproves them
-     * outright, so those records retire themselves.
+     * [relevantNow] already answers. `HOTSPOT_NOT_RUNNING`, `WIFI_DIRECT_GROUP_REFUSED`,
+     * `WIFI_DIRECT_STACK_CYCLED` and `VIDEO_LINK_TOO_SLOW` have none either: no setting fixes them,
+     * and an access point coming up, a group forming or a session rendering a frame disproves them
+     * outright, so those records retire themselves. Lowering the frame rate is deliberately not a
+     * remedy here: it is a guess at the ceiling, and only a session that renders proves it was
+     * enough.
      *
      * @param hotspotSsid [com.andrerinas.openheadunit.utils.Settings.hotspotSsid]
      * @param hotspotPassword [com.andrerinas.openheadunit.utils.Settings.hotspotPassword] — needed

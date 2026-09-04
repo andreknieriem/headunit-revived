@@ -74,7 +74,7 @@ class WifiP2pOperatingChannelPolicyTest {
             assertEquals(
                 "$preference",
                 emptyList<Int>(),
-                WifiP2pOperatingChannelPolicy.attemptChannels(api34, preference, useUpperBand = true)
+                WifiP2pOperatingChannelPolicy.attemptChannels(api34, preference, chosenChannel = WifiP2pOperatingChannelPolicy.CHANNEL_UPPER)
             )
         }
     }
@@ -100,7 +100,7 @@ class WifiP2pOperatingChannelPolicyTest {
             "the upper-band flag belongs to a rung this radio no longer reaches",
             listOf(6),
             WifiP2pOperatingChannelPolicy.attemptChannels(
-                api27, P2pBandPreference.AUTO, useUpperBand = true, supports5Ghz = false
+                api27, P2pBandPreference.AUTO, chosenChannel = WifiP2pOperatingChannelPolicy.CHANNEL_UPPER, supports5Ghz = false
             )
         )
     }
@@ -143,10 +143,10 @@ class WifiP2pOperatingChannelPolicyTest {
         assertEquals(listOf(36), WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ))
         assertEquals(
             listOf(149),
-            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ, useUpperBand = true)
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ, chosenChannel = WifiP2pOperatingChannelPolicy.CHANNEL_UPPER)
         )
-        for (useUpper in listOf(false, true)) {
-            for (channel in WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ, useUpper)) {
+        for (chosen in listOf(0, 36, 40, 44, 48, 149)) {
+            for (channel in WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_5GHZ, chosen)) {
                 assertTrue(
                     "channel $channel is not 5 GHz",
                     WifiP2pOperatingChannelPolicy.frequencyMhzFor(channel) > 5000
@@ -159,17 +159,63 @@ class WifiP2pOperatingChannelPolicyTest {
     fun `2_4 GHz only asks for one channel and never a 5 GHz one`() {
         assertEquals(listOf(6), WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_2_4GHZ))
         assertEquals(
-            "the upper-band flag belongs to the 5 GHz rung, which this preference never reaches",
+            "the chosen channel belongs to the 5 GHz rung, which this preference never reaches",
             listOf(6),
-            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_2_4GHZ, useUpperBand = true)
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_2_4GHZ, chosenChannel = WifiP2pOperatingChannelPolicy.CHANNEL_UPPER)
         )
+    }
+
+    @Test
+    fun `a chosen channel replaces the 5 GHz rung and nothing else`() {
+        // The 2.4 GHz rung has to survive: the request is a disallowed-frequency list, so a unit
+        // that cannot host a group owner on the named channel forms no group at all, and this rung
+        // is the only thing that stops a wrong choice being a dead unit.
+        for (channel in listOf(36, 40, 44, 48, 149)) {
+            assertEquals(
+                listOf(channel, 6),
+                WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, channel)
+            )
+        }
+    }
+
+    @Test
+    fun `automatic reproduces the ladder that shipped before the choice existed`() {
+        assertEquals(
+            listOf(36, 6),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, 0)
+        )
+    }
+
+    @Test
+    fun `a channel this policy cannot ask for falls back to the rung that always shipped`() {
+        // Total rather than trusting the caller. 52 is DFS, 6 is the other band, and both would be
+        // a worse answer than the default one if they reached the driver.
+        for (nonsense in listOf(52, 6, 200, -1)) {
+            assertEquals(
+                "chosen=$nonsense",
+                listOf(36, 6),
+                WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, nonsense)
+            )
+        }
+    }
+
+    @Test
+    fun `a chosen channel changes nothing from API 29 up, where the band request replaces this`() {
+        for (channel in listOf(0, 36, 149)) {
+            assertTrue(
+                WifiP2pOperatingChannelPolicy.attemptChannels(api29, P2pBandPreference.AUTO, channel).isEmpty()
+            )
+            assertTrue(
+                WifiP2pOperatingChannelPolicy.attemptChannels(api34, P2pBandPreference.FORCE_5GHZ, channel).isEmpty()
+            )
+        }
     }
 
     @Test
     fun `every rung is a channel the platform will accept`() {
         for (preference in P2pBandPreference.values()) {
-            for (useUpper in listOf(false, true)) {
-                for (channel in WifiP2pOperatingChannelPolicy.attemptChannels(api27, preference, useUpper)) {
+            for (chosen in listOf(0, 36, 40, 44, 48, 149)) {
+                for (channel in WifiP2pOperatingChannelPolicy.attemptChannels(api27, preference, chosen)) {
                     assertTrue("$preference/$channel", WifiP2pOperatingChannelPolicy.isRequestable(channel))
                     assertTrue(
                         "a rung must never be the sentinel that means 'ask for nothing'",
@@ -184,12 +230,12 @@ class WifiP2pOperatingChannelPolicyTest {
     fun `the upper band is only reached when it is asked for`() {
         assertEquals(
             listOf(149, 6),
-            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, useUpperBand = true),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.AUTO, chosenChannel = WifiP2pOperatingChannelPolicy.CHANNEL_UPPER),
         )
         assertEquals(
             "the flag must not smuggle UNII-3 onto a preference that never asks for 5 GHz",
             listOf(6),
-            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_2_4GHZ, useUpperBand = true),
+            WifiP2pOperatingChannelPolicy.attemptChannels(api27, P2pBandPreference.FORCE_2_4GHZ, chosenChannel = WifiP2pOperatingChannelPolicy.CHANNEL_UPPER),
         )
     }
 

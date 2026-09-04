@@ -70,6 +70,8 @@
 
     <string name="bluetooth_address_s">Bluetooth-адреса</string>
     <string name="enter_bluetooth_mac">Ввести MAC-адресу Bluetooth</string>
+    <string name="bluetooth_address_message">Власна адреса цього пристрою, за якою його розпізнає телефон. Знайдіть її в Налаштуваннях, Про телефон, Стан, або на спареному телефоні під шестернею поруч із цим пристроєм. Залиште порожнім для автоматичного визначення.</string>
+    <string name="invalid_bluetooth_address">Це не адреса Bluetooth. Введіть шість пар шістнадцяткових цифр, наприклад 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Скинути</string>
     <string name="gps_for_navigation">GPS для навігації</string>
     <string name="gps_for_navigation_description">Використовувати GPS для навігації</string>
@@ -864,7 +866,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Задайте BSSID для бездротового з\'єднання вручну. Потрібно лише там, де жодне джерело на пристрої її не називає; у журналі перелічено кожне опитане джерело.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -891,8 +893,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -902,8 +902,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -954,22 +952,46 @@
     <string name="wifi_direct_band_24ghz">Лише 2.4 ГГц</string>
     <string name="wifi_direct_band_hint">Авто запитує 5 ГГц і переходить на 2.4 ГГц.</string>
     <string name="connection_issue_banner_bt_silent">Телефон підключився через Bluetooth, але не отримав даних. Торкніться, щоб перейти на USB, Wireless Helper або Auto.</string>
-    <string name="connection_issue_banner_bssid">Пристрій не зміг зчитати свою WiFi MAC-адресу (BSSID). Торкніться, щоб увімкнути Геолокацію або ввести вручну.</string>
+    <string name="connection_issue_banner_bssid">Жодне джерело на цьому пристрої не назвало його власну MAC-адресу WiFi (BSSID), тож телефон так і не дізнався, до якої мережі під\'єднуватися. Перевірено всі, зокрема те, якому не потрібні дозволи. Торкніться, щоб увімкнути геолокацію, яка розблоковує решту, або щоб ввести адресу вручну.</string>
     <string name="connection_issue_banner_hotspot_off">Точку доступу цього пристрою вимкнено, тому телефон не мав мережі для підключення. Увімкніть точку доступу перед підключенням або торкніться, щоб програма ввімкнула її за вас.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Модуль Wi-Fi цього пристрою не зміг створити мережу Wi-Fi Direct для підключення телефону, і програма не може зробити це примусово. Якщо пристрій підключено до іншої мережі Wi-Fi, спробуйте відключити її. Торкніться, щоб замість цього використати власну точку доступу.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Інша програма на цьому пристрої постійно вимикає та вмикає Wi-Fi Direct, тож створити мережу для підключення телефона неможливо. Зазвичай причиною є попередньо встановлена програма проєкції (CarLife, ZLink, CarPlay та подібні), і її варто вимкнути. Натисніть, щоб використати власну точку доступу цього пристрою.</string>
     <string name="connection_issue_banner_hotspot_config">Не вдалося отримати назву та пароль точки доступу. Торкніться для введення вручну.</string>
+    <string name="narrow_band_profile_cap">Знижувати відео на радіо лише 2,4 ГГц</string>
+    <string name="narrow_band_profile_cap_description">Коли Wi-Fi цього пристрою не має діапазону 5 ГГц, запитувати в телефона щонайбільше 720p і 30 кадр/с замість налаштувань вище. На такому з\'єднанні виміряно, що потік на повній швидкості не передавав зображення взагалі, а нижчий працював. Вимкніть, щоб отримувати саме те, що ви задали.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Ваш телефон кілька разів поспіль припиняв відео ще до першого кадру. З\'єднання Wi-Fi надто повільне для зображення. Натисніть, щоб знизити обмеження FPS до 30; також допоможуть менша роздільність і звук AAC.</string>
     <string name="connection_issue_banner_dismiss">Закрити</string>
     <string name="connection_issue_remedy_hotspot_query">Назва та пароль точки доступу</string>
     <string name="preflight_title">Перед підключенням</string>
     <string name="preflight_intro">Цей пристрій не може надати всі дані, необхідні для Android Auto:</string>
     <string name="preflight_item_hotspot_name">Назва точки доступу: пристрій блокує читання додатками.</string>
     <string name="preflight_item_hotspot_password">Потрібен пароль точки доступу.</string>
-    <string name="preflight_item_bssid">WiFi адреса (BSSID) недоступна.</string>
+    <string name="preflight_item_bssid">Адреса WiFi (BSSID). Її не назвало ніщо, навіть адреса, виведена з власного мережевого інтерфейсу пристрою.</string>
     <string name="preflight_item_location">Геолокація вимкнена, тому WiFi адреса прихована.</string>
     <string name="preflight_enter_now">Ввести зараз</string>
     <string name="preflight_open_location">Геолокація</string>
     <string name="preflight_later">Пізніше</string>
     <string name="preflight_invalid_bssid">Недійсна адреса WiFi. Введіть 6 пар шістнадцяткових цифр (наприклад, 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Підключення через мережу (нове рукостискання AA)</string>
+    <string name="native_wifi_version_exchange_description">Дозволяє телефону перепідключатися через WiFi замість Bluetooth, використовуючи точку доступу цього пристрою. Допомагає на пристроях, Bluetooth яких не може передати рукостискання, та в новіших версіях Android Auto. Типово вимкнено, і перше підключення все одно відбувається через Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Завершувати підключення Bluetooth</string>
+    <string name="native_aa_complete_hfp_slc_description">Деякі телефони не запускають бездротовий Android Auto, доки Bluetooth цього пристрою не вважатиметься підключеним, а не лише спареним. Типово увімкнено; вимкніть, якщо дзвінки на цьому пристрої перестануть працювати.</string>
+    <string name="native_aa_ignore_external_bt">Ігнорувати перевірку сумісності Bluetooth</string>
+    <string name="native_aa_ignore_external_bt_description">Схоже, цей пристрій тримає Bluetooth на окремому модулі, недоступному для Android, тому бездротовий Android Auto вимикається автоматично. Типово вимкнено. Вмикайте, лише якщо вважаєте це помилкою: якщо визначення правильне, підключення тихо не вдасться, а журнал виглядатиме нормально.</string>
+    <string name="native_aa_setup_qr_title">Налаштування за QR-кодом</string>
+    <string name="native_aa_setup_qr_description">Показати код, який може зчитати телефон</string>
+    <string name="native_aa_setup_qr_content_description">QR-код для налаштування бездротового Android Auto</string>
+    <string name="native_aa_setup_qr_instruction">Відскануйте його камерою телефона та підтвердьте на телефоні. Це потрібно лише один раз: далі телефон під\'єднується сам.</string>
+    <string name="native_aa_setup_qr_not_drawn">Не вдалося створити код.</string>
+    <string name="native_aa_setup_qr_not_running">Спершу запустіть з\'єднання. Код містить поточну мережу цього пристрою, якої до того немає.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Доступно лише через точку доступу. Мережа WiFi Direct перейменовується щоразу під час створення, тож телефон запам\'ятав би ту, якої вже немає.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Точку доступу вибрано, але з\'єднання досі працює через Wi-Fi Direct. Перезапустіть з\'єднання і спробуйте ще раз.</string>
+    <string name="native_aa_setup_qr_not_listening">Цей пристрій ще не очікує на телефон. Спробуйте ще раз за мить.</string>
+    <string name="native_aa_setup_qr_no_credentials">Назва або пароль мережі поки невідомі. Увімкніть точку доступу або введіть їх вручну вище.</string>
+    <string name="native_aa_setup_qr_no_bssid">Не вдалося прочитати WiFi-адресу (BSSID) цього пристрою. Android Auto відхиляє мережу, яку не може з нею пов\'язати.</string>
+    <string name="native_aa_setup_qr_no_address">Власна адреса цього пристрою в цій мережі поки невідома.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">Не вдалося прочитати Bluetooth-адресу цього пристрою, а телефону вона потрібна, щоб згодом упізнати цей головний пристрій.</string>
+    <string name="native_aa_setup_qr_dongle">Назва Bluetooth цього пристрою схожа на бездротовий адаптер, який телефон вважає іншим типом пристрою. Перейменуйте Bluetooth на цьому пристрої та спробуйте ще раз.</string>
     <string name="category_ui">Інтерфейс користувача</string>
     <string name="hide_phone_signal_label">Приховати рівень сигналу телефону</string>
     <string name="hide_battery_level_label">Приховати рівень заряду телефону</string>

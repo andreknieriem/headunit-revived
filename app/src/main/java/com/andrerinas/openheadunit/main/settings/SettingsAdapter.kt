@@ -49,6 +49,8 @@ sealed class SettingItem {
         var isChecked: Boolean,
         val isEnabled: Boolean = true,
         val nameOverride: String? = null,
+        /** Replaces [descriptionResId] when the subtitle depends on the device, not the string. */
+        val descriptionOverride: String? = null,
         val searchKeywords: String? = null,
         val onCheckedChanged: (Boolean) -> Unit
     ) : SettingItem()
@@ -219,7 +221,10 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
             // Both branches set the visibility, because the holder is recycled. Hiding the view
             // without ever showing it again meant that once a toggle with no description had been
             // bound here, every later toggle reusing this holder rendered without its subtitle.
-            if (setting.descriptionResId != null) {
+            if (setting.descriptionOverride != null) {
+                settingDescription.text = setting.descriptionOverride
+                settingDescription.visibility = View.VISIBLE
+            } else if (setting.descriptionResId != null) {
                 settingDescription.setText(setting.descriptionResId)
                 settingDescription.visibility = View.VISIBLE
             } else {
@@ -369,7 +374,7 @@ class SettingsAdapter : ListAdapter<SettingItem, RecyclerView.ViewHolder>(Settin
                 oldItem is SettingItem.SettingEntry && newItem is SettingItem.SettingEntry ->
                     oldItem.nameResId == newItem.nameResId && oldItem.value == newItem.value
                 oldItem is SettingItem.ToggleSettingEntry && newItem is SettingItem.ToggleSettingEntry ->
-                    oldItem.nameResId == newItem.nameResId && oldItem.descriptionResId == newItem.descriptionResId && oldItem.isChecked == newItem.isChecked && oldItem.isEnabled == newItem.isEnabled && oldItem.nameOverride == newItem.nameOverride
+                    oldItem.nameResId == newItem.nameResId && oldItem.descriptionResId == newItem.descriptionResId && oldItem.isChecked == newItem.isChecked && oldItem.isEnabled == newItem.isEnabled && oldItem.nameOverride == newItem.nameOverride && oldItem.descriptionOverride == newItem.descriptionOverride
                 oldItem is SettingItem.SliderSettingEntry && newItem is SettingItem.SliderSettingEntry ->
                     oldItem.nameResId == newItem.nameResId && oldItem.value == newItem.value && oldItem.sliderValue == newItem.sliderValue
                 oldItem is SettingItem.CategoryHeader && newItem is SettingItem.CategoryHeader ->

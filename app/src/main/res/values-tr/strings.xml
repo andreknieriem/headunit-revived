@@ -75,6 +75,8 @@
 
     <string name="bluetooth_address_s">Bluetooth adresi</string>
     <string name="enter_bluetooth_mac">Bluetooth MAC adresi girin</string>
+    <string name="bluetooth_address_message">Bu cihazın kendi adresi; telefon onu bu adresle tanır. Ayarlar, Hakkında, Durum bölümünde ya da eşleştirilmiş telefonda bu cihazın yanındaki dişli simgesinde bulabilirsiniz. Otomatik olarak algılanması için boş bırakın.</string>
+    <string name="invalid_bluetooth_address">Bu bir Bluetooth adresi değil. Altı çift onaltılık rakam girin, örneğin 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Sıfırla</string>
     <string name="gps_for_navigation">Navigasyon için GPS</string>
     <string name="gps_for_navigation_description">Navigasyon için GPS kullan</string>
@@ -858,7 +860,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Kablosuz bağlantı için BSSID\'yi elle ayarlayın. Yalnızca bu cihazdaki hiçbir kaynak bildirmediğinde gerekir; günlük, sorulan her kaynağı listeler.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -885,8 +887,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -896,8 +896,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -948,22 +946,46 @@
     <string name="wifi_direct_band_24ghz">Yalnızca 2.4 GHz</string>
     <string name="wifi_direct_band_hint">Otomatik 5 GHz ister ve 2.4 GHz\'e geri döner.</string>
     <string name="connection_issue_banner_bt_silent">Telefonunuz Bluetooth ile bağlandı ancak veri alamadı. USB, Wireless Helper veya Auto moduna geçmek için dokunun.</string>
-    <string name="connection_issue_banner_bssid">Cihaz kendi WiFi MAC adresini (BSSID) okuyamadı. Konumu açmak veya adresi manuel girmek için dokunun.</string>
+    <string name="connection_issue_banner_bssid">Bu cihazdaki hiçbir kaynak kendi WiFi MAC adresini (BSSID) bildirmedi, bu yüzden telefonunuz hangi ağa katılacağını hiç öğrenemedi. Hepsi denendi, izin gerektirmeyen biri de dahil. Diğerlerinin önünü açan konumu açmak ya da adresi elle girmek için dokunun.</string>
     <string name="connection_issue_banner_hotspot_off">Bu cihazın erişim noktası kapalı olduğundan telefonun bağlanacağı bir ağ yoktu. Bağlanmadan önce erişim noktasını açın veya uygulamanın sizin için açması için dokunun.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Bu cihazın Wi-Fi\'ı, telefonunuzun katılacağı Wi-Fi Direct ağını oluşturamadı ve uygulama bunu zorlayamaz. Cihaz başka bir Wi-Fi ağına bağlıysa bağlantısını kesmeyi deneyin. Bunun yerine bu cihazın kendi erişim noktasını kullanmak için dokunun.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Bu cihazdaki başka bir uygulama Wi-Fi Direct\'i sürekli kapatıp açıyor, bu yüzden telefonunuzun katılacağı bir ağ oluşturulamıyor. Genellikle önceden yüklü bir yansıtma uygulaması (CarLife, ZLink, CarPlay ve benzerleri) buna yol açar, devre dışı bırakmayı denemeye değer. Bunun yerine bu cihazın kendi erişim noktasını kullanmak için dokunun.</string>
     <string name="connection_issue_banner_hotspot_config">Erişim noktası adı ve şifresi alınamadı. Manuel girmek için dokunun.</string>
+    <string name="narrow_band_profile_cap">Yalnızca 2,4 GHz radyoda videoyu düşür</string>
+    <string name="narrow_band_profile_cap_description">Bu cihazın Wi-Fi\'ında 5 GHz bandı yoksa, yukarıdaki ayarlar yerine telefondan en fazla 720p ve 30 fps iste. Böyle bir bağlantıda tam hızlı akışın hiç görüntü taşımadığı, daha düşüğünün ise tutunduğu ölçüldü. İstediğiniz ayarların aynen uygulanması için bunu kapatın.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Telefonunuz üst üste birkaç kez, tek bir kare bile gelmeden videodan vazgeçti. Wi-Fi bağlantısı görüntüyü taşıyamayacak kadar yavaş. FPS sınırını 30\'a düşürmek için dokunun; daha düşük çözünürlük ve AAC ses de yardımcı olur.</string>
     <string name="connection_issue_banner_dismiss">Kapat</string>
     <string name="connection_issue_remedy_hotspot_query">Erişim noktası adı ve şifresi</string>
     <string name="preflight_title">Bağlanmadan önce</string>
     <string name="preflight_intro">Bu cihaz Android Auto için gereken tüm bilgileri sağlayamıyor:</string>
     <string name="preflight_item_hotspot_name">Erişim noktası adı uygulamalar tarafından okunamıyor.</string>
     <string name="preflight_item_hotspot_password">Erişim noktası şifresi gerekiyor.</string>
-    <string name="preflight_item_bssid">WiFi adresi (BSSID) bulunamadı.</string>
+    <string name="preflight_item_bssid">WiFi adresi (BSSID). Hiçbir kaynak bildirmedi; cihazın kendi ağ arayüzünden türetilen adres bile.</string>
     <string name="preflight_item_location">Konum kapalı olduğu için WiFi adresi gizleniyor.</string>
     <string name="preflight_enter_now">Şimdi girin</string>
     <string name="preflight_open_location">Konum</string>
     <string name="preflight_later">Daha sonra</string>
     <string name="preflight_invalid_bssid">Geçersiz WiFi adresi. 6 çift onaltılık basamak girin (örn. 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Ağ üzerinden bağlan (yeni AA el sıkışması)</string>
+    <string name="native_wifi_version_exchange_description">Telefonun Bluetooth yerine WiFi üzerinden, bu cihazın erişim noktasını kullanarak yeniden bağlanmasını sağlar. Bluetooth\'u el sıkışmasını taşıyamayan cihazlarda ve daha yeni Android Auto sürümlerinde yardımcı olur. Varsayılan olarak kapalı ve ilk bağlantı yine Bluetooth üzerinden gerçekleşir.</string>
+    <string name="native_aa_complete_hfp_slc">Bluetooth bağlantısını tamamla</string>
+    <string name="native_aa_complete_hfp_slc_description">Bazı telefonlar, bu cihazın Bluetooth\'u yalnızca eşleştirilmiş değil bağlı sayılana kadar kablosuz Android Auto\'yu başlatmaz. Varsayılan olarak açık; bu cihazdaki aramalar çalışmayı bırakırsa kapatın.</string>
+    <string name="native_aa_ignore_external_bt">Bluetooth uyumluluk denetimini yoksay</string>
+    <string name="native_aa_ignore_external_bt_description">Bu cihaz, Bluetooth\'u Android\'in erişemediği ayrı bir modülde tutuyor gibi görünüyor, bu nedenle kablosuz Android Auto otomatik olarak kapatılır. Varsayılan olarak kapalı. Yalnızca bunun yanlış olduğunu düşünüyorsanız açın: tespit doğruysa bağlantı sessizce başarısız olur ve günlük sorunsuz görünür.</string>
+    <string name="native_aa_setup_qr_title">QR kod ile kurulum</string>
+    <string name="native_aa_setup_qr_description">Telefonun tarayabileceği bir kod göster</string>
+    <string name="native_aa_setup_qr_content_description">Kablosuz Android Auto kurulumu için QR kod</string>
+    <string name="native_aa_setup_qr_instruction">Telefonun kamerasıyla tarayın ve telefonda onaylayın. Yalnızca bir kez gerekir: sonrasında telefon kendiliğinden bağlanır.</string>
+    <string name="native_aa_setup_qr_not_drawn">Kod oluşturulamadı.</string>
+    <string name="native_aa_setup_qr_not_running">Önce bağlantıyı başlatın. Kod, bu cihazın güncel ağını taşır; o ana kadar böyle bir ağ yoktur.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Yalnızca erişim noktası ile kullanılabilir. WiFi Direct ağı her oluşturulduğunda yeniden adlandırılır, bu yüzden telefon artık var olmayan bir ağı hatırlardı.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Erişim noktası seçili, ancak bağlantı hâlâ Wi-Fi Direct üzerinden çalışıyor. Bağlantıyı yeniden başlatıp tekrar deneyin.</string>
+    <string name="native_aa_setup_qr_not_listening">Bu cihaz henüz telefonu beklemiyor. Birazdan tekrar deneyin.</string>
+    <string name="native_aa_setup_qr_no_credentials">Ağın adı veya parolası henüz bilinmiyor. Erişim noktasını açın ya da yukarıdan elle girin.</string>
+    <string name="native_aa_setup_qr_no_bssid">Bu cihazın WiFi adresi (BSSID) okunamadı. Android Auto, bir adrese bağlayamadığı ağı kabul etmez.</string>
+    <string name="native_aa_setup_qr_no_address">Bu cihazın o ağdaki kendi adresi henüz bilinmiyor.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">Bu cihazın Bluetooth adresi okunamadı; telefonun bu üniteyi daha sonra tanıması için bu adres gerekir.</string>
+    <string name="native_aa_setup_qr_dongle">Bu cihazın Bluetooth adı kablosuz bir adaptör gibi görünüyor ve telefon bunu farklı bir cihaz türü olarak ele alır. Bu cihazda Bluetooth adını değiştirip tekrar deneyin.</string>
     <string name="category_ui">Kullanıcı Arayüzü</string>
     <string name="hide_phone_signal_label">Telefonun sinyal gücünü gizle</string>
     <string name="hide_battery_level_label">Telefonun pil seviyesini gizle</string>

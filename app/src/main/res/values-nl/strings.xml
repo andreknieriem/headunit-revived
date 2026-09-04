@@ -69,6 +69,8 @@
 
     <string name="bluetooth_address_s">Bluetooth adres</string>
     <string name="enter_bluetooth_mac">Geef bluetooth MAC in</string>
+    <string name="bluetooth_address_message">Het eigen adres van dit apparaat, waaraan de telefoon het herkent. Je vindt het onder Instellingen, Over, Status, of op de gekoppelde telefoon onder het tandwiel naast dit apparaat. Laat leeg om het automatisch te laten detecteren.</string>
+    <string name="invalid_bluetooth_address">Dat is geen Bluetooth-adres. Geef zes paren hexadecimale tekens in, bijvoorbeeld 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Reset</string>
     <string name="gps_for_navigation">Gps for navigatie</string>
     <string name="gps_for_navigation_description">Gebruik Gps for navigatie</string>
@@ -863,7 +865,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Stel de BSSID voor de draadloze handshake handmatig in. Alleen nodig als geen enkele bron op dit apparaat er een noemt; het logboek noemt elke bevraagde bron.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -890,8 +892,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -901,8 +901,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -953,22 +951,46 @@
     <string name="wifi_direct_band_24ghz">Alleen 2,4 GHz</string>
     <string name="wifi_direct_band_hint">Automatisch vraagt 5 GHz aan en valt terug op 2,4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Je telefoon is via Bluetooth verbonden, maar ontving geen gegevens. Tik om over te schakelen naar USB, Wireless Helper of Auto.</string>
-    <string name="connection_issue_banner_bssid">Dit apparaat kon zijn eigen WiFi MAC-adres (BSSID) niet lezen. Tik om Locatie in te schakelen of het adres handmatig in te voeren.</string>
+    <string name="connection_issue_banner_bssid">Geen enkele bron op dit apparaat noemde het eigen WiFi-MAC-adres (BSSID), dus je telefoon hoorde nooit met welk netwerk hij moest verbinden. Alle bronnen zijn geprobeerd, ook een die geen toestemming nodig heeft. Tik om locatie aan te zetten, wat de rest vrijgeeft, of om het adres met de hand in te voeren.</string>
     <string name="connection_issue_banner_hotspot_off">De hotspot van dit apparaat staat uit, dus er was geen netwerk om je telefoon mee te verbinden. Schakel de hotspot in voordat je verbinding maakt, of tik om de app deze voor je te laten inschakelen.</string>
     <string name="connection_issue_banner_wifi_direct_refused">De wifi van dit apparaat kon het Wi-Fi Direct-netwerk niet aanmaken waarmee je telefoon verbinding wilde maken, en de app kan dit niet forceren. Als dit apparaat verbonden is met een ander wifi-netwerk, verbreek dan die verbinding om te testen. Tik om in plaats daarvan de hotspot van dit apparaat te gebruiken.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Een andere app op dit apparaat zet Wi-Fi Direct steeds uit en weer aan, waardoor er geen netwerk kan worden aangemaakt voor je telefoon. Meestal is een voorgeïnstalleerde projectie-app (CarLife, ZLink, CarPlay en dergelijke) de oorzaak, die uitschakelen is het proberen waard. Tik om in plaats daarvan de hotspot van dit apparaat te gebruiken.</string>
     <string name="connection_issue_banner_hotspot_config">Hotspot-naam en wachtwoord konden niet worden gelezen. Tik om handmatig in te voeren.</string>
+    <string name="narrow_band_profile_cap">Lagere video bij een radio met alleen 2,4 GHz</string>
+    <string name="narrow_band_profile_cap_description">Als de wifi van dit apparaat geen 5GHz-band heeft, vraag de telefoon dan om maximaal 720p en 30 fps in plaats van de instellingen hierboven. Op zo\'n verbinding bleek uit metingen dat een stream op volle snelheid helemaal geen beeld doorgaf, terwijl een lagere het wel volhield. Zet dit uit om precies te krijgen wat je hebt ingesteld.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Je telefoon heeft de video meerdere keren achter elkaar opgegeven voordat er ook maar één beeld binnenkwam. De wifi-verbinding is te traag voor het beeld. Tik om de FPS-limiet naar 30 te verlagen; een lagere resolutie en AAC-audio helpen ook.</string>
     <string name="connection_issue_banner_dismiss">Sluiten</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-naam en wachtwoord</string>
     <string name="preflight_title">Voordat je verbindt</string>
     <string name="preflight_intro">Dit apparaat kan niet alle gegevens leveren die Android Auto nodig heeft:</string>
     <string name="preflight_item_hotspot_name">Hotspot-naam: dit apparaat staat apps niet toe deze te lezen.</string>
     <string name="preflight_item_hotspot_password">Hotspot-wachtwoord vereist.</string>
-    <string name="preflight_item_bssid">WiFi-adres (BSSID) niet beschikbaar.</string>
+    <string name="preflight_item_bssid">WiFi-adres (BSSID). Niets noemde er een, ook niet het adres dat uit de eigen netwerkinterface van dit apparaat is afgeleid.</string>
     <string name="preflight_item_location">Locatie staat uit waardoor het WiFi-adres verborgen blijft.</string>
     <string name="preflight_enter_now">Nu invoeren</string>
     <string name="preflight_open_location">Locatie</string>
     <string name="preflight_later">Later</string>
     <string name="preflight_invalid_bssid">Ongeldig WiFi-adres. Voer zes paren hex-cijfers in (bijv. 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Verbinden via netwerk (nieuwe AA-handshake)</string>
+    <string name="native_wifi_version_exchange_description">Laat de telefoon opnieuw verbinden via WiFi in plaats van Bluetooth, via de hotspot van dit apparaat. Helpt bij apparaten waarvan de Bluetooth de handshake niet kan dragen, en bij nieuwere versies van Android Auto. Standaard uit, en de eerste verbinding gaat nog steeds via Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Bluetooth-verbinding voltooien</string>
+    <string name="native_aa_complete_hfp_slc_description">Sommige telefoons starten draadloos Android Auto pas als de Bluetooth van dit apparaat als verbonden telt, niet alleen als gekoppeld. Standaard aan; schakel het uit als gesprekken op dit apparaat niet meer werken.</string>
+    <string name="native_aa_ignore_external_bt">Bluetooth-compatibiliteitscontrole negeren</string>
+    <string name="native_aa_ignore_external_bt_description">Dit apparaat lijkt Bluetooth op een aparte module te hebben die Android niet kan bereiken, daarom wordt draadloos Android Auto automatisch uitgeschakeld. Standaard uit. Schakel het alleen in als je denkt dat dat niet klopt: als de detectie klopt, mislukt de verbinding geruisloos en ziet het logboek er gezond uit.</string>
+    <string name="native_aa_setup_qr_title">Instellen met QR-code</string>
+    <string name="native_aa_setup_qr_description">Toon een code die de telefoon kan scannen</string>
+    <string name="native_aa_setup_qr_content_description">QR-code om draadloos Android Auto in te stellen</string>
+    <string name="native_aa_setup_qr_instruction">Scan hem met de camera van de telefoon en bevestig daar. Dit hoeft maar één keer: daarna verbindt de telefoon vanzelf.</string>
+    <string name="native_aa_setup_qr_not_drawn">De code kon niet worden gemaakt.</string>
+    <string name="native_aa_setup_qr_not_running">Start eerst de verbinding. De code bevat het huidige netwerk van dit apparaat, dat er daarvoor niet is.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Alleen beschikbaar via de hotspot. Een WiFi Direct-netwerk krijgt bij elke aanmaak een nieuwe naam, dus de telefoon zou er een onthouden die niet meer bestaat.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">De hotspot is gekozen, maar de verbinding loopt nog via Wi-Fi Direct. Start de verbinding opnieuw en probeer het dan nogmaals.</string>
+    <string name="native_aa_setup_qr_not_listening">Dit apparaat wacht nog niet op de telefoon. Probeer het zo nog eens.</string>
+    <string name="native_aa_setup_qr_no_credentials">De naam of het wachtwoord van het netwerk zijn nog niet bekend. Zet de hotspot aan of vul ze hierboven handmatig in.</string>
+    <string name="native_aa_setup_qr_no_bssid">Het WiFi-adres (BSSID) van dit apparaat kon niet worden gelezen. Android Auto weigert een netwerk dat het daar niet aan kan koppelen.</string>
+    <string name="native_aa_setup_qr_no_address">Het eigen adres van dit apparaat op dat netwerk is nog niet bekend.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">Het Bluetooth-adres van dit apparaat kon niet worden gelezen, en de telefoon heeft het nodig om deze headunit later te herkennen.</string>
+    <string name="native_aa_setup_qr_dongle">De Bluetooth-naam van dit apparaat leest als een draadloze dongle, die de telefoon als een ander soort apparaat behandelt. Hernoem Bluetooth op dit apparaat en probeer het opnieuw.</string>
     <string name="category_ui">Gebruikersinterface</string>
     <string name="hide_phone_signal_label">Telefoonsignaal verbergen</string>
     <string name="hide_battery_level_label">Batterijniveau van telefoon verbergen</string>

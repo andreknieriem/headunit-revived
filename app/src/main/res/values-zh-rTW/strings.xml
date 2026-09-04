@@ -69,6 +69,8 @@
 
     <string name="bluetooth_address_s">藍牙位址</string>
     <string name="enter_bluetooth_mac">輸入藍牙 MAC</string>
+    <string name="bluetooth_address_message">此主機自身的位址，手機以此辨識它。可在設定、關於、狀態中找到，或在已配對的手機上此裝置旁的齒輪圖示中查看。留空則自動偵測。</string>
+    <string name="invalid_bluetooth_address">這不是藍牙位址。請輸入六組十六進位數字，例如 0C:32:3A:2D:5D:4A。</string>
     <string name="reset">重置</string>
     <string name="gps_for_navigation">用於導航的 GPS</string>
     <string name="gps_for_navigation_description">使用 GPS 進行導航</string>
@@ -862,7 +864,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">手動設定無線連線的 BSSID。只有在本機沒有任何來源回報時才需要；記錄檔會列出詢問過的每個來源。</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -889,8 +891,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -900,8 +900,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -952,22 +950,46 @@
     <string name="wifi_direct_band_24ghz">僅 2.4 GHz</string>
     <string name="wifi_direct_band_hint">自動會優先要求 5 GHz，必要時降至 2.4 GHz。</string>
     <string name="connection_issue_banner_bt_silent">手機已透過藍牙連線，但未收到任何資料。請輕觸以切換至 USB、Wireless Helper 或 Auto 模式。</string>
-    <string name="connection_issue_banner_bssid">無法讀取 WiFi MAC 位址（BSSID）。輕觸以開啟定位或手動輸入位址。</string>
+    <string name="connection_issue_banner_bssid">此主機沒有任何來源回報自己的 WiFi MAC 位址（BSSID），因此手機始終不知道該加入哪個網路。所有來源都已嘗試，包括一個不需要權限的來源。輕觸以開啟定位（可解除其餘來源的封鎖），或手動輸入位址。</string>
     <string name="connection_issue_banner_hotspot_off">此主機的熱點已關閉，因此沒有可供手機加入的網路。連線前請先開啟熱點，或輕觸讓應用程式為您開啟。</string>
     <string name="connection_issue_banner_wifi_direct_refused">此主機的 WiFi 無法建立手機要加入的 WiFi Direct 網路，且應用程式無法強制建立。若此主機已連線至其他 WiFi 網路，建議嘗試中斷連線。輕觸以改用此主機本身的熱點。</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">此主機上的其他應用程式不斷關閉又開啟 WiFi Direct，因此無法建立手機要加入的網路。通常原因是預先安裝的投影應用程式（CarLife、ZLink、CarPlay 之類），建議停用試試。輕觸以改用此主機本身的熱點。</string>
     <string name="connection_issue_banner_hotspot_config">無法取得熱點名稱與密碼。輕觸以手動輸入。</string>
+    <string name="narrow_band_profile_cap">僅有 2.4 GHz 無線時降低影像</string>
+    <string name="narrow_band_profile_cap_description">當此主機的 WiFi 沒有 5 GHz 頻段時，改為向手機要求最高 720p 與 30 fps，而非上方的設定。實測顯示在這種連線上，全速串流完全傳不出畫面，較低的設定則能維持。若要完全依照您的設定，請關閉此選項。</string>
+    <string name="connection_issue_banner_video_link_too_slow">手機連續多次在第一個影格送達前就放棄影像。WiFi 連線太慢，無法承載畫面。輕觸以將 FPS 上限降為 30；降低解析度與改用 AAC 音訊也有幫助。</string>
     <string name="connection_issue_banner_dismiss">關閉</string>
     <string name="connection_issue_remedy_hotspot_query">熱點名稱與密碼</string>
     <string name="preflight_title">連線前檢查</string>
     <string name="preflight_intro">此裝置無法提供 Android Auto 所需的所有資訊：</string>
     <string name="preflight_item_hotspot_name">熱點名稱：此裝置不允許應用程式讀取。</string>
     <string name="preflight_item_hotspot_password">需要熱點密碼。</string>
-    <string name="preflight_item_bssid">無法取得 WiFi 位址（BSSID）。</string>
+    <string name="preflight_item_bssid">WiFi 位址（BSSID）。沒有任何來源回報，連從本機網路介面推導出的位址也沒有。</string>
     <string name="preflight_item_location">定位服務已關閉，導致 WiFi 位址被隱藏。</string>
     <string name="preflight_enter_now">立即輸入</string>
     <string name="preflight_open_location">定位服務</string>
     <string name="preflight_later">稍後</string>
     <string name="preflight_invalid_bssid">無效的 WiFi 位址。請輸入 6 組十六進位數字（例如 02:1A:11:FF:3C:4D）。</string>
+    <string name="native_wifi_version_exchange">透過網路連線（新版 AA 交握）</string>
+    <string name="native_wifi_version_exchange_description">讓手機改用 WiFi 而非藍牙重新連線，透過此裝置的熱點。對藍牙無法傳送交握的裝置，以及較新版本的 Android Auto 有幫助。預設關閉，且第一次連線仍會透過藍牙。</string>
+    <string name="native_aa_complete_hfp_slc">完成藍牙連線</string>
+    <string name="native_aa_complete_hfp_slc_description">部分手機必須等到此裝置的藍牙被視為已連線（而非僅已配對）才會啟動無線 Android Auto。預設開啟；若此裝置上的通話停止運作，請關閉。</string>
+    <string name="native_aa_ignore_external_bt">忽略藍牙相容性檢查</string>
+    <string name="native_aa_ignore_external_bt_description">此裝置似乎將藍牙置於 Android 無法存取的獨立模組上，因此無線 Android Auto 會自動關閉。預設關閉。只有在你認為判斷有誤時才開啟：若判斷正確，連線會無聲失敗，而記錄看起來一切正常。</string>
+    <string name="native_aa_setup_qr_title">以 QR 碼設定</string>
+    <string name="native_aa_setup_qr_description">顯示手機可掃描的代碼</string>
+    <string name="native_aa_setup_qr_content_description">設定無線 Android Auto 的 QR 碼</string>
+    <string name="native_aa_setup_qr_instruction">用手機相機掃描，然後在手機上確認。只需一次，之後手機會自行連線。</string>
+    <string name="native_aa_setup_qr_not_drawn">無法產生代碼。</string>
+    <string name="native_aa_setup_qr_not_running">請先開始連線。代碼帶有此主機目前的網路，在那之前並不存在。</string>
+    <string name="native_aa_setup_qr_not_hotspot">僅在熱點模式下可用。WiFi Direct 網路每次建立都會重新命名，手機會記住一個已不存在的網路。</string>
+    <string name="native_aa_setup_qr_transport_not_applied">已選擇熱點，但連線仍在 WiFi Direct 上執行。請重新啟動連線後再試一次。</string>
+    <string name="native_aa_setup_qr_not_listening">此主機尚未等待手機連入。請稍候再試。</string>
+    <string name="native_aa_setup_qr_no_credentials">尚不知道網路名稱或密碼。請開啟熱點，或在上方手動輸入。</string>
+    <string name="native_aa_setup_qr_no_bssid">無法讀取此主機的 WiFi 位址（BSSID）。Android Auto 會拒絕無法對應到位址的網路。</string>
+    <string name="native_aa_setup_qr_no_address">尚不知道此主機在該網路上的位址。</string>
+    <string name="native_aa_setup_qr_no_bluetooth">無法讀取此主機的藍牙位址，而手機需要它才能在日後認出這台主機。</string>
+    <string name="native_aa_setup_qr_dongle">此主機的藍牙名稱看起來像無線轉接器，手機會把它視為另一種裝置。請重新命名此主機的藍牙後再試一次。</string>
     <string name="category_ui">使用者介面</string>
     <string name="hide_phone_signal_label">隱藏手機訊號圖示</string>
     <string name="hide_battery_level_label">隱藏手機電量圖示</string>

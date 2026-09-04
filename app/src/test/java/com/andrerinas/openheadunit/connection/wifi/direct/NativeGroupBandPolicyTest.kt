@@ -141,4 +141,87 @@ class NativeGroupBandPolicyTest {
         assertEquals("2.4GHz", NativeGroupBandPolicy.label(Band.GHZ_2_4))
         assertEquals("5GHz", NativeGroupBandPolicy.label(Band.GHZ_5))
     }
+
+    @Test
+    fun `a chosen channel becomes a frequency, and automatic asks for the band instead`() {
+        // The whole point: setGroupOperatingBand is answered by a random pick among eight
+        // frequencies, four of them UNII-3, so a request that names MHz is the only fixed one.
+        assertEquals(5180, NativeGroupBandPolicy.requestedFrequencyMhz(NativeGroupBandPolicy.Band.GHZ_5, 36))
+        assertEquals(5745, NativeGroupBandPolicy.requestedFrequencyMhz(NativeGroupBandPolicy.Band.GHZ_5, 149))
+        assertEquals(0, NativeGroupBandPolicy.requestedFrequencyMhz(NativeGroupBandPolicy.Band.GHZ_5, 0))
+    }
+
+    @Test
+    fun `a 5 GHz channel is never pinned onto a request for another band`() {
+        // The setting is shared with the hotspot route, so it is set on units asking for 2.4 GHz.
+        assertEquals(0, NativeGroupBandPolicy.requestedFrequencyMhz(NativeGroupBandPolicy.Band.GHZ_2_4, 36))
+        assertEquals(0, NativeGroupBandPolicy.requestedFrequencyMhz(NativeGroupBandPolicy.Band.UNSPECIFIED, 36))
+    }
+
+    @Test
+    fun `a channel we do not offer is not passed to the driver`() {
+        assertEquals(0, NativeGroupBandPolicy.requestedFrequencyMhz(NativeGroupBandPolicy.Band.GHZ_5, 52))
+    }
+
+    @Test
+    fun `failures retry until the budget is spent, whatever was asked for`() {
+        for (pinned in listOf(false, true)) {
+            for (preference in P2pBandPreference.values()) {
+                assertEquals(
+                    "pinned=$pinned $preference",
+                    NativeGroupBandPolicy.NextStep.RETRY,
+                    NativeGroupBandPolicy.nextStepAfterFailure(preference, pinned, retriesSoFar = 3, maxRetries = 4)
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `a spent budget drops the pinned channel before it drops the band`() {
+        // Dropping the channel first is what keeps a wrong choice from being a dead unit: a forced
+        // frequency fails the group outright rather than landing somewhere else.
+        assertEquals(
+            NativeGroupBandPolicy.NextStep.DROP_PINNED_CHANNEL,
+            NativeGroupBandPolicy.nextStepAfterFailure(P2pBandPreference.AUTO, true, 4, 4)
+        )
+        // Including under 5 GHz only, which is about the band and says nothing about the channel.
+        assertEquals(
+            NativeGroupBandPolicy.NextStep.DROP_PINNED_CHANNEL,
+            NativeGroupBandPolicy.nextStepAfterFailure(P2pBandPreference.FORCE_5GHZ, true, 4, 4)
+        )
+    }
+
+    @Test
+    fun `with no channel pinned the ladder is exactly the one that shipped`() {
+        assertEquals(
+            NativeGroupBandPolicy.NextStep.STANDARD_FALLBACK,
+            NativeGroupBandPolicy.nextStepAfterFailure(P2pBandPreference.AUTO, false, 4, 4)
+        )
+        assertEquals(
+            NativeGroupBandPolicy.NextStep.STANDARD_FALLBACK,
+            NativeGroupBandPolicy.nextStepAfterFailure(P2pBandPreference.FORCE_2_4GHZ, false, 4, 4)
+        )
+        assertEquals(
+            NativeGroupBandPolicy.NextStep.GIVE_UP,
+            NativeGroupBandPolicy.nextStepAfterFailure(P2pBandPreference.FORCE_5GHZ, false, 4, 4)
+        )
+    }
+
+    @Test
+    fun `the step after a dropped channel agrees with fallsBackToPlatformChoice`() {
+        // The caller restarts the budget with nothing pinned, so this pair is the whole ladder and
+        // the two halves must not drift apart.
+        for (preference in P2pBandPreference.values()) {
+            val expected = if (NativeGroupBandPolicy.fallsBackToPlatformChoice(preference)) {
+                NativeGroupBandPolicy.NextStep.STANDARD_FALLBACK
+            } else {
+                NativeGroupBandPolicy.NextStep.GIVE_UP
+            }
+            assertEquals(
+                preference.toString(),
+                expected,
+                NativeGroupBandPolicy.nextStepAfterFailure(preference, false, 4, 4)
+            )
+        }
+    }
 }

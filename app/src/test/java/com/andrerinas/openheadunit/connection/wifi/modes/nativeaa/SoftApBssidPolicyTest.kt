@@ -145,4 +145,36 @@ class SoftApBssidPolicyTest {
         val resolved = SoftApBssidPolicy.choose("11:22:33:44:55:66", "11:22:33:44:55:66", null)
         assertFalse(SoftApBssidPolicy.disprovesBssidUnavailable(resolved, "11:22:33:44:55:66"))
     }
+
+    @Test
+    fun `the list form takes the first usable detected address in order`() {
+        assertEquals(
+            "AA:BB:CC:DD:EE:FF",
+            SoftApBssidPolicy.choose(null, listOf(null, "0", "aa-bb-cc-dd-ee-ff", "11:22:33:44:55:66"))
+        )
+    }
+
+    @Test
+    fun `the list form still lets the override outrank every detected address`() {
+        assertEquals(
+            "11:22:33:44:55:66",
+            SoftApBssidPolicy.choose("11:22:33:44:55:66", listOf("aa:bb:cc:dd:ee:ff"))
+        )
+    }
+
+    @Test
+    fun `the list form rejects placeholders and non-addresses`() {
+        assertEquals(
+            "",
+            SoftApBssidPolicy.choose("0", listOf("02:00:00:00:00:00", "00:00:00:00:00:00", "", null))
+        )
+    }
+
+    @Test
+    fun `the two forms agree`() {
+        assertEquals(
+            SoftApBssidPolicy.choose("0", "aa:bb:cc:dd:ee:ff", "11:22:33:44:55:66"),
+            SoftApBssidPolicy.choose("0", listOf("aa:bb:cc:dd:ee:ff", "11:22:33:44:55:66"))
+        )
+    }
 }

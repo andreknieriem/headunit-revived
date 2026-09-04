@@ -52,8 +52,9 @@ class AutoStartReceiver : BroadcastReceiver() {
                 AppLog.i("MATCH! Starting AapService via Bluetooth Auto-start...")
 
                 // Start the service to make the app alive. Explicit action so onStartCommand
-                // re-arms wireless mode even if the service process was already running from
-                // an earlier session (onCreate's init only runs once) — see ACTION_BT_AUTO_START.
+                // arms the wireless mode even if the service process was already running from
+                // an earlier session (onCreate's init only runs once); BtAutoStartRearmPolicy
+                // decides what that means per mode. The Self Mode half is MainActivity's.
                 val serviceIntent = Intent(context, AapService::class.java).setAction(AapService.ACTION_BT_AUTO_START)
                 try {
                     androidx.core.content.ContextCompat.startForegroundService(context, serviceIntent)
@@ -64,7 +65,7 @@ class AutoStartReceiver : BroadcastReceiver() {
                 // Also attempt to start the UI (might be blocked on Android 10+ without special permission)
                 val launchIntent = Intent(context, MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    putExtra(MainActivity.EXTRA_LAUNCH_SOURCE, "Bluetooth auto-start")
+                    putExtra(MainActivity.EXTRA_LAUNCH_SOURCE, MainActivity.LAUNCH_SOURCE_BLUETOOTH)
                 }
                 try {
                     context.startActivity(launchIntent)

@@ -70,6 +70,8 @@
 
     <string name="bluetooth_address_s">Dirección Bluetooth</string>
     <string name="enter_bluetooth_mac">Introducir MAC Bluetooth</string>
+    <string name="bluetooth_address_message">La dirección propia de esta unidad, con la que el teléfono la reconoce. La encontrarás en Ajustes, Información, Estado, o en el teléfono emparejado bajo el engranaje junto a este dispositivo. Déjalo vacío para detectarla automáticamente.</string>
+    <string name="invalid_bluetooth_address">Eso no es una dirección Bluetooth. Introduce seis pares de dígitos hexadecimales, como 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Restablecer</string>
     <string name="gps_for_navigation">GPS para navegación</string>
     <string name="gps_for_navigation_description">Usar GPS para navegación</string>
@@ -872,7 +874,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Establece a mano la BSSID para el enlace inalámbrico. Solo hace falta si ninguna fuente de este dispositivo indica una; el registro nombra cada fuente consultada.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -899,8 +901,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -910,8 +910,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -962,22 +960,46 @@
     <string name="wifi_direct_band_24ghz">Solo 2.4 GHz</string>
     <string name="wifi_direct_band_hint">Automático solicita 5 GHz y recurre a 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Su teléfono se conectó por Bluetooth, pero no recibió datos. Toque para cambiar a USB, Wireless Helper o Auto.</string>
-    <string name="connection_issue_banner_bssid">Esta unidad no pudo leer su dirección MAC WiFi (BSSID). Toque para activar Ubicación o introducir la dirección a mano.</string>
+    <string name="connection_issue_banner_bssid">Ninguna fuente de esta unidad indicó su propia dirección MAC de WiFi (BSSID), así que tu teléfono nunca supo a qué red conectarse. Se probaron todas, incluida una que no necesita permisos. Toca para activar la ubicación, lo que desbloquea las demás, o para introducir la dirección a mano.</string>
     <string name="connection_issue_banner_hotspot_off">El punto de acceso de esta unidad está desactivado, por lo que no había red a la que conectar tu teléfono. Activa el punto de acceso antes de conectar o toca para que la app lo active por ti.</string>
     <string name="connection_issue_banner_wifi_direct_refused">El Wi-Fi de esta unidad no pudo crear la red Wi-Fi Direct a la que se iba a unir tu teléfono, y la app no puede forzarlo. Si esta unidad está conectada a otra red Wi-Fi, prueba a desconectarla. Toca para usar el punto de acceso propio de esta unidad.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Otra app de esta unidad apaga y enciende WiFi Direct continuamente, así que no se puede crear ninguna red a la que se una tu teléfono. Lo habitual es que la causa sea una app de proyección preinstalada (CarLife, ZLink, CarPlay y similares), y merece la pena desactivarla. Toca para usar el punto de acceso propio de esta unidad.</string>
     <string name="connection_issue_banner_hotspot_config">Esta unidad no proporcionó el nombre y contraseña del punto de acceso. Toque para introducirlos a mano.</string>
+    <string name="narrow_band_profile_cap">Bajar el vídeo con radio solo de 2,4 GHz</string>
+    <string name="narrow_band_profile_cap_description">Cuando el WiFi de esta unidad no tiene banda de 5 GHz, pedir al teléfono como máximo 720p y 30 fps en lugar de los ajustes de arriba. En un enlace así se midió que un flujo a plena velocidad no llevaba imagen alguna, mientras que uno más bajo sí aguantaba. Desactiva esto para recibir exactamente lo que pediste.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Tu teléfono abandonó el vídeo antes de que llegara un solo fotograma, varias veces seguidas. El enlace WiFi es demasiado lento para llevar la imagen. Toca para bajar el límite de FPS a 30; una resolución menor y el audio AAC también ayudan.</string>
     <string name="connection_issue_banner_dismiss">Descartar</string>
     <string name="connection_issue_remedy_hotspot_query">Nombre y contraseña del punto de acceso</string>
     <string name="preflight_title">Antes de conectar</string>
     <string name="preflight_intro">Este dispositivo no puede suministrar todo lo necesario para Android Auto:</string>
     <string name="preflight_item_hotspot_name">Nombre del punto de acceso: este dispositivo no permite leerlo.</string>
     <string name="preflight_item_hotspot_password">Se requiere contraseña para el punto de acceso.</string>
-    <string name="preflight_item_bssid">Dirección WiFi (BSSID) no disponible.</string>
+    <string name="preflight_item_bssid">Dirección WiFi (BSSID). Nada indicó una, ni siquiera la deducida de la propia interfaz de red de este dispositivo.</string>
     <string name="preflight_item_location">La ubicación está desactivada, ocultando la dirección WiFi.</string>
     <string name="preflight_enter_now">Introducir ahora</string>
     <string name="preflight_open_location">Ubicación</string>
     <string name="preflight_later">Más tarde</string>
     <string name="preflight_invalid_bssid">Dirección WiFi no válida. Introduzca seis pares de dígitos hexadecimales (ej. 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Conectar por red (nuevo handshake AA)</string>
+    <string name="native_wifi_version_exchange_description">Permite que el teléfono se vuelva a conectar por WiFi en lugar de Bluetooth, usando el punto de acceso de esta unidad. Ayuda en unidades cuyo Bluetooth no puede transportar el handshake, y en versiones nuevas de Android Auto. Desactivado de forma predeterminada, y la primera conexión sigue pasando por Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Completar la conexión Bluetooth</string>
+    <string name="native_aa_complete_hfp_slc_description">Algunos teléfonos no inician Android Auto inalámbrico hasta que el Bluetooth de esta unidad cuenta como conectado, no solo emparejado. Activado de forma predeterminada; desactívelo si las llamadas en este dispositivo dejan de funcionar.</string>
+    <string name="native_aa_ignore_external_bt">Ignorar la comprobación de compatibilidad Bluetooth</string>
+    <string name="native_aa_ignore_external_bt_description">Esta unidad parece tener el Bluetooth en un módulo aparte que Android no puede alcanzar, por lo que Android Auto inalámbrico se desactiva automáticamente. Desactivado de forma predeterminada. Actívelo solo si cree que eso es incorrecto: cuando la detección acierta, la conexión falla en silencio y el registro parece correcto.</string>
+    <string name="native_aa_setup_qr_title">Configurar con código QR</string>
+    <string name="native_aa_setup_qr_description">Mostrar un código que el teléfono pueda escanear</string>
+    <string name="native_aa_setup_qr_content_description">Código QR para configurar Android Auto inalámbrico</string>
+    <string name="native_aa_setup_qr_instruction">Escanéalo con la cámara del teléfono y confirma en él. Solo hace falta una vez: después el teléfono se conecta solo.</string>
+    <string name="native_aa_setup_qr_not_drawn">No se pudo generar el código.</string>
+    <string name="native_aa_setup_qr_not_running">Inicia primero la conexión. El código lleva la red actual de esta unidad, que antes no existe.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Solo disponible con el punto de acceso. Una red WiFi Direct se renombra cada vez que se crea, así que el teléfono recordaría una que ya no existe.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">El punto de acceso está elegido, pero la conexión sigue funcionando con WiFi Direct. Reinicia la conexión y vuelve a intentarlo.</string>
+    <string name="native_aa_setup_qr_not_listening">Esta unidad todavía no está esperando al teléfono. Inténtalo de nuevo en un momento.</string>
+    <string name="native_aa_setup_qr_no_credentials">Aún no se conocen el nombre o la contraseña de la red. Activa el punto de acceso o introdúcelos a mano arriba.</string>
+    <string name="native_aa_setup_qr_no_bssid">No se pudo leer la dirección WiFi (BSSID) de esta unidad. Android Auto rechaza una red que no puede asociar a una.</string>
+    <string name="native_aa_setup_qr_no_address">Aún no se conoce la dirección de esta unidad en esa red.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">No se pudo leer la dirección Bluetooth de esta unidad, y el teléfono la necesita para reconocer después este equipo.</string>
+    <string name="native_aa_setup_qr_dongle">El nombre Bluetooth de esta unidad parece el de un adaptador inalámbrico, que el teléfono trata como otro tipo de dispositivo. Cambia el nombre de Bluetooth en esta unidad e inténtalo de nuevo.</string>
     <string name="category_ui">Interfaz de usuario</string>
     <string name="hide_phone_signal_label">Ocultar señal del teléfono</string>
     <string name="hide_battery_level_label">Ocultar nivel de batería del teléfono</string>

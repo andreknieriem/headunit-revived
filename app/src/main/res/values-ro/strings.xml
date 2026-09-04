@@ -70,6 +70,8 @@
 
     <string name="bluetooth_address_s">Adresă Bluetooth</string>
     <string name="enter_bluetooth_mac">Introdu adresa MAC Bluetooth</string>
+    <string name="bluetooth_address_message">Adresa proprie a acestei unități, după care o recunoaște telefonul. O găsiți în Setări, Despre, Stare, sau pe telefonul asociat, sub roata dințată de lângă acest dispozitiv. Lăsați gol pentru detectare automată.</string>
+    <string name="invalid_bluetooth_address">Aceasta nu este o adresă Bluetooth. Introduceți șase perechi de cifre hexazecimale, de exemplu 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Resetează</string>
     <string name="gps_for_navigation">GPS pentru navigație</string>
     <string name="gps_for_navigation_description">Folosește GPS-ul pentru navigație</string>
@@ -860,7 +862,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Setați manual BSSID-ul pentru conexiunea wireless. Necesar doar când nicio sursă de pe acest dispozitiv nu indică una; jurnalul numește fiecare sursă interogată.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -887,8 +889,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -898,8 +898,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -950,22 +948,46 @@
     <string name="wifi_direct_band_24ghz">Doar 2.4 GHz</string>
     <string name="wifi_direct_band_hint">Automat solicită 5 GHz și recurge la 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Telefonul s-a conectat prin Bluetooth, dar nu a primit date. Atingeți pentru a comuta pe USB, Wireless Helper sau Auto.</string>
-    <string name="connection_issue_banner_bssid">Unitatea nu a putut citi adresa MAC WiFi (BSSID). Atingeți pentru a porni Locația sau a introduce adresa manual.</string>
+    <string name="connection_issue_banner_bssid">Nicio sursă de pe această unitate nu a indicat propria adresă MAC WiFi (BSSID), așa că telefonul nu a aflat niciodată la ce rețea să se conecteze. Au fost încercate toate, inclusiv una care nu are nevoie de nicio permisiune. Atingeți pentru a activa Locația, ceea ce deblochează restul, sau pentru a introduce adresa manual.</string>
     <string name="connection_issue_banner_hotspot_off">Hotspotul acestei unități este oprit, astfel că telefonul nu a avut la ce rețea să se conecteze. Porniți hotspotul înainte de conectare sau atingeți pentru ca aplicația să îl pornească pentru dvs.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi-ul acestei unități nu a putut crea rețeaua Wi-Fi Direct la care urma să se conecteze telefonul, iar aplicația nu poate forța acest lucru. Dacă unitatea este conectată la altă rețea Wi-Fi, încercați să o deconectați. Atingeți pentru a utiliza hotspotul acestei unități.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">O altă aplicație de pe această unitate oprește și pornește încontinuu Wi-Fi Direct, așa că nu poate fi creată nicio rețea la care să se conecteze telefonul. De obicei cauza este o aplicație de proiecție preinstalată (CarLife, ZLink, CarPlay și altele asemenea), iar dezactivarea ei merită încercată. Atingeți pentru a utiliza hotspotul acestei unități.</string>
     <string name="connection_issue_banner_hotspot_config">Unitatea nu a furnizat numele și parola hotspotului. Atingeți pentru a le introduce manual.</string>
+    <string name="narrow_band_profile_cap">Video redus pe radio doar de 2,4 GHz</string>
+    <string name="narrow_band_profile_cap_description">Când Wi-Fi-ul acestei unități nu are banda de 5 GHz, cere telefonului cel mult 720p și 30 fps în locul setărilor de mai sus. Pe o astfel de legătură s-a măsurat că fluxul la rată completă nu transporta deloc imagine, în timp ce unul mai mic rezista. Dezactivați pentru a primi exact ce ați cerut.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Telefonul a renunțat la video de mai multe ori la rând, înainte să ajungă vreun cadru. Legătura Wi-Fi este prea lentă pentru imagine. Atingeți pentru a coborî limita de FPS la 30; ajută și o rezoluție mai mică, precum și sunetul AAC.</string>
     <string name="connection_issue_banner_dismiss">Închide</string>
     <string name="connection_issue_remedy_hotspot_query">Nume și parolă hotspot</string>
     <string name="preflight_title">Înainte de conectare</string>
     <string name="preflight_intro">Acest dispozitiv nu poate furniza toate datele necesare pentru Android Auto:</string>
     <string name="preflight_item_hotspot_name">Numele hotspotului nu poate fi citit de aplicații.</string>
     <string name="preflight_item_hotspot_password">Este necesară parola hotspotului.</string>
-    <string name="preflight_item_bssid">Adresa WiFi (BSSID) nu este disponibilă.</string>
+    <string name="preflight_item_bssid">Adresă WiFi (BSSID). Nimic nu a indicat una, nici măcar cea dedusă din propria interfață de rețea a acestui dispozitiv.</string>
     <string name="preflight_item_location">Locația este oprită, ascunzând adresa WiFi.</string>
     <string name="preflight_enter_now">Introdu acum</string>
     <string name="preflight_open_location">Locație</string>
     <string name="preflight_later">Mai târziu</string>
     <string name="preflight_invalid_bssid">Adresă WiFi nevalidă. Introduceți 6 perechi de cifre hexazecimale (ex: 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Conectare prin rețea (handshake AA nou)</string>
+    <string name="native_wifi_version_exchange_description">Permite telefonului să se reconecteze prin WiFi în loc de Bluetooth, folosind hotspotul acestei unități. Ajută la unitățile al căror Bluetooth nu poate transporta handshake-ul și la versiunile mai noi de Android Auto. Dezactivat implicit, iar prima conexiune trece în continuare prin Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Finalizează conexiunea Bluetooth</string>
+    <string name="native_aa_complete_hfp_slc_description">Unele telefoane nu pornesc Android Auto wireless până când Bluetooth-ul acestei unități nu este considerat conectat, nu doar asociat. Activat implicit; dezactivați-l dacă apelurile pe acest dispozitiv nu mai funcționează.</string>
+    <string name="native_aa_ignore_external_bt">Ignoră verificarea de compatibilitate Bluetooth</string>
+    <string name="native_aa_ignore_external_bt_description">Această unitate pare să țină Bluetooth-ul pe un modul separat la care Android nu ajunge, așa că Android Auto wireless este dezactivat automat. Dezactivat implicit. Activați-l doar dacă credeți că este greșit: când detectarea este corectă, conexiunea eșuează fără niciun semn, iar jurnalul pare în regulă.</string>
+    <string name="native_aa_setup_qr_title">Configurare prin cod QR</string>
+    <string name="native_aa_setup_qr_description">Afișează un cod pe care telefonul îl poate scana</string>
+    <string name="native_aa_setup_qr_content_description">Cod QR pentru configurarea Android Auto wireless</string>
+    <string name="native_aa_setup_qr_instruction">Scanați-l cu camera telefonului și confirmați pe telefon. Este necesar o singură dată: după aceea telefonul se conectează singur.</string>
+    <string name="native_aa_setup_qr_not_drawn">Codul nu a putut fi generat.</string>
+    <string name="native_aa_setup_qr_not_running">Porniți mai întâi conexiunea. Codul conține rețeaua curentă a acestei unități, care înainte nu există.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Disponibil doar prin hotspot. O rețea WiFi Direct este redenumită la fiecare creare, așa că telefonul ar reține una care nu mai există.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Hotspotul este ales, dar conexiunea rulează încă pe Wi-Fi Direct. Reporniți conexiunea, apoi încercați din nou.</string>
+    <string name="native_aa_setup_qr_not_listening">Această unitate încă nu așteaptă telefonul. Încercați din nou peste câteva momente.</string>
+    <string name="native_aa_setup_qr_no_credentials">Numele sau parola rețelei nu sunt încă cunoscute. Porniți hotspotul sau introduceți-le manual mai sus.</string>
+    <string name="native_aa_setup_qr_no_bssid">Adresa WiFi (BSSID) a acestei unități nu a putut fi citită. Android Auto refuză o rețea pe care nu o poate lega de una.</string>
+    <string name="native_aa_setup_qr_no_address">Adresa proprie a acestei unități în acea rețea nu este încă cunoscută.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">Adresa Bluetooth a acestei unități nu a putut fi citită, iar telefonul are nevoie de ea pentru a recunoaște ulterior această unitate.</string>
+    <string name="native_aa_setup_qr_dongle">Numele Bluetooth al acestei unități pare al unui adaptor wireless, pe care telefonul îl tratează ca pe alt tip de dispozitiv. Redenumiți Bluetooth pe această unitate și încercați din nou.</string>
     <string name="category_ui">Interfață utilizator</string>
     <string name="hide_phone_signal_label">Ascunde semnalul telefonului</string>
     <string name="hide_battery_level_label">Ascunde nivelul bateriei telefonului</string>

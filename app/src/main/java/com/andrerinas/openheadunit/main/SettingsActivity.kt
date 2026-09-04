@@ -68,8 +68,14 @@ class SettingsActivity : BaseActivity() {
         SystemUI.apply(window, root, appSettings.fullscreenMode)
     }
 
+    override fun onResume() {
+        super.onResume()
+        isForeground = true
+    }
+
     override fun onPause() {
         super.onPause()
+        isForeground = false
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
         currentFocus?.let { v ->
             imm?.hideSoftInputFromWindow(v.windowToken, 0)
@@ -86,6 +92,13 @@ class SettingsActivity : BaseActivity() {
     }
 
     companion object {
+        /**
+         * Whether this screen is in front. Read by the Native AA wake poke, which would otherwise
+         * wake the phone and let it take the screen while the user is still changing settings.
+         * A static flag rather than a message to the service: nothing else needs to know.
+         */
+        @Volatile var isForeground = false
+
         private const val KEY_CURRENT_DESTINATION = "current_nav_destination"
         // Optional destination id to open directly on launch (e.g. R.id.darkModeFragment).
         const val EXTRA_DESTINATION = "extra_destination"

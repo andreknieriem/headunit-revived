@@ -90,7 +90,10 @@ object WifiP2pOperatingChannelPolicy {
      *   supported band request does this properly and reaching for a hidden method would be trading
      *   a guarantee for a reflection.
      * @param preference the user's band choice.
-     * @param useUpperBand ask for UNII-3 instead of UNII-1 on the 5 GHz rung.
+     * @param chosenChannel the channel the user pinned, or [CHANNEL_UNRESTRICTED] for automatic,
+     *   which asks for [CHANNEL_LOWER]. A pinned channel replaces that first rung and nothing else:
+     *   the 2.4 GHz rung below it stays, because a disallowed-frequency list a unit cannot satisfy
+     *   costs it the group rather than the band.
      * @param supports5Ghz [WifiBandCapability.supports5Ghz], where null means the platform would not
      *   say. Only `false` drops a rung, and only under [P2pBandPreference.AUTO]: a `true` describes
      *   the station side and does not promise a group owner can be hosted there, so the ladder keeps
@@ -100,11 +103,13 @@ object WifiP2pOperatingChannelPolicy {
     fun attemptChannels(
         sdkInt: Int,
         preference: P2pBandPreference,
-        useUpperBand: Boolean = false,
+        chosenChannel: Int = CHANNEL_UNRESTRICTED,
         supports5Ghz: Boolean? = null
     ): List<Int> {
         if (!appliesTo(sdkInt)) return emptyList()
-        val fiveGhz = if (useUpperBand) CHANNEL_UPPER else CHANNEL_LOWER
+        // Total rather than trusting the caller: anything a group owner cannot be hosted on falls
+        // back to the rung that shipped before the choice existed.
+        val fiveGhz = if (isGroupOwnerCapable(chosenChannel)) chosenChannel else CHANNEL_LOWER
         return when (preference) {
             // Spending the 5 GHz rung on a radio with no 5 GHz band costs a whole bring-up: the
             // request is a disallowed-frequency list, so the group is not formed on the other band,
@@ -137,4 +142,19 @@ object WifiP2pOperatingChannelPolicy {
 
     /** A channel the platform will accept. Outside this it rejects the whole request. */
     fun isRequestable(channel: Int): Boolean = channel == CHANNEL_UNRESTRICTED || channel in 1..165
+
+    /**
+     * True for a 5 GHz channel a group owner can realistically be hosted on.
+     *
+     * Operating class 115 (UNII-1) and 124/125 (UNII-3), which is the whole of it: everything
+     * between them is DFS, and wpa_supplicant excludes DFS from group ownership unless the driver
+     * offloads radar detection, so a forced frequency there fails the group rather than the
+     * channel. `isRequestable` is a wider question - what the *call* will take - and answering yes
+     * to 52 is correct there and wrong here.
+     */
+    fun isGroupOwnerCapable(channel: Int): Boolean =
+        channel in UNII_1_CHANNELS || channel in UNII_3_CHANNELS
+
+    private val UNII_1_CHANNELS = listOf(36, 40, 44, 48)
+    private val UNII_3_CHANNELS = listOf(149, 153, 157, 161, 165)
 }
