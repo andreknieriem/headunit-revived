@@ -16,7 +16,7 @@ enum class WifiLauncherMode(
 
     companion object {
 
-        val DEFAULT: WifiLauncherMode = HELPER
+        val DEFAULT: WifiLauncherMode = NATIVE
 
 
         fun byIdOrDefault(id: Int): WifiLauncherMode {

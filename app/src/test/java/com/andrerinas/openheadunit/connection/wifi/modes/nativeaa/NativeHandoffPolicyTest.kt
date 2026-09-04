@@ -231,4 +231,83 @@ class NativeHandoffPolicyTest {
             )
         )
     }
+
+    /** Today's ladder for a phone that joined and dropped mid-DHCP is kept. */
+    @Test
+    fun `a group that never carried a session re-arms the watchdog when the phone leaves`() {
+        assertTrue(
+            NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                nativeAaMode = true, groupHasHostedSession = false
+            )
+        )
+    }
+
+    /**
+     * The recreate is what moves the group's address, and a phone that comes back looks for the
+     * network it saved. A group that has already worked is left where the phone left it, and on
+     * the native path the discovery loop never restarts either, so nothing touches it.
+     */
+    @Test
+    fun `a group that has carried a session is not recreated when the phone leaves`() {
+        assertFalse(
+            NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                nativeAaMode = true, groupHasHostedSession = true
+            )
+        )
+        assertFalse(
+            NativeHandoffPolicy.shouldRestartDiscovery(
+                nativeAaMode = true, hadClient = true, hasClient = false
+            )
+        )
+    }
+
+    @Test
+    fun `the join watchdog is not a question the Helper path asks`() {
+        assertFalse(
+            NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                nativeAaMode = false, groupHasHostedSession = false
+            )
+        )
+        assertFalse(
+            NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                nativeAaMode = false, groupHasHostedSession = true
+            )
+        )
+    }
+
+    /**
+     * The retry loop's third answer. Stopping needs a fresh credential delivery to start it again,
+     * and after a settled group none comes, so a screen the user is working on defers rather than
+     * ends the loop.
+     */
+    @Test
+    fun `the settings screen defers a poke rather than ending the loop`() {
+        assertEquals(
+            NativeHandoffPolicy.LoopStep.DEFER,
+            NativeHandoffPolicy.loopStep(settling = false, handshakeInFlight = false, sessionConnected = false, userConfiguring = true)
+        )
+        assertEquals(
+            NativeHandoffPolicy.LoopStep.POKE,
+            NativeHandoffPolicy.loopStep(settling = false, handshakeInFlight = false, sessionConnected = false, userConfiguring = false)
+        )
+    }
+
+    @Test
+    fun `work in progress ends the loop whatever screen is open`() {
+        for (configuring in listOf(true, false)) {
+            assertEquals(
+                NativeHandoffPolicy.LoopStep.STOP,
+                NativeHandoffPolicy.loopStep(settling = true, handshakeInFlight = false, sessionConnected = false, userConfiguring = configuring)
+            )
+            assertEquals(
+                NativeHandoffPolicy.LoopStep.STOP,
+                NativeHandoffPolicy.loopStep(settling = false, handshakeInFlight = true, sessionConnected = false, userConfiguring = configuring)
+            )
+            assertEquals(
+                NativeHandoffPolicy.LoopStep.STOP,
+                NativeHandoffPolicy.loopStep(settling = false, handshakeInFlight = false, sessionConnected = true, userConfiguring = configuring)
+            )
+        }
+    }
+
 }

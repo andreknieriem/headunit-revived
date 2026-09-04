@@ -27,9 +27,13 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialField
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
+import com.andrerinas.openheadunit.connection.wifi.direct.P2pGroupIdentityPolicy
+import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDownPolicy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeCredentialsPreflightPolicy
 import com.andrerinas.openheadunit.aap.NativeTransport
+import com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy
 import com.andrerinas.openheadunit.connection.wifi.direct.P2pBandPreference
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.HotspotBandPreference
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.PreflightReport
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBssidPolicy
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
@@ -47,6 +51,7 @@ import com.andrerinas.openheadunit.utils.LogExporter
 import com.andrerinas.openheadunit.utils.SettingsBackupManager
 import com.andrerinas.openheadunit.utils.VpnControl
 import com.andrerinas.openheadunit.utils.DialogUtils
+import com.andrerinas.openheadunit.utils.ProjectionSetupQrDialog
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -59,6 +64,7 @@ import androidx.lifecycle.lifecycleScope
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
+import com.andrerinas.openheadunit.connection.wifi.WirelessRearmPolicy
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -99,6 +105,9 @@ class SettingsFragment : Fragment() {
         // thing to try when a wireless session connects and shows no picture, and a user sent to
         // Advanced to find it is a user who never finds it.
         "wifiDirectBand", "wifiDirectBandHint",
+        // And the channel within the band, which is the same kind of first thing to try: a
+        // network on a channel the phone's regulatory domain forbids is one it never lists.
+        "fiveGhzChannel",
         "hotspotSsidOverride", "hotspotPasswordOverride",
         "hotspotInterfaceOverride",
         // Dark mode
@@ -126,6 +135,7 @@ class SettingsFragment : Fragment() {
     private var pendingUseGps: Boolean? = null
     private var pendingShowNavigationNotifications: Boolean? = null
     private var pendingSyncMediaSessionAaMetadata: Boolean? = null
+    private var pendingAutoResumePlaybackOnReconnect: Boolean? = null
     private var pendingResolution: Int? = null
     private var pendingDpi: Int? = null
     private var pendingPixelAspectRatioE4: Int? = null
@@ -160,11 +170,13 @@ class SettingsFragment : Fragment() {
     private var pendingWaitForWifi: Boolean? = null
     private var pendingWaitForWifiTimeout: Int? = null
     private var pendingBluetoothManagerServiceName: String? = null
-    private var pendingManualSecondaryBluetoothServiceName: String? = null
+    private var pendingNativeAaIgnoreExternalBt: Boolean? = null
     private var pendingNativeWifiVersionExchange: Boolean? = null
+    private var pendingNativeAaCompleteHfpSlc: Boolean? = null
     private var pendingNativeApTransport: NativeStrategy? = null
     private var pendingWifiDirectBand: Int? = null
     private var pendingHotspotBand: Int? = null
+    private var pendingFiveGhzChannel: Int? = null
     private var pendingHotspotSsid: String? = null
     private var pendingHotspotPassword: String? = null
     private var pendingHotspotInterface: String? = null
@@ -272,6 +284,7 @@ class SettingsFragment : Fragment() {
         pendingUseGps = settings.useGpsForNavigation
         pendingShowNavigationNotifications = settings.showNavigationNotifications
         pendingSyncMediaSessionAaMetadata = settings.syncMediaSessionWithAaMetadata
+        pendingAutoResumePlaybackOnReconnect = settings.autoResumePlaybackOnReconnect
         pendingResolution = settings.resolutionId
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
@@ -315,11 +328,13 @@ class SettingsFragment : Fragment() {
         pendingWaitForWifi = settings.waitForWifiBeforeWifiDirect
         pendingWaitForWifiTimeout = settings.waitForWifiTimeout
         pendingBluetoothManagerServiceName = settings.bluetoothManagerServiceName
-        pendingManualSecondaryBluetoothServiceName = settings.manualSecondaryBluetoothServiceName
+        pendingNativeAaIgnoreExternalBt = settings.nativeAaIgnoreExternalBt
         pendingNativeWifiVersionExchange = settings.nativeWifiVersionExchange
+        pendingNativeAaCompleteHfpSlc = settings.nativeAaCompleteHfpSlc
         pendingNativeApTransport = settings.nativeApStrategy
         pendingWifiDirectBand = settings.wifiDirectBand
         pendingHotspotBand = settings.hotspotBand
+        pendingFiveGhzChannel = settings.fiveGhzChannel
         pendingHotspotSsid = settings.hotspotSsid
         pendingHotspotPassword = settings.hotspotPassword
         pendingHotspotInterface = settings.hotspotInterface
@@ -392,6 +407,7 @@ class SettingsFragment : Fragment() {
         pendingUseGps = settings.useGpsForNavigation
         pendingShowNavigationNotifications = settings.showNavigationNotifications
         pendingSyncMediaSessionAaMetadata = settings.syncMediaSessionWithAaMetadata
+        pendingAutoResumePlaybackOnReconnect = settings.autoResumePlaybackOnReconnect
         pendingResolution = settings.resolutionId
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
@@ -429,11 +445,13 @@ class SettingsFragment : Fragment() {
         pendingWaitForWifi = settings.waitForWifiBeforeWifiDirect
         pendingWaitForWifiTimeout = settings.waitForWifiTimeout
         pendingBluetoothManagerServiceName = settings.bluetoothManagerServiceName
-        pendingManualSecondaryBluetoothServiceName = settings.manualSecondaryBluetoothServiceName
+        pendingNativeAaIgnoreExternalBt = settings.nativeAaIgnoreExternalBt
         pendingNativeWifiVersionExchange = settings.nativeWifiVersionExchange
+        pendingNativeAaCompleteHfpSlc = settings.nativeAaCompleteHfpSlc
         pendingNativeApTransport = settings.nativeApStrategy
         pendingWifiDirectBand = settings.wifiDirectBand
         pendingHotspotBand = settings.hotspotBand
+        pendingFiveGhzChannel = settings.fiveGhzChannel
         pendingHotspotSsid = settings.hotspotSsid
         pendingHotspotPassword = settings.hotspotPassword
         pendingHotspotInterface = settings.hotspotInterface
@@ -518,6 +536,7 @@ class SettingsFragment : Fragment() {
         pendingUseGps?.let { settings.useGpsForNavigation = it }
         pendingShowNavigationNotifications?.let { settings.showNavigationNotifications = it }
         pendingSyncMediaSessionAaMetadata?.let { settings.syncMediaSessionWithAaMetadata = it }
+        pendingAutoResumePlaybackOnReconnect?.let { settings.autoResumePlaybackOnReconnect = it }
         pendingResolution?.let { settings.resolutionId = it }
         pendingDpi?.let { settings.dpiPixelDensity = it }
         pendingPixelAspectRatioE4?.let { settings.pixelAspectRatioE4 = it }
@@ -570,19 +589,19 @@ class SettingsFragment : Fragment() {
         pendingFakeSpeed?.let { settings.fakeSpeed = it }
         pendingUseLibusb?.let { settings.useLibusb = it }
 
-        val oldWifiMode = settings.wifiConnectionMode
-        val oldHelperStrategy = settings.helperConnectionStrategy
-        val oldBluetoothManagerServiceName = settings.bluetoothManagerServiceName
+        val wirelessConfigBefore = wirelessRearmConfig()
         pendingWifiConnectionMode?.let { settings.wifiConnectionMode = it }
         pendingHelperConnectionStrategy?.let { settings.helperConnectionStrategy = it }
         pendingWaitForWifi?.let { settings.waitForWifiBeforeWifiDirect = it }
         pendingWaitForWifiTimeout?.let { settings.waitForWifiTimeout = it }
         pendingBluetoothManagerServiceName?.let { settings.bluetoothManagerServiceName = it }
-        pendingManualSecondaryBluetoothServiceName?.let { settings.manualSecondaryBluetoothServiceName = it }
+        pendingNativeAaIgnoreExternalBt?.let { settings.nativeAaIgnoreExternalBt = it }
         pendingNativeWifiVersionExchange?.let { settings.nativeWifiVersionExchange = it }
+        pendingNativeAaCompleteHfpSlc?.let { settings.nativeAaCompleteHfpSlc = it }
         pendingNativeApTransport?.let { settings.nativeApStrategy = it }
         pendingWifiDirectBand?.let { settings.wifiDirectBand = it }
         pendingHotspotBand?.let { settings.hotspotBand = it }
+        pendingFiveGhzChannel?.let { settings.fiveGhzChannel = it }
         pendingHotspotSsid?.let { settings.hotspotSsid = it }
         pendingHotspotPassword?.let { settings.hotspotPassword = it }
         pendingHotspotInterface?.let { settings.hotspotInterface = it }
@@ -609,9 +628,7 @@ class SettingsFragment : Fragment() {
             )
         }
 
-        if (oldWifiMode != settings.wifiConnectionMode ||
-            oldHelperStrategy != settings.helperConnectionStrategy ||
-            oldBluetoothManagerServiceName != settings.bluetoothManagerServiceName) {
+        if (WirelessRearmPolicy.requiresRearm(wirelessConfigBefore, wirelessRearmConfig())) {
             val intent = Intent(requireContext(), AapService::class.java).apply {
                 val mode = settings.wifiConnectionMode
                 action = if (mode != WifiLauncherMode.MANUAL)
@@ -649,6 +666,7 @@ class SettingsFragment : Fragment() {
                         pendingUseGps != settings.useGpsForNavigation ||
                         pendingShowNavigationNotifications != settings.showNavigationNotifications ||
                         pendingSyncMediaSessionAaMetadata != settings.syncMediaSessionWithAaMetadata ||
+                        pendingAutoResumePlaybackOnReconnect != settings.autoResumePlaybackOnReconnect ||
                         pendingResolution != settings.resolutionId ||
                         pendingDpi != settings.dpiPixelDensity ||
                         pendingPixelAspectRatioE4 != settings.pixelAspectRatioE4 ||
@@ -694,11 +712,13 @@ class SettingsFragment : Fragment() {
                         pendingWaitForWifi != settings.waitForWifiBeforeWifiDirect ||
                         pendingWaitForWifiTimeout != settings.waitForWifiTimeout ||
                         pendingBluetoothManagerServiceName != settings.bluetoothManagerServiceName ||
-                        pendingManualSecondaryBluetoothServiceName != settings.manualSecondaryBluetoothServiceName ||
+                        pendingNativeAaIgnoreExternalBt != settings.nativeAaIgnoreExternalBt ||
                         pendingNativeWifiVersionExchange != settings.nativeWifiVersionExchange ||
+                        pendingNativeAaCompleteHfpSlc != settings.nativeAaCompleteHfpSlc ||
                         pendingNativeApTransport != settings.nativeApStrategy ||
                         pendingWifiDirectBand != settings.wifiDirectBand ||
                         pendingHotspotBand != settings.hotspotBand ||
+                        pendingFiveGhzChannel != settings.fiveGhzChannel ||
                         pendingHotspotSsid != settings.hotspotSsid ||
                         pendingHotspotPassword != settings.hotspotPassword ||
                         pendingHotspotInterface != settings.hotspotInterface ||
@@ -882,7 +902,7 @@ class SettingsFragment : Fragment() {
             WifiLauncherMode.HELPER -> 0 // Helper
             WifiLauncherMode.NATIVE -> 1 // Native
             WifiLauncherMode.MANUAL, WifiLauncherMode.AUTO -> 2 // Server
-            else -> 2
+            else -> 1
         }
 
         items.add(SettingItem.SegmentedButtonSettingEntry(
@@ -895,7 +915,7 @@ class SettingsFragment : Fragment() {
                     0 -> WifiLauncherMode.HELPER // Helper
                     1 -> WifiLauncherMode.NATIVE // Native
                     2 -> if (pendingWifiConnectionMode == WifiLauncherMode.MANUAL) WifiLauncherMode.MANUAL else WifiLauncherMode.AUTO // Keep manual/auto choice if already in server mode
-                    else -> WifiLauncherMode.AUTO
+                    else -> WifiLauncherMode.NATIVE
                 }
 
                 if (newMode == WifiLauncherMode.NATIVE) {
@@ -948,6 +968,9 @@ class SettingsFragment : Fragment() {
                 // the setting governing this route unreachable from the screen that selects it.
                 addHotspotToggle(items)
                 addHotspotBandSetting(items)
+                if (pendingHotspotBandPreference() != HotspotBandPreference.FORCE_2_4GHZ) {
+                    addFiveGhzChannelSetting(items)
+                }
 
                 // The automatic read goes through the same non-public API that a locked-down
                 // device refuses outright, so on those units this override is the only way the
@@ -1017,6 +1040,17 @@ class SettingsFragment : Fragment() {
                         )
                     }
                 ))
+
+                // The one route onto a unit whose Bluetooth cannot carry the handshake: the phone
+                // reads the network and our TCP endpoint straight off the screen. Only on this
+                // transport, and only from here, because the QR is worth showing exactly where the
+                // network it names is configured.
+                items.add(SettingItem.SettingEntry(
+                    stableId = "projectionSetupQr",
+                    nameResId = R.string.native_aa_setup_qr_title,
+                    value = getString(R.string.native_aa_setup_qr_description),
+                    onClick = { _ -> ProjectionSetupQrDialog.show(requireContext()) }
+                ))
             }
 
             // The band choice lives here rather than under Debug because it is read in exactly
@@ -1035,17 +1069,32 @@ class SettingsFragment : Fragment() {
             if (pendingNativeTransport() == NativeTransport.WIFI_DIRECT) {
                 addWifiDirectBandSetting(items)
 
-                // The 5 GHz rung has two non-DFS ranges and a regulatory domain can refuse the
-                // lower one, so this only means anything where a 5 GHz channel is asked for at all.
+                // Only where a 5 GHz channel is asked for at all. Replaces a two-position toggle
+                // that could say 36 or 149 and nothing between.
                 if (pendingP2pBandPreference() != P2pBandPreference.FORCE_2_4GHZ) {
+                    addFiveGhzChannelSetting(items)
+                }
+
+                addWifiDirectIdentitySettings(items)
+
+                // Only where the platform would honour it. Below Android 10 anything may ask; from
+                // 10 to 14 the overlay permission is what gets past the framework's check, so the
+                // row stays and says so rather than vanishing into an unanswerable question; from
+                // 15 there is no route at all and offering the switch would be a lie.
+                val overlayGranted = AppPermissions.isOverlayGranted(requireContext())
+                if (StationStandDownPolicy.isAvailable(Build.VERSION.SDK_INT, true)) {
                     items.add(SettingItem.ToggleSettingEntry(
-                        stableId = "p2pLegacyFiveGhzUpperBand",
-                        nameResId = R.string.p2p_legacy_5ghz_upper,
-                        descriptionResId = R.string.p2p_legacy_5ghz_upper_description,
-                        isChecked = settings.p2pLegacyFiveGhzUpperBand,
-                        searchKeywords = "channel 149 upper 5 ghz unii region",
+                        stableId = "standDownStationForWifiDirect",
+                        nameResId = R.string.stand_down_station,
+                        descriptionResId = R.string.stand_down_station_description,
+                        isChecked = settings.standDownStationForWifiDirect,
+                        isEnabled = overlayGranted,
+                        descriptionOverride = if (overlayGranted) null else
+                            getString(R.string.stand_down_station_needs_overlay) + " " +
+                                getString(R.string.stand_down_station_description),
+                        searchKeywords = "wifi disconnect station home network channel single radio",
                         onCheckedChanged = { isChecked ->
-                            settings.p2pLegacyFiveGhzUpperBand = isChecked
+                            settings.standDownStationForWifiDirect = isChecked
                             updateSettingsList()
                         }
                     ))
@@ -1077,26 +1126,23 @@ class SettingsFragment : Fragment() {
                 }
             ))
 
-            val manualSecondary = pendingManualSecondaryBluetoothServiceName
-            items.add(SettingItem.SettingEntry(
-                stableId = "manualSecondaryBluetoothService",
-                nameResId = R.string.manual_secondary_bt_service_title,
-                value = if (manualSecondary.isNullOrEmpty()) getString(R.string.auto)
-                         else BluetoothHelper.getAdapterDescription(requireContext(), manualSecondary),
-                onClick = { _ ->
-                    DialogUtils.showTextInputDialogWithMessage(
-                        requireContext(),
-                        R.string.manual_secondary_bt_service_title,
-                        R.string.manual_secondary_bt_service_message,
-                        manualSecondary ?: "",
-                        { newVal ->
-                            pendingManualSecondaryBluetoothServiceName = newVal.trim()
-                            checkChanges()
-                            updateSettingsList()
-                        }
-                    )
-                }
-            ))
+            // Only where the detection has fired: everywhere else this governs a gate that never
+            // closes, and a switch that changes nothing is what sends people down a wrong
+            // diagnosis. The evidence is a lazy, so asking on every rebuild costs one field read.
+            if (BluetoothHelper.externalBtEvidence != null) {
+                items.add(SettingItem.ToggleSettingEntry(
+                    stableId = "nativeAaIgnoreExternalBt",
+                    nameResId = R.string.native_aa_ignore_external_bt,
+                    descriptionResId = R.string.native_aa_ignore_external_bt_description,
+                    isChecked = pendingNativeAaIgnoreExternalBt ?: settings.nativeAaIgnoreExternalBt,
+                    searchKeywords = "external bluetooth module rfcomm override compatibility anyway",
+                    onCheckedChanged = { isChecked ->
+                        pendingNativeAaIgnoreExternalBt = isChecked
+                        checkChanges()
+                        updateSettingsList()
+                    }
+                ))
+            }
 
             items.add(SettingItem.ToggleSettingEntry(
                 stableId = "nativeWifiVersionExchange",
@@ -1105,6 +1151,19 @@ class SettingsFragment : Fragment() {
                 isChecked = pendingNativeWifiVersionExchange ?: false,
                 onCheckedChanged = { isChecked ->
                     pendingNativeWifiVersionExchange = isChecked
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "nativeAaCompleteHfpSlc",
+                nameResId = R.string.native_aa_complete_hfp_slc,
+                descriptionResId = R.string.native_aa_complete_hfp_slc_description,
+                isChecked = pendingNativeAaCompleteHfpSlc ?: settings.nativeAaCompleteHfpSlc,
+                searchKeywords = "bluetooth hfp hands-free handsfree calls profile wireless",
+                onCheckedChanged = { isChecked ->
+                    pendingNativeAaCompleteHfpSlc = isChecked
                     checkChanges()
                     updateSettingsList()
                 }
@@ -1167,14 +1226,15 @@ class SettingsFragment : Fragment() {
         // Sub-setting for Wireless Helper Strategy
         if (pendingWifiConnectionMode == WifiLauncherMode.HELPER) {
             val helperStrategies = resources.getStringArray(R.array.helper_strategies)
+            val currentStrategyId = pendingHelperConnectionStrategy?.id ?: settings.helperConnectionStrategy.id
             items.add(SettingItem.SettingEntry(
                 stableId = "helperStrategy",
                 nameResId = R.string.helper_strategy_label,
-                value = helperStrategies.getOrElse(pendingHelperConnectionStrategy!!.id) { "" },
+                value = helperStrategies.getOrElse(currentStrategyId) { "" },
                 onClick = {
                     MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                         .setTitle(R.string.helper_strategy_label)
-                        .setSingleChoiceItems(helperStrategies, pendingHelperConnectionStrategy!!.id) { dialog, which ->
+                        .setSingleChoiceItems(helperStrategies, currentStrategyId) { dialog, which ->
                             pendingHelperConnectionStrategy = HelperStrategy.byIdOrDefault(which)
                             checkChanges()
                             dialog.dismiss()
@@ -1190,6 +1250,9 @@ class SettingsFragment : Fragment() {
                 // Strategy 4 reaches the same HotspotManager sweep as the Native AA hotspot
                 // transport, so the band choice applies here too and would otherwise be invisible.
                 addHotspotBandSetting(items)
+                if (pendingHotspotBandPreference() != HotspotBandPreference.FORCE_2_4GHZ) {
+                    addFiveGhzChannelSetting(items)
+                }
             }
 
             if (pendingHelperConnectionStrategy == HelperStrategy.WIFI_DIRECT) { // WiFi Direct (P2P)
@@ -1270,6 +1333,39 @@ class SettingsFragment : Fragment() {
         }
 
 
+        // Ungated, unlike the static BSSID above: this address is announced as carAddress in
+        // every connection mode, and the setup QR's own refusal deep-links here by searching for
+        // this row's title, which bypasses the Basic and Advanced tiers but not a construction gate.
+        val btAddress = pendingBluetoothAddress.orEmpty()
+        items.add(SettingItem.SettingEntry(
+            stableId = "bluetoothAddress",
+            nameResId = R.string.bluetooth_address_s,
+            value = btAddress.ifEmpty { getString(R.string.not_set) },
+            searchKeywords = "bluetooth mac address car identity hands-free calls qr",
+            onClick = { _ ->
+                DialogUtils.showTextInputDialogWithMessage(
+                    requireContext(),
+                    R.string.enter_bluetooth_mac,
+                    R.string.bluetooth_address_message,
+                    btAddress,
+                    { newVal ->
+                        // Validated at entry, for the reason the static BSSID row records: an
+                        // address that is not MAC-shaped is announced verbatim and fails much later.
+                        val trimmed = newVal.trim()
+                        when {
+                            trimmed.isEmpty() -> pendingBluetoothAddress = ""
+                            SoftApBssidPolicy.isUsable(trimmed) -> pendingBluetoothAddress = trimmed
+                            else -> Toast.makeText(
+                                requireContext(), R.string.invalid_bluetooth_address, Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        checkChanges()
+                        updateSettingsList()
+                    }
+                )
+            }
+        ))
+
         // --- Automation ---
         items.add(SettingItem.CategoryHeader("automation", R.string.category_automation))
 
@@ -1279,7 +1375,8 @@ class SettingsFragment : Fragment() {
             value = getString(R.string.auto_start_settings_description),
             searchKeywords = kw(
                 R.string.auto_start_on_boot_label, R.string.auto_start_screen_on_label,
-                R.string.auto_start_usb_label, R.string.auto_start_bt_label, R.string.auto_start_wifi_label
+                R.string.auto_start_usb_label, R.string.auto_start_bt_label, R.string.auto_start_wifi_label,
+                R.string.auto_disconnect_bt_label
             ),
             onClick = {
                 try {
@@ -1307,7 +1404,7 @@ class SettingsFragment : Fragment() {
             stableId = "killOnDisconnect",
             nameResId = R.string.kill_on_disconnect,
             descriptionResId = R.string.kill_on_disconnect_description,
-            isChecked = pendingKillOnDisconnect!!,
+            isChecked = pendingKillOnDisconnect ?: settings.killOnDisconnect,
             onCheckedChanged = { isChecked ->
                 if (isChecked) {
                     val conflicts = getKillOnDisconnectConflicts()
@@ -1337,7 +1434,7 @@ class SettingsFragment : Fragment() {
                 stableId = "raiseProjectionDuringCall",
                 nameResId = R.string.raise_projection_during_call,
                 descriptionResId = R.string.raise_projection_during_call_description,
-                isChecked = pendingRaiseProjectionDuringCall!!,
+                isChecked = pendingRaiseProjectionDuringCall ?: settings.raiseProjectionDuringCall,
                 onCheckedChanged = { isChecked ->
                     pendingRaiseProjectionDuringCall = isChecked
                     checkChanges()
@@ -1356,7 +1453,7 @@ class SettingsFragment : Fragment() {
                 stableId = "gpsNavigation",
                 nameResId = R.string.gps_for_navigation,
                 descriptionResId = R.string.gps_for_navigation_description,
-                isChecked = pendingUseGps!!,
+                isChecked = pendingUseGps ?: settings.useGpsForNavigation,
                 onCheckedChanged = { isChecked ->
                     pendingUseGps = isChecked
                     checkChanges()
@@ -1369,7 +1466,7 @@ class SettingsFragment : Fragment() {
             stableId = "showNavigationNotifications",
             nameResId = R.string.show_navigation_notifications,
             descriptionResId = R.string.show_navigation_notifications_description,
-            isChecked = pendingShowNavigationNotifications!!,
+            isChecked = pendingShowNavigationNotifications ?: settings.showNavigationNotifications,
             onCheckedChanged = { isChecked ->
                 pendingShowNavigationNotifications = isChecked
                 checkChanges()
@@ -1381,7 +1478,7 @@ class SettingsFragment : Fragment() {
             stableId = "fakeSpeed",
             nameResId = R.string.fake_speed_title,
             descriptionResId = R.string.fake_speed_description,
-            isChecked = pendingFakeSpeed!!,
+            isChecked = pendingFakeSpeed ?: settings.fakeSpeed,
             onCheckedChanged = { isChecked ->
                 pendingFakeSpeed = isChecked
                 checkChanges()
@@ -1395,7 +1492,7 @@ class SettingsFragment : Fragment() {
         items.add(SettingItem.SettingEntry(
             stableId = "resolution",
             nameResId = R.string.resolution,
-            value = Settings.Resolution.fromId(pendingResolution!!)?.resName ?: "",
+            value = Settings.Resolution.fromId(pendingResolution ?: settings.resolutionId)?.resName ?: "",
             searchKeywords = Settings.Resolution.allRes.joinToString(" "),
             onClick = { showResolutionDialog() }
         ))
@@ -1423,7 +1520,7 @@ class SettingsFragment : Fragment() {
                 showNumericInputDialog(
                     title = getString(R.string.enter_pixel_aspect_ratio_value),
                     message = null,
-                    initialValue = if ((pendingPixelAspectRatioE4 ?: 10000) <= 0) 10000 else pendingPixelAspectRatioE4!!,
+                    initialValue = if ((pendingPixelAspectRatioE4 ?: 10000) <= 0) 10000 else (pendingPixelAspectRatioE4 ?: 10000),
                     onConfirm = { newVal ->
                         pendingPixelAspectRatioE4 = if (newVal <= 0) 10000 else newVal
                         checkChanges()
@@ -1493,11 +1590,11 @@ class SettingsFragment : Fragment() {
             },
             onClick = { _ ->
                 val viewModes = arrayOf(getString(R.string.surface_view), getString(R.string.texture_view), getString(R.string.gles_view))
-                val currentIdx = pendingViewMode!!.value
+                val currentIdx = pendingViewMode?.value ?: settings.viewMode.value
                 MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                     .setTitle(R.string.change_view_mode)
                     .setSingleChoiceItems(viewModes, currentIdx) { dialog, which ->
-                        pendingViewMode = Settings.ViewMode.fromInt(which)!!
+                        Settings.ViewMode.fromInt(which)?.let { pendingViewMode = it }
                         checkChanges()
                         dialog.dismiss()
                         updateSettingsList()
@@ -1506,14 +1603,15 @@ class SettingsFragment : Fragment() {
             }
         ))
 
+        val orientationOptions = resources.getStringArray(R.array.screen_orientation)
+        val currentOrientationIdx = pendingScreenOrientation?.value ?: settings.screenOrientation.value
         items.add(SettingItem.SettingEntry(
             stableId = "screenOrientation",
             nameResId = R.string.screen_orientation,
-            value = resources.getStringArray(R.array.screen_orientation)[pendingScreenOrientation!!.value],
-            searchKeywords = resources.getStringArray(R.array.screen_orientation).joinToString(" "),
+            value = orientationOptions.getOrElse(currentOrientationIdx) { "" },
+            searchKeywords = orientationOptions.joinToString(" "),
             onClick = { _ ->
-                val orientationOptions = resources.getStringArray(R.array.screen_orientation)
-                val currentIdx = pendingScreenOrientation!!.value
+                val currentIdx = pendingScreenOrientation?.value ?: settings.screenOrientation.value
                 MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                     .setTitle(R.string.change_screen_orientation)
                     .setSingleChoiceItems(orientationOptions, currentIdx) { dialog, whiches ->
@@ -1542,7 +1640,7 @@ class SettingsFragment : Fragment() {
             stableId = "stretchToFill",
             nameResId = R.string.pref_stretch_screen_title,
             descriptionResId = R.string.pref_stretch_screen_summary,
-            isChecked = pendingStretchToFill!!,
+            isChecked = pendingStretchToFill ?: settings.stretchToFill,
             onCheckedChanged = { isChecked ->
                 pendingStretchToFill = isChecked
                 requiresRestart = true // Requires a reconnect to apply the new rendering bounds
@@ -1580,7 +1678,7 @@ class SettingsFragment : Fragment() {
                 stableId = "forcedScale",
                 nameResId = R.string.forced_scale,
                 descriptionResId = R.string.forced_scale_description,
-                isChecked = pendingForcedScale!!,
+                isChecked = pendingForcedScale ?: settings.forcedScale,
                 onCheckedChanged = { isChecked ->
                     pendingForcedScale = isChecked
                     requiresRestart = true
@@ -1643,7 +1741,7 @@ class SettingsFragment : Fragment() {
             stableId = "forceSoftwareDecoding",
             nameResId = R.string.force_software_decoding,
             descriptionResId = R.string.force_software_decoding_description,
-            isChecked = pendingForceSoftware!!,
+            isChecked = pendingForceSoftware ?: settings.forceSoftwareDecoding,
             onCheckedChanged = { isChecked ->
                 pendingForceSoftware = isChecked
                 checkChanges()
@@ -1686,7 +1784,7 @@ class SettingsFragment : Fragment() {
         items.add(SettingItem.SettingEntry(
             stableId = "videoCodec",
             nameResId = R.string.video_codec,
-            value = pendingVideoCodec!!,
+            value = pendingVideoCodec ?: settings.videoCodec,
             searchKeywords = "Auto H.264 H.265",
             onClick = { _ ->
                 val codecs = arrayOf("Auto", "H.264", "H.265")
@@ -1719,6 +1817,20 @@ class SettingsFragment : Fragment() {
                         updateSettingsList()
                     }
                     .show()
+            }
+        ))
+
+        // Beside the two rows it overrides, because that is where a user looking at 1080p/60 and
+        // not getting it will come looking.
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "narrowBandProfileCap",
+            nameResId = R.string.narrow_band_profile_cap,
+            descriptionResId = R.string.narrow_band_profile_cap_description,
+            isChecked = settings.narrowBandProfileCap,
+            searchKeywords = "2.4 GHz band resolution fps limit hotspot wifi direct video",
+            onCheckedChanged = { isChecked ->
+                settings.narrowBandProfileCap = isChecked
+                updateSettingsList()
             }
         ))
 
@@ -1815,7 +1927,7 @@ class SettingsFragment : Fragment() {
             stableId = "enableAudioSink",
             nameResId = R.string.enable_audio_sink,
             descriptionResId = R.string.enable_audio_sink_description,
-            isChecked = pendingEnableAudioSink!!,
+            isChecked = pendingEnableAudioSink ?: settings.enableAudioSink,
             onCheckedChanged = { isChecked ->
                 pendingEnableAudioSink = isChecked
                 checkChanges()
@@ -1899,7 +2011,7 @@ class SettingsFragment : Fragment() {
             stableId = "useAacAudio",
             nameResId = R.string.use_aac_audio,
             descriptionResId = R.string.use_aac_audio_description,
-            isChecked = pendingUseAacAudio!!,
+            isChecked = pendingUseAacAudio ?: settings.useAacAudio,
             onCheckedChanged = { isChecked ->
                 pendingUseAacAudio = isChecked
                 checkChanges()
@@ -1924,9 +2036,21 @@ class SettingsFragment : Fragment() {
             stableId = "syncMediaSessionAaMetadata",
             nameResId = R.string.sync_media_session_aa_metadata,
             descriptionResId = R.string.sync_media_session_aa_metadata_description,
-            isChecked = pendingSyncMediaSessionAaMetadata!!,
+            isChecked = pendingSyncMediaSessionAaMetadata ?: settings.syncMediaSessionWithAaMetadata,
             onCheckedChanged = { isChecked ->
                 pendingSyncMediaSessionAaMetadata = isChecked
+                checkChanges()
+                updateSettingsList()
+            }
+        ))
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "autoResumePlaybackOnReconnect",
+            nameResId = R.string.auto_resume_playback_on_reconnect,
+            descriptionResId = R.string.auto_resume_playback_on_reconnect_description,
+            isChecked = pendingAutoResumePlaybackOnReconnect ?: settings.autoResumePlaybackOnReconnect,
+            onCheckedChanged = { isChecked ->
+                pendingAutoResumePlaybackOnReconnect = isChecked
                 checkChanges()
                 updateSettingsList()
             }
@@ -2078,7 +2202,7 @@ class SettingsFragment : Fragment() {
             stableId = "showFpsCounter",
             nameResId = R.string.show_fps_counter,
             descriptionResId = R.string.show_fps_counter_description,
-            isChecked = pendingShowFpsCounter!!,
+            isChecked = pendingShowFpsCounter ?: settings.showFpsCounter,
             onCheckedChanged = { isChecked ->
                 pendingShowFpsCounter = isChecked
                 checkChanges()
@@ -2692,6 +2816,7 @@ class SettingsFragment : Fragment() {
     private data class ImportSnapshot(
         val wifiConnectionMode: WifiLauncherMode,
         val helperConnectionStrategy: HelperStrategy,
+        val nativeApStrategy: NativeStrategy,
         val bluetoothManagerServiceName: String,
         val appLanguage: String,
         val uiScaleSettingsPercent: Int,
@@ -3075,6 +3200,7 @@ class SettingsFragment : Fragment() {
         return ImportSnapshot(
             wifiConnectionMode = settings.wifiConnectionMode,
             helperConnectionStrategy = settings.helperConnectionStrategy,
+            nativeApStrategy = settings.nativeApStrategy,
             bluetoothManagerServiceName = settings.bluetoothManagerServiceName,
             appLanguage = settings.appLanguage,
             uiScaleSettingsPercent = settings.uiScaleSettingsPercent,
@@ -3125,10 +3251,22 @@ class SettingsFragment : Fragment() {
         }
     }
 
+    /** What a launcher reads once at construction, for [WirelessRearmPolicy]. */
+    private fun wirelessRearmConfig() = WirelessRearmPolicy.Config(
+        wifiConnectionMode = settings.wifiConnectionMode,
+        helperConnectionStrategy = settings.helperConnectionStrategy,
+        nativeApStrategy = settings.nativeApStrategy,
+        bluetoothManagerServiceName = settings.bluetoothManagerServiceName,
+    )
+
     private fun applyWirelessSideEffects(snapshot: ImportSnapshot, context: Context = requireContext()) {
-        if (snapshot.wifiConnectionMode != settings.wifiConnectionMode ||
-            snapshot.helperConnectionStrategy != settings.helperConnectionStrategy ||
-            snapshot.bluetoothManagerServiceName != settings.bluetoothManagerServiceName) {
+        val before = WirelessRearmPolicy.Config(
+            wifiConnectionMode = snapshot.wifiConnectionMode,
+            helperConnectionStrategy = snapshot.helperConnectionStrategy,
+            nativeApStrategy = snapshot.nativeApStrategy,
+            bluetoothManagerServiceName = snapshot.bluetoothManagerServiceName,
+        )
+        if (WirelessRearmPolicy.requiresRearm(before, wirelessRearmConfig())) {
             val intent = Intent(context, AapService::class.java).apply {
                 val mode = settings.wifiConnectionMode
                 action = if (mode != WifiLauncherMode.MANUAL)
@@ -3602,6 +3740,94 @@ class SettingsFragment : Fragment() {
     private fun pendingP2pBandPreference(): P2pBandPreference =
         P2pBandPreference.fromSetting(pendingWifiDirectBand ?: 0)
 
+    /** The hotspot band the block is currently showing settings for. */
+    private fun pendingHotspotBandPreference(): HotspotBandPreference =
+        HotspotBandPreference.fromSetting(pendingHotspotBand ?: 0)
+
+    /**
+     * Which 5 GHz channel to ask for, on whichever transport this block is showing.
+     *
+     * One setting shown in three places rather than one per transport: which channels a phone will
+     * join is decided by its own regulatory domain, so the answer follows the user's phone and
+     * country and not the transport, and somebody who switches transport to work around the problem
+     * must not silently lose the choice.
+     *
+     * A dialog rather than the segmented buttons the two band settings use, because there are five
+     * channels and that layout holds three.
+     */
+    private fun addFiveGhzChannelSetting(items: MutableList<SettingItem>) {
+        val current = FiveGhzChannelPolicy.pinnedChannel(pendingFiveGhzChannel ?: 0)
+        val values = listOf(FiveGhzChannelPolicy.AUTOMATIC) + FiveGhzChannelPolicy.CHANNELS
+        val labels = values.map { channel ->
+            if (channel == FiveGhzChannelPolicy.AUTOMATIC) getString(R.string.five_ghz_channel_auto)
+            else getString(
+                R.string.five_ghz_channel_option,
+                channel,
+                FiveGhzChannelPolicy.frequencyMhz(channel),
+            )
+        }.toTypedArray()
+        items.add(SettingItem.SettingEntry(
+            stableId = "fiveGhzChannel",
+            nameResId = R.string.five_ghz_channel,
+            value = labels[values.indexOf(current)],
+            searchKeywords = "channel 36 40 44 48 149 unii 5ghz region country band",
+            onClick = { _ ->
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.five_ghz_channel)
+                    .setSingleChoiceItems(labels, values.indexOf(current)) { dialog, which ->
+                        pendingFiveGhzChannel = values[which]
+                        checkChanges()
+                        dialog.dismiss()
+                        updateSettingsList()
+                    }
+                    .show()
+            }
+        ))
+    }
+
+    /**
+     * Whether the group keeps its name and passphrase between bring-ups, and a way to draw new ones.
+     *
+     * Only where the group is ours to name: the hotspot's identity is the access point's own. The
+     * switch writes straight through, like the stand-down beside it, because it is read at the next
+     * create and nothing needs re-arming for it. The "new identity" action replaces both halves
+     * together, which is the one rotation a phone's saved profile survives.
+     */
+    private fun addWifiDirectIdentitySettings(items: MutableList<SettingItem>) {
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "wifiDirectStableIdentity",
+            nameResId = R.string.wifi_direct_stable_identity,
+            descriptionResId = R.string.wifi_direct_stable_identity_description,
+            isChecked = settings.wifiDirectStableIdentity,
+            searchKeywords = "persistent group ssid passphrase password same network reconnect faster",
+            onCheckedChanged = { isChecked ->
+                settings.wifiDirectStableIdentity = isChecked
+                updateSettingsList()
+            }
+        ))
+        if (!settings.wifiDirectStableIdentity) return
+        items.add(SettingItem.SettingEntry(
+            stableId = "wifiDirectNewIdentity",
+            nameResId = R.string.wifi_direct_new_identity,
+            value = settings.wifiDirectGroupIdentity?.networkName
+                ?: getString(R.string.wifi_direct_new_identity_none),
+            searchKeywords = "forget reset ssid passphrase password group name",
+            onClick = { _ ->
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.wifi_direct_new_identity)
+                    .setMessage(R.string.wifi_direct_new_identity_confirm)
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        settings.wifiDirectGroupIdentity =
+                            P2pGroupIdentityPolicy.mint(AapService.wifiDirectName.value)
+                        Toast.makeText(requireContext(), R.string.wifi_direct_new_identity_done, Toast.LENGTH_LONG).show()
+                        updateSettingsList()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+        ))
+    }
+
     /**
      * The band to ask for when this app creates the WiFi Direct group, plus what that choice costs.
      *
@@ -3821,9 +4047,9 @@ class SettingsFragment : Fragment() {
             MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
                 .setTitle(R.string.external_bt_nativeaa)
                 .setMessage(getString(R.string.external_bt_nativeaa_desc, externalBtEvidence))
-                // Selecting the mode is still allowed: on a unit with a second, reachable radio
-                // the user can name it under the secondary-Bluetooth setting, and Native mode
-                // will then run. Without that it stays switched off, and the log says why.
+                // Selecting the mode is still allowed: the detection marks a class of hardware
+                // rather than measuring this one, and the Advanced settings carry a switch that
+                // starts the route anyway. Without it the mode stays off, and the log says why.
                 .setPositiveButton(android.R.string.ok) { dialog, _ ->
                     acceptNativeAaMode()
                     dialog.dismiss()

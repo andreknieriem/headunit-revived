@@ -23,6 +23,21 @@ class ConnectionIssuesTest {
     private val store = FakeStore()
 
     @Test
+    fun `every issue round-trips through the store`() {
+        // The store's read and write are parallel `when`s over the enum, so a kind added to one and
+        // not the other is silently unrecordable. This is what catches that.
+        val store = FakeStore()
+        ConnectionIssue.values().forEachIndexed { i, issue ->
+            ConnectionIssues.raise(store, issue, 1_000L + i)
+        }
+        val standing = ConnectionIssues.standing(store)
+        assertEquals(ConnectionIssue.values().size, standing.size)
+        ConnectionIssue.values().forEachIndexed { i, issue ->
+            assertEquals(1_000L + i, standing.first { it.issue == issue }.raisedAtEpochMs)
+        }
+    }
+
+    @Test
     fun `nothing raised means nothing standing`() {
         assertTrue(ConnectionIssues.standing(store).isEmpty())
     }

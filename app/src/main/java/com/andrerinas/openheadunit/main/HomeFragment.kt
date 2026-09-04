@@ -551,7 +551,7 @@ class HomeFragment : Fragment() {
      *   maxGridW    = maxBtnSize * 2 + cell-padding * 4   (2 cols, padding each side)
      */
     private fun constrainPortraitGridWidth(rootView: View) {
-        val gridLayout = rootView.findViewById<android.widget.LinearLayout>(R.id.main_buttons_layout)
+        val gridLayout = rootView.findViewById<View>(R.id.main_buttons_layout) as? android.widget.LinearLayout
             ?: return
         val density = resources.displayMetrics.density
 

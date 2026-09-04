@@ -163,7 +163,13 @@ class SelfLauncherManager(
             if (!anySucceeded) {
                 AppLog.e("SelfMode: All launchers failed")
                 if (SelfLaunchCoalescePolicy.mayReportAllLaunchersFailed(commManager.isConnected)) {
-                    commManager.emitError("No launch method succeeded") // hide "connecting" overlay
+                    // reportError, not emitError: disconnect() defaults to isUserExit, so a launch
+                    // that never had a session latched userExitedAA and suppressed the Native poke
+                    // for the rest of the group. Reporting still hides the "connecting" overlay.
+                    commManager.reportError("No launch method succeeded")
+                    // The report is not a disconnect, so nothing else clears this - and the
+                    // watchdog below is only armed once a launcher has succeeded.
+                    isActive = false
                 } else {
                     // emitError disconnects, and the session that is up is not this attempt's to
                     // end. Measured on the 17.4+ route, where a duplicate launch's failure killed
@@ -229,6 +235,9 @@ class SelfLauncherManager(
     fun clearLaunchInFlight() {
         launchInFlight = false
     }
+
+    /** Whether the launchers are still running, for a disconnect deciding what it is looking at. */
+    fun isLaunchInFlight(): Boolean = launchInFlight
 
     fun stopDummyVpnWatchdog() {
         selfModeVpnWatchdog?.cancel()

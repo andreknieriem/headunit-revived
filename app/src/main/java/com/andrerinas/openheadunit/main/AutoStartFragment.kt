@@ -23,8 +23,10 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.main.settings.SettingItem
 import com.andrerinas.openheadunit.main.settings.SettingsAdapter
 import com.andrerinas.openheadunit.aap.AapService
+import com.andrerinas.openheadunit.app.BtAutoDisconnectPolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.AppPermissions
+import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.utils.Settings
 import com.andrerinas.openheadunit.utils.BluetoothHelper
 import com.google.android.material.appbar.MaterialToolbar
@@ -43,7 +45,15 @@ class AutoStartFragment : Fragment() {
     private var pendingListenForUsbDevices: Boolean? = null
     private var pendingAutoStartOnUsb: Boolean? = null
     private val pendingAutoStartBtMacs = mutableSetOf<String>()
+    private val pendingAutoDisconnectBtMacs = mutableSetOf<String>()
+    private val pendingNativePokeBtMacs = mutableSetOf<String>()
+    private var pendingNativePokeAllPaired: Boolean? = null
+    private var pendingAutoDisconnectBtDelaySeconds: Int? = null
     private var pendingAutoStartOnWifi: Boolean? = null
+
+    /** Which list the device picker edits; remembered across the permission and enable prompts. */
+    private enum class BtPickerTarget { AUTO_START, AUTO_DISCONNECT, NATIVE_POKE }
+    private var btPickerTarget = BtPickerTarget.AUTO_START
     private var pendingAutoStartWifiSsid: String? = null
     private var pendingReopenOnReconnection: Boolean? = null
 
@@ -54,7 +64,7 @@ class AutoStartFragment : Fragment() {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            showBluetoothDeviceSelector()
+            showBluetoothDeviceSelector(btPickerTarget)
         } else {
             showBluetoothPermissionDeniedDialog()
         }
@@ -64,7 +74,7 @@ class AutoStartFragment : Fragment() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
-            showBluetoothDeviceSelector()
+            showBluetoothDeviceSelector(btPickerTarget)
         }
     }
 
@@ -83,6 +93,12 @@ class AutoStartFragment : Fragment() {
         pendingAutoStartOnUsb = settings.autoStartOnUsb
         pendingAutoStartBtMacs.clear()
         pendingAutoStartBtMacs.addAll(settings.autoStartBluetoothDeviceMacs)
+        pendingAutoDisconnectBtMacs.clear()
+        pendingAutoDisconnectBtMacs.addAll(settings.autoDisconnectBluetoothDeviceMacs)
+        pendingNativePokeBtMacs.clear()
+        pendingNativePokeBtMacs.addAll(settings.nativePokeBtMacs)
+        pendingNativePokeAllPaired = settings.nativePokeAllPairedDevices
+        pendingAutoDisconnectBtDelaySeconds = settings.autoDisconnectBtDelaySeconds
         pendingAutoStartOnWifi = settings.autoStartOnWifi
         pendingAutoStartWifiSsid = settings.autoStartWifiSsid
         pendingReopenOnReconnection = settings.reopenOnReconnection
@@ -171,6 +187,8 @@ class AutoStartFragment : Fragment() {
         }
         settings.autoStartBluetoothDeviceMacs = pendingAutoStartBtMacs
         Settings.syncAutoStartBtMacsToDeviceStorage(requireContext(), pendingAutoStartBtMacs)
+        settings.nativePokeBtMacs = pendingNativePokeBtMacs
+        pendingNativePokeAllPaired?.let { settings.nativePokeAllPairedDevices = it }
         if (pendingAutoStartBtMacs.isNotEmpty()) {
             val firstMac = pendingAutoStartBtMacs.first()
             val adapter = BluetoothHelper.getBluetoothAdapter(requireContext())
@@ -204,8 +222,11 @@ class AutoStartFragment : Fragment() {
             Settings.syncAutoStartWifiSsidToDeviceStorage(requireContext(), it)
         }
         pendingReopenOnReconnection?.let { settings.reopenOnReconnection = it }
+        settings.autoDisconnectBluetoothDeviceMacs = pendingAutoDisconnectBtMacs.toSet()
+        pendingAutoDisconnectBtDelaySeconds?.let { settings.autoDisconnectBtDelaySeconds = it }
 
-        // Check for Overlay permission if any auto-start is configured
+        // Check for Overlay permission if any auto-start is configured. Auto-disconnect launches
+        // nothing, so it is not part of this.
         if ((pendingAutoStartBtMacs.isNotEmpty() || pendingAutoStartOnUsb == true ||
             pendingAutoStartOnBoot == true || pendingAutoStartOnScreenOn == true ||
             pendingAutoStartOnWifi == true)) {
@@ -256,6 +277,10 @@ class AutoStartFragment : Fragment() {
                 pendingListenForUsbDevices != settings.listenForUsbDevices ||
                 pendingAutoStartOnUsb != settings.autoStartOnUsb ||
                 pendingAutoStartBtMacs != settings.autoStartBluetoothDeviceMacs ||
+                pendingAutoDisconnectBtMacs != settings.autoDisconnectBluetoothDeviceMacs ||
+                pendingNativePokeBtMacs != settings.nativePokeBtMacs ||
+                pendingNativePokeAllPaired != settings.nativePokeAllPairedDevices ||
+                pendingAutoDisconnectBtDelaySeconds != settings.autoDisconnectBtDelaySeconds ||
                 pendingAutoStartOnWifi != settings.autoStartOnWifi ||
                 pendingAutoStartWifiSsid != settings.autoStartWifiSsid ||
                 pendingReopenOnReconnection != settings.reopenOnReconnection
@@ -340,9 +365,63 @@ class AutoStartFragment : Fragment() {
             nameResId = R.string.auto_start_bt_label,
             value = getBluetoothSummaryText(),
             onClick = {
-                showBluetoothDeviceSelector()
+                showBluetoothDeviceSelector(BtPickerTarget.AUTO_START)
             }
         ))
+
+        if (settings.wifiConnectionMode == WifiLauncherMode.NATIVE) {
+            items.add(SettingItem.SettingEntry(
+                stableId = "nativePokeBt",
+                nameResId = R.string.native_poke_bt_label,
+                value = BluetoothDevicePicker.summaryFor(requireContext(), pendingNativePokeBtMacs)
+                    ?: getString(R.string.bt_device_not_set),
+                onClick = {
+                    showBluetoothDeviceSelector(BtPickerTarget.NATIVE_POKE)
+                }
+            ))
+
+            // Only asked when nothing is chosen: a chosen device is never widened.
+            if (pendingNativePokeBtMacs.isEmpty()) {
+                items.add(SettingItem.ToggleSettingEntry(
+                    stableId = "nativePokeAllPaired",
+                    nameResId = R.string.native_poke_all_paired_label,
+                    descriptionResId = R.string.native_poke_all_paired_description,
+                    isChecked = pendingNativePokeAllPaired ?: true,
+                    onCheckedChanged = { isChecked ->
+                        pendingNativePokeAllPaired = isChecked
+                        checkChanges()
+                    }
+                ))
+            }
+        }
+
+        items.add(SettingItem.SettingEntry(
+            stableId = "autoDisconnectBt",
+            nameResId = R.string.auto_disconnect_bt_label,
+            value = BluetoothDevicePicker.summaryFor(requireContext(), pendingAutoDisconnectBtMacs)
+                ?: getString(R.string.bt_device_not_set),
+            onClick = {
+                showBluetoothDeviceSelector(BtPickerTarget.AUTO_DISCONNECT)
+            }
+        ))
+
+        if (pendingAutoDisconnectBtMacs.isNotEmpty()) {
+            val delaySeconds = pendingAutoDisconnectBtDelaySeconds ?: 0
+            items.add(SettingItem.SettingEntry(
+                stableId = "autoDisconnectBtDelay",
+                nameResId = R.string.auto_disconnect_bt_delay_label,
+                value = if (delaySeconds <= 0) getString(R.string.auto_disconnect_bt_delay_immediate)
+                    else getString(R.string.auto_disconnect_bt_delay_value, delaySeconds),
+                onClick = {
+                    showAutoDisconnectDelayDialog()
+                }
+            ))
+
+            items.add(SettingItem.InfoBanner(
+                stableId = "autoDisconnectBtKillHint",
+                textResId = R.string.auto_disconnect_bt_kill_hint
+            ))
+        }
 
         if (Build.VERSION.SDK_INT <= 32) {
             items.add(SettingItem.InfoBanner(
@@ -374,13 +453,16 @@ class AutoStartFragment : Fragment() {
             }
         }
 
-        // Hide options that do not apply to the chosen connection types. Bluetooth bridges
-        // WiFi, so it is treated as WiFi scope.
+        // Hide options that do not apply to the chosen connection types. The Bluetooth rows decide
+        // when a wireless or Self Mode session starts and stops; USB has its own attach and
+        // detach, so a USB-only unit does not see them.
         val usbIds = setOf("listenForUsbDevices", "autoStartUsb", "reopenOnReconnection")
-        val wifiIds = setOf("autoStartBt", "autoStartWifiWarning", "autoStartWifi", "autoStartWifiSsid")
+        val wifiIds = setOf("autoStartWifiWarning", "autoStartWifi", "autoStartWifiSsid")
+        val btIds = setOf("autoStartBt", "autoDisconnectBt", "autoDisconnectBtDelay", "autoDisconnectBtKillHint")
         val filtered = items.filterNot { item ->
             (item.stableId in usbIds && !settings.showsUsb()) ||
-                (item.stableId in wifiIds && !settings.showsWifi())
+                (item.stableId in wifiIds && !settings.showsWifi()) ||
+                (item.stableId in btIds && !settings.showsWifi() && !settings.showsSelf())
         }
 
         settingsAdapter.submitList(filtered) {
@@ -419,6 +501,7 @@ class AutoStartFragment : Fragment() {
                 pendingAutoStartBtMacs.clear()
                 disabled = true
             }
+            // The auto-disconnect list stays: it launches nothing, so it needs no overlay.
             if (settings.autoStartOnWifi) {
                 settings.autoStartOnWifi = false
                 settings.autoStartWifiSsid = ""
@@ -437,7 +520,8 @@ class AutoStartFragment : Fragment() {
         }
     }
 
-    private fun showBluetoothDeviceSelector() {
+    private fun showBluetoothDeviceSelector(target: BtPickerTarget) {
+        btPickerTarget = target
         if (Build.VERSION.SDK_INT >= 31 && ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             bluetoothPermissionLauncher.launch(android.Manifest.permission.BLUETOOTH_CONNECT)
             return
@@ -451,105 +535,57 @@ class AutoStartFragment : Fragment() {
             return
         }
 
-        val bondedDevices = adapter.bondedDevices.toList()
-
-        if (bondedDevices.isEmpty()) {
-            Toast.makeText(requireContext(), "No paired Bluetooth devices found", Toast.LENGTH_LONG).show()
-            return
+        val pending = when (target) {
+            BtPickerTarget.AUTO_START -> pendingAutoStartBtMacs
+            BtPickerTarget.AUTO_DISCONNECT -> pendingAutoDisconnectBtMacs
+            BtPickerTarget.NATIVE_POKE -> pendingNativePokeBtMacs
         }
+        val titleResId = when (target) {
+            BtPickerTarget.AUTO_START -> R.string.select_bt_device
+            BtPickerTarget.AUTO_DISCONNECT -> R.string.select_bt_disconnect_device
+            BtPickerTarget.NATIVE_POKE -> R.string.select_bt_poke_device
+        }
+        BluetoothDevicePicker.show(requireContext(), titleResId, pending) { chosen ->
+            pending.clear()
+            pending.addAll(chosen)
+            checkChanges()
+            updateSettingsList()
+        }
+    }
 
-        val deviceNames = bondedDevices.map { device ->
-            val hardwareName = device.name ?: "Unknown Device"
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val alias = device.alias
-                if (!alias.isNullOrEmpty() && alias != hardwareName) {
-                    "$alias ($hardwareName)"
-                } else {
-                    alias ?: hardwareName
-                }
-            } else {
-                hardwareName
-            }
-        }.toTypedArray()
+    private fun getBluetoothSummaryText(): String =
+        BluetoothDevicePicker.summaryFor(requireContext(), pendingAutoStartBtMacs) { mac ->
+            // The name saved with the list, for when Bluetooth is off or cannot be asked.
+            if (settings.autoStartBluetoothDeviceMac == mac && settings.autoStartBluetoothDeviceName.isNotEmpty()) {
+                settings.autoStartBluetoothDeviceName
+            } else null
+        } ?: getString(R.string.bt_device_not_set)
 
-        val checkedItems = bondedDevices.map { pendingAutoStartBtMacs.contains(it.address) }.toBooleanArray()
-        val selectedMacs = pendingAutoStartBtMacs.toMutableSet()
+    private fun showAutoDisconnectDelayDialog() {
+        val input = EditText(requireContext())
+        input.inputType = InputType.TYPE_CLASS_NUMBER
+        input.setText((pendingAutoDisconnectBtDelaySeconds ?: 0).toString())
+        input.setSelection(input.text.length)
 
-        MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
-            .setTitle(R.string.select_bt_device)
-            .setMultiChoiceItems(deviceNames, checkedItems) { _, which, isChecked ->
-                val device = bondedDevices[which]
-                if (isChecked) {
-                    selectedMacs.add(device.address)
-                } else {
-                    selectedMacs.remove(device.address)
-                }
-            }
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                pendingAutoStartBtMacs.clear()
-                pendingAutoStartBtMacs.addAll(selectedMacs)
-                checkChanges()
-                updateSettingsList()
-            }
-            .setNeutralButton(R.string.remove) { _, _ ->
-                pendingAutoStartBtMacs.clear()
+        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+            .setTitle(R.string.enter_auto_disconnect_bt_delay)
+            .setMessage(R.string.auto_disconnect_bt_delay_hint)
+            .setView(input)
+            .setPositiveButton(R.string.save) { _, _ ->
+                val seconds = input.text.toString().toIntOrNull() ?: 0
+                pendingAutoDisconnectBtDelaySeconds = seconds.coerceIn(0, BtAutoDisconnectPolicy.MAX_DELAY_SECONDS)
                 checkChanges()
                 updateSettingsList()
             }
             .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
+            .create()
 
-    private fun getBluetoothSummaryText(): String {
-        if (pendingAutoStartBtMacs.isEmpty()) {
-            return getString(R.string.bt_device_not_set)
-        }
-
-        val adapter = BluetoothHelper.getBluetoothAdapter(requireContext())
-        val hasBtConnectPermission = if (Build.VERSION.SDK_INT >= 31) {
-            ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        } else true
-
-        val bondedAddresses = if (adapter?.isEnabled == true && hasBtConnectPermission) {
-            try {
-                adapter.bondedDevices.map { it.address }.toSet()
-            } catch (e: SecurityException) { null }
-        } else null
-
-        val validSelectedMacs = if (bondedAddresses != null) {
-            pendingAutoStartBtMacs.filter { bondedAddresses.contains(it) }
-        } else {
-            pendingAutoStartBtMacs.toList()
-        }
-
-        if (validSelectedMacs.isEmpty()) {
-            return getString(R.string.bt_device_not_set)
-        }
-
-        return if (validSelectedMacs.size == 1) {
-            val mac = validSelectedMacs.first()
-            if (hasBtConnectPermission && adapter?.isEnabled == true) {
-                try {
-                    val device = adapter.getRemoteDevice(mac)
-                    val hardwareName = device.name ?: mac
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        device.alias ?: hardwareName
-                    } else {
-                        hardwareName
-                    }
-                } catch (e: Exception) {
-                    mac
-                }
-            } else {
-                if (settings.autoStartBluetoothDeviceMac == mac && settings.autoStartBluetoothDeviceName.isNotEmpty()) {
-                    settings.autoStartBluetoothDeviceName
-                } else {
-                    mac
-                }
-            }
-        } else {
-            "${validSelectedMacs.size} ${getString(R.string.bt_devices_selected)}"
-        }
+        dialog.window?.clearFlags(
+            android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
+        )
+        dialog.show()
+        input.requestFocus()
     }
 
     private fun showBluetoothPermissionDeniedDialog() {

@@ -238,6 +238,8 @@
 
     <string name="bluetooth_address_s">Adresse Bluetooth</string>
     <string name="enter_bluetooth_mac">Entrer l\'adresse MAC Bluetooth</string>
+    <string name="bluetooth_address_message">L\'adresse propre à cet appareil, celle qui permet au téléphone de le reconnaître. Vous la trouverez dans Paramètres, À propos, État, ou sur le téléphone appairé sous l\'engrenage à côté de cet appareil. Laissez vide pour la détecter automatiquement.</string>
+    <string name="invalid_bluetooth_address">Ce n\'est pas une adresse Bluetooth. Saisissez six paires de chiffres hexadécimaux, par exemple 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Réinitialiser</string>
     <string name="reset_settings">Réinitialiser aux valeurs par défaut</string>
     <string name="reset_settings_confirm">Es-tu sûr de vouloir réinitialiser tous les paramètres à leurs valeurs par défaut ? Cela redémarrera l\'application.</string>
@@ -386,7 +388,7 @@
 
     <string name="static_bssid_title">BSSID statique</string>
     <string name="static_bssid_enter_value">Entrer BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Définir manuellement le BSSID pour la poignée de main sans fil si la détection auto est bloquée par les permissions du système</string>
+    <string name="static_bssid_desc">Définir la BSSID de la connexion sans fil à la main. Utile uniquement si aucune source de cet appareil n\'en donne ; le journal indique chaque source interrogée.</string>
 
     <string name="custom_insets">Encarts personnalisés (Marges)</string>
     <string name="inset_top">Haut</string>
@@ -663,6 +665,8 @@
     <string name="media_session_aa_status_placeholder">Connecté</string>
     <string name="sync_media_session_aa_metadata">AA en cours de lecture sur la session média</string>
     <string name="sync_media_session_aa_metadata_description">Afficher le titre de la piste, l\'artiste, la durée et la pochette du téléphone dans la session média du système et la notification média</string>
+    <string name="auto_resume_playback_on_reconnect">Reprendre la lecture lors de la reconnexion</string>
+    <string name="auto_resume_playback_on_reconnect_description">Reprend automatiquement la lecture si de la musique était en cours avant une brève coupure de connexion (moins de 60 secondes)</string>
     <string name="nav_notification_channel_name">Navigation</string>
     <string name="nav_notification_channel_description">Mises à jour de navigation pas à pas d\'Android Auto</string>
     <string name="nav_notification_title_format">Dans %1$d m — %2$s</string>
@@ -692,8 +696,6 @@
     <string name="debug_video_fault_rate" translatable="false">Fault rate (one in N)</string>
     <string name="debug_video_fault_budget" translatable="false">Fault budget</string>
     <string name="debug_force_memory_profile" translatable="false">Force memory profile</string>
-    <string name="p2p_legacy_5ghz_upper" translatable="false">Use the upper 5 GHz range</string>
-    <string name="p2p_legacy_5ghz_upper_description" translatable="false">Asks for channel 149 instead of channel 36. Try this only if channel 36 fails — some regions allow one range and not the other.</string>
     <string name="debug_video_low_latency" translatable="false">Request decoder low-latency mode</string>
     <string name="debug_video_low_latency_description" translatable="false">Sets the vendor low-latency MediaFormat key when configuring the video decoder. Falls back automatically if the decoder rejects it.</string>
     <string name="show_fps_counter_description">Afficher un compteur FPS en temps réel dans le coin supérieur gauche pendant la projection.</string>
@@ -843,8 +845,6 @@
     <string name="bluetooth_adapter_label">Adaptateur Bluetooth</string>
     <string name="bluetooth_adapter_description">Sélectionner l\'adaptateur/contrôleur Bluetooth à utiliser pour la poignée de main. Utile pour les systèmes à double Bluetooth.</string>
     <string name="select_bt_adapter">Sélectionner l\'adaptateur Bluetooth</string>
-    <string name="manual_secondary_bt_service_title">Radio secondaire manuelle</string>
-    <string name="manual_secondary_bt_service_message">Avancé : forcer une radio Bluetooth supplémentaire, pour les unités à double radio dont la seconde radio n\'est pas trouvée automatiquement. Trouve-la via \"adb shell service list\" (cherche une entrée avec Bluetooth à part bluetooth_manager) ou via un menu ingénieur, puis colle soit le nom avant les deux points, soit l\'interface affichée entre crochets - les deux fonctionnent. Pas garanti de fonctionner sur toutes les unités : certains autoradios font tourner une pile Bluetooth modifiée avec laquelle cela ne fera pas le pont, peu importe ce que tu entres ici. Laisse vide pour désactiver.</string>
     <string name="native_ap_transport">Transport réseau</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Point d\'accès</string>
@@ -855,8 +855,6 @@
     <string name="hotspot_ssid_override_message">Laisse vide pour lire automatiquement le nom depuis les paramètres du point d\'accès de cet appareil. Certains appareils ne laissent pas les applications le lire - si le journal indique que le nom n\'a pas pu être lu, tape-le ici exactement tel qu\'il apparaît dans les paramètres de ton point d\'accès.</string>
     <string name="hotspot_password_override">Mot de passe du point d\'accès (manuel)</string>
     <string name="hotspot_password_override_message">Laisse vide pour lire le mot de passe automatiquement. Nécessaire sur les appareils qui ne laissent pas les applications lire la configuration du point d\'accès. Le téléphone recevra ce mot de passe pour le rejoindre.</string>
-    <string name="native_wifi_version_exchange">Poignée de main moderne (échange de version)</string>
-    <string name="native_wifi_version_exchange_description">Ouvre la poignée de main Bluetooth en indiquant au téléphone quelle version du protocole cet autoradio parle, comme le font les autoradios d\'usine, au lieu d\'aller directement aux détails de connexion. Désactivé par défaut. Vaut le coup d\'essayer si le sans fil fonctionnait avant une mise à jour d\'Android Auto et a échoué depuis ; si ça ne change rien, désactive-le à nouveau.</string>
     <!-- QR Code Generator -->
     <string name="share_hotspot_qr_title">Configurer l\'assistant sans fil</string>
     <string name="share_hotspot_qr_desc">Afficher le code QR pour la connexion auto du téléphone</string>
@@ -1000,22 +998,46 @@
     <string name="wifi_direct_band_24ghz">2,4 GHz uniquement</string>
     <string name="wifi_direct_band_hint">Auto demande 5 GHz avec repli sur 2,4 GHz. Le 2,4 GHz est fiable jusqu\'à 720p, choisissez 5 GHz au-delà.</string>
     <string name="connection_issue_banner_bt_silent">Votre téléphone s\'est connecté en Bluetooth, mais n\'a reçu aucun paquet. Touchez pour passer en USB, Wireless Helper ou Auto.</string>
-    <string name="connection_issue_banner_bssid">Cet appareil n\'a pas pu lire son adresse MAC Wi-Fi (BSSID). Touchez pour activer la localisation ou entrer l\'adresse manuellement.</string>
+    <string name="connection_issue_banner_bssid">Aucune source de cet appareil n\'a donné sa propre adresse MAC WiFi (BSSID), votre téléphone n\'a donc jamais su à quel réseau se connecter. Toutes les sources ont été essayées, dont une qui ne demande aucune autorisation. Touchez pour activer la localisation, ce qui débloque les autres, ou pour saisir l\'adresse à la main.</string>
     <string name="connection_issue_banner_hotspot_off">Le point d\'accès de cet appareil est désactivé, aucun réseau n\'était donc disponible pour votre téléphone. Activez le point d\'accès avant de vous connecter ou touchez pour laisser l\'application l\'activer pour vous.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Le Wi-Fi de cet appareil n\'a pas pu créer le réseau Wi-Fi Direct que votre téléphone devait rejoindre, et l\'application ne peut pas le forcer. Si cet appareil est connecté à un autre réseau Wi-Fi, essayez de le déconnecter. Touchez pour utiliser le point d\'accès de cet appareil à la place.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Une autre application de cet appareil désactive et réactive sans cesse le WiFi Direct, aucun réseau ne peut donc être créé pour votre téléphone. Une application de projection préinstallée (CarLife, ZLink, CarPlay et similaires) en est la cause habituelle, et il vaut la peine de la désactiver. Touchez pour utiliser le point d\'accès de cet appareil à la place.</string>
     <string name="connection_issue_banner_hotspot_config">Cet appareil ne peut pas transmettre le nom et le mot de passe du point d\'accès. Touchez pour les saisir manuellement.</string>
+    <string name="narrow_band_profile_cap">Réduire la vidéo sur une radio 2,4 GHz uniquement</string>
+    <string name="narrow_band_profile_cap_description">Quand le WiFi de cet appareil n\'a pas de bande 5 GHz, demander au téléphone au maximum 720p et 30 fps au lieu des réglages ci-dessus. Sur une telle liaison, un flux à pleine cadence ne transportait aucune image lors des mesures, alors qu\'un flux réduit tenait. Désactivez ceci pour obtenir exactement ce que vous avez demandé.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Votre téléphone a abandonné la vidéo avant la moindre image, plusieurs fois de suite. La liaison WiFi est trop lente pour transporter l\'image. Touchez pour abaisser la limite de FPS à 30 ; une résolution plus basse et l\'audio AAC aident aussi.</string>
     <string name="connection_issue_banner_dismiss">Ignorer</string>
     <string name="connection_issue_remedy_hotspot_query">Nom et mot de passe du point d\'accès</string>
     <string name="preflight_title">Avant de vous connecter</string>
     <string name="preflight_intro">Cet appareil ne peut pas fournir tous les éléments requis pour Android Auto :</string>
     <string name="preflight_item_hotspot_name">Nom du point d\'accès : cet appareil empêche les applications de le lire.</string>
     <string name="preflight_item_hotspot_password">Mot de passe du point d\'accès requis.</string>
-    <string name="preflight_item_bssid">Adresse Wi-Fi (BSSID) introuvable.</string>
+    <string name="preflight_item_bssid">Adresse WiFi (BSSID). Aucune source n\'en a donné, pas même celle déduite de l\'interface réseau de cet appareil.</string>
     <string name="preflight_item_location">La localisation est désactivée, masquant l\'adresse Wi-Fi.</string>
     <string name="preflight_enter_now">Saisir maintenant</string>
     <string name="preflight_open_location">Localisation</string>
     <string name="preflight_later">Plus tard</string>
     <string name="preflight_invalid_bssid">Adresse Wi-Fi non valide. Entrez 6 paires de caractères hexadécimaux (ex. 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Se connecter via le réseau (nouveau handshake AA)</string>
+    <string name="native_wifi_version_exchange_description">Permet au téléphone de se reconnecter en Wi-Fi plutôt qu\'en Bluetooth, via le point d\'accès de cet appareil. Utile sur les appareils dont le Bluetooth ne peut pas transporter le handshake, et avec les versions récentes d\'Android Auto. Désactivé par défaut, et la première connexion passe toujours par le Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Terminer la connexion Bluetooth</string>
+    <string name="native_aa_complete_hfp_slc_description">Certains téléphones ne démarrent Android Auto sans fil que lorsque le Bluetooth de cet appareil est considéré comme connecté, et pas seulement appairé. Activé par défaut ; désactivez-le si les appels sur cet appareil cessent de fonctionner.</string>
+    <string name="native_aa_ignore_external_bt">Ignorer la vérification de compatibilité Bluetooth</string>
+    <string name="native_aa_ignore_external_bt_description">Cet appareil semble gérer le Bluetooth via un module séparé qu\'Android ne peut pas atteindre, Android Auto sans fil est donc désactivé automatiquement. Désactivé par défaut. Ne l\'activez que si vous pensez que c\'est faux : si la détection est correcte, la connexion échoue sans rien signaler et le journal paraît normal.</string>
+    <string name="native_aa_setup_qr_title">Configurer par QR code</string>
+    <string name="native_aa_setup_qr_description">Afficher un code que le téléphone peut scanner</string>
+    <string name="native_aa_setup_qr_content_description">QR code de configuration d\'Android Auto sans fil</string>
+    <string name="native_aa_setup_qr_instruction">Scannez-le avec l\'appareil photo du téléphone, puis confirmez sur celui-ci. Une seule fois suffit : ensuite le téléphone se connecte tout seul.</string>
+    <string name="native_aa_setup_qr_not_drawn">Le code n\'a pas pu être généré.</string>
+    <string name="native_aa_setup_qr_not_running">Démarrez d\'abord la connexion. Le code contient le réseau actuel de cet appareil, qui n\'existe pas avant cela.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Disponible uniquement avec le point d\'accès. Un réseau WiFi Direct est renommé à chaque création : le téléphone retiendrait donc un réseau qui n\'existe plus.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Le point d\'accès est sélectionné, mais la connexion tourne encore en WiFi Direct. Redémarrez la connexion, puis réessayez.</string>
+    <string name="native_aa_setup_qr_not_listening">Cet appareil n\'attend pas encore le téléphone. Réessayez dans un instant.</string>
+    <string name="native_aa_setup_qr_no_credentials">Le nom ou le mot de passe du réseau ne sont pas encore connus. Activez le point d\'accès ou saisissez-les ci-dessus.</string>
+    <string name="native_aa_setup_qr_no_bssid">L\'adresse WiFi (BSSID) de cet appareil n\'a pas pu être lue. Android Auto refuse un réseau qu\'il ne peut pas y rattacher.</string>
+    <string name="native_aa_setup_qr_no_address">L\'adresse de cet appareil sur ce réseau n\'est pas encore connue.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">L\'adresse Bluetooth de cet appareil n\'a pas pu être lue, et le téléphone en a besoin pour reconnaître cet autoradio par la suite.</string>
+    <string name="native_aa_setup_qr_dongle">Le nom Bluetooth de cet appareil ressemble à celui d\'un dongle sans fil, que le téléphone traite comme un autre type d\'appareil. Renommez le Bluetooth de cet appareil et réessayez.</string>
     <string name="category_ui">Interface utilisateur</string>
     <string name="hide_phone_signal_label">Masquer le signal réseau du téléphone</string>
     <string name="hide_battery_level_label">Masquer le niveau de batterie du téléphone</string>

@@ -34,6 +34,7 @@ import com.andrerinas.openheadunit.aap.AapProjectionActivity
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.aap.NativeTransport
 import com.andrerinas.openheadunit.app.BaseActivity
+import com.andrerinas.openheadunit.app.BtAutoStartRearmPolicy
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.AppPermissions
@@ -197,12 +198,15 @@ class MainActivity : BaseActivity() {
             }
         })
 
-        val isUsbAutoStart = savedInstanceState == null &&
-            intent?.getStringExtra(EXTRA_LAUNCH_SOURCE) == "USB auto-start"
+        val launchSource = if (savedInstanceState == null) intent?.getStringExtra(EXTRA_LAUNCH_SOURCE) else null
 
-        if (isUsbAutoStart) {
+        if (launchSource == "USB auto-start") {
             findViewById<View>(R.id.splash_overlay)?.visibility = View.GONE
             beginAutoConnect("USB auto-start", ConnectionUiMode.OVERLAY)
+        } else if (launchSource == LAUNCH_SOURCE_BLUETOOTH) {
+            // The connect pill and the Self Mode launch are raised from handleLaunchIntent, so a
+            // warm activity handed the same intent behaves the same way.
+            findViewById<View>(R.id.splash_overlay)?.visibility = View.GONE
         } else if (savedInstanceState == null) {
             val elapsedSinceStart = SystemClock.elapsedRealtime() - App.appStartTime
             val targetTotalDuration = 1200L
@@ -768,6 +772,14 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    private fun forceSelfModeLaunch() {
+        HomeFragment.forceSelfModeLaunch = true
+        val selfModeIntent = Intent(this, AapService::class.java).apply {
+            this.action = AapService.ACTION_START_SELF_MODE
+        }
+        ContextCompat.startForegroundService(this, selfModeIntent)
+    }
+
     private fun handleLaunchIntent(intent: Intent?) {
         if (intent == null) return
 
@@ -787,11 +799,31 @@ class MainActivity : BaseActivity() {
         if (intentAction == AapService.ACTION_START_SELF_MODE ||
            (intentData?.scheme == "headunit" && intentData.host == "selfmode")) {
             AppLog.i("MainActivity: Forced self-mode start requested")
-            HomeFragment.forceSelfModeLaunch = true
-            val selfModeIntent = Intent(this, AapService::class.java).apply {
-                this.action = AapService.ACTION_START_SELF_MODE
+            forceSelfModeLaunch()
+        }
+
+        if (intent.getStringExtra(EXTRA_LAUNCH_SOURCE) == LAUNCH_SOURCE_BLUETOOTH) {
+            // The service has already been told to arm wireless; this is the non-blocking pill
+            // while it does, and the Self Mode launch, which only an activity can start because
+            // HomeFragment owns the VPN consent and the projection needs a foreground window.
+            val commManager = App.provide(this).commManager
+            val settings = App.provide(this).settings
+            if (!commManager.isConnected) {
+                beginAutoConnect(LAUNCH_SOURCE_BLUETOOTH, ConnectionUiMode.PILL)
             }
-            ContextCompat.startForegroundService(this, selfModeIntent)
+            val launchesSelfMode = BtAutoStartRearmPolicy.launchesSelfMode(
+                selfSelected = settings.showsSelf(),
+                wirelessSelected = settings.showsWifi(),
+                mode = settings.wifiConnectionMode,
+                sessionUp = commManager.isConnected,
+                nativeAttemptInFlight = AapService.instance?.nativeAttemptInFlight()
+            )
+            if (launchesSelfMode) {
+                AppLog.i("MainActivity: Bluetooth auto-start: forcing a Self Mode launch")
+                forceSelfModeLaunch()
+            } else {
+                AppLog.i("MainActivity: Bluetooth auto-start: leaving Self Mode alone")
+            }
         }
 
         if (intent.action == Intent.ACTION_VIEW) {
@@ -930,6 +962,10 @@ class MainActivity : BaseActivity() {
                 ConnectionIssue.HOTSPOT_NOT_RUNNING -> R.string.connection_issue_banner_hotspot_off
                 ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED ->
                     R.string.connection_issue_banner_wifi_direct_refused
+                ConnectionIssue.WIFI_DIRECT_STACK_CYCLED ->
+                    R.string.connection_issue_banner_wifi_direct_cycled
+                ConnectionIssue.VIDEO_LINK_TOO_SLOW ->
+                    R.string.connection_issue_banner_video_link_too_slow
             }
         )
         banner.setOnClickListener { openRemedyFor(issue) }
@@ -970,6 +1006,8 @@ class MainActivity : BaseActivity() {
                 getString(R.string.connection_issue_remedy_hotspot_query)
             ConnectionIssue.HOTSPOT_NOT_RUNNING -> getString(R.string.auto_enable_hotspot)
             ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> getString(R.string.native_ap_transport)
+            ConnectionIssue.WIFI_DIRECT_STACK_CYCLED -> getString(R.string.native_ap_transport)
+            ConnectionIssue.VIDEO_LINK_TOO_SLOW -> getString(R.string.fps_limit)
         }
         startActivity(
             Intent(this, SettingsActivity::class.java)
@@ -1067,10 +1105,11 @@ class MainActivity : BaseActivity() {
     companion object {
         private const val permissionRequestCode = 97
         const val EXTRA_LAUNCH_SOURCE = "launch_source"
+        const val LAUNCH_SOURCE_BLUETOOTH = "Bluetooth auto-start"
 
         /** Launch sources that mean the app opened itself, with nobody necessarily watching. */
         private val AUTOMATIC_LAUNCH_SOURCES = setOf(
-            "Boot auto-start", "USB auto-start", "WiFi auto-start", "Bluetooth auto-start"
+            "Boot auto-start", "USB auto-start", "WiFi auto-start", LAUNCH_SOURCE_BLUETOOTH
         )
 
         /**

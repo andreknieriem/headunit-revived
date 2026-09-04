@@ -18,6 +18,8 @@ import com.andrerinas.openheadunit.aap.protocol.proto.Control
 import com.andrerinas.openheadunit.app.UsbAttachedActivity
 import com.andrerinas.openheadunit.connection.usb.UsbBlacklistPolicy
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
+import com.andrerinas.openheadunit.connection.wifi.direct.ObservedP2pGroup
+import com.andrerinas.openheadunit.connection.wifi.direct.StoredP2pIdentity
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
@@ -145,6 +147,13 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean(KEY_SYNC_MEDIA_SESSION_AA_METADATA, false)
         set(value) {
             prefs.edit().putBoolean(KEY_SYNC_MEDIA_SESSION_AA_METADATA, value).apply()
+        }
+
+    /** Auto-resume media playback on quick reconnect if music was playing before disconnect. */
+    var autoResumePlaybackOnReconnect: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_RESUME_PLAYBACK_ON_RECONNECT, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_AUTO_RESUME_PLAYBACK_ON_RECONNECT, value).apply()
         }
 
     /**
@@ -447,17 +456,36 @@ class Settings(private val context: Context) {
         set(value) = prefs.edit().putInt("wifi-direct-band", value).apply()
 
     /**
-     * Asks for UNII-3 (channel 149) instead of UNII-1 (channel 36) on the 5 GHz rung of the pre-Q
-     * operating-channel ladder.
+     * Which 5 GHz channel to ask for, on whichever transport is hosting the network.
+     * 0 = automatic, otherwise the channel number: 36, 40, 44 or 48 (UNII-1), or 149 (UNII-3).
      *
-     * Both are non-DFS and channel 36 is what the reference implementations use, so this exists only
-     * for a regulatory domain that refuses the lower range. Ignored when [wifiDirectBand] is 2.4 GHz
-     * only, which never reaches that rung, and from API 29 up, where the band request replaces the
-     * whole ladder.
+     * A phone's regulatory domain decides which 5 GHz channels it will join, and a network on a
+     * channel that domain forbids is one the phone never lists at all - not a weak connection, an
+     * invisible one. Several domains refuse UNII-3, and asking Android for "the 5 GHz band" is
+     * answered by picking a random one of eight candidates, four of which are UNII-3. That is what
+     * this setting takes out of the hands of chance.
+     *
+     * One setting for both transports because the answer belongs to the user's phone and country
+     * rather than to WiFi Direct or the access point. What each transport can do with it is not
+     * equal: WiFi Direct asks for it through supported API and gets it, while the access point's
+     * configuration call is refused outright on most head units, so there it is a request the unit
+     * is free to ignore. See
+     * [com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy].
+     *
+     * Ignored when the matching band setting is 2.4 GHz only. Replaces `p2p-legacy-5ghz-upper`,
+     * whose value migrates in the getter below. Applies to the next bring-up, so it needs a
+     * reconnect rather than only a write.
      */
-    var p2pLegacyFiveGhzUpperBand: Boolean
-        get() = prefs.getBoolean("p2p-legacy-5ghz-upper", false)
-        set(value) { prefs.edit().putBoolean("p2p-legacy-5ghz-upper", value).apply() }
+    var fiveGhzChannel: Int
+        get() {
+            if (prefs.contains("wifi-5ghz-channel")) return prefs.getInt("wifi-5ghz-channel", 0)
+            // The boolean this replaces said only "UNII-3 rather than UNII-1", which is exactly
+            // channel 149, and it only ever applied below API 29. Nothing is lost by widening it.
+            val migrated = if (prefs.getBoolean("p2p-legacy-5ghz-upper", false)) 149 else 0
+            prefs.edit().putInt("wifi-5ghz-channel", migrated).apply()
+            return migrated
+        }
+        set(value) = prefs.edit().putInt("wifi-5ghz-channel", value).apply()
 
     /**
      * Keeps this app's dummy VPN up for the life of a Native AA session, not only offline Self Mode.
@@ -482,6 +510,85 @@ class Settings(private val context: Context) {
     var keepDummyVpnDuringSession: Boolean
         get() = prefs.getBoolean("keep-dummy-vpn-during-session", false)
         set(value) { prefs.edit().putBoolean("keep-dummy-vpn-during-session", value).apply() }
+
+    /**
+     * Drops this unit's own WiFi association while the Native AA WiFi Direct group is brought up.
+     *
+     * On a single-radio unit an associated station leaves the group owner no free channel, so
+     * wpa_supplicant forces the group onto the station's channel or refuses to make one at all. That
+     * is the shape of a unit whose group never forms, and of one whose picture stutters because the
+     * group is sharing the home network's channel.
+     *
+     * Off by default, and deliberately not a general remedy: the same association is measured to be
+     * the *better* state once a session is running, on this same class of hardware. It is bounded to
+     * the bring-up and the network is put back on teardown. See
+     * [com.andrerinas.openheadunit.connection.wifi.direct.StationStandDownPolicy], which also holds
+     * the rule for whether the platform will honour it at all.
+     */
+    var standDownStationForWifiDirect: Boolean
+        get() = prefs.getBoolean("stand-down-station-for-wifi-direct", false)
+        set(value) { prefs.edit().putBoolean("stand-down-station-for-wifi-direct", value).apply() }
+
+    /**
+     * The network id disabled by the stand-down above, or -1 for none standing.
+     *
+     * Written before the network is disabled rather than after, so a crash in between still leaves a
+     * record to restore from. Not a user setting; it exists so a force-stop cannot leave the unit
+     * unable to rejoin its own home network.
+     */
+    var stationStandDownNetworkId: Int
+        get() = prefs.getInt("station-stand-down-network-id", -1)
+        set(value) { prefs.edit().putInt("station-stand-down-network-id", value).apply() }
+
+    /**
+     * Keeps the Native AA WiFi Direct group's name and passphrase between bring-ups.
+     *
+     * On, the group is asked for as a persistent one with a pair drawn once and kept, so the phone
+     * rejoins a network it already saved instead of being provisioned a new one every session. Off,
+     * every create names a new temporary network, which is what every 3.2.x and 3.3.x build did.
+     * See [com.andrerinas.openheadunit.connection.wifi.direct.P2pGroupIdentityPolicy].
+     */
+    var wifiDirectStableIdentity: Boolean
+        get() = prefs.getBoolean("wifi-direct-stable-identity", true)
+        set(value) { prefs.edit().putBoolean("wifi-direct-stable-identity", value).apply() }
+
+    /**
+     * The kept pair, or null before the first bring-up draws one.
+     *
+     * Written by WifiDirectManager when the policy draws it, and by the settings screen's "new
+     * identity" action. Always both halves together: a name reused with a different passphrase is
+     * the one combination a phone's saved profile cannot recover from on its own.
+     */
+    var wifiDirectGroupIdentity: StoredP2pIdentity?
+        get() {
+            val name = prefs.getString("wifi-direct-group-name", null) ?: return null
+            val passphrase = prefs.getString("wifi-direct-group-passphrase", null) ?: return null
+            return StoredP2pIdentity(name, passphrase)
+        }
+        set(value) {
+            prefs.edit()
+                .putString("wifi-direct-group-name", value?.networkName)
+                .putString("wifi-direct-group-passphrase", value?.passphrase)
+                .apply()
+        }
+
+    /**
+     * The last Native AA group this unit hosted, as the phone saw it, so the next one can be
+     * compared to it. Whether the BSSID repeats is a per-unit fact the platform does not expose,
+     * so it is measured across bring-ups (GroupIdentityStabilityPolicy). Not a user setting.
+     */
+    var wifiDirectLastGroup: ObservedP2pGroup?
+        get() {
+            val ssid = prefs.getString("wifi-direct-last-group-ssid", null) ?: return null
+            val bssid = prefs.getString("wifi-direct-last-group-bssid", null) ?: return null
+            return ObservedP2pGroup(ssid, bssid)
+        }
+        set(value) {
+            prefs.edit()
+                .putString("wifi-direct-last-group-ssid", value?.ssid)
+                .putString("wifi-direct-last-group-bssid", value?.bssid)
+                .apply()
+        }
 
     /**
      * Asks the decoder for low-latency mode, through whichever key its vendor understands.
@@ -616,6 +723,14 @@ class Settings(private val context: Context) {
     var fpsLimit: Int
         get() = prefs.getInt("fps-limit", 60)
         set(value) { prefs.edit().putInt("fps-limit", value).apply() }
+
+    /**
+     * Whether a wireless session on a radio with no 5 GHz band is asked for less than the settings
+     * above say. On by default: measured on such a link, a full-rate stream carried no frame at all.
+     */
+    var narrowBandProfileCap: Boolean
+        get() = prefs.getBoolean("narrow-band-profile-cap", true)
+        set(value) { prefs.edit().putBoolean("narrow-band-profile-cap", value).apply() }
 
     var hasAcceptedDisclaimer: Boolean
         get() = prefs.getBoolean("has-accepted-disclaimer", false)
@@ -969,6 +1084,51 @@ class Settings(private val context: Context) {
             autoStartBluetoothDeviceMacs = current
         }
 
+    /**
+     * Devices the Native AA wake poke connects to, to make Android Auto start on the phone.
+     *
+     * Its own setting since the auto-start list was both this and the trigger for
+     * `AutoStartReceiver`, and the handshake wrote a completed peer back into it - so clearing
+     * auto-start undid itself on the next poke cycle. Seeded from the auto-start list once, so a
+     * unit that has been poking a phone keeps poking it. Read after unlock only, so no mirror.
+     */
+    var nativePokeBtMacs: Set<String>
+        get() {
+            var macs = prefs.getStringSet("native-poke-bt-macs", null)
+            if (macs == null) {
+                macs = autoStartBluetoothDeviceMacs
+                prefs.edit().putStringSet("native-poke-bt-macs", macs).apply()
+            }
+            return macs
+        }
+        set(value) {
+            prefs.edit().putStringSet("native-poke-bt-macs", value).apply()
+        }
+
+    /**
+     * Whether an empty [nativePokeBtMacs] pokes every paired device instead of nothing.
+     *
+     * What the empty list used to do implicitly, kept as the default because the poke is the only
+     * thing that starts Android Auto on some units and a unit with nothing chosen yet must still
+     * connect. Turning it off is how a user says "this phone only".
+     */
+    var nativePokeAllPairedDevices: Boolean
+        get() = prefs.getBoolean("native-poke-all-paired", true)
+        set(value) { prefs.edit().putBoolean("native-poke-all-paired", value).apply() }
+
+    /**
+     * Devices whose Bluetooth link going away ends a session. Deliberately not the auto-start list,
+     * which doubles as the wake-poke targets. Read after unlock only, so no device-protected mirror.
+     */
+    var autoDisconnectBluetoothDeviceMacs: Set<String>
+        get() = prefs.getStringSet("auto-disconnect-bt-macs", null) ?: emptySet()
+        set(value) { prefs.edit().putStringSet("auto-disconnect-bt-macs", value).apply() }
+
+    /** Grace period before a watched device's absence counts. 0 ends the session at once. */
+    var autoDisconnectBtDelaySeconds: Int
+        get() = prefs.getInt("auto-disconnect-bt-delay-seconds", 5)
+        set(value) { prefs.edit().putInt("auto-disconnect-bt-delay-seconds", value).apply() }
+
     var appLanguage: String
         get() = prefs.getString("app-language", "")!!
         set(value) { prefs.edit().putString("app-language", value).apply() }
@@ -1064,6 +1224,9 @@ class Settings(private val context: Context) {
             syncAutoStartOnWifiToDeviceStorage(context, false)
             syncListenForUsbDevicesToDeviceStorage(context, true)
             syncAutoStartBtMacToDeviceStorage(context, "")
+            // The legacy key alone left the set AutoStartReceiver actually reads intact, so a
+            // reset kept auto-starting on the old phone.
+            syncAutoStartBtMacsToDeviceStorage(context, emptySet())
             syncUsbBlacklistToDeviceStorage(context, emptySet())
         }
     }
@@ -1235,6 +1398,7 @@ class Settings(private val context: Context) {
 
         /** SharedPreferences key; also used by [com.andrerinas.openheadunit.aap.AapService] for change listener. */
         const val KEY_SYNC_MEDIA_SESSION_AA_METADATA = "sync-media-session-aa-metadata"
+        const val KEY_AUTO_RESUME_PLAYBACK_ON_RECONNECT = "auto-resume-playback-on-reconnect"
 
         /** SharedPreferences key; also used by [com.andrerinas.openheadunit.aap.AapService] for change listener. */
         const val KEY_LOG_LEVEL = "log-level"
@@ -1743,13 +1907,12 @@ class Settings(private val context: Context) {
     // Whether the Native AA handshake opens with a WifiVersionRequest (Type 4), as real head units
     // and the OEM ZLink app do, instead of going straight to WifiStartRequest.
     //
-    // Off by default, deliberately: this is the only change on this route that alters what a unit
-    // with a working setup puts on the wire, and the version it announces is a guess — no capture
-    // of a real head unit's Type 4 has been decoded. A phone under test answered that guess with
-    // status=-8 and completed the handshake anyway, so the exchange is survivable on at least one
-    // Gearhead, but "survivable on one" is not a default. Left as an opt-in until a reporter whose
-    // unit broke on Android Auto 17.4 confirms it helps, since fixing that is the only reason to
-    // send it at all.
+    // Off by default: it is the one change on this route that alters what a unit with a working
+    // setup puts on the wire, so it stays opt-in. What it buys is the WPP-over-TCP endpoint, which
+    // from Android Auto 17.4 is how a reconnect happens with nothing running on the phone. That
+    // endpoint goes out on the hotspot transport, and on WiFi Direct once this unit's group has been
+    // seen to keep its name and address across bring-ups (see WppEndpointPolicy). Fields 3 and 4 of
+    // the request are still undecoded and are the shape a channel hint would take.
     var nativeWifiVersionExchange: Boolean
         get() = prefs.getBoolean("native-wifi-version-exchange", false)
         set(value) = prefs.edit().putBoolean("native-wifi-version-exchange", value).apply()
@@ -1794,6 +1957,16 @@ class Settings(private val context: Context) {
         get() = prefs.getLong("connection-issue-p2p-refused", 0L)
         set(value) = prefs.edit().putLong("connection-issue-p2p-refused", value).apply()
 
+    /** Something else on this unit kept switching WiFi Direct off and on, so no group could form. */
+    var connectionIssueWifiDirectCycledAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-p2p-cycled", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-p2p-cycled", value).apply()
+
+    /** Sessions kept starting and ending without a single video frame, so the link cannot carry it. */
+    var connectionIssueVideoLinkTooSlowAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-video-starved", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-video-starved", value).apply()
+
     /**
      * When the user last dismissed the failure banner.
      *
@@ -1803,12 +1976,6 @@ class Settings(private val context: Context) {
     var connectionIssueDismissedAtEpochMs: Long
         get() = prefs.getLong("connection-issue-dismissed-at", 0L)
         set(value) = prefs.edit().putLong("connection-issue-dismissed-at", value).apply()
-
-    // Manual fallback for dual-radio head units whose second radio isn't discoverable via
-    // ServiceManager.listServices() at all. Empty = disabled (rely on automatic discovery only).
-    var manualSecondaryBluetoothServiceName: String
-        get() = prefs.getString("manual-secondary-bt-service-name", "")!!
-        set(value) = prefs.edit().putString("manual-secondary-bt-service-name", value).apply()
 
     // Which interface hosts the head unit's access point. Empty = work it out from the interface
     // list. Worth having because every other implementation of this protocol either creates the AP
@@ -1862,5 +2029,43 @@ class Settings(private val context: Context) {
     var useLibusb: Boolean
         get() = prefs.getBoolean("use-libusb", false)
         set(value) = prefs.edit().putBoolean("use-libusb", value).apply()
+
+    // Publish the Android Auto RFCOMM record as insecure, so a phone can open it without the link
+    // having been authenticated first. It changes nothing where the two devices are already bonded,
+    // which is every setup that has ever reached wireless Android Auto; it is for the case where
+    // the bond or its link key has been dropped on one side, which a phone standing in for a head
+    // unit reaches more easily than a car does.
+    //
+    // Off by default, and a security trade rather than a free win: the handshake behind that record
+    // hands the peer this network's name, passphrase and BSSID, so anything in radio range can ask
+    // for them. The bond check on accept is what still refuses an unknown device.
+    var insecureAaRfcommListener: Boolean
+        get() = prefs.getBoolean("insecure-aa-rfcomm-listener", false)
+        set(value) = prefs.edit().putBoolean("insecure-aa-rfcomm-listener", value).apply()
+
+    // Open a hands-free service level connection instead of holding a silent channel. Android Auto
+    // will not start wireless setup unless the head unit is connected with a Bluetooth profile, and
+    // a silent channel leaves the phone's hands-free state machine half-open until it times out, so
+    // it never counts. Measured on hardware: a full wireless session with this on, none with it off.
+    //
+    // On by default, because it only runs where this app stands in for a radio with no hands-free
+    // stack of its own, and stands down again where a real hands-free link is already up.
+    //
+    // What a completed stand-in link does to call routing is not measured: no round has placed or
+    // taken a call with this on, and the responder negotiates neither a codec nor a SCO link, so it
+    // could not carry one. The switch is here for the user who would rather not find out.
+    var nativeAaCompleteHfpSlc: Boolean
+        get() = prefs.getBoolean("native-aa-complete-hfp-slc", true)
+        set(value) = prefs.edit().putBoolean("native-aa-complete-hfp-slc", value).apply()
+
+    // Run the Native AA Bluetooth route on a unit ExternalBtPolicy has flagged, instead of refusing
+    // to start it. The detection marks a class of hardware rather than measuring the unit in front
+    // of us, so it must not be the one refusal a user cannot argue with.
+    //
+    // Off by default, and unlikely to help: on the one such unit examined closely the Android radio
+    // accepted every write, flushed, and put nothing on the air.
+    var nativeAaIgnoreExternalBt: Boolean
+        get() = prefs.getBoolean("native-aa-ignore-external-bt", false)
+        set(value) = prefs.edit().putBoolean("native-aa-ignore-external-bt", value).apply()
 
 }

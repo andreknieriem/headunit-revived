@@ -1571,10 +1571,16 @@ public final class Wireless {
    * <pre>
    * Type 3, head unit -&gt; phone. The credentials themselves.
    *
-   * bssid, security_mode and access_point_type were required. Optional now because a hotspot
-   * cannot always resolve a real BSSID, and aa-proxy-rs omits the field outright when it has none.
-   * Wire-compatible: proto2 encodes optional and required identically for a field that is set, so
-   * this only drops a build()-time assertion.
+   * bssid, security_mode and access_point_type are `required` in the schema every other
+   * implementation uses — aa-proxy-rs and WirelessAndroidAutoDongle ship byte-identical copies of it.
+   * Relaxed to optional here so a truncated or future message still parses rather than throwing, and
+   * that is the only reason. Wire-compatible either way: proto2 encodes optional and required
+   * identically for a field that is set.
+   *
+   * It does not license leaving one out. Send all five, always — an empty bssid where there is no
+   * real one, as aa-proxy-rs does on the one path where it has none. A field the reference schema
+   * calls required is one a strict parser on the phone may refuse the whole message over, and that
+   * failure would look nothing like the credentials being wrong.
    * </pre>
    *
    * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WifiInfoResponse}
@@ -2033,10 +2039,16 @@ public final class Wireless {
      * <pre>
      * Type 3, head unit -&gt; phone. The credentials themselves.
      *
-     * bssid, security_mode and access_point_type were required. Optional now because a hotspot
-     * cannot always resolve a real BSSID, and aa-proxy-rs omits the field outright when it has none.
-     * Wire-compatible: proto2 encodes optional and required identically for a field that is set, so
-     * this only drops a build()-time assertion.
+     * bssid, security_mode and access_point_type are `required` in the schema every other
+     * implementation uses — aa-proxy-rs and WirelessAndroidAutoDongle ship byte-identical copies of it.
+     * Relaxed to optional here so a truncated or future message still parses rather than throwing, and
+     * that is the only reason. Wire-compatible either way: proto2 encodes optional and required
+     * identically for a field that is set.
+     *
+     * It does not license leaving one out. Send all five, always — an empty bssid where there is no
+     * real one, as aa-proxy-rs does on the one path where it has none. A field the reference schema
+     * calls required is one a strict parser on the phone may refuse the whole message over, and that
+     * failure would look nothing like the credentials being wrong.
      * </pre>
      *
      * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WifiInfoResponse}
@@ -2674,6 +2686,2695 @@ public final class Wireless {
 
   }
 
+  public interface WifiProjectionProtocolInfoOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional string ip_address = 1;</code>
+     * @return Whether the ipAddress field is set.
+     */
+    boolean hasIpAddress();
+    /**
+     * <code>optional string ip_address = 1;</code>
+     * @return The ipAddress.
+     */
+    java.lang.String getIpAddress();
+    /**
+     * <code>optional string ip_address = 1;</code>
+     * @return The bytes for ipAddress.
+     */
+    com.google.protobuf.ByteString
+        getIpAddressBytes();
+
+    /**
+     * <code>optional int32 port = 2;</code>
+     * @return Whether the port field is set.
+     */
+    boolean hasPort();
+    /**
+     * <code>optional int32 port = 2;</code>
+     * @return The port.
+     */
+    int getPort();
+  }
+  /**
+   * <pre>
+   * Where the phone should open the WPP session when it runs over TCP instead of RFCOMM. Carried on
+   * WifiVersionRequest; the phone stores it against our Bluetooth address and dials it on later
+   * connections. Both fields are copied out without a presence check, so an omitted one becomes ""
+   * or 0 and fails later at socket creation - always set both. An ip_address of "0.0.0.0" is a
+   * supported "use the gateway" signal rather than an error.
+   * </pre>
+   *
+   * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo}
+   */
+  public static final class WifiProjectionProtocolInfo extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo)
+      WifiProjectionProtocolInfoOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use WifiProjectionProtocolInfo.newBuilder() to construct.
+    private WifiProjectionProtocolInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private WifiProjectionProtocolInfo() {
+      ipAddress_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new WifiProjectionProtocolInfo();
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.class, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int IP_ADDRESS_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object ipAddress_ = "";
+    /**
+     * <code>optional string ip_address = 1;</code>
+     * @return Whether the ipAddress field is set.
+     */
+    @java.lang.Override
+    public boolean hasIpAddress() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional string ip_address = 1;</code>
+     * @return The ipAddress.
+     */
+    @java.lang.Override
+    public java.lang.String getIpAddress() {
+      java.lang.Object ref = ipAddress_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          ipAddress_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string ip_address = 1;</code>
+     * @return The bytes for ipAddress.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getIpAddressBytes() {
+      java.lang.Object ref = ipAddress_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        ipAddress_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PORT_FIELD_NUMBER = 2;
+    private int port_ = 0;
+    /**
+     * <code>optional int32 port = 2;</code>
+     * @return Whether the port field is set.
+     */
+    @java.lang.Override
+    public boolean hasPort() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional int32 port = 2;</code>
+     * @return The port.
+     */
+    @java.lang.Override
+    public int getPort() {
+      return port_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, ipAddress_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        output.writeInt32(2, port_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, ipAddress_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, port_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo)) {
+        return super.equals(obj);
+      }
+      com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo other = (com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo) obj;
+
+      if (hasIpAddress() != other.hasIpAddress()) return false;
+      if (hasIpAddress()) {
+        if (!getIpAddress()
+            .equals(other.getIpAddress())) return false;
+      }
+      if (hasPort() != other.hasPort()) return false;
+      if (hasPort()) {
+        if (getPort()
+            != other.getPort()) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasIpAddress()) {
+        hash = (37 * hash) + IP_ADDRESS_FIELD_NUMBER;
+        hash = (53 * hash) + getIpAddress().hashCode();
+      }
+      if (hasPort()) {
+        hash = (37 * hash) + PORT_FIELD_NUMBER;
+        hash = (53 * hash) + getPort();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * Where the phone should open the WPP session when it runs over TCP instead of RFCOMM. Carried on
+     * WifiVersionRequest; the phone stores it against our Bluetooth address and dials it on later
+     * connections. Both fields are copied out without a presence check, so an omitted one becomes ""
+     * or 0 and fails later at socket creation - always set both. An ip_address of "0.0.0.0" is a
+     * supported "use the gateway" signal rather than an error.
+     * </pre>
+     *
+     * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo)
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfoOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.class, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.Builder.class);
+      }
+
+      // Construct using com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        ipAddress_ = "";
+        port_ = 0;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_descriptor;
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo getDefaultInstanceForType() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo build() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo buildPartial() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo result = new com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.ipAddress_ = ipAddress_;
+          to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.port_ = port_;
+          to_bitField0_ |= 0x00000002;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo) {
+          return mergeFrom((com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo other) {
+        if (other == com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.getDefaultInstance()) return this;
+        if (other.hasIpAddress()) {
+          ipAddress_ = other.ipAddress_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.hasPort()) {
+          setPort(other.getPort());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                ipAddress_ = input.readBytes();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 16: {
+                port_ = input.readInt32();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object ipAddress_ = "";
+      /**
+       * <code>optional string ip_address = 1;</code>
+       * @return Whether the ipAddress field is set.
+       */
+      public boolean hasIpAddress() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional string ip_address = 1;</code>
+       * @return The ipAddress.
+       */
+      public java.lang.String getIpAddress() {
+        java.lang.Object ref = ipAddress_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            ipAddress_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string ip_address = 1;</code>
+       * @return The bytes for ipAddress.
+       */
+      public com.google.protobuf.ByteString
+          getIpAddressBytes() {
+        java.lang.Object ref = ipAddress_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          ipAddress_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string ip_address = 1;</code>
+       * @param value The ipAddress to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIpAddress(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ipAddress_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string ip_address = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIpAddress() {
+        ipAddress_ = getDefaultInstance().getIpAddress();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string ip_address = 1;</code>
+       * @param value The bytes for ipAddress to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIpAddressBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        ipAddress_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private int port_ ;
+      /**
+       * <code>optional int32 port = 2;</code>
+       * @return Whether the port field is set.
+       */
+      @java.lang.Override
+      public boolean hasPort() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional int32 port = 2;</code>
+       * @return The port.
+       */
+      @java.lang.Override
+      public int getPort() {
+        return port_;
+      }
+      /**
+       * <code>optional int32 port = 2;</code>
+       * @param value The port to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPort(int value) {
+
+        port_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 port = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPort() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        port_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo)
+    }
+
+    // @@protoc_insertion_point(class_scope:com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo)
+    private static final com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo();
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<WifiProjectionProtocolInfo>
+        PARSER = new com.google.protobuf.AbstractParser<WifiProjectionProtocolInfo>() {
+      @java.lang.Override
+      public WifiProjectionProtocolInfo parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<WifiProjectionProtocolInfo> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<WifiProjectionProtocolInfo> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface WppCarInfoOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional string make = 1;</code>
+     * @return Whether the make field is set.
+     */
+    boolean hasMake();
+    /**
+     * <code>optional string make = 1;</code>
+     * @return The make.
+     */
+    java.lang.String getMake();
+    /**
+     * <code>optional string make = 1;</code>
+     * @return The bytes for make.
+     */
+    com.google.protobuf.ByteString
+        getMakeBytes();
+
+    /**
+     * <code>optional string model = 2;</code>
+     * @return Whether the model field is set.
+     */
+    boolean hasModel();
+    /**
+     * <code>optional string model = 2;</code>
+     * @return The model.
+     */
+    java.lang.String getModel();
+    /**
+     * <code>optional string model = 2;</code>
+     * @return The bytes for model.
+     */
+    com.google.protobuf.ByteString
+        getModelBytes();
+
+    /**
+     * <code>optional string model_year = 3;</code>
+     * @return Whether the modelYear field is set.
+     */
+    boolean hasModelYear();
+    /**
+     * <code>optional string model_year = 3;</code>
+     * @return The modelYear.
+     */
+    java.lang.String getModelYear();
+    /**
+     * <code>optional string model_year = 3;</code>
+     * @return The bytes for modelYear.
+     */
+    com.google.protobuf.ByteString
+        getModelYearBytes();
+
+    /**
+     * <code>optional string vehicle_id = 4;</code>
+     * @return Whether the vehicleId field is set.
+     */
+    boolean hasVehicleId();
+    /**
+     * <code>optional string vehicle_id = 4;</code>
+     * @return The vehicleId.
+     */
+    java.lang.String getVehicleId();
+    /**
+     * <code>optional string vehicle_id = 4;</code>
+     * @return The bytes for vehicleId.
+     */
+    com.google.protobuf.ByteString
+        getVehicleIdBytes();
+
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return Whether the headUnitMake field is set.
+     */
+    boolean hasHeadUnitMake();
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return The headUnitMake.
+     */
+    java.lang.String getHeadUnitMake();
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return The bytes for headUnitMake.
+     */
+    com.google.protobuf.ByteString
+        getHeadUnitMakeBytes();
+
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return Whether the headUnitModel field is set.
+     */
+    boolean hasHeadUnitModel();
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return The headUnitModel.
+     */
+    java.lang.String getHeadUnitModel();
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return The bytes for headUnitModel.
+     */
+    com.google.protobuf.ByteString
+        getHeadUnitModelBytes();
+
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return Whether the headUnitSoftwareBuild field is set.
+     */
+    boolean hasHeadUnitSoftwareBuild();
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return The headUnitSoftwareBuild.
+     */
+    java.lang.String getHeadUnitSoftwareBuild();
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return The bytes for headUnitSoftwareBuild.
+     */
+    com.google.protobuf.ByteString
+        getHeadUnitSoftwareBuildBytes();
+
+    /**
+     * <code>optional string head_unit_software_version = 8;</code>
+     * @return Whether the headUnitSoftwareVersion field is set.
+     */
+    boolean hasHeadUnitSoftwareVersion();
+    /**
+     * <code>optional string head_unit_software_version = 8;</code>
+     * @return The headUnitSoftwareVersion.
+     */
+    java.lang.String getHeadUnitSoftwareVersion();
+    /**
+     * <code>optional string head_unit_software_version = 8;</code>
+     * @return The bytes for headUnitSoftwareVersion.
+     */
+    com.google.protobuf.ByteString
+        getHeadUnitSoftwareVersionBytes();
+
+    /**
+     * <pre>
+     * Declared so a capture can be read; never sent. It is absent from the schema the phone
+     * parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+     * already the least certain part of this message.
+     * </pre>
+     *
+     * <code>optional int32 body_type = 9;</code>
+     * @return Whether the bodyType field is set.
+     */
+    boolean hasBodyType();
+    /**
+     * <pre>
+     * Declared so a capture can be read; never sent. It is absent from the schema the phone
+     * parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+     * already the least certain part of this message.
+     * </pre>
+     *
+     * <code>optional int32 body_type = 9;</code>
+     * @return The bodyType.
+     */
+    int getBodyType();
+  }
+  /**
+   * <pre>
+   * Who we say we are, on WifiVersionRequest. The same identity ServiceDiscoveryResponse announces,
+   * and not decorative: at protocol 4.1 the phone accepts the WPP-over-TCP endpoint only for a make
+   * on its own allowlist, which is why we announce 4.2 instead and clear that check.
+   *
+   * Fields 5-8 are matched by position against the ServiceDiscoveryResponse layout rather than read
+   * from a capture, so they are the least certain part of this message. body_type is 2 for a model
+   * name ending in "truck" and 1 otherwise, which is the same rule ServiceDiscoveryResponse notes.
+   * </pre>
+   *
+   * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo}
+   */
+  public static final class WppCarInfo extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo)
+      WppCarInfoOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use WppCarInfo.newBuilder() to construct.
+    private WppCarInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private WppCarInfo() {
+      make_ = "";
+      model_ = "";
+      modelYear_ = "";
+      vehicleId_ = "";
+      headUnitMake_ = "";
+      headUnitModel_ = "";
+      headUnitSoftwareBuild_ = "";
+      headUnitSoftwareVersion_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new WppCarInfo();
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.class, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int MAKE_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object make_ = "";
+    /**
+     * <code>optional string make = 1;</code>
+     * @return Whether the make field is set.
+     */
+    @java.lang.Override
+    public boolean hasMake() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional string make = 1;</code>
+     * @return The make.
+     */
+    @java.lang.Override
+    public java.lang.String getMake() {
+      java.lang.Object ref = make_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          make_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string make = 1;</code>
+     * @return The bytes for make.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMakeBytes() {
+      java.lang.Object ref = make_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        make_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MODEL_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object model_ = "";
+    /**
+     * <code>optional string model = 2;</code>
+     * @return Whether the model field is set.
+     */
+    @java.lang.Override
+    public boolean hasModel() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional string model = 2;</code>
+     * @return The model.
+     */
+    @java.lang.Override
+    public java.lang.String getModel() {
+      java.lang.Object ref = model_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          model_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string model = 2;</code>
+     * @return The bytes for model.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getModelBytes() {
+      java.lang.Object ref = model_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        model_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MODEL_YEAR_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object modelYear_ = "";
+    /**
+     * <code>optional string model_year = 3;</code>
+     * @return Whether the modelYear field is set.
+     */
+    @java.lang.Override
+    public boolean hasModelYear() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>optional string model_year = 3;</code>
+     * @return The modelYear.
+     */
+    @java.lang.Override
+    public java.lang.String getModelYear() {
+      java.lang.Object ref = modelYear_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          modelYear_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string model_year = 3;</code>
+     * @return The bytes for modelYear.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getModelYearBytes() {
+      java.lang.Object ref = modelYear_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        modelYear_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VEHICLE_ID_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object vehicleId_ = "";
+    /**
+     * <code>optional string vehicle_id = 4;</code>
+     * @return Whether the vehicleId field is set.
+     */
+    @java.lang.Override
+    public boolean hasVehicleId() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <code>optional string vehicle_id = 4;</code>
+     * @return The vehicleId.
+     */
+    @java.lang.Override
+    public java.lang.String getVehicleId() {
+      java.lang.Object ref = vehicleId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          vehicleId_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string vehicle_id = 4;</code>
+     * @return The bytes for vehicleId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getVehicleIdBytes() {
+      java.lang.Object ref = vehicleId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        vehicleId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int HEAD_UNIT_MAKE_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object headUnitMake_ = "";
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return Whether the headUnitMake field is set.
+     */
+    @java.lang.Override
+    public boolean hasHeadUnitMake() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return The headUnitMake.
+     */
+    @java.lang.Override
+    public java.lang.String getHeadUnitMake() {
+      java.lang.Object ref = headUnitMake_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          headUnitMake_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string head_unit_make = 5;</code>
+     * @return The bytes for headUnitMake.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getHeadUnitMakeBytes() {
+      java.lang.Object ref = headUnitMake_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        headUnitMake_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int HEAD_UNIT_MODEL_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object headUnitModel_ = "";
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return Whether the headUnitModel field is set.
+     */
+    @java.lang.Override
+    public boolean hasHeadUnitModel() {
+      return ((bitField0_ & 0x00000020) != 0);
+    }
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return The headUnitModel.
+     */
+    @java.lang.Override
+    public java.lang.String getHeadUnitModel() {
+      java.lang.Object ref = headUnitModel_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          headUnitModel_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string head_unit_model = 6;</code>
+     * @return The bytes for headUnitModel.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getHeadUnitModelBytes() {
+      java.lang.Object ref = headUnitModel_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        headUnitModel_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int HEAD_UNIT_SOFTWARE_BUILD_FIELD_NUMBER = 7;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object headUnitSoftwareBuild_ = "";
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return Whether the headUnitSoftwareBuild field is set.
+     */
+    @java.lang.Override
+    public boolean hasHeadUnitSoftwareBuild() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return The headUnitSoftwareBuild.
+     */
+    @java.lang.Override
+    public java.lang.String getHeadUnitSoftwareBuild() {
+      java.lang.Object ref = headUnitSoftwareBuild_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          headUnitSoftwareBuild_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string head_unit_software_build = 7;</code>
+     * @return The bytes for headUnitSoftwareBuild.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getHeadUnitSoftwareBuildBytes() {
+      java.lang.Object ref = headUnitSoftwareBuild_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        headUnitSoftwareBuild_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int HEAD_UNIT_SOFTWARE_VERSION_FIELD_NUMBER = 8;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object headUnitSoftwareVersion_ = "";
+    /**
+     * <code>optional string head_unit_software_version = 8;</code>
+     * @return Whether the headUnitSoftwareVersion field is set.
+     */
+    @java.lang.Override
+    public boolean hasHeadUnitSoftwareVersion() {
+      return ((bitField0_ & 0x00000080) != 0);
+    }
+    /**
+     * <code>optional string head_unit_software_version = 8;</code>
+     * @return The headUnitSoftwareVersion.
+     */
+    @java.lang.Override
+    public java.lang.String getHeadUnitSoftwareVersion() {
+      java.lang.Object ref = headUnitSoftwareVersion_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          headUnitSoftwareVersion_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string head_unit_software_version = 8;</code>
+     * @return The bytes for headUnitSoftwareVersion.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getHeadUnitSoftwareVersionBytes() {
+      java.lang.Object ref = headUnitSoftwareVersion_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        headUnitSoftwareVersion_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int BODY_TYPE_FIELD_NUMBER = 9;
+    private int bodyType_ = 0;
+    /**
+     * <pre>
+     * Declared so a capture can be read; never sent. It is absent from the schema the phone
+     * parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+     * already the least certain part of this message.
+     * </pre>
+     *
+     * <code>optional int32 body_type = 9;</code>
+     * @return Whether the bodyType field is set.
+     */
+    @java.lang.Override
+    public boolean hasBodyType() {
+      return ((bitField0_ & 0x00000100) != 0);
+    }
+    /**
+     * <pre>
+     * Declared so a capture can be read; never sent. It is absent from the schema the phone
+     * parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+     * already the least certain part of this message.
+     * </pre>
+     *
+     * <code>optional int32 body_type = 9;</code>
+     * @return The bodyType.
+     */
+    @java.lang.Override
+    public int getBodyType() {
+      return bodyType_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, make_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, model_);
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, modelYear_);
+      }
+      if (((bitField0_ & 0x00000008) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, vehicleId_);
+      }
+      if (((bitField0_ & 0x00000010) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, headUnitMake_);
+      }
+      if (((bitField0_ & 0x00000020) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, headUnitModel_);
+      }
+      if (((bitField0_ & 0x00000040) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, headUnitSoftwareBuild_);
+      }
+      if (((bitField0_ & 0x00000080) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 8, headUnitSoftwareVersion_);
+      }
+      if (((bitField0_ & 0x00000100) != 0)) {
+        output.writeInt32(9, bodyType_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, make_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, model_);
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, modelYear_);
+      }
+      if (((bitField0_ & 0x00000008) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, vehicleId_);
+      }
+      if (((bitField0_ & 0x00000010) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, headUnitMake_);
+      }
+      if (((bitField0_ & 0x00000020) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, headUnitModel_);
+      }
+      if (((bitField0_ & 0x00000040) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, headUnitSoftwareBuild_);
+      }
+      if (((bitField0_ & 0x00000080) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, headUnitSoftwareVersion_);
+      }
+      if (((bitField0_ & 0x00000100) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(9, bodyType_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo)) {
+        return super.equals(obj);
+      }
+      com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo other = (com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo) obj;
+
+      if (hasMake() != other.hasMake()) return false;
+      if (hasMake()) {
+        if (!getMake()
+            .equals(other.getMake())) return false;
+      }
+      if (hasModel() != other.hasModel()) return false;
+      if (hasModel()) {
+        if (!getModel()
+            .equals(other.getModel())) return false;
+      }
+      if (hasModelYear() != other.hasModelYear()) return false;
+      if (hasModelYear()) {
+        if (!getModelYear()
+            .equals(other.getModelYear())) return false;
+      }
+      if (hasVehicleId() != other.hasVehicleId()) return false;
+      if (hasVehicleId()) {
+        if (!getVehicleId()
+            .equals(other.getVehicleId())) return false;
+      }
+      if (hasHeadUnitMake() != other.hasHeadUnitMake()) return false;
+      if (hasHeadUnitMake()) {
+        if (!getHeadUnitMake()
+            .equals(other.getHeadUnitMake())) return false;
+      }
+      if (hasHeadUnitModel() != other.hasHeadUnitModel()) return false;
+      if (hasHeadUnitModel()) {
+        if (!getHeadUnitModel()
+            .equals(other.getHeadUnitModel())) return false;
+      }
+      if (hasHeadUnitSoftwareBuild() != other.hasHeadUnitSoftwareBuild()) return false;
+      if (hasHeadUnitSoftwareBuild()) {
+        if (!getHeadUnitSoftwareBuild()
+            .equals(other.getHeadUnitSoftwareBuild())) return false;
+      }
+      if (hasHeadUnitSoftwareVersion() != other.hasHeadUnitSoftwareVersion()) return false;
+      if (hasHeadUnitSoftwareVersion()) {
+        if (!getHeadUnitSoftwareVersion()
+            .equals(other.getHeadUnitSoftwareVersion())) return false;
+      }
+      if (hasBodyType() != other.hasBodyType()) return false;
+      if (hasBodyType()) {
+        if (getBodyType()
+            != other.getBodyType()) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasMake()) {
+        hash = (37 * hash) + MAKE_FIELD_NUMBER;
+        hash = (53 * hash) + getMake().hashCode();
+      }
+      if (hasModel()) {
+        hash = (37 * hash) + MODEL_FIELD_NUMBER;
+        hash = (53 * hash) + getModel().hashCode();
+      }
+      if (hasModelYear()) {
+        hash = (37 * hash) + MODEL_YEAR_FIELD_NUMBER;
+        hash = (53 * hash) + getModelYear().hashCode();
+      }
+      if (hasVehicleId()) {
+        hash = (37 * hash) + VEHICLE_ID_FIELD_NUMBER;
+        hash = (53 * hash) + getVehicleId().hashCode();
+      }
+      if (hasHeadUnitMake()) {
+        hash = (37 * hash) + HEAD_UNIT_MAKE_FIELD_NUMBER;
+        hash = (53 * hash) + getHeadUnitMake().hashCode();
+      }
+      if (hasHeadUnitModel()) {
+        hash = (37 * hash) + HEAD_UNIT_MODEL_FIELD_NUMBER;
+        hash = (53 * hash) + getHeadUnitModel().hashCode();
+      }
+      if (hasHeadUnitSoftwareBuild()) {
+        hash = (37 * hash) + HEAD_UNIT_SOFTWARE_BUILD_FIELD_NUMBER;
+        hash = (53 * hash) + getHeadUnitSoftwareBuild().hashCode();
+      }
+      if (hasHeadUnitSoftwareVersion()) {
+        hash = (37 * hash) + HEAD_UNIT_SOFTWARE_VERSION_FIELD_NUMBER;
+        hash = (53 * hash) + getHeadUnitSoftwareVersion().hashCode();
+      }
+      if (hasBodyType()) {
+        hash = (37 * hash) + BODY_TYPE_FIELD_NUMBER;
+        hash = (53 * hash) + getBodyType();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * Who we say we are, on WifiVersionRequest. The same identity ServiceDiscoveryResponse announces,
+     * and not decorative: at protocol 4.1 the phone accepts the WPP-over-TCP endpoint only for a make
+     * on its own allowlist, which is why we announce 4.2 instead and clear that check.
+     *
+     * Fields 5-8 are matched by position against the ServiceDiscoveryResponse layout rather than read
+     * from a capture, so they are the least certain part of this message. body_type is 2 for a model
+     * name ending in "truck" and 1 otherwise, which is the same rule ServiceDiscoveryResponse notes.
+     * </pre>
+     *
+     * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo)
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfoOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.class, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.Builder.class);
+      }
+
+      // Construct using com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        make_ = "";
+        model_ = "";
+        modelYear_ = "";
+        vehicleId_ = "";
+        headUnitMake_ = "";
+        headUnitModel_ = "";
+        headUnitSoftwareBuild_ = "";
+        headUnitSoftwareVersion_ = "";
+        bodyType_ = 0;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_descriptor;
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo getDefaultInstanceForType() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo build() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo buildPartial() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo result = new com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.make_ = make_;
+          to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.model_ = model_;
+          to_bitField0_ |= 0x00000002;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.modelYear_ = modelYear_;
+          to_bitField0_ |= 0x00000004;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.vehicleId_ = vehicleId_;
+          to_bitField0_ |= 0x00000008;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.headUnitMake_ = headUnitMake_;
+          to_bitField0_ |= 0x00000010;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.headUnitModel_ = headUnitModel_;
+          to_bitField0_ |= 0x00000020;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.headUnitSoftwareBuild_ = headUnitSoftwareBuild_;
+          to_bitField0_ |= 0x00000040;
+        }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.headUnitSoftwareVersion_ = headUnitSoftwareVersion_;
+          to_bitField0_ |= 0x00000080;
+        }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
+          result.bodyType_ = bodyType_;
+          to_bitField0_ |= 0x00000100;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo) {
+          return mergeFrom((com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo other) {
+        if (other == com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.getDefaultInstance()) return this;
+        if (other.hasMake()) {
+          make_ = other.make_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.hasModel()) {
+          model_ = other.model_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (other.hasModelYear()) {
+          modelYear_ = other.modelYear_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (other.hasVehicleId()) {
+          vehicleId_ = other.vehicleId_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (other.hasHeadUnitMake()) {
+          headUnitMake_ = other.headUnitMake_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (other.hasHeadUnitModel()) {
+          headUnitModel_ = other.headUnitModel_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (other.hasHeadUnitSoftwareBuild()) {
+          headUnitSoftwareBuild_ = other.headUnitSoftwareBuild_;
+          bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        if (other.hasHeadUnitSoftwareVersion()) {
+          headUnitSoftwareVersion_ = other.headUnitSoftwareVersion_;
+          bitField0_ |= 0x00000080;
+          onChanged();
+        }
+        if (other.hasBodyType()) {
+          setBodyType(other.getBodyType());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                make_ = input.readBytes();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                model_ = input.readBytes();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                modelYear_ = input.readBytes();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                vehicleId_ = input.readBytes();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 42: {
+                headUnitMake_ = input.readBytes();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              case 50: {
+                headUnitModel_ = input.readBytes();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+              case 58: {
+                headUnitSoftwareBuild_ = input.readBytes();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
+              case 66: {
+                headUnitSoftwareVersion_ = input.readBytes();
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 66
+              case 72: {
+                bodyType_ = input.readInt32();
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 72
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object make_ = "";
+      /**
+       * <code>optional string make = 1;</code>
+       * @return Whether the make field is set.
+       */
+      public boolean hasMake() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional string make = 1;</code>
+       * @return The make.
+       */
+      public java.lang.String getMake() {
+        java.lang.Object ref = make_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            make_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string make = 1;</code>
+       * @return The bytes for make.
+       */
+      public com.google.protobuf.ByteString
+          getMakeBytes() {
+        java.lang.Object ref = make_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          make_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string make = 1;</code>
+       * @param value The make to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMake(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        make_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string make = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMake() {
+        make_ = getDefaultInstance().getMake();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string make = 1;</code>
+       * @param value The bytes for make to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMakeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        make_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object model_ = "";
+      /**
+       * <code>optional string model = 2;</code>
+       * @return Whether the model field is set.
+       */
+      public boolean hasModel() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional string model = 2;</code>
+       * @return The model.
+       */
+      public java.lang.String getModel() {
+        java.lang.Object ref = model_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            model_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string model = 2;</code>
+       * @return The bytes for model.
+       */
+      public com.google.protobuf.ByteString
+          getModelBytes() {
+        java.lang.Object ref = model_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          model_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string model = 2;</code>
+       * @param value The model to set.
+       * @return This builder for chaining.
+       */
+      public Builder setModel(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        model_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string model = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearModel() {
+        model_ = getDefaultInstance().getModel();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string model = 2;</code>
+       * @param value The bytes for model to set.
+       * @return This builder for chaining.
+       */
+      public Builder setModelBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        model_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object modelYear_ = "";
+      /**
+       * <code>optional string model_year = 3;</code>
+       * @return Whether the modelYear field is set.
+       */
+      public boolean hasModelYear() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional string model_year = 3;</code>
+       * @return The modelYear.
+       */
+      public java.lang.String getModelYear() {
+        java.lang.Object ref = modelYear_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            modelYear_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string model_year = 3;</code>
+       * @return The bytes for modelYear.
+       */
+      public com.google.protobuf.ByteString
+          getModelYearBytes() {
+        java.lang.Object ref = modelYear_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          modelYear_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string model_year = 3;</code>
+       * @param value The modelYear to set.
+       * @return This builder for chaining.
+       */
+      public Builder setModelYear(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        modelYear_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string model_year = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearModelYear() {
+        modelYear_ = getDefaultInstance().getModelYear();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string model_year = 3;</code>
+       * @param value The bytes for modelYear to set.
+       * @return This builder for chaining.
+       */
+      public Builder setModelYearBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        modelYear_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object vehicleId_ = "";
+      /**
+       * <code>optional string vehicle_id = 4;</code>
+       * @return Whether the vehicleId field is set.
+       */
+      public boolean hasVehicleId() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <code>optional string vehicle_id = 4;</code>
+       * @return The vehicleId.
+       */
+      public java.lang.String getVehicleId() {
+        java.lang.Object ref = vehicleId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            vehicleId_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string vehicle_id = 4;</code>
+       * @return The bytes for vehicleId.
+       */
+      public com.google.protobuf.ByteString
+          getVehicleIdBytes() {
+        java.lang.Object ref = vehicleId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          vehicleId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string vehicle_id = 4;</code>
+       * @param value The vehicleId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVehicleId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        vehicleId_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string vehicle_id = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVehicleId() {
+        vehicleId_ = getDefaultInstance().getVehicleId();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string vehicle_id = 4;</code>
+       * @param value The bytes for vehicleId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVehicleIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        vehicleId_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object headUnitMake_ = "";
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @return Whether the headUnitMake field is set.
+       */
+      public boolean hasHeadUnitMake() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @return The headUnitMake.
+       */
+      public java.lang.String getHeadUnitMake() {
+        java.lang.Object ref = headUnitMake_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            headUnitMake_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @return The bytes for headUnitMake.
+       */
+      public com.google.protobuf.ByteString
+          getHeadUnitMakeBytes() {
+        java.lang.Object ref = headUnitMake_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          headUnitMake_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @param value The headUnitMake to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitMake(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitMake_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeadUnitMake() {
+        headUnitMake_ = getDefaultInstance().getHeadUnitMake();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_make = 5;</code>
+       * @param value The bytes for headUnitMake to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitMakeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitMake_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object headUnitModel_ = "";
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @return Whether the headUnitModel field is set.
+       */
+      public boolean hasHeadUnitModel() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @return The headUnitModel.
+       */
+      public java.lang.String getHeadUnitModel() {
+        java.lang.Object ref = headUnitModel_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            headUnitModel_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @return The bytes for headUnitModel.
+       */
+      public com.google.protobuf.ByteString
+          getHeadUnitModelBytes() {
+        java.lang.Object ref = headUnitModel_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          headUnitModel_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @param value The headUnitModel to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitModel(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitModel_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeadUnitModel() {
+        headUnitModel_ = getDefaultInstance().getHeadUnitModel();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_model = 6;</code>
+       * @param value The bytes for headUnitModel to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitModelBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitModel_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object headUnitSoftwareBuild_ = "";
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @return Whether the headUnitSoftwareBuild field is set.
+       */
+      public boolean hasHeadUnitSoftwareBuild() {
+        return ((bitField0_ & 0x00000040) != 0);
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @return The headUnitSoftwareBuild.
+       */
+      public java.lang.String getHeadUnitSoftwareBuild() {
+        java.lang.Object ref = headUnitSoftwareBuild_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            headUnitSoftwareBuild_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @return The bytes for headUnitSoftwareBuild.
+       */
+      public com.google.protobuf.ByteString
+          getHeadUnitSoftwareBuildBytes() {
+        java.lang.Object ref = headUnitSoftwareBuild_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          headUnitSoftwareBuild_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @param value The headUnitSoftwareBuild to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitSoftwareBuild(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitSoftwareBuild_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeadUnitSoftwareBuild() {
+        headUnitSoftwareBuild_ = getDefaultInstance().getHeadUnitSoftwareBuild();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_software_build = 7;</code>
+       * @param value The bytes for headUnitSoftwareBuild to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitSoftwareBuildBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitSoftwareBuild_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object headUnitSoftwareVersion_ = "";
+      /**
+       * <code>optional string head_unit_software_version = 8;</code>
+       * @return Whether the headUnitSoftwareVersion field is set.
+       */
+      public boolean hasHeadUnitSoftwareVersion() {
+        return ((bitField0_ & 0x00000080) != 0);
+      }
+      /**
+       * <code>optional string head_unit_software_version = 8;</code>
+       * @return The headUnitSoftwareVersion.
+       */
+      public java.lang.String getHeadUnitSoftwareVersion() {
+        java.lang.Object ref = headUnitSoftwareVersion_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            headUnitSoftwareVersion_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_software_version = 8;</code>
+       * @return The bytes for headUnitSoftwareVersion.
+       */
+      public com.google.protobuf.ByteString
+          getHeadUnitSoftwareVersionBytes() {
+        java.lang.Object ref = headUnitSoftwareVersion_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          headUnitSoftwareVersion_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string head_unit_software_version = 8;</code>
+       * @param value The headUnitSoftwareVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitSoftwareVersion(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitSoftwareVersion_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_software_version = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHeadUnitSoftwareVersion() {
+        headUnitSoftwareVersion_ = getDefaultInstance().getHeadUnitSoftwareVersion();
+        bitField0_ = (bitField0_ & ~0x00000080);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string head_unit_software_version = 8;</code>
+       * @param value The bytes for headUnitSoftwareVersion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHeadUnitSoftwareVersionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        headUnitSoftwareVersion_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+
+      private int bodyType_ ;
+      /**
+       * <pre>
+       * Declared so a capture can be read; never sent. It is absent from the schema the phone
+       * parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+       * already the least certain part of this message.
+       * </pre>
+       *
+       * <code>optional int32 body_type = 9;</code>
+       * @return Whether the bodyType field is set.
+       */
+      @java.lang.Override
+      public boolean hasBodyType() {
+        return ((bitField0_ & 0x00000100) != 0);
+      }
+      /**
+       * <pre>
+       * Declared so a capture can be read; never sent. It is absent from the schema the phone
+       * parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+       * already the least certain part of this message.
+       * </pre>
+       *
+       * <code>optional int32 body_type = 9;</code>
+       * @return The bodyType.
+       */
+      @java.lang.Override
+      public int getBodyType() {
+        return bodyType_;
+      }
+      /**
+       * <pre>
+       * Declared so a capture can be read; never sent. It is absent from the schema the phone
+       * parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+       * already the least certain part of this message.
+       * </pre>
+       *
+       * <code>optional int32 body_type = 9;</code>
+       * @param value The bodyType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBodyType(int value) {
+
+        bodyType_ = value;
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Declared so a capture can be read; never sent. It is absent from the schema the phone
+       * parses, where field 9 is either unknown or something else entirely, and fields 5-8 above are
+       * already the least certain part of this message.
+       * </pre>
+       *
+       * <code>optional int32 body_type = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBodyType() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        bodyType_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo)
+    }
+
+    // @@protoc_insertion_point(class_scope:com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo)
+    private static final com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo();
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<WppCarInfo>
+        PARSER = new com.google.protobuf.AbstractParser<WppCarInfo>() {
+      @java.lang.Override
+      public WppCarInfo parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<WppCarInfo> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<WppCarInfo> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface WifiVersionRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:com.andrerinas.openheadunit.aap.protocol.proto.WifiVersionRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -2699,12 +5400,45 @@ public final class Wireless {
      * @return The minor.
      */
     int getMinor();
+
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+     * @return Whether the carInfo field is set.
+     */
+    boolean hasCarInfo();
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+     * @return The carInfo.
+     */
+    com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo getCarInfo();
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+     */
+    com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfoOrBuilder getCarInfoOrBuilder();
+
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+     * @return Whether the wppInfo field is set.
+     */
+    boolean hasWppInfo();
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+     * @return The wppInfo.
+     */
+    com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo getWppInfo();
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+     */
+    com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfoOrBuilder getWppInfoOrBuilder();
   }
   /**
    * <pre>
-   * Type 4, head unit -&gt; phone. Opens the modern handshake by declaring our protocol version. Real
-   * head units send this first, aa-proxy-rs's dongle does not, hence the setting. Only major/minor
-   * are defined — the rest is revision dependent and we never have to read one.
+   * Type 4, head unit -&gt; phone. Opens the modern handshake by declaring our protocol version, and
+   * carries the two things the phone needs to reach us over TCP later: where to dial, and who we
+   * are. Below protocol 4.1 the phone skips wpp_info entirely, which is why the version matters.
+   *
+   * Fields 3 and 4 exist in the phone's schema (an enum and a packed int32 list) and are left
+   * undefined here: we never send them and an absent field costs nothing.
    * </pre>
    *
    * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WifiVersionRequest}
@@ -2780,6 +5514,58 @@ public final class Wireless {
       return minor_;
     }
 
+    public static final int CAR_INFO_FIELD_NUMBER = 5;
+    private com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo carInfo_;
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+     * @return Whether the carInfo field is set.
+     */
+    @java.lang.Override
+    public boolean hasCarInfo() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+     * @return The carInfo.
+     */
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo getCarInfo() {
+      return carInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.getDefaultInstance() : carInfo_;
+    }
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+     */
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfoOrBuilder getCarInfoOrBuilder() {
+      return carInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.getDefaultInstance() : carInfo_;
+    }
+
+    public static final int WPP_INFO_FIELD_NUMBER = 6;
+    private com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo wppInfo_;
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+     * @return Whether the wppInfo field is set.
+     */
+    @java.lang.Override
+    public boolean hasWppInfo() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+     * @return The wppInfo.
+     */
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo getWppInfo() {
+      return wppInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.getDefaultInstance() : wppInfo_;
+    }
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+     */
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfoOrBuilder getWppInfoOrBuilder() {
+      return wppInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.getDefaultInstance() : wppInfo_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -2800,6 +5586,12 @@ public final class Wireless {
       if (((bitField0_ & 0x00000002) != 0)) {
         output.writeInt32(2, minor_);
       }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        output.writeMessage(5, getCarInfo());
+      }
+      if (((bitField0_ & 0x00000008) != 0)) {
+        output.writeMessage(6, getWppInfo());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -2816,6 +5608,14 @@ public final class Wireless {
       if (((bitField0_ & 0x00000002) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(2, minor_);
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(5, getCarInfo());
+      }
+      if (((bitField0_ & 0x00000008) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, getWppInfo());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -2842,6 +5642,16 @@ public final class Wireless {
         if (getMinor()
             != other.getMinor()) return false;
       }
+      if (hasCarInfo() != other.hasCarInfo()) return false;
+      if (hasCarInfo()) {
+        if (!getCarInfo()
+            .equals(other.getCarInfo())) return false;
+      }
+      if (hasWppInfo() != other.hasWppInfo()) return false;
+      if (hasWppInfo()) {
+        if (!getWppInfo()
+            .equals(other.getWppInfo())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -2860,6 +5670,14 @@ public final class Wireless {
       if (hasMinor()) {
         hash = (37 * hash) + MINOR_FIELD_NUMBER;
         hash = (53 * hash) + getMinor();
+      }
+      if (hasCarInfo()) {
+        hash = (37 * hash) + CAR_INFO_FIELD_NUMBER;
+        hash = (53 * hash) + getCarInfo().hashCode();
+      }
+      if (hasWppInfo()) {
+        hash = (37 * hash) + WPP_INFO_FIELD_NUMBER;
+        hash = (53 * hash) + getWppInfo().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -2960,9 +5778,12 @@ public final class Wireless {
     }
     /**
      * <pre>
-     * Type 4, head unit -&gt; phone. Opens the modern handshake by declaring our protocol version. Real
-     * head units send this first, aa-proxy-rs's dongle does not, hence the setting. Only major/minor
-     * are defined — the rest is revision dependent and we never have to read one.
+     * Type 4, head unit -&gt; phone. Opens the modern handshake by declaring our protocol version, and
+     * carries the two things the phone needs to reach us over TCP later: where to dial, and who we
+     * are. Below protocol 4.1 the phone skips wpp_info entirely, which is why the version matters.
+     *
+     * Fields 3 and 4 exist in the phone's schema (an enum and a packed int32 list) and are left
+     * undefined here: we never send them and an absent field costs nothing.
      * </pre>
      *
      * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WifiVersionRequest}
@@ -2986,13 +5807,20 @@ public final class Wireless {
 
       // Construct using com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiVersionRequest.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getCarInfoFieldBuilder();
+          getWppInfoFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
@@ -3000,6 +5828,16 @@ public final class Wireless {
         bitField0_ = 0;
         major_ = 0;
         minor_ = 0;
+        carInfo_ = null;
+        if (carInfoBuilder_ != null) {
+          carInfoBuilder_.dispose();
+          carInfoBuilder_ = null;
+        }
+        wppInfo_ = null;
+        if (wppInfoBuilder_ != null) {
+          wppInfoBuilder_.dispose();
+          wppInfoBuilder_ = null;
+        }
         return this;
       }
 
@@ -3041,6 +5879,18 @@ public final class Wireless {
         if (((from_bitField0_ & 0x00000002) != 0)) {
           result.minor_ = minor_;
           to_bitField0_ |= 0x00000002;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.carInfo_ = carInfoBuilder_ == null
+              ? carInfo_
+              : carInfoBuilder_.build();
+          to_bitField0_ |= 0x00000004;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.wppInfo_ = wppInfoBuilder_ == null
+              ? wppInfo_
+              : wppInfoBuilder_.build();
+          to_bitField0_ |= 0x00000008;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -3095,6 +5945,12 @@ public final class Wireless {
         if (other.hasMinor()) {
           setMinor(other.getMinor());
         }
+        if (other.hasCarInfo()) {
+          mergeCarInfo(other.getCarInfo());
+        }
+        if (other.hasWppInfo()) {
+          mergeWppInfo(other.getWppInfo());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
         return this;
@@ -3131,6 +5987,20 @@ public final class Wireless {
                 bitField0_ |= 0x00000002;
                 break;
               } // case 16
+              case 42: {
+                input.readMessage(
+                    getCarInfoFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 42
+              case 50: {
+                input.readMessage(
+                    getWppInfoFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 50
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -3226,6 +6096,248 @@ public final class Wireless {
         minor_ = 0;
         onChanged();
         return this;
+      }
+
+      private com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo carInfo_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfoOrBuilder> carInfoBuilder_;
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       * @return Whether the carInfo field is set.
+       */
+      public boolean hasCarInfo() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       * @return The carInfo.
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo getCarInfo() {
+        if (carInfoBuilder_ == null) {
+          return carInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.getDefaultInstance() : carInfo_;
+        } else {
+          return carInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       */
+      public Builder setCarInfo(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo value) {
+        if (carInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          carInfo_ = value;
+        } else {
+          carInfoBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       */
+      public Builder setCarInfo(
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.Builder builderForValue) {
+        if (carInfoBuilder_ == null) {
+          carInfo_ = builderForValue.build();
+        } else {
+          carInfoBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       */
+      public Builder mergeCarInfo(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo value) {
+        if (carInfoBuilder_ == null) {
+          if (((bitField0_ & 0x00000004) != 0) &&
+            carInfo_ != null &&
+            carInfo_ != com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.getDefaultInstance()) {
+            getCarInfoBuilder().mergeFrom(value);
+          } else {
+            carInfo_ = value;
+          }
+        } else {
+          carInfoBuilder_.mergeFrom(value);
+        }
+        if (carInfo_ != null) {
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       */
+      public Builder clearCarInfo() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        carInfo_ = null;
+        if (carInfoBuilder_ != null) {
+          carInfoBuilder_.dispose();
+          carInfoBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.Builder getCarInfoBuilder() {
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return getCarInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfoOrBuilder getCarInfoOrBuilder() {
+        if (carInfoBuilder_ != null) {
+          return carInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return carInfo_ == null ?
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.getDefaultInstance() : carInfo_;
+        }
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppCarInfo car_info = 5;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfoOrBuilder> 
+          getCarInfoFieldBuilder() {
+        if (carInfoBuilder_ == null) {
+          carInfoBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppCarInfoOrBuilder>(
+                  getCarInfo(),
+                  getParentForChildren(),
+                  isClean());
+          carInfo_ = null;
+        }
+        return carInfoBuilder_;
+      }
+
+      private com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo wppInfo_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfoOrBuilder> wppInfoBuilder_;
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       * @return Whether the wppInfo field is set.
+       */
+      public boolean hasWppInfo() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       * @return The wppInfo.
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo getWppInfo() {
+        if (wppInfoBuilder_ == null) {
+          return wppInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.getDefaultInstance() : wppInfo_;
+        } else {
+          return wppInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       */
+      public Builder setWppInfo(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo value) {
+        if (wppInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          wppInfo_ = value;
+        } else {
+          wppInfoBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       */
+      public Builder setWppInfo(
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.Builder builderForValue) {
+        if (wppInfoBuilder_ == null) {
+          wppInfo_ = builderForValue.build();
+        } else {
+          wppInfoBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       */
+      public Builder mergeWppInfo(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo value) {
+        if (wppInfoBuilder_ == null) {
+          if (((bitField0_ & 0x00000008) != 0) &&
+            wppInfo_ != null &&
+            wppInfo_ != com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.getDefaultInstance()) {
+            getWppInfoBuilder().mergeFrom(value);
+          } else {
+            wppInfo_ = value;
+          }
+        } else {
+          wppInfoBuilder_.mergeFrom(value);
+        }
+        if (wppInfo_ != null) {
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       */
+      public Builder clearWppInfo() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        wppInfo_ = null;
+        if (wppInfoBuilder_ != null) {
+          wppInfoBuilder_.dispose();
+          wppInfoBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.Builder getWppInfoBuilder() {
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return getWppInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfoOrBuilder getWppInfoOrBuilder() {
+        if (wppInfoBuilder_ != null) {
+          return wppInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return wppInfo_ == null ?
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.getDefaultInstance() : wppInfo_;
+        }
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WifiProjectionProtocolInfo wpp_info = 6;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfoOrBuilder> 
+          getWppInfoFieldBuilder() {
+        if (wppInfoBuilder_ == null) {
+          wppInfoBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiProjectionProtocolInfoOrBuilder>(
+                  getWppInfo(),
+                  getParentForChildren(),
+                  isClean());
+          wppInfo_ = null;
+        }
+        return wppInfoBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -3355,6 +6467,21 @@ public final class Wireless {
      * @return The selectedWifiChannelType.
      */
     int getSelectedWifiChannelType();
+
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+     * @return Whether the deviceInfo field is set.
+     */
+    boolean hasDeviceInfo();
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+     * @return The deviceInfo.
+     */
+    com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo getDeviceInfo();
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+     */
+    com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfoOrBuilder getDeviceInfoOrBuilder();
   }
   /**
    * <pre>
@@ -3523,6 +6650,32 @@ public final class Wireless {
       return selectedWifiChannelType_;
     }
 
+    public static final int DEVICE_INFO_FIELD_NUMBER = 6;
+    private com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo deviceInfo_;
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+     * @return Whether the deviceInfo field is set.
+     */
+    @java.lang.Override
+    public boolean hasDeviceInfo() {
+      return ((bitField0_ & 0x00000020) != 0);
+    }
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+     * @return The deviceInfo.
+     */
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo getDeviceInfo() {
+      return deviceInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.getDefaultInstance() : deviceInfo_;
+    }
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+     */
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfoOrBuilder getDeviceInfoOrBuilder() {
+      return deviceInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.getDefaultInstance() : deviceInfo_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -3552,6 +6705,9 @@ public final class Wireless {
       if (((bitField0_ & 0x00000010) != 0)) {
         output.writeInt32(5, selectedWifiChannelType_);
       }
+      if (((bitField0_ & 0x00000020) != 0)) {
+        output.writeMessage(6, getDeviceInfo());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -3579,6 +6735,10 @@ public final class Wireless {
       if (((bitField0_ & 0x00000010) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(5, selectedWifiChannelType_);
+      }
+      if (((bitField0_ & 0x00000020) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, getDeviceInfo());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -3620,6 +6780,11 @@ public final class Wireless {
         if (getSelectedWifiChannelType()
             != other.getSelectedWifiChannelType()) return false;
       }
+      if (hasDeviceInfo() != other.hasDeviceInfo()) return false;
+      if (hasDeviceInfo()) {
+        if (!getDeviceInfo()
+            .equals(other.getDeviceInfo())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -3650,6 +6815,10 @@ public final class Wireless {
       if (hasSelectedWifiChannelType()) {
         hash = (37 * hash) + SELECTED_WIFI_CHANNEL_TYPE_FIELD_NUMBER;
         hash = (53 * hash) + getSelectedWifiChannelType();
+      }
+      if (hasDeviceInfo()) {
+        hash = (37 * hash) + DEVICE_INFO_FIELD_NUMBER;
+        hash = (53 * hash) + getDeviceInfo().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -3775,13 +6944,19 @@ public final class Wireless {
 
       // Construct using com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WifiVersionResponse.newBuilder()
       private Builder() {
-
+        maybeForceBuilderInitialization();
       }
 
       private Builder(
           com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
-
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+          getDeviceInfoFieldBuilder();
+        }
       }
       @java.lang.Override
       public Builder clear() {
@@ -3792,6 +6967,11 @@ public final class Wireless {
         deviceSerial_ = "";
         status_ = 0;
         selectedWifiChannelType_ = 0;
+        deviceInfo_ = null;
+        if (deviceInfoBuilder_ != null) {
+          deviceInfoBuilder_.dispose();
+          deviceInfoBuilder_ = null;
+        }
         return this;
       }
 
@@ -3845,6 +7025,12 @@ public final class Wireless {
         if (((from_bitField0_ & 0x00000010) != 0)) {
           result.selectedWifiChannelType_ = selectedWifiChannelType_;
           to_bitField0_ |= 0x00000010;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.deviceInfo_ = deviceInfoBuilder_ == null
+              ? deviceInfo_
+              : deviceInfoBuilder_.build();
+          to_bitField0_ |= 0x00000020;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -3910,6 +7096,9 @@ public final class Wireless {
         if (other.hasSelectedWifiChannelType()) {
           setSelectedWifiChannelType(other.getSelectedWifiChannelType());
         }
+        if (other.hasDeviceInfo()) {
+          mergeDeviceInfo(other.getDeviceInfo());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
         return this;
@@ -3961,6 +7150,13 @@ public final class Wireless {
                 bitField0_ |= 0x00000010;
                 break;
               } // case 40
+              case 50: {
+                input.readMessage(
+                    getDeviceInfoFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -4217,6 +7413,127 @@ public final class Wireless {
         onChanged();
         return this;
       }
+
+      private com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo deviceInfo_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfoOrBuilder> deviceInfoBuilder_;
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       * @return Whether the deviceInfo field is set.
+       */
+      public boolean hasDeviceInfo() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       * @return The deviceInfo.
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo getDeviceInfo() {
+        if (deviceInfoBuilder_ == null) {
+          return deviceInfo_ == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.getDefaultInstance() : deviceInfo_;
+        } else {
+          return deviceInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       */
+      public Builder setDeviceInfo(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo value) {
+        if (deviceInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          deviceInfo_ = value;
+        } else {
+          deviceInfoBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       */
+      public Builder setDeviceInfo(
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.Builder builderForValue) {
+        if (deviceInfoBuilder_ == null) {
+          deviceInfo_ = builderForValue.build();
+        } else {
+          deviceInfoBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       */
+      public Builder mergeDeviceInfo(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo value) {
+        if (deviceInfoBuilder_ == null) {
+          if (((bitField0_ & 0x00000020) != 0) &&
+            deviceInfo_ != null &&
+            deviceInfo_ != com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.getDefaultInstance()) {
+            getDeviceInfoBuilder().mergeFrom(value);
+          } else {
+            deviceInfo_ = value;
+          }
+        } else {
+          deviceInfoBuilder_.mergeFrom(value);
+        }
+        if (deviceInfo_ != null) {
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       */
+      public Builder clearDeviceInfo() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        deviceInfo_ = null;
+        if (deviceInfoBuilder_ != null) {
+          deviceInfoBuilder_.dispose();
+          deviceInfoBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.Builder getDeviceInfoBuilder() {
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return getDeviceInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       */
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfoOrBuilder getDeviceInfoOrBuilder() {
+        if (deviceInfoBuilder_ != null) {
+          return deviceInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return deviceInfo_ == null ?
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.getDefaultInstance() : deviceInfo_;
+        }
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo device_info = 6;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfoOrBuilder> 
+          getDeviceInfoFieldBuilder() {
+        if (deviceInfoBuilder_ == null) {
+          deviceInfoBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.Builder, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfoOrBuilder>(
+                  getDeviceInfo(),
+                  getParentForChildren(),
+                  isClean());
+          deviceInfo_ = null;
+        }
+        return deviceInfoBuilder_;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -4281,6 +7598,777 @@ public final class Wireless {
 
   }
 
+  public interface WppWifiDeviceInfoOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional string device_id = 1;</code>
+     * @return Whether the deviceId field is set.
+     */
+    boolean hasDeviceId();
+    /**
+     * <code>optional string device_id = 1;</code>
+     * @return The deviceId.
+     */
+    java.lang.String getDeviceId();
+    /**
+     * <code>optional string device_id = 1;</code>
+     * @return The bytes for deviceId.
+     */
+    com.google.protobuf.ByteString
+        getDeviceIdBytes();
+
+    /**
+     * <code>optional string connectivity_lifetime_id = 2;</code>
+     * @return Whether the connectivityLifetimeId field is set.
+     */
+    boolean hasConnectivityLifetimeId();
+    /**
+     * <code>optional string connectivity_lifetime_id = 2;</code>
+     * @return The connectivityLifetimeId.
+     */
+    java.lang.String getConnectivityLifetimeId();
+    /**
+     * <code>optional string connectivity_lifetime_id = 2;</code>
+     * @return The bytes for connectivityLifetimeId.
+     */
+    com.google.protobuf.ByteString
+        getConnectivityLifetimeIdBytes();
+  }
+  /**
+   * <pre>
+   * Field 6 of WifiVersionResponse. Named from the schema's own descriptor rather than guessed at.
+   * Logged only; nothing branches on it.
+   * </pre>
+   *
+   * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo}
+   */
+  public static final class WppWifiDeviceInfo extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo)
+      WppWifiDeviceInfoOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use WppWifiDeviceInfo.newBuilder() to construct.
+    private WppWifiDeviceInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private WppWifiDeviceInfo() {
+      deviceId_ = "";
+      connectivityLifetimeId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new WppWifiDeviceInfo();
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.class, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int DEVICE_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object deviceId_ = "";
+    /**
+     * <code>optional string device_id = 1;</code>
+     * @return Whether the deviceId field is set.
+     */
+    @java.lang.Override
+    public boolean hasDeviceId() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional string device_id = 1;</code>
+     * @return The deviceId.
+     */
+    @java.lang.Override
+    public java.lang.String getDeviceId() {
+      java.lang.Object ref = deviceId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          deviceId_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string device_id = 1;</code>
+     * @return The bytes for deviceId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDeviceIdBytes() {
+      java.lang.Object ref = deviceId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        deviceId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CONNECTIVITY_LIFETIME_ID_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object connectivityLifetimeId_ = "";
+    /**
+     * <code>optional string connectivity_lifetime_id = 2;</code>
+     * @return Whether the connectivityLifetimeId field is set.
+     */
+    @java.lang.Override
+    public boolean hasConnectivityLifetimeId() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional string connectivity_lifetime_id = 2;</code>
+     * @return The connectivityLifetimeId.
+     */
+    @java.lang.Override
+    public java.lang.String getConnectivityLifetimeId() {
+      java.lang.Object ref = connectivityLifetimeId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          connectivityLifetimeId_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string connectivity_lifetime_id = 2;</code>
+     * @return The bytes for connectivityLifetimeId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getConnectivityLifetimeIdBytes() {
+      java.lang.Object ref = connectivityLifetimeId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        connectivityLifetimeId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, deviceId_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, connectivityLifetimeId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, deviceId_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, connectivityLifetimeId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo)) {
+        return super.equals(obj);
+      }
+      com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo other = (com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo) obj;
+
+      if (hasDeviceId() != other.hasDeviceId()) return false;
+      if (hasDeviceId()) {
+        if (!getDeviceId()
+            .equals(other.getDeviceId())) return false;
+      }
+      if (hasConnectivityLifetimeId() != other.hasConnectivityLifetimeId()) return false;
+      if (hasConnectivityLifetimeId()) {
+        if (!getConnectivityLifetimeId()
+            .equals(other.getConnectivityLifetimeId())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasDeviceId()) {
+        hash = (37 * hash) + DEVICE_ID_FIELD_NUMBER;
+        hash = (53 * hash) + getDeviceId().hashCode();
+      }
+      if (hasConnectivityLifetimeId()) {
+        hash = (37 * hash) + CONNECTIVITY_LIFETIME_ID_FIELD_NUMBER;
+        hash = (53 * hash) + getConnectivityLifetimeId().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * Field 6 of WifiVersionResponse. Named from the schema's own descriptor rather than guessed at.
+     * Logged only; nothing branches on it.
+     * </pre>
+     *
+     * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo)
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfoOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.class, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.Builder.class);
+      }
+
+      // Construct using com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        deviceId_ = "";
+        connectivityLifetimeId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_descriptor;
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo getDefaultInstanceForType() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo build() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo buildPartial() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo result = new com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.deviceId_ = deviceId_;
+          to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.connectivityLifetimeId_ = connectivityLifetimeId_;
+          to_bitField0_ |= 0x00000002;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo) {
+          return mergeFrom((com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo other) {
+        if (other == com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo.getDefaultInstance()) return this;
+        if (other.hasDeviceId()) {
+          deviceId_ = other.deviceId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.hasConnectivityLifetimeId()) {
+          connectivityLifetimeId_ = other.connectivityLifetimeId_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                deviceId_ = input.readBytes();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                connectivityLifetimeId_ = input.readBytes();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object deviceId_ = "";
+      /**
+       * <code>optional string device_id = 1;</code>
+       * @return Whether the deviceId field is set.
+       */
+      public boolean hasDeviceId() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional string device_id = 1;</code>
+       * @return The deviceId.
+       */
+      public java.lang.String getDeviceId() {
+        java.lang.Object ref = deviceId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            deviceId_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string device_id = 1;</code>
+       * @return The bytes for deviceId.
+       */
+      public com.google.protobuf.ByteString
+          getDeviceIdBytes() {
+        java.lang.Object ref = deviceId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          deviceId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string device_id = 1;</code>
+       * @param value The deviceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDeviceId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        deviceId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string device_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDeviceId() {
+        deviceId_ = getDefaultInstance().getDeviceId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string device_id = 1;</code>
+       * @param value The bytes for deviceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDeviceIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        deviceId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object connectivityLifetimeId_ = "";
+      /**
+       * <code>optional string connectivity_lifetime_id = 2;</code>
+       * @return Whether the connectivityLifetimeId field is set.
+       */
+      public boolean hasConnectivityLifetimeId() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional string connectivity_lifetime_id = 2;</code>
+       * @return The connectivityLifetimeId.
+       */
+      public java.lang.String getConnectivityLifetimeId() {
+        java.lang.Object ref = connectivityLifetimeId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            connectivityLifetimeId_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string connectivity_lifetime_id = 2;</code>
+       * @return The bytes for connectivityLifetimeId.
+       */
+      public com.google.protobuf.ByteString
+          getConnectivityLifetimeIdBytes() {
+        java.lang.Object ref = connectivityLifetimeId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          connectivityLifetimeId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string connectivity_lifetime_id = 2;</code>
+       * @param value The connectivityLifetimeId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setConnectivityLifetimeId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        connectivityLifetimeId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string connectivity_lifetime_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearConnectivityLifetimeId() {
+        connectivityLifetimeId_ = getDefaultInstance().getConnectivityLifetimeId();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string connectivity_lifetime_id = 2;</code>
+       * @param value The bytes for connectivityLifetimeId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setConnectivityLifetimeIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        connectivityLifetimeId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo)
+    }
+
+    // @@protoc_insertion_point(class_scope:com.andrerinas.openheadunit.aap.protocol.proto.WppWifiDeviceInfo)
+    private static final com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo();
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<WppWifiDeviceInfo>
+        PARSER = new com.google.protobuf.AbstractParser<WppWifiDeviceInfo>() {
+      @java.lang.Override
+      public WppWifiDeviceInfo parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<WppWifiDeviceInfo> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<WppWifiDeviceInfo> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.WppWifiDeviceInfo getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface WifiConnectStatusOrBuilder extends
       // @@protoc_insertion_point(interface_extends:com.andrerinas.openheadunit.aap.protocol.proto.WifiConnectStatus)
       com.google.protobuf.MessageOrBuilder {
@@ -4295,6 +8383,38 @@ public final class Wireless {
      * @return The status.
      */
     int getStatus();
+
+    /**
+     * <pre>
+     * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+     * on the one message that reports whether it got onto our network.
+     * </pre>
+     *
+     * <code>optional string error_message_hint = 2;</code>
+     * @return Whether the errorMessageHint field is set.
+     */
+    boolean hasErrorMessageHint();
+    /**
+     * <pre>
+     * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+     * on the one message that reports whether it got onto our network.
+     * </pre>
+     *
+     * <code>optional string error_message_hint = 2;</code>
+     * @return The errorMessageHint.
+     */
+    java.lang.String getErrorMessageHint();
+    /**
+     * <pre>
+     * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+     * on the one message that reports whether it got onto our network.
+     * </pre>
+     *
+     * <code>optional string error_message_hint = 2;</code>
+     * @return The bytes for errorMessageHint.
+     */
+    com.google.protobuf.ByteString
+        getErrorMessageHintBytes();
   }
   /**
    * <pre>
@@ -4317,6 +8437,7 @@ public final class Wireless {
       super(builder);
     }
     private WifiConnectStatus() {
+      errorMessageHint_ = "";
     }
 
     @java.lang.Override
@@ -4359,6 +8480,70 @@ public final class Wireless {
       return status_;
     }
 
+    public static final int ERROR_MESSAGE_HINT_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object errorMessageHint_ = "";
+    /**
+     * <pre>
+     * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+     * on the one message that reports whether it got onto our network.
+     * </pre>
+     *
+     * <code>optional string error_message_hint = 2;</code>
+     * @return Whether the errorMessageHint field is set.
+     */
+    @java.lang.Override
+    public boolean hasErrorMessageHint() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <pre>
+     * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+     * on the one message that reports whether it got onto our network.
+     * </pre>
+     *
+     * <code>optional string error_message_hint = 2;</code>
+     * @return The errorMessageHint.
+     */
+    @java.lang.Override
+    public java.lang.String getErrorMessageHint() {
+      java.lang.Object ref = errorMessageHint_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          errorMessageHint_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+     * on the one message that reports whether it got onto our network.
+     * </pre>
+     *
+     * <code>optional string error_message_hint = 2;</code>
+     * @return The bytes for errorMessageHint.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorMessageHintBytes() {
+      java.lang.Object ref = errorMessageHint_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        errorMessageHint_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -4376,6 +8561,9 @@ public final class Wireless {
       if (((bitField0_ & 0x00000001) != 0)) {
         output.writeInt32(1, status_);
       }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, errorMessageHint_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -4388,6 +8576,9 @@ public final class Wireless {
       if (((bitField0_ & 0x00000001) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(1, status_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, errorMessageHint_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -4409,6 +8600,11 @@ public final class Wireless {
         if (getStatus()
             != other.getStatus()) return false;
       }
+      if (hasErrorMessageHint() != other.hasErrorMessageHint()) return false;
+      if (hasErrorMessageHint()) {
+        if (!getErrorMessageHint()
+            .equals(other.getErrorMessageHint())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -4423,6 +8619,10 @@ public final class Wireless {
       if (hasStatus()) {
         hash = (37 * hash) + STATUS_FIELD_NUMBER;
         hash = (53 * hash) + getStatus();
+      }
+      if (hasErrorMessageHint()) {
+        hash = (37 * hash) + ERROR_MESSAGE_HINT_FIELD_NUMBER;
+        hash = (53 * hash) + getErrorMessageHint().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -4564,6 +8764,7 @@ public final class Wireless {
         super.clear();
         bitField0_ = 0;
         status_ = 0;
+        errorMessageHint_ = "";
         return this;
       }
 
@@ -4601,6 +8802,10 @@ public final class Wireless {
         if (((from_bitField0_ & 0x00000001) != 0)) {
           result.status_ = status_;
           to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.errorMessageHint_ = errorMessageHint_;
+          to_bitField0_ |= 0x00000002;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -4652,6 +8857,11 @@ public final class Wireless {
         if (other.hasStatus()) {
           setStatus(other.getStatus());
         }
+        if (other.hasErrorMessageHint()) {
+          errorMessageHint_ = other.errorMessageHint_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
         return this;
@@ -4683,6 +8893,11 @@ public final class Wireless {
                 bitField0_ |= 0x00000001;
                 break;
               } // case 8
+              case 18: {
+                errorMessageHint_ = input.readBytes();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -4736,6 +8951,116 @@ public final class Wireless {
       public Builder clearStatus() {
         bitField0_ = (bitField0_ & ~0x00000001);
         status_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object errorMessageHint_ = "";
+      /**
+       * <pre>
+       * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+       * on the one message that reports whether it got onto our network.
+       * </pre>
+       *
+       * <code>optional string error_message_hint = 2;</code>
+       * @return Whether the errorMessageHint field is set.
+       */
+      public boolean hasErrorMessageHint() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <pre>
+       * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+       * on the one message that reports whether it got onto our network.
+       * </pre>
+       *
+       * <code>optional string error_message_hint = 2;</code>
+       * @return The errorMessageHint.
+       */
+      public java.lang.String getErrorMessageHint() {
+        java.lang.Object ref = errorMessageHint_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            errorMessageHint_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+       * on the one message that reports whether it got onto our network.
+       * </pre>
+       *
+       * <code>optional string error_message_hint = 2;</code>
+       * @return The bytes for errorMessageHint.
+       */
+      public com.google.protobuf.ByteString
+          getErrorMessageHintBytes() {
+        java.lang.Object ref = errorMessageHint_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          errorMessageHint_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+       * on the one message that reports whether it got onto our network.
+       * </pre>
+       *
+       * <code>optional string error_message_hint = 2;</code>
+       * @param value The errorMessageHint to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorMessageHint(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        errorMessageHint_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+       * on the one message that reports whether it got onto our network.
+       * </pre>
+       *
+       * <code>optional string error_message_hint = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearErrorMessageHint() {
+        errorMessageHint_ = getDefaultInstance().getErrorMessageHint();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * The phone's own words for why it did not join, where it sends any. The one free diagnostic
+       * on the one message that reports whether it got onto our network.
+       * </pre>
+       *
+       * <code>optional string error_message_hint = 2;</code>
+       * @param value The bytes for errorMessageHint to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorMessageHintBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        errorMessageHint_ = value;
+        bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
@@ -4825,6 +9150,17 @@ public final class Wireless {
         getIpAddressBytes();
 
     /**
+     * <code>optional int32 port = 2;</code>
+     * @return Whether the port field is set.
+     */
+    boolean hasPort();
+    /**
+     * <code>optional int32 port = 2;</code>
+     * @return The port.
+     */
+    int getPort();
+
+    /**
      * <code>optional int32 status = 3;</code>
      * @return Whether the status field is set.
      */
@@ -4838,7 +9174,8 @@ public final class Wireless {
   /**
    * <pre>
    * Type 7, phone -&gt; head unit. Acknowledges type 1 and reports the address it will connect from.
-   * Field 2 is unclaimed on purpose — it is not observed and guessing at it would mis-parse.
+   * Field 2 was left unclaimed while it was unobserved; the schema's own descriptor names it as the
+   * port, so it is claimed rather than guessed at.
    * </pre>
    *
    * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WifiStartResponse}
@@ -4926,6 +9263,25 @@ public final class Wireless {
       }
     }
 
+    public static final int PORT_FIELD_NUMBER = 2;
+    private int port_ = 0;
+    /**
+     * <code>optional int32 port = 2;</code>
+     * @return Whether the port field is set.
+     */
+    @java.lang.Override
+    public boolean hasPort() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional int32 port = 2;</code>
+     * @return The port.
+     */
+    @java.lang.Override
+    public int getPort() {
+      return port_;
+    }
+
     public static final int STATUS_FIELD_NUMBER = 3;
     private int status_ = 0;
     /**
@@ -4934,7 +9290,7 @@ public final class Wireless {
      */
     @java.lang.Override
     public boolean hasStatus() {
-      return ((bitField0_ & 0x00000002) != 0);
+      return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <code>optional int32 status = 3;</code>
@@ -4963,6 +9319,9 @@ public final class Wireless {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, ipAddress_);
       }
       if (((bitField0_ & 0x00000002) != 0)) {
+        output.writeInt32(2, port_);
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
         output.writeInt32(3, status_);
       }
       getUnknownFields().writeTo(output);
@@ -4978,6 +9337,10 @@ public final class Wireless {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, ipAddress_);
       }
       if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, port_);
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(3, status_);
       }
@@ -5001,6 +9364,11 @@ public final class Wireless {
         if (!getIpAddress()
             .equals(other.getIpAddress())) return false;
       }
+      if (hasPort() != other.hasPort()) return false;
+      if (hasPort()) {
+        if (getPort()
+            != other.getPort()) return false;
+      }
       if (hasStatus() != other.hasStatus()) return false;
       if (hasStatus()) {
         if (getStatus()
@@ -5020,6 +9388,10 @@ public final class Wireless {
       if (hasIpAddress()) {
         hash = (37 * hash) + IP_ADDRESS_FIELD_NUMBER;
         hash = (53 * hash) + getIpAddress().hashCode();
+      }
+      if (hasPort()) {
+        hash = (37 * hash) + PORT_FIELD_NUMBER;
+        hash = (53 * hash) + getPort();
       }
       if (hasStatus()) {
         hash = (37 * hash) + STATUS_FIELD_NUMBER;
@@ -5125,7 +9497,8 @@ public final class Wireless {
     /**
      * <pre>
      * Type 7, phone -&gt; head unit. Acknowledges type 1 and reports the address it will connect from.
-     * Field 2 is unclaimed on purpose — it is not observed and guessing at it would mis-parse.
+     * Field 2 was left unclaimed while it was unobserved; the schema's own descriptor names it as the
+     * port, so it is claimed rather than guessed at.
      * </pre>
      *
      * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.WifiStartResponse}
@@ -5162,6 +9535,7 @@ public final class Wireless {
         super.clear();
         bitField0_ = 0;
         ipAddress_ = "";
+        port_ = 0;
         status_ = 0;
         return this;
       }
@@ -5202,8 +9576,12 @@ public final class Wireless {
           to_bitField0_ |= 0x00000001;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.status_ = status_;
+          result.port_ = port_;
           to_bitField0_ |= 0x00000002;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.status_ = status_;
+          to_bitField0_ |= 0x00000004;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -5257,6 +9635,9 @@ public final class Wireless {
           bitField0_ |= 0x00000001;
           onChanged();
         }
+        if (other.hasPort()) {
+          setPort(other.getPort());
+        }
         if (other.hasStatus()) {
           setStatus(other.getStatus());
         }
@@ -5291,9 +9672,14 @@ public final class Wireless {
                 bitField0_ |= 0x00000001;
                 break;
               } // case 10
+              case 16: {
+                port_ = input.readInt32();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
               case 24: {
                 status_ = input.readInt32();
-                bitField0_ |= 0x00000002;
+                bitField0_ |= 0x00000004;
                 break;
               } // case 24
               default: {
@@ -5393,6 +9779,46 @@ public final class Wireless {
         return this;
       }
 
+      private int port_ ;
+      /**
+       * <code>optional int32 port = 2;</code>
+       * @return Whether the port field is set.
+       */
+      @java.lang.Override
+      public boolean hasPort() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional int32 port = 2;</code>
+       * @return The port.
+       */
+      @java.lang.Override
+      public int getPort() {
+        return port_;
+      }
+      /**
+       * <code>optional int32 port = 2;</code>
+       * @param value The port to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPort(int value) {
+
+        port_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 port = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPort() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        port_ = 0;
+        onChanged();
+        return this;
+      }
+
       private int status_ ;
       /**
        * <code>optional int32 status = 3;</code>
@@ -5400,7 +9826,7 @@ public final class Wireless {
        */
       @java.lang.Override
       public boolean hasStatus() {
-        return ((bitField0_ & 0x00000002) != 0);
+        return ((bitField0_ & 0x00000004) != 0);
       }
       /**
        * <code>optional int32 status = 3;</code>
@@ -5418,7 +9844,7 @@ public final class Wireless {
       public Builder setStatus(int value) {
 
         status_ = value;
-        bitField0_ |= 0x00000002;
+        bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
@@ -5427,7 +9853,7 @@ public final class Wireless {
        * @return This builder for chaining.
        */
       public Builder clearStatus() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000004);
         status_ = 0;
         onChanged();
         return this;
@@ -7133,6 +11559,1532 @@ public final class Wireless {
 
   }
 
+  public interface ProjectionDeepLinkDataOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:com.andrerinas.openheadunit.aap.protocol.proto.ProjectionDeepLinkData)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional string ssid = 1;</code>
+     * @return Whether the ssid field is set.
+     */
+    boolean hasSsid();
+    /**
+     * <code>optional string ssid = 1;</code>
+     * @return The ssid.
+     */
+    java.lang.String getSsid();
+    /**
+     * <code>optional string ssid = 1;</code>
+     * @return The bytes for ssid.
+     */
+    com.google.protobuf.ByteString
+        getSsidBytes();
+
+    /**
+     * <code>optional string bssid = 2;</code>
+     * @return Whether the bssid field is set.
+     */
+    boolean hasBssid();
+    /**
+     * <code>optional string bssid = 2;</code>
+     * @return The bssid.
+     */
+    java.lang.String getBssid();
+    /**
+     * <code>optional string bssid = 2;</code>
+     * @return The bytes for bssid.
+     */
+    com.google.protobuf.ByteString
+        getBssidBytes();
+
+    /**
+     * <code>optional string passkey = 3;</code>
+     * @return Whether the passkey field is set.
+     */
+    boolean hasPasskey();
+    /**
+     * <code>optional string passkey = 3;</code>
+     * @return The passkey.
+     */
+    java.lang.String getPasskey();
+    /**
+     * <code>optional string passkey = 3;</code>
+     * @return The bytes for passkey.
+     */
+    com.google.protobuf.ByteString
+        getPasskeyBytes();
+
+    /**
+     * <code>optional string wpp_tcp_ip = 4;</code>
+     * @return Whether the wppTcpIp field is set.
+     */
+    boolean hasWppTcpIp();
+    /**
+     * <code>optional string wpp_tcp_ip = 4;</code>
+     * @return The wppTcpIp.
+     */
+    java.lang.String getWppTcpIp();
+    /**
+     * <code>optional string wpp_tcp_ip = 4;</code>
+     * @return The bytes for wppTcpIp.
+     */
+    com.google.protobuf.ByteString
+        getWppTcpIpBytes();
+
+    /**
+     * <code>optional int32 wpp_tcp_port = 5;</code>
+     * @return Whether the wppTcpPort field is set.
+     */
+    boolean hasWppTcpPort();
+    /**
+     * <code>optional int32 wpp_tcp_port = 5;</code>
+     * @return The wppTcpPort.
+     */
+    int getWppTcpPort();
+
+    /**
+     * <code>optional string bluetooth_mac = 6;</code>
+     * @return Whether the bluetoothMac field is set.
+     */
+    boolean hasBluetoothMac();
+    /**
+     * <code>optional string bluetooth_mac = 6;</code>
+     * @return The bluetoothMac.
+     */
+    java.lang.String getBluetoothMac();
+    /**
+     * <code>optional string bluetooth_mac = 6;</code>
+     * @return The bytes for bluetoothMac.
+     */
+    com.google.protobuf.ByteString
+        getBluetoothMacBytes();
+
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.SecurityMode security_mode = 7;</code>
+     * @return Whether the securityMode field is set.
+     */
+    boolean hasSecurityMode();
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.SecurityMode security_mode = 7;</code>
+     * @return The securityMode.
+     */
+    com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode getSecurityMode();
+  }
+  /**
+   * <pre>
+   * The payload of Android Auto's own wireless-setup QR code, url-safe base64 encoded into the
+   * `data` query parameter of https://androidauto.com/projection/... . Scanning one writes these
+   * straight into the phone's list of known cars and starts a WPP session.
+   *
+   * It is the only way to seed the TCP endpoint on a head unit whose Bluetooth adapter the phone
+   * cannot reach: with no RFCOMM channel there is no WifiVersionRequest to carry it. bluetooth_mac
+   * is the identity the phone keys the record on and must be a device it is actually connected to;
+   * nothing checks that it is this head unit.
+   *
+   * Every field is validated on the phone before any of it is stored, each with its own error, so a
+   * malformed one is refused outright rather than half-applied.
+   * </pre>
+   *
+   * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.ProjectionDeepLinkData}
+   */
+  public static final class ProjectionDeepLinkData extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:com.andrerinas.openheadunit.aap.protocol.proto.ProjectionDeepLinkData)
+      ProjectionDeepLinkDataOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ProjectionDeepLinkData.newBuilder() to construct.
+    private ProjectionDeepLinkData(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ProjectionDeepLinkData() {
+      ssid_ = "";
+      bssid_ = "";
+      passkey_ = "";
+      wppTcpIp_ = "";
+      bluetoothMac_ = "";
+      securityMode_ = 0;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ProjectionDeepLinkData();
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData.class, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int SSID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object ssid_ = "";
+    /**
+     * <code>optional string ssid = 1;</code>
+     * @return Whether the ssid field is set.
+     */
+    @java.lang.Override
+    public boolean hasSsid() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional string ssid = 1;</code>
+     * @return The ssid.
+     */
+    @java.lang.Override
+    public java.lang.String getSsid() {
+      java.lang.Object ref = ssid_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          ssid_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string ssid = 1;</code>
+     * @return The bytes for ssid.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSsidBytes() {
+      java.lang.Object ref = ssid_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        ssid_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int BSSID_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object bssid_ = "";
+    /**
+     * <code>optional string bssid = 2;</code>
+     * @return Whether the bssid field is set.
+     */
+    @java.lang.Override
+    public boolean hasBssid() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional string bssid = 2;</code>
+     * @return The bssid.
+     */
+    @java.lang.Override
+    public java.lang.String getBssid() {
+      java.lang.Object ref = bssid_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          bssid_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string bssid = 2;</code>
+     * @return The bytes for bssid.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getBssidBytes() {
+      java.lang.Object ref = bssid_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        bssid_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PASSKEY_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object passkey_ = "";
+    /**
+     * <code>optional string passkey = 3;</code>
+     * @return Whether the passkey field is set.
+     */
+    @java.lang.Override
+    public boolean hasPasskey() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>optional string passkey = 3;</code>
+     * @return The passkey.
+     */
+    @java.lang.Override
+    public java.lang.String getPasskey() {
+      java.lang.Object ref = passkey_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          passkey_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string passkey = 3;</code>
+     * @return The bytes for passkey.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getPasskeyBytes() {
+      java.lang.Object ref = passkey_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        passkey_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int WPP_TCP_IP_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object wppTcpIp_ = "";
+    /**
+     * <code>optional string wpp_tcp_ip = 4;</code>
+     * @return Whether the wppTcpIp field is set.
+     */
+    @java.lang.Override
+    public boolean hasWppTcpIp() {
+      return ((bitField0_ & 0x00000008) != 0);
+    }
+    /**
+     * <code>optional string wpp_tcp_ip = 4;</code>
+     * @return The wppTcpIp.
+     */
+    @java.lang.Override
+    public java.lang.String getWppTcpIp() {
+      java.lang.Object ref = wppTcpIp_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          wppTcpIp_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string wpp_tcp_ip = 4;</code>
+     * @return The bytes for wppTcpIp.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getWppTcpIpBytes() {
+      java.lang.Object ref = wppTcpIp_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        wppTcpIp_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int WPP_TCP_PORT_FIELD_NUMBER = 5;
+    private int wppTcpPort_ = 0;
+    /**
+     * <code>optional int32 wpp_tcp_port = 5;</code>
+     * @return Whether the wppTcpPort field is set.
+     */
+    @java.lang.Override
+    public boolean hasWppTcpPort() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <code>optional int32 wpp_tcp_port = 5;</code>
+     * @return The wppTcpPort.
+     */
+    @java.lang.Override
+    public int getWppTcpPort() {
+      return wppTcpPort_;
+    }
+
+    public static final int BLUETOOTH_MAC_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object bluetoothMac_ = "";
+    /**
+     * <code>optional string bluetooth_mac = 6;</code>
+     * @return Whether the bluetoothMac field is set.
+     */
+    @java.lang.Override
+    public boolean hasBluetoothMac() {
+      return ((bitField0_ & 0x00000020) != 0);
+    }
+    /**
+     * <code>optional string bluetooth_mac = 6;</code>
+     * @return The bluetoothMac.
+     */
+    @java.lang.Override
+    public java.lang.String getBluetoothMac() {
+      java.lang.Object ref = bluetoothMac_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          bluetoothMac_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string bluetooth_mac = 6;</code>
+     * @return The bytes for bluetoothMac.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getBluetoothMacBytes() {
+      java.lang.Object ref = bluetoothMac_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        bluetoothMac_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SECURITY_MODE_FIELD_NUMBER = 7;
+    private int securityMode_ = 0;
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.SecurityMode security_mode = 7;</code>
+     * @return Whether the securityMode field is set.
+     */
+    @java.lang.Override public boolean hasSecurityMode() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.SecurityMode security_mode = 7;</code>
+     * @return The securityMode.
+     */
+    @java.lang.Override public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode getSecurityMode() {
+      com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode result = com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode.forNumber(securityMode_);
+      return result == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode.UNKNOWN_SECURITY_MODE : result;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, ssid_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, bssid_);
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, passkey_);
+      }
+      if (((bitField0_ & 0x00000008) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, wppTcpIp_);
+      }
+      if (((bitField0_ & 0x00000010) != 0)) {
+        output.writeInt32(5, wppTcpPort_);
+      }
+      if (((bitField0_ & 0x00000020) != 0)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, bluetoothMac_);
+      }
+      if (((bitField0_ & 0x00000040) != 0)) {
+        output.writeEnum(7, securityMode_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, ssid_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, bssid_);
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, passkey_);
+      }
+      if (((bitField0_ & 0x00000008) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, wppTcpIp_);
+      }
+      if (((bitField0_ & 0x00000010) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(5, wppTcpPort_);
+      }
+      if (((bitField0_ & 0x00000020) != 0)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, bluetoothMac_);
+      }
+      if (((bitField0_ & 0x00000040) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(7, securityMode_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData)) {
+        return super.equals(obj);
+      }
+      com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData other = (com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData) obj;
+
+      if (hasSsid() != other.hasSsid()) return false;
+      if (hasSsid()) {
+        if (!getSsid()
+            .equals(other.getSsid())) return false;
+      }
+      if (hasBssid() != other.hasBssid()) return false;
+      if (hasBssid()) {
+        if (!getBssid()
+            .equals(other.getBssid())) return false;
+      }
+      if (hasPasskey() != other.hasPasskey()) return false;
+      if (hasPasskey()) {
+        if (!getPasskey()
+            .equals(other.getPasskey())) return false;
+      }
+      if (hasWppTcpIp() != other.hasWppTcpIp()) return false;
+      if (hasWppTcpIp()) {
+        if (!getWppTcpIp()
+            .equals(other.getWppTcpIp())) return false;
+      }
+      if (hasWppTcpPort() != other.hasWppTcpPort()) return false;
+      if (hasWppTcpPort()) {
+        if (getWppTcpPort()
+            != other.getWppTcpPort()) return false;
+      }
+      if (hasBluetoothMac() != other.hasBluetoothMac()) return false;
+      if (hasBluetoothMac()) {
+        if (!getBluetoothMac()
+            .equals(other.getBluetoothMac())) return false;
+      }
+      if (hasSecurityMode() != other.hasSecurityMode()) return false;
+      if (hasSecurityMode()) {
+        if (securityMode_ != other.securityMode_) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasSsid()) {
+        hash = (37 * hash) + SSID_FIELD_NUMBER;
+        hash = (53 * hash) + getSsid().hashCode();
+      }
+      if (hasBssid()) {
+        hash = (37 * hash) + BSSID_FIELD_NUMBER;
+        hash = (53 * hash) + getBssid().hashCode();
+      }
+      if (hasPasskey()) {
+        hash = (37 * hash) + PASSKEY_FIELD_NUMBER;
+        hash = (53 * hash) + getPasskey().hashCode();
+      }
+      if (hasWppTcpIp()) {
+        hash = (37 * hash) + WPP_TCP_IP_FIELD_NUMBER;
+        hash = (53 * hash) + getWppTcpIp().hashCode();
+      }
+      if (hasWppTcpPort()) {
+        hash = (37 * hash) + WPP_TCP_PORT_FIELD_NUMBER;
+        hash = (53 * hash) + getWppTcpPort();
+      }
+      if (hasBluetoothMac()) {
+        hash = (37 * hash) + BLUETOOTH_MAC_FIELD_NUMBER;
+        hash = (53 * hash) + getBluetoothMac().hashCode();
+      }
+      if (hasSecurityMode()) {
+        hash = (37 * hash) + SECURITY_MODE_FIELD_NUMBER;
+        hash = (53 * hash) + securityMode_;
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * The payload of Android Auto's own wireless-setup QR code, url-safe base64 encoded into the
+     * `data` query parameter of https://androidauto.com/projection/... . Scanning one writes these
+     * straight into the phone's list of known cars and starts a WPP session.
+     *
+     * It is the only way to seed the TCP endpoint on a head unit whose Bluetooth adapter the phone
+     * cannot reach: with no RFCOMM channel there is no WifiVersionRequest to carry it. bluetooth_mac
+     * is the identity the phone keys the record on and must be a device it is actually connected to;
+     * nothing checks that it is this head unit.
+     *
+     * Every field is validated on the phone before any of it is stored, each with its own error, so a
+     * malformed one is refused outright rather than half-applied.
+     * </pre>
+     *
+     * Protobuf type {@code com.andrerinas.openheadunit.aap.protocol.proto.ProjectionDeepLinkData}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:com.andrerinas.openheadunit.aap.protocol.proto.ProjectionDeepLinkData)
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkDataOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData.class, com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData.Builder.class);
+      }
+
+      // Construct using com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        ssid_ = "";
+        bssid_ = "";
+        passkey_ = "";
+        wppTcpIp_ = "";
+        wppTcpPort_ = 0;
+        bluetoothMac_ = "";
+        securityMode_ = 0;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_descriptor;
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData getDefaultInstanceForType() {
+        return com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData build() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData buildPartial() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData result = new com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.ssid_ = ssid_;
+          to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.bssid_ = bssid_;
+          to_bitField0_ |= 0x00000002;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.passkey_ = passkey_;
+          to_bitField0_ |= 0x00000004;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.wppTcpIp_ = wppTcpIp_;
+          to_bitField0_ |= 0x00000008;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.wppTcpPort_ = wppTcpPort_;
+          to_bitField0_ |= 0x00000010;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.bluetoothMac_ = bluetoothMac_;
+          to_bitField0_ |= 0x00000020;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.securityMode_ = securityMode_;
+          to_bitField0_ |= 0x00000040;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData) {
+          return mergeFrom((com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData other) {
+        if (other == com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData.getDefaultInstance()) return this;
+        if (other.hasSsid()) {
+          ssid_ = other.ssid_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.hasBssid()) {
+          bssid_ = other.bssid_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (other.hasPasskey()) {
+          passkey_ = other.passkey_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (other.hasWppTcpIp()) {
+          wppTcpIp_ = other.wppTcpIp_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (other.hasWppTcpPort()) {
+          setWppTcpPort(other.getWppTcpPort());
+        }
+        if (other.hasBluetoothMac()) {
+          bluetoothMac_ = other.bluetoothMac_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (other.hasSecurityMode()) {
+          setSecurityMode(other.getSecurityMode());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                ssid_ = input.readBytes();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                bssid_ = input.readBytes();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                passkey_ = input.readBytes();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                wppTcpIp_ = input.readBytes();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 40: {
+                wppTcpPort_ = input.readInt32();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 40
+              case 50: {
+                bluetoothMac_ = input.readBytes();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+              case 56: {
+                int tmpRaw = input.readEnum();
+                com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode tmpValue =
+                    com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode.forNumber(tmpRaw);
+                if (tmpValue == null) {
+                  mergeUnknownVarintField(7, tmpRaw);
+                } else {
+                  securityMode_ = tmpRaw;
+                  bitField0_ |= 0x00000040;
+                }
+                break;
+              } // case 56
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object ssid_ = "";
+      /**
+       * <code>optional string ssid = 1;</code>
+       * @return Whether the ssid field is set.
+       */
+      public boolean hasSsid() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional string ssid = 1;</code>
+       * @return The ssid.
+       */
+      public java.lang.String getSsid() {
+        java.lang.Object ref = ssid_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            ssid_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string ssid = 1;</code>
+       * @return The bytes for ssid.
+       */
+      public com.google.protobuf.ByteString
+          getSsidBytes() {
+        java.lang.Object ref = ssid_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          ssid_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string ssid = 1;</code>
+       * @param value The ssid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSsid(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ssid_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string ssid = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSsid() {
+        ssid_ = getDefaultInstance().getSsid();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string ssid = 1;</code>
+       * @param value The bytes for ssid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSsidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        ssid_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object bssid_ = "";
+      /**
+       * <code>optional string bssid = 2;</code>
+       * @return Whether the bssid field is set.
+       */
+      public boolean hasBssid() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>optional string bssid = 2;</code>
+       * @return The bssid.
+       */
+      public java.lang.String getBssid() {
+        java.lang.Object ref = bssid_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            bssid_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string bssid = 2;</code>
+       * @return The bytes for bssid.
+       */
+      public com.google.protobuf.ByteString
+          getBssidBytes() {
+        java.lang.Object ref = bssid_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          bssid_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string bssid = 2;</code>
+       * @param value The bssid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBssid(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        bssid_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string bssid = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBssid() {
+        bssid_ = getDefaultInstance().getBssid();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string bssid = 2;</code>
+       * @param value The bytes for bssid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBssidBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        bssid_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object passkey_ = "";
+      /**
+       * <code>optional string passkey = 3;</code>
+       * @return Whether the passkey field is set.
+       */
+      public boolean hasPasskey() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional string passkey = 3;</code>
+       * @return The passkey.
+       */
+      public java.lang.String getPasskey() {
+        java.lang.Object ref = passkey_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            passkey_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string passkey = 3;</code>
+       * @return The bytes for passkey.
+       */
+      public com.google.protobuf.ByteString
+          getPasskeyBytes() {
+        java.lang.Object ref = passkey_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          passkey_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string passkey = 3;</code>
+       * @param value The passkey to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPasskey(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        passkey_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string passkey = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPasskey() {
+        passkey_ = getDefaultInstance().getPasskey();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string passkey = 3;</code>
+       * @param value The bytes for passkey to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPasskeyBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        passkey_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object wppTcpIp_ = "";
+      /**
+       * <code>optional string wpp_tcp_ip = 4;</code>
+       * @return Whether the wppTcpIp field is set.
+       */
+      public boolean hasWppTcpIp() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <code>optional string wpp_tcp_ip = 4;</code>
+       * @return The wppTcpIp.
+       */
+      public java.lang.String getWppTcpIp() {
+        java.lang.Object ref = wppTcpIp_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            wppTcpIp_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string wpp_tcp_ip = 4;</code>
+       * @return The bytes for wppTcpIp.
+       */
+      public com.google.protobuf.ByteString
+          getWppTcpIpBytes() {
+        java.lang.Object ref = wppTcpIp_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          wppTcpIp_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string wpp_tcp_ip = 4;</code>
+       * @param value The wppTcpIp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWppTcpIp(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        wppTcpIp_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string wpp_tcp_ip = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWppTcpIp() {
+        wppTcpIp_ = getDefaultInstance().getWppTcpIp();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string wpp_tcp_ip = 4;</code>
+       * @param value The bytes for wppTcpIp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWppTcpIpBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        wppTcpIp_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private int wppTcpPort_ ;
+      /**
+       * <code>optional int32 wpp_tcp_port = 5;</code>
+       * @return Whether the wppTcpPort field is set.
+       */
+      @java.lang.Override
+      public boolean hasWppTcpPort() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <code>optional int32 wpp_tcp_port = 5;</code>
+       * @return The wppTcpPort.
+       */
+      @java.lang.Override
+      public int getWppTcpPort() {
+        return wppTcpPort_;
+      }
+      /**
+       * <code>optional int32 wpp_tcp_port = 5;</code>
+       * @param value The wppTcpPort to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWppTcpPort(int value) {
+
+        wppTcpPort_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 wpp_tcp_port = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWppTcpPort() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        wppTcpPort_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object bluetoothMac_ = "";
+      /**
+       * <code>optional string bluetooth_mac = 6;</code>
+       * @return Whether the bluetoothMac field is set.
+       */
+      public boolean hasBluetoothMac() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <code>optional string bluetooth_mac = 6;</code>
+       * @return The bluetoothMac.
+       */
+      public java.lang.String getBluetoothMac() {
+        java.lang.Object ref = bluetoothMac_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            bluetoothMac_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string bluetooth_mac = 6;</code>
+       * @return The bytes for bluetoothMac.
+       */
+      public com.google.protobuf.ByteString
+          getBluetoothMacBytes() {
+        java.lang.Object ref = bluetoothMac_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          bluetoothMac_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string bluetooth_mac = 6;</code>
+       * @param value The bluetoothMac to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBluetoothMac(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        bluetoothMac_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string bluetooth_mac = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBluetoothMac() {
+        bluetoothMac_ = getDefaultInstance().getBluetoothMac();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string bluetooth_mac = 6;</code>
+       * @param value The bytes for bluetoothMac to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBluetoothMacBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        bluetoothMac_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private int securityMode_ = 0;
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.SecurityMode security_mode = 7;</code>
+       * @return Whether the securityMode field is set.
+       */
+      @java.lang.Override public boolean hasSecurityMode() {
+        return ((bitField0_ & 0x00000040) != 0);
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.SecurityMode security_mode = 7;</code>
+       * @return The securityMode.
+       */
+      @java.lang.Override
+      public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode getSecurityMode() {
+        com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode result = com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode.forNumber(securityMode_);
+        return result == null ? com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode.UNKNOWN_SECURITY_MODE : result;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.SecurityMode security_mode = 7;</code>
+       * @param value The securityMode to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSecurityMode(com.andrerinas.openheadunit.aap.protocol.proto.Wireless.SecurityMode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000040;
+        securityMode_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .com.andrerinas.openheadunit.aap.protocol.proto.SecurityMode security_mode = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSecurityMode() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        securityMode_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:com.andrerinas.openheadunit.aap.protocol.proto.ProjectionDeepLinkData)
+    }
+
+    // @@protoc_insertion_point(class_scope:com.andrerinas.openheadunit.aap.protocol.proto.ProjectionDeepLinkData)
+    private static final com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData();
+    }
+
+    public static com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<ProjectionDeepLinkData>
+        PARSER = new com.google.protobuf.AbstractParser<ProjectionDeepLinkData>() {
+      @java.lang.Override
+      public ProjectionDeepLinkData parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<ProjectionDeepLinkData> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ProjectionDeepLinkData> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.andrerinas.openheadunit.aap.protocol.proto.Wireless.ProjectionDeepLinkData getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiStartRequest_descriptor;
   private static final 
@@ -7149,6 +13101,16 @@ public final class Wireless {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiInfoResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionRequest_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -7158,6 +13120,11 @@ public final class Wireless {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiConnectStatus_descriptor;
   private static final 
@@ -7183,6 +13150,11 @@ public final class Wireless {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiSetupInfo_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -7201,23 +13173,46 @@ public final class Wireless {
       "<.com.andrerinas.openheadunit.aap.protoc" +
       "ol.proto.SecurityMode\022Z\n\021access_point_ty" +
       "pe\030\005 \001(\0162?.com.andrerinas.openheadunit.a" +
-      "ap.protocol.proto.AccessPointType\"2\n\022Wif" +
-      "iVersionRequest\022\r\n\005major\030\001 \001(\005\022\r\n\005minor\030" +
-      "\002 \001(\005\"~\n\023WifiVersionResponse\022\r\n\005major\030\001 " +
-      "\001(\005\022\r\n\005minor\030\002 \001(\005\022\025\n\rdevice_serial\030\003 \001(" +
-      "\t\022\016\n\006status\030\004 \001(\005\022\"\n\032selected_wifi_chann" +
-      "el_type\030\005 \001(\005\"#\n\021WifiConnectStatus\022\016\n\006st" +
-      "atus\030\001 \001(\005\"7\n\021WifiStartResponse\022\022\n\nip_ad" +
-      "dress\030\001 \001(\t\022\016\n\006status\030\003 \001(\005\"$\n\017WifiPingR" +
-      "equest\022\021\n\ttimestamp\030\001 \001(\003\"%\n\020WifiPingRes" +
-      "ponse\022\021\n\ttimestamp\030\001 \001(\003\"-\n\rWifiSetupInf" +
-      "o\022\r\n\005major\030\001 \001(\005\022\r\n\005minor\030\002 \001(\005**\n\017Acces" +
-      "sPointType\022\n\n\006STATIC\020\000\022\013\n\007DYNAMIC\020\001*\312\001\n\014" +
-      "SecurityMode\022\031\n\025UNKNOWN_SECURITY_MODE\020\000\022" +
-      "\010\n\004OPEN\020\001\022\n\n\006WEP_64\020\002\022\013\n\007WEP_128\020\003\022\020\n\014WP" +
-      "A_PERSONAL\020\004\022\021\n\rWPA2_PERSONAL\020\010\022\025\n\021WPA_W" +
-      "PA2_PERSONAL\020\014\022\022\n\016WPA_ENTERPRISE\020\024\022\023\n\017WP" +
-      "A2_ENTERPRISE\020\030\022\027\n\023WPA_WPA2_ENTERPRISE\020\034"
+      "ap.protocol.proto.AccessPointType\">\n\032Wif" +
+      "iProjectionProtocolInfo\022\022\n\nip_address\030\001 " +
+      "\001(\t\022\014\n\004port\030\002 \001(\005\"\333\001\n\nWppCarInfo\022\014\n\004make" +
+      "\030\001 \001(\t\022\r\n\005model\030\002 \001(\t\022\022\n\nmodel_year\030\003 \001(" +
+      "\t\022\022\n\nvehicle_id\030\004 \001(\t\022\026\n\016head_unit_make\030" +
+      "\005 \001(\t\022\027\n\017head_unit_model\030\006 \001(\t\022 \n\030head_u" +
+      "nit_software_build\030\007 \001(\t\022\"\n\032head_unit_so" +
+      "ftware_version\030\010 \001(\t\022\021\n\tbody_type\030\t \001(\005\"" +
+      "\336\001\n\022WifiVersionRequest\022\r\n\005major\030\001 \001(\005\022\r\n" +
+      "\005minor\030\002 \001(\005\022L\n\010car_info\030\005 \001(\0132:.com.and" +
+      "rerinas.openheadunit.aap.protocol.proto." +
+      "WppCarInfo\022\\\n\010wpp_info\030\006 \001(\0132J.com.andre" +
+      "rinas.openheadunit.aap.protocol.proto.Wi" +
+      "fiProjectionProtocolInfo\"\326\001\n\023WifiVersion" +
+      "Response\022\r\n\005major\030\001 \001(\005\022\r\n\005minor\030\002 \001(\005\022\025" +
+      "\n\rdevice_serial\030\003 \001(\t\022\016\n\006status\030\004 \001(\005\022\"\n" +
+      "\032selected_wifi_channel_type\030\005 \001(\005\022V\n\013dev" +
+      "ice_info\030\006 \001(\0132A.com.andrerinas.openhead" +
+      "unit.aap.protocol.proto.WppWifiDeviceInf" +
+      "o\"H\n\021WppWifiDeviceInfo\022\021\n\tdevice_id\030\001 \001(" +
+      "\t\022 \n\030connectivity_lifetime_id\030\002 \001(\t\"?\n\021W" +
+      "ifiConnectStatus\022\016\n\006status\030\001 \001(\005\022\032\n\022erro" +
+      "r_message_hint\030\002 \001(\t\"E\n\021WifiStartRespons" +
+      "e\022\022\n\nip_address\030\001 \001(\t\022\014\n\004port\030\002 \001(\005\022\016\n\006s" +
+      "tatus\030\003 \001(\005\"$\n\017WifiPingRequest\022\021\n\ttimest" +
+      "amp\030\001 \001(\003\"%\n\020WifiPingResponse\022\021\n\ttimesta" +
+      "mp\030\001 \001(\003\"-\n\rWifiSetupInfo\022\r\n\005major\030\001 \001(\005" +
+      "\022\r\n\005minor\030\002 \001(\005\"\334\001\n\026ProjectionDeepLinkDa" +
+      "ta\022\014\n\004ssid\030\001 \001(\t\022\r\n\005bssid\030\002 \001(\t\022\017\n\007passk" +
+      "ey\030\003 \001(\t\022\022\n\nwpp_tcp_ip\030\004 \001(\t\022\024\n\014wpp_tcp_" +
+      "port\030\005 \001(\005\022\025\n\rbluetooth_mac\030\006 \001(\t\022S\n\rsec" +
+      "urity_mode\030\007 \001(\0162<.com.andrerinas.openhe" +
+      "adunit.aap.protocol.proto.SecurityMode**" +
+      "\n\017AccessPointType\022\n\n\006STATIC\020\000\022\013\n\007DYNAMIC" +
+      "\020\001*\312\001\n\014SecurityMode\022\031\n\025UNKNOWN_SECURITY_" +
+      "MODE\020\000\022\010\n\004OPEN\020\001\022\n\n\006WEP_64\020\002\022\013\n\007WEP_128\020" +
+      "\003\022\020\n\014WPA_PERSONAL\020\004\022\021\n\rWPA2_PERSONAL\020\010\022\025" +
+      "\n\021WPA_WPA2_PERSONAL\020\014\022\022\n\016WPA_ENTERPRISE\020" +
+      "\024\022\023\n\017WPA2_ENTERPRISE\020\030\022\027\n\023WPA_WPA2_ENTER" +
+      "PRISE\020\034"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -7241,48 +13236,72 @@ public final class Wireless {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiInfoResponse_descriptor,
         new java.lang.String[] { "Ssid", "Key", "Bssid", "SecurityMode", "AccessPointType", });
-    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionRequest_descriptor =
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_descriptor =
       getDescriptor().getMessageTypes().get(3);
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiProjectionProtocolInfo_descriptor,
+        new java.lang.String[] { "IpAddress", "Port", });
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_descriptor =
+      getDescriptor().getMessageTypes().get(4);
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppCarInfo_descriptor,
+        new java.lang.String[] { "Make", "Model", "ModelYear", "VehicleId", "HeadUnitMake", "HeadUnitModel", "HeadUnitSoftwareBuild", "HeadUnitSoftwareVersion", "BodyType", });
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionRequest_descriptor =
+      getDescriptor().getMessageTypes().get(5);
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionRequest_descriptor,
-        new java.lang.String[] { "Major", "Minor", });
+        new java.lang.String[] { "Major", "Minor", "CarInfo", "WppInfo", });
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionResponse_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiVersionResponse_descriptor,
-        new java.lang.String[] { "Major", "Minor", "DeviceSerial", "Status", "SelectedWifiChannelType", });
+        new java.lang.String[] { "Major", "Minor", "DeviceSerial", "Status", "SelectedWifiChannelType", "DeviceInfo", });
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WppWifiDeviceInfo_descriptor,
+        new java.lang.String[] { "DeviceId", "ConnectivityLifetimeId", });
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiConnectStatus_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiConnectStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiConnectStatus_descriptor,
-        new java.lang.String[] { "Status", });
+        new java.lang.String[] { "Status", "ErrorMessageHint", });
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiStartResponse_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiStartResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiStartResponse_descriptor,
-        new java.lang.String[] { "IpAddress", "Status", });
+        new java.lang.String[] { "IpAddress", "Port", "Status", });
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiPingRequest_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiPingRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiPingRequest_descriptor,
         new java.lang.String[] { "Timestamp", });
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiPingResponse_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiPingResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiPingResponse_descriptor,
         new java.lang.String[] { "Timestamp", });
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiSetupInfo_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiSetupInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_andrerinas_openheadunit_aap_protocol_proto_WifiSetupInfo_descriptor,
         new java.lang.String[] { "Major", "Minor", });
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_descriptor =
+      getDescriptor().getMessageTypes().get(13);
+    internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_andrerinas_openheadunit_aap_protocol_proto_ProjectionDeepLinkData_descriptor,
+        new java.lang.String[] { "Ssid", "Bssid", "Passkey", "WppTcpIp", "WppTcpPort", "BluetoothMac", "SecurityMode", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

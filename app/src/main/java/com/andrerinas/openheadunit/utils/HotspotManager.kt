@@ -33,6 +33,19 @@ object HotspotManager {
     /** How long to leave the access point down so a joined client notices it has gone. */
     private const val RESTART_SETTLE_MS = 2_000L
 
+    /**
+     * How long to wait for the radio to finish whatever it is doing before asking it for an access
+     * point.
+     *
+     * Measured on the #907 unit: four of six starts failed and every one of those had followed a
+     * WiFi disable 45 ms earlier or a teardown 2-8.5 s earlier, while both starts on a settled
+     * radio came up in under a second. The old fixed 500 ms was not a wait, it was a guess.
+     */
+    private const val RADIO_SETTLE_TIMEOUT_MS = 8_000L
+
+    /** Long enough for a driver to finish tearing down after the state says it has. */
+    private const val RADIO_SETTLE_GRACE_MS = 750L
+
     /** TetheringManager.TETHERING_WIFI. */
     private const val TETHERING_WIFI = 0
 
@@ -46,6 +59,18 @@ object HotspotManager {
      * up twice, on both of them.
      */
     @Volatile private var startInFlight = false
+
+    /**
+     * Bumped by every disable. A start captures it on entry and abandons if it moves, because a
+     * disable arriving mid-start is somebody switching the hotspot off, not this start failing.
+     *
+     * Measured on #907: `AapService.onDestroy` posted `stopTethering` 3.7 s into a start's confirm
+     * window, and the start then spent nine more seconds concluding the device would not do it.
+     */
+    @Volatile private var stopGeneration = 0
+
+    /** Whether any start has brought an access point up in this process. */
+    @Volatile private var everBroughtApUp = false
 
     /**
      * Takes the access point down and brings it straight back up.
@@ -81,6 +106,12 @@ object HotspotManager {
         AppLog.i("HotspotManager: Restarting the hotspot so any joined client is put off it.")
         setHotspotEnabled(context, false)
         try {
+            // Wait for the access point to actually be down, then leave it down long enough for a
+            // joined client to notice. Counting two seconds at a driver still tearing down is how
+            // the start that follows loses to it.
+            if (!awaitApDown(context)) {
+                AppLog.w("HotspotManager: The access point was still up ${RADIO_SETTLE_TIMEOUT_MS / 1000}s after being asked down; restarting it anyway.")
+            }
             Thread.sleep(RESTART_SETTLE_MS)
         } catch (e: InterruptedException) {
             // Interrupted with the access point already down, which is the one state this method
@@ -102,12 +133,16 @@ object HotspotManager {
     fun setHotspotEnabled(context: Context, enabled: Boolean): Boolean {
         AppLog.i("HotspotManager: Setting hotspot enabled=$enabled (API ${Build.VERSION.SDK_INT}, canWriteSettings=${AppPermissions.isWriteSettingsGranted(context)})")
 
-        // Disabling has no band to choose and nothing to confirm afterwards, and never collides
-        // with a start: only one caller ever asks for it. The band below is unused, since
+        // Disabling has no band to choose and nothing to confirm afterwards. It can land in the
+        // middle of a start, which is what stopGeneration is for. The band below is unused, since
         // SoftApConfigCompat.enableHotspot() returns before reading it when enabled is false.
-        if (!enabled) return startOnBand(context, enabled = false, band = ApBand.BAND_5GHZ).attempted
+        if (!enabled) {
+            // Before the request, so a start already inside its confirm window sees it.
+            stopGeneration++
+            return startOnBand(context, enabled = false, band = ApBand.BAND_5GHZ).attempted
+        }
 
-        // Claimed before anything slow runs, or the WiFi-disable sleep below is long enough for a
+        // Claimed before anything slow runs, or the WiFi-disable wait below is long enough for a
         // second caller to walk straight past the check.
         synchronized(this) {
             if (startInFlight) {
@@ -122,17 +157,21 @@ object HotspotManager {
         // targets well past that, so on most devices the request is silently ignored and the
         // framework drops the station itself when it needs the radio. Announcing the attempt as if
         // it worked is how the radio state ends up being read as ours.
+        val startedAtGeneration = stopGeneration
         try {
             try {
                 val wm = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
                 if (wm.isWifiEnabled) {
                     @Suppress("DEPRECATION")
                     wm.isWifiEnabled = false
-                    Thread.sleep(500) // Let the radio settle
-                    if (wm.isWifiEnabled) {
+                    // Wait for the state, not for a stopwatch. Asking a radio that is still on its
+                    // way down produces a start that fails for twelve seconds and says nothing.
+                    if (awaitWifiDisabled(wm)) {
+                        AppLog.i("HotspotManager: WiFi disabled before enabling hotspot.")
+                    } else if (wm.isWifiEnabled) {
                         AppLog.i("HotspotManager: Asked to disable WiFi and the platform ignored it (expected on modern Android); the framework will take the radio itself if it needs to.")
                     } else {
-                        AppLog.i("HotspotManager: WiFi disabled before enabling hotspot.")
+                        AppLog.w("HotspotManager: WiFi is neither on nor off after ${RADIO_SETTLE_TIMEOUT_MS / 1000}s; asking for an access point anyway.")
                     }
                 }
             } catch (e: Exception) {
@@ -153,8 +192,13 @@ object HotspotManager {
                 val outcome = startOnBand(context, enabled = true, band = band)
                 attemptedAny = attemptedAny || outcome.attempted
                 if (outcome.up) {
+                    everBroughtApUp = true
                     AppLog.i(describeApUp(outcome.configured, band))
                     return true
+                }
+                if (stopGeneration != startedAtGeneration) {
+                    AppLog.i("HotspotManager: The hotspot was switched off while this start was still running, so it is giving up rather than reporting a failure that was not one.")
+                    return false
                 }
                 if (!outcome.configured) {
                     // The band never reached the framework, so the next one would post the same
@@ -176,12 +220,25 @@ object HotspotManager {
             // it belonged to has been written off. Look once more before reporting failure: saying
             // no here is what makes a caller start a second, overlapping sweep.
             if (attemptedAny && awaitApUp(context)) {
+                everBroughtApUp = true
                 AppLog.i("HotspotManager: An access point came up after its band's window had expired; taking it. Which band it chose is not something this app can read.")
                 return true
             }
 
             if (attemptedAny) {
-                AppLog.w("HotspotManager: Every start path was tried on ${order.joinToString { SoftApBandPolicy.describe(it) }} and no access point came up within ${AP_STATE_TIMEOUT_MS / 1000}s each. On a non-privileged install this usually cannot be done from an app — switch the hotspot on in system settings instead.")
+                // Only blame privileges when they are actually missing. On a unit that has
+                // WRITE_SETTINGS, and more so on one where a start has already worked, the honest
+                // answer is that the radio was busy — and telling that user to do it by hand is how
+                // a bug of ours becomes their permanent routine.
+                val reason = when {
+                    !AppPermissions.isWriteSettingsGranted(context) ->
+                        "On a non-privileged install this usually cannot be done from an app — switch the hotspot on in system settings instead."
+                    everBroughtApUp ->
+                        "This unit has brought one up before, so this is the radio being busy rather than the app being refused; connecting again is worth trying before doing it by hand."
+                    else ->
+                        "This app is allowed to ask, so either the radio was busy or this unit refuses it. Connecting again is worth trying before switching the hotspot on in system settings."
+                }
+                AppLog.w("HotspotManager: Every start path was tried on ${order.joinToString { SoftApBandPolicy.describe(it) }} and no access point came up within ${AP_STATE_TIMEOUT_MS / 1000}s each. $reason")
             } else {
                 AppLog.w("HotspotManager: All hotspot attempts failed.")
             }
@@ -282,6 +339,33 @@ object HotspotManager {
             }
         } catch (e: Exception) {
             AppLog.d("HotspotManager: Could not read the WiFi state: ${e.message}")
+        }
+    }
+
+    /**
+     * Polls until WiFi reports itself off, or the budget expires. False means it never got there,
+     * which includes the platform ignoring the request entirely.
+     */
+    private fun awaitWifiDisabled(wm: WifiManager): Boolean {
+        val deadline = System.currentTimeMillis() + RADIO_SETTLE_TIMEOUT_MS
+        while (true) {
+            if (wm.wifiState == WifiManager.WIFI_STATE_DISABLED) {
+                // The state flips before the driver has finished with the radio.
+                try { Thread.sleep(RADIO_SETTLE_GRACE_MS) } catch (e: InterruptedException) { return true }
+                return true
+            }
+            if (System.currentTimeMillis() >= deadline) return false
+            try { Thread.sleep(200) } catch (e: InterruptedException) { return false }
+        }
+    }
+
+    /** Polls until no soft AP is running, or the budget expires. */
+    private fun awaitApDown(context: Context): Boolean {
+        val deadline = System.currentTimeMillis() + RADIO_SETTLE_TIMEOUT_MS
+        while (true) {
+            if (!isApUp(context)) return true
+            if (System.currentTimeMillis() >= deadline) return false
+            try { Thread.sleep(200) } catch (e: InterruptedException) { return false }
         }
     }
 

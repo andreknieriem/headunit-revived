@@ -208,6 +208,56 @@ class WppHandshakeSessionTest {
         assertEquals(WppStage.SETTLING, settling.stage)
     }
 
+    // --- a phone that needs no credentials ------------------------------------------------
+
+    @Test
+    fun `a phone already on the network reports the join instead of asking for credentials`() {
+        // The shape the hotspot transport produces: the phone dials us from inside the network,
+        // so there is nothing to hand it and type 2 never comes.
+        val s = session(versionExchange = true)
+        s.on(WppEvent.SocketReady)
+        s.on(msg(WppMessageType.VERSION_RESPONSE))
+        s.on(WppEvent.CredentialsReady)
+        assertEquals(WppStage.AWAIT_INFO_REQUEST, s.stage)
+
+        assertEquals(emptyList<WppAction>(), s.on(msg(WppMessageType.START_RESPONSE, 0)))
+        assertEquals(emptyList<WppAction>(), s.on(msg(WppMessageType.CONNECT_STATUS, 0)))
+        assertEquals(WppStage.SETTLING, s.stage)
+
+        assertEquals(listOf(WppAction.CompleteSuccess), s.on(WppEvent.TcpSessionUp))
+        assertEquals(WppStage.DONE, s.stage)
+    }
+
+    @Test
+    fun `a join failure before any credential request fails the same way as after one`() {
+        val s = session(versionExchange = false)
+        s.on(WppEvent.SocketReady)
+        s.on(WppEvent.CredentialsReady)
+
+        val actions = s.on(msg(WppMessageType.CONNECT_STATUS, -1))
+
+        assertEquals(WppStage.FAILED, s.stage)
+        assertTrue(actions[0] is WppAction.Fail)
+        assertEquals(WppAction.ResumePoke, actions[1])
+    }
+
+    @Test
+    fun `the session landing completes the handshake from every stage it can reach`() {
+        // Without this the caller spins: it feeds TcpSessionUp on every tick once the session is
+        // up, and a stage that ignored it would never reach its own timeout either.
+        for (drive in listOf<(WppHandshakeSession) -> Unit>(
+            { },
+            { it.on(WppEvent.SocketReady) },
+            { it.on(WppEvent.SocketReady); it.on(WppEvent.StageTimeout) },
+            { it.on(WppEvent.SocketReady); it.on(WppEvent.StageTimeout); it.on(WppEvent.CredentialsReady) }
+        )) {
+            val s = session(versionExchange = true)
+            drive(s)
+            assertEquals(listOf(WppAction.CompleteSuccess), s.on(WppEvent.TcpSessionUp))
+            assertEquals(WppStage.DONE, s.stage)
+        }
+    }
+
     @Test
     fun `a start response we could not parse is never read as a failure`() {
         val s = settledSession()
