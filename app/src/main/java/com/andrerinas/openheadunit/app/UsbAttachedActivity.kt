@@ -19,6 +19,7 @@ import com.andrerinas.openheadunit.connection.usb.UsbAttachPolicy
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import com.andrerinas.openheadunit.connection.usb.UsbDeviceDiagnostics
 import com.andrerinas.openheadunit.connection.usb.UsbReceiver
+import com.andrerinas.openheadunit.connection.usb.UsbSwitchClaim
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.DeviceIntent
 import com.andrerinas.openheadunit.utils.LocaleHelper
@@ -178,13 +179,32 @@ class UsbAttachedActivity : Activity() {
             return
         }
 
+        if (UsbSwitchClaim.isLive()) {
+            // Each attach lands in a fresh instance (noHistory, no task affinity), so without this
+            // the 0x2D00 re-enumeration would start a second switch on the same device.
+            AppLog.i("A USB accessory switch is already in flight; leaving ${deviceCompat.uniqueName} to it")
+            finish()
+            return
+        }
+
         val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
         val usbMode = UsbAccessoryMode(usbManager)
         AppLog.i("Switching USB device to accessory mode " + deviceCompat.uniqueName)
         ToastUtils.showToast(this, getString(R.string.switching_usb_accessory_mode, deviceCompat.uniqueName), Toast.LENGTH_SHORT)
         val useLibusb = settings?.useLibusb ?: false
+        // The claim keeps the service's 2 s attach fallback off a device we are already switching.
+        // noHistory means this activity can be finished out from under the thread, so the release
+        // is in a finally and the claim expires on its own if even that is missed.
+        UsbSwitchClaim.stake()
         Thread {
-            val result = usbMode.connectAndSwitch(device, useLibusb)
+            val result = try {
+                usbMode.connectAndSwitch(device, useLibusb)
+            } catch (e: Exception) {
+                AppLog.e("AOA switch threw for ${deviceCompat.uniqueName}", e)
+                false
+            } finally {
+                UsbSwitchClaim.release()
+            }
             runOnUiThread {
                 if (result) {
                     ToastUtils.showToast(this, getString(R.string.success), Toast.LENGTH_SHORT)

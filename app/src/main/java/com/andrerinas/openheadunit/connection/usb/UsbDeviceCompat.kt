@@ -3,6 +3,7 @@ package com.andrerinas.openheadunit.connection.usb
 import android.content.Context
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbInterface
 import android.os.Build
 import com.andrerinas.openheadunit.utils.Settings
@@ -50,6 +51,26 @@ class UsbDeviceCompat(val wrappedDevice: UsbDevice) {
             }
 
             return vidPid
+        }
+
+        /**
+         * The IN/OUT pair to run AAP over, bulk preferred. Both transports ask here so they cannot
+         * drift apart again; the rule itself is [UsbEndpointSelectionPolicy].
+         */
+        fun selectEndpoints(iface: UsbInterface): Pair<UsbEndpoint?, UsbEndpoint?> {
+            val endpoints = (0 until iface.endpointCount).map { iface.getEndpoint(it) }
+            val selection = UsbEndpointSelectionPolicy.select(
+                endpoints.map {
+                    UsbEndpointSelectionPolicy.Endpoint(
+                        isInbound = it.direction == UsbConstants.USB_DIR_IN,
+                        isBulk = it.type == UsbConstants.USB_ENDPOINT_XFER_BULK,
+                    )
+                }
+            )
+            return Pair(
+                selection.inIndex?.let { endpoints[it] },
+                selection.outIndex?.let { endpoints[it] },
+            )
         }
 
         fun isInAccessoryMode(device: UsbDevice): Boolean =
