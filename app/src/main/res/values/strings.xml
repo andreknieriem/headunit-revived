@@ -1020,6 +1020,7 @@
     <string name="native_aa_setup_qr_not_drawn">The code could not be drawn.</string>
     <string name="native_aa_setup_qr_not_running">Start the connection first. The code carries this unit\'s live network, which does not exist until then.</string>
     <string name="native_aa_setup_qr_not_hotspot">Only available on the hotspot transport. A WiFi Direct network is renamed every time it is created, so the phone would remember one that no longer exists.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">The hotspot is chosen, but the connection is still running on WiFi Direct. Restart the connection, then try again.</string>
     <string name="native_aa_setup_qr_not_listening">This unit is not listening for the phone yet. Try again in a moment.</string>
     <string name="native_aa_setup_qr_no_credentials">This unit\'s network name or password is not known yet. Switch the hotspot on, or enter them by hand above.</string>
     <string name="native_aa_setup_qr_no_bssid">This unit\'s WiFi address (BSSID) could not be read. Android Auto refuses a network it cannot pin to one.</string>

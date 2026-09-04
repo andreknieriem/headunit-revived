@@ -64,6 +64,7 @@ import androidx.lifecycle.lifecycleScope
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
+import com.andrerinas.openheadunit.connection.wifi.WirelessRearmPolicy
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -588,9 +589,7 @@ class SettingsFragment : Fragment() {
         pendingFakeSpeed?.let { settings.fakeSpeed = it }
         pendingUseLibusb?.let { settings.useLibusb = it }
 
-        val oldWifiMode = settings.wifiConnectionMode
-        val oldHelperStrategy = settings.helperConnectionStrategy
-        val oldBluetoothManagerServiceName = settings.bluetoothManagerServiceName
+        val wirelessConfigBefore = wirelessRearmConfig()
         pendingWifiConnectionMode?.let { settings.wifiConnectionMode = it }
         pendingHelperConnectionStrategy?.let { settings.helperConnectionStrategy = it }
         pendingWaitForWifi?.let { settings.waitForWifiBeforeWifiDirect = it }
@@ -629,9 +628,7 @@ class SettingsFragment : Fragment() {
             )
         }
 
-        if (oldWifiMode != settings.wifiConnectionMode ||
-            oldHelperStrategy != settings.helperConnectionStrategy ||
-            oldBluetoothManagerServiceName != settings.bluetoothManagerServiceName) {
+        if (WirelessRearmPolicy.requiresRearm(wirelessConfigBefore, wirelessRearmConfig())) {
             val intent = Intent(requireContext(), AapService::class.java).apply {
                 val mode = settings.wifiConnectionMode
                 action = if (mode != WifiLauncherMode.MANUAL)
@@ -2772,6 +2769,7 @@ class SettingsFragment : Fragment() {
     private data class ImportSnapshot(
         val wifiConnectionMode: WifiLauncherMode,
         val helperConnectionStrategy: HelperStrategy,
+        val nativeApStrategy: NativeStrategy,
         val bluetoothManagerServiceName: String,
         val appLanguage: String,
         val uiScaleSettingsPercent: Int,
@@ -3155,6 +3153,7 @@ class SettingsFragment : Fragment() {
         return ImportSnapshot(
             wifiConnectionMode = settings.wifiConnectionMode,
             helperConnectionStrategy = settings.helperConnectionStrategy,
+            nativeApStrategy = settings.nativeApStrategy,
             bluetoothManagerServiceName = settings.bluetoothManagerServiceName,
             appLanguage = settings.appLanguage,
             uiScaleSettingsPercent = settings.uiScaleSettingsPercent,
@@ -3205,10 +3204,22 @@ class SettingsFragment : Fragment() {
         }
     }
 
+    /** What a launcher reads once at construction, for [WirelessRearmPolicy]. */
+    private fun wirelessRearmConfig() = WirelessRearmPolicy.Config(
+        wifiConnectionMode = settings.wifiConnectionMode,
+        helperConnectionStrategy = settings.helperConnectionStrategy,
+        nativeApStrategy = settings.nativeApStrategy,
+        bluetoothManagerServiceName = settings.bluetoothManagerServiceName,
+    )
+
     private fun applyWirelessSideEffects(snapshot: ImportSnapshot, context: Context = requireContext()) {
-        if (snapshot.wifiConnectionMode != settings.wifiConnectionMode ||
-            snapshot.helperConnectionStrategy != settings.helperConnectionStrategy ||
-            snapshot.bluetoothManagerServiceName != settings.bluetoothManagerServiceName) {
+        val before = WirelessRearmPolicy.Config(
+            wifiConnectionMode = snapshot.wifiConnectionMode,
+            helperConnectionStrategy = snapshot.helperConnectionStrategy,
+            nativeApStrategy = snapshot.nativeApStrategy,
+            bluetoothManagerServiceName = snapshot.bluetoothManagerServiceName,
+        )
+        if (WirelessRearmPolicy.requiresRearm(before, wirelessRearmConfig())) {
             val intent = Intent(context, AapService::class.java).apply {
                 val mode = settings.wifiConnectionMode
                 action = if (mode != WifiLauncherMode.MANUAL)

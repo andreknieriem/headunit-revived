@@ -55,6 +55,7 @@ object ProjectionSetupQrDialog {
     private fun reasonRes(refusal: ProjectionQrPolicy.Refusal): Int = when (refusal) {
         ProjectionQrPolicy.Refusal.NOT_RUNNING -> R.string.native_aa_setup_qr_not_running
         ProjectionQrPolicy.Refusal.NOT_HOTSPOT -> R.string.native_aa_setup_qr_not_hotspot
+        ProjectionQrPolicy.Refusal.TRANSPORT_NOT_APPLIED -> R.string.native_aa_setup_qr_transport_not_applied
         ProjectionQrPolicy.Refusal.NOT_LISTENING -> R.string.native_aa_setup_qr_not_listening
         ProjectionQrPolicy.Refusal.NO_CREDENTIALS -> R.string.native_aa_setup_qr_no_credentials
         ProjectionQrPolicy.Refusal.NO_BSSID -> R.string.native_aa_setup_qr_no_bssid

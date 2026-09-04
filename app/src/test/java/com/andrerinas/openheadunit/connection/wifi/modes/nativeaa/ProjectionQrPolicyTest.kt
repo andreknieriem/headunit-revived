@@ -8,6 +8,7 @@ class ProjectionQrPolicyTest {
 
     private fun snapshot(
         strategy: NativeStrategy = NativeStrategy.HOTSPOT,
+        savedStrategy: NativeStrategy = strategy,
         ssid: String? = "OpenHeadunit",
         passkey: String? = "12345678",
         bssid: String? = "AA:BB:CC:DD:EE:FF",
@@ -17,6 +18,7 @@ class ProjectionQrPolicyTest {
         bluetoothName: String? = "Open Headunit",
     ) = ProjectionQrSnapshot(
         strategy = strategy,
+        savedStrategy = savedStrategy,
         ssid = ssid,
         passkey = passkey,
         bssid = bssid,
@@ -60,6 +62,19 @@ class ProjectionQrPolicyTest {
         assertEquals(
             ProjectionQrPolicy.Refusal.NOT_HOTSPOT,
             refusalOf(snapshot(strategy = NativeStrategy.WIFI_DIRECT))
+        )
+    }
+
+    @Test
+    fun `names a saved hotspot the running stack has not picked up yet`() {
+        assertEquals(
+            ProjectionQrPolicy.Refusal.TRANSPORT_NOT_APPLIED,
+            refusalOf(
+                snapshot(
+                    strategy = NativeStrategy.WIFI_DIRECT,
+                    savedStrategy = NativeStrategy.HOTSPOT
+                )
+            )
         )
     }
 

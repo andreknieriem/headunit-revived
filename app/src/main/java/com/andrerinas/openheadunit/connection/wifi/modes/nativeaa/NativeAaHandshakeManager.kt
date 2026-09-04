@@ -312,6 +312,7 @@ class NativeAaHandshakeManager(
         val adapterName = try { adapter?.name } catch (e: SecurityException) { null }
         return ProjectionQrSnapshot(
             strategy = launcher.strategy,
+            savedStrategy = settings.nativeApStrategy,
             ssid = creds?.ssid,
             passkey = creds?.psk,
             bssid = creds?.bssid,
@@ -1212,8 +1213,10 @@ class NativeAaHandshakeManager(
         // the phone is associating and there is nothing to gain by being busy.
         var retiredSilentRecord = false
         var abortedLocally = false
-        // Captured once, so a settings change mid-exchange cannot split it across two rulesets.
-        val transport = settings.nativeApStrategy
+        // The launcher's, not the setting's: what we tell the phone has to be the network we are
+        // actually hosting, and a saved transport does not reach the running launcher until it is
+        // re-armed.
+        val transport = launcher.strategy
         val session = WppHandshakeSession(settings.nativeWifiVersionExchange)
         // Everything the phone sends, in order. Replaces the single bounded read this used to do:
         // types 6 and 7 arrive *after* the credentials go out, so a one-shot read could never see
@@ -1802,7 +1805,8 @@ class NativeAaHandshakeManager(
             override fun credentials(): NativeNetworkCredentials? = this@NativeAaHandshakeManager.credentials
                 ?.let { NativeNetworkCredentials(it.ssid, it.psk, it.ip, it.bssid) }
 
-            override fun strategy(): NativeStrategy = settings.nativeApStrategy
+            // The hosted transport, not the saved one: see handleHandshake().
+            override fun strategy(): NativeStrategy = launcher.strategy
 
             override fun identity(): GroupIdentityStability =
                 this@NativeAaHandshakeManager.credentials?.identity ?: GroupIdentityStability.UNPROVEN

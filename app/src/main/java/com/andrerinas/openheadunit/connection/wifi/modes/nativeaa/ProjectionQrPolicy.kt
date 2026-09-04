@@ -6,6 +6,8 @@ package com.andrerinas.openheadunit.connection.wifi.modes.nativeaa
  */
 data class ProjectionQrSnapshot(
     val strategy: NativeStrategy,
+    /** What the settings screen asks for, which the running launcher may not have picked up yet. */
+    val savedStrategy: NativeStrategy,
     val ssid: String?,
     val passkey: String?,
     val bssid: String?,
@@ -36,6 +38,9 @@ object ProjectionQrPolicy {
         /** WiFi Direct: nothing is up to measure from the settings screen, so the record could go stale. */
         NOT_HOTSPOT,
 
+        /** The hotspot is chosen but the running stack is still on the other transport. */
+        TRANSPORT_NOT_APPLIED,
+
         /** No WPP TCP server is listening, so the record would name a port nothing answers. */
         NOT_LISTENING,
 
@@ -57,7 +62,15 @@ object ProjectionQrPolicy {
 
     fun decide(snapshot: ProjectionQrSnapshot?): Result {
         if (snapshot == null) return Result.Refuse(Refusal.NOT_RUNNING)
-        if (snapshot.strategy != NativeStrategy.HOTSPOT) return Result.Refuse(Refusal.NOT_HOTSPOT)
+        if (snapshot.strategy != NativeStrategy.HOTSPOT) {
+            // Ahead of NOT_HOTSPOT, which would otherwise contradict the screen the user is on:
+            // a re-arm can be refused (boot-loop pause, a live USB session), so the two can differ.
+            return if (snapshot.savedStrategy == NativeStrategy.HOTSPOT) {
+                Result.Refuse(Refusal.TRANSPORT_NOT_APPLIED)
+            } else {
+                Result.Refuse(Refusal.NOT_HOTSPOT)
+            }
+        }
         val port = snapshot.listeningPort ?: return Result.Refuse(Refusal.NOT_LISTENING)
         if (ProjectionDeepLink.looksLikeDongle(snapshot.bluetoothName)) {
             return Result.Refuse(Refusal.DONGLE_IDENTITY)
