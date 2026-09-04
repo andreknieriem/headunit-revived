@@ -69,6 +69,8 @@
     <string name="reconnection_required_message">Az eszköz várakozó állapotban van. Kérlek húzd ki, majd dugd vissza az USB-kábelt az Android Auto újraindításához.</string>
     <string name="bluetooth_address_s">Bluetooth cím</string>
     <string name="enter_bluetooth_mac">Add meg a Bluetooth MAC-et</string>
+    <string name="bluetooth_address_message">Ennek az egységnek a saját címe, amelyről a telefon felismeri. Megtalálható a Beállítások, Névjegy, Állapot alatt, vagy a párosított telefonon az eszköz melletti fogaskeréknél. Hagyja üresen az automatikus felismeréshez.</string>
+    <string name="invalid_bluetooth_address">Ez nem Bluetooth-cím. Adjon meg hat pár hexadecimális számjegyet, például 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Visszaállítás</string>
     <string name="gps_for_navigation">GPS a navigációhoz</string>
     <string name="gps_for_navigation_description">GPS használata a navigációhoz.</string>
@@ -510,6 +512,8 @@
     <string name="media_session_aa_status_placeholder">Csatlakoztatva</string>
     <string name="sync_media_session_aa_metadata">AA aktuális szám a médialejátszási munkamenetben</string>
     <string name="sync_media_session_aa_metadata_description">A telefonról származó számcímet, előadót, időtartamot és borítót jelenítse meg a rendszer médialejátszási munkamenetében és médiás értesítésben</string>
+    <string name="auto_resume_playback_on_reconnect">Lejátszás folytatása újrakapcsolódáskor</string>
+    <string name="auto_resume_playback_on_reconnect_description">Automatikusan folytatja a zenét, ha az aktívan szólt egy rövid kapcsolatszakadás előtt (60 másodpercen belül)</string>
     <string name="error_usb_permission_failed">Rendszerhiba: Nem sikerült lekérni az USB engedélykérő ablakot.</string>
 
     <!-- Custom loading screen -->
@@ -857,7 +861,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">A vezeték nélküli kapcsolat BSSID-jének kézi megadása. Csak akkor kell, ha az eszközön egyetlen forrás sem ad meg egyet; a napló felsorolja az összes megkérdezett forrást.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -884,8 +888,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -895,8 +897,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -947,22 +947,46 @@
     <string name="wifi_direct_band_24ghz">Csak 2,4 GHz</string>
     <string name="wifi_direct_band_hint">Az Automatikus 5 GHz-et kér, és 2,4 GHz-re vált vissza.</string>
     <string name="connection_issue_banner_bt_silent">A telefon Bluetooth-on csatlakozott, de nem érkezett adat. Érintse meg az USB, Wireless Helper vagy Auto módra váltáshoz.</string>
-    <string name="connection_issue_banner_bssid">Az egység nem tudta beolvasni a WiFi MAC-címét (BSSID). Érintse meg a Helymeghatározás bekapcsolásához vagy a cím kézi megadásához.</string>
+    <string name="connection_issue_banner_bssid">Az egységen egyetlen forrás sem adta meg a saját WiFi MAC-címét (BSSID), így a telefon soha nem tudta meg, melyik hálózathoz csatlakozzon. Mindegyiket megpróbáltuk, azt is, amelyik nem igényel engedélyt. Koppintson a helymeghatározás bekapcsolásához, ami a többit feloldja, vagy a cím kézi megadásához.</string>
     <string name="connection_issue_banner_hotspot_off">Az egység hotspotja ki van kapcsolva, így a telefonnak nem volt mihez csatlakoznia. Kapcsolja be a hotspotot a csatlakozás előtt, vagy érintse meg, hogy az alkalmazás bekapcsolja Ön helyett.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Az egység Wi-Fi-je nem tudta létrehozni a Wi-Fi Direct hálózatot, amelyhez a telefon csatlakozott volna, és az alkalmazás nem tudja ezt kényszeríteni. Ha az egység másik Wi-Fi-hálózathoz csatlakozik, próbálja meg lecsatlakoztatni. Érintse meg az egység saját hotspotjának használatához.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Egy másik alkalmazás ezen az egységen folyamatosan ki- és bekapcsolja a Wi-Fi Directet, így nem hozható létre hálózat, amelyhez a telefon csatlakozhatna. Ezt általában egy gyárilag telepített vetítőalkalmazás (CarLife, ZLink, CarPlay és hasonlók) okozza, érdemes letiltani. Érintse meg az egység saját hotspotjának használatához.</string>
     <string name="connection_issue_banner_hotspot_config">A készülék nem adta meg a hotspot nevét és jelszavát. Érintse meg a kézi megadáshoz.</string>
+    <string name="narrow_band_profile_cap">Gyengébb kép csak 2,4 GHz-es rádiónál</string>
+    <string name="narrow_band_profile_cap_description">Ha az egység Wi-Fi-je nem tud 5 GHz-et, a fenti beállítások helyett legfeljebb 720p és 30 fps kérése a telefontól. Ilyen kapcsolaton a mérések szerint a teljes sebességű adatfolyam egyáltalán nem vitt képet, az alacsonyabb viszont igen. Kapcsolja ki, ha pontosan a beállított értékeket szeretné.</string>
+    <string name="connection_issue_banner_video_link_too_slow">A telefon egymás után többször feladta a videót, mielőtt egyetlen képkocka megérkezett volna. A Wi-Fi kapcsolat túl lassú a képhez. Érintse meg az FPS-korlát 30-ra csökkentéséhez; az alacsonyabb felbontás és az AAC hang is segít.</string>
     <string name="connection_issue_banner_dismiss">Elvetés</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot neve és jelszava</string>
     <string name="preflight_title">Csatlakozás előtt</string>
     <string name="preflight_intro">Ez a készülék nem tud minden szükséges adatot biztosítani az Android Auto számára:</string>
     <string name="preflight_item_hotspot_name">Hotspot neve: ez az eszköz nem engedi az alkalmazásoknak a kiolvasást.</string>
     <string name="preflight_item_hotspot_password">Hotspot jelszó szükséges.</string>
-    <string name="preflight_item_bssid">WiFi cím (BSSID) nem érhető el.</string>
+    <string name="preflight_item_bssid">WiFi-cím (BSSID). Semmi nem adott meg egyet sem, még az eszköz saját hálózati csatolójából származtatott cím sem.</string>
     <string name="preflight_item_location">A Helymeghatározás ki van kapcsolva, elrejtve a WiFi címet.</string>
     <string name="preflight_enter_now">Megadás most</string>
     <string name="preflight_open_location">Helymeghatározás</string>
     <string name="preflight_later">Később</string>
     <string name="preflight_invalid_bssid">Érvénytelen WiFi cím. Adjon meg 6 hexadecimális számpárt (pl. 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Csatlakozás hálózaton keresztül (új AA kézfogás)</string>
+    <string name="native_wifi_version_exchange_description">Lehetővé teszi, hogy a telefon Bluetooth helyett WiFi-n csatlakozzon újra, a készülék hotspotján keresztül. Azoknál a készülékeknél segít, amelyek Bluetooth-a nem tudja átvinni a kézfogást, valamint az újabb Android Auto verzióknál. Alapértelmezés szerint kikapcsolva, és az első csatlakozás továbbra is Bluetooth-on történik.</string>
+    <string name="native_aa_complete_hfp_slc">Bluetooth-kapcsolat befejezése</string>
+    <string name="native_aa_complete_hfp_slc_description">Egyes telefonok csak akkor indítják el a vezeték nélküli Android Autót, ha a készülék Bluetooth-kapcsolata csatlakoztatottnak számít, nem csupán párosítottnak. Alapértelmezés szerint bekapcsolva; kapcsolja ki, ha a hívások ezen az eszközön nem működnek tovább.</string>
+    <string name="native_aa_ignore_external_bt">Bluetooth-kompatibilitási ellenőrzés figyelmen kívül hagyása</string>
+    <string name="native_aa_ignore_external_bt_description">Úgy tűnik, ez a készülék külön modulon kezeli a Bluetooth-t, amelyet az Android nem ér el, ezért a vezeték nélküli Android Auto automatikusan kikapcsol. Alapértelmezés szerint kikapcsolva. Csak akkor kapcsolja be, ha úgy gondolja, hogy ez téves: ha a felismerés helyes, a kapcsolat némán meghiúsul, a napló pedig rendben lévőnek tűnik.</string>
+    <string name="native_aa_setup_qr_title">Beállítás QR-kóddal</string>
+    <string name="native_aa_setup_qr_description">Kód megjelenítése, amelyet a telefon beolvashat</string>
+    <string name="native_aa_setup_qr_content_description">QR-kód a vezeték nélküli Android Auto beállításához</string>
+    <string name="native_aa_setup_qr_instruction">Olvassa be a telefon kamerájával, majd erősítse meg a telefonon. Csak egyszer kell: utána a telefon magától csatlakozik.</string>
+    <string name="native_aa_setup_qr_not_drawn">A kódot nem sikerült létrehozni.</string>
+    <string name="native_aa_setup_qr_not_running">Előbb indítsa el a kapcsolatot. A kód az egység aktuális hálózatát tartalmazza, ami addig nem létezik.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Csak hotspoton érhető el. A WiFi Direct hálózat minden létrehozáskor új nevet kap, így a telefon olyat jegyezne meg, ami már nincs.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">A hotspot van kiválasztva, de a kapcsolat még Wi-Fi Directen fut. Indítsa újra a kapcsolatot, majd próbálja meg ismét.</string>
+    <string name="native_aa_setup_qr_not_listening">Ez az egység még nem várja a telefont. Próbálja újra egy pillanat múlva.</string>
+    <string name="native_aa_setup_qr_no_credentials">A hálózat neve vagy jelszava még nem ismert. Kapcsolja be a hotspotot, vagy adja meg őket kézzel fent.</string>
+    <string name="native_aa_setup_qr_no_bssid">Az egység WiFi-címét (BSSID) nem sikerült kiolvasni. Az Android Auto elutasít egy hálózatot, amelyet nem tud ehhez kötni.</string>
+    <string name="native_aa_setup_qr_no_address">Az egység saját címe ezen a hálózaton még nem ismert.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">Az egység Bluetooth-címét nem sikerült kiolvasni, a telefonnak pedig szüksége van rá, hogy később felismerje ezt az egységet.</string>
+    <string name="native_aa_setup_qr_dongle">Az egység Bluetooth-neve vezeték nélküli adapternek látszik, amit a telefon másfajta eszközként kezel. Nevezze át a Bluetootht ezen az egységen, és próbálja újra.</string>
     <string name="category_ui">Felhasználói felület</string>
     <string name="hide_phone_signal_label">Telefon térerő elrejtése</string>
     <string name="hide_battery_level_label">Telefon akkumulátorszint elrejtése</string>

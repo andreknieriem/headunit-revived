@@ -74,6 +74,8 @@
 
     <string name="bluetooth_address_s">Indirizzo Bluetooth</string>
     <string name="enter_bluetooth_mac">Inserisci MAC bluetooth</string>
+    <string name="bluetooth_address_message">L\'indirizzo di questa unità, quello con cui il telefono la riconosce. Lo trovi in Impostazioni, Informazioni, Stato, oppure sul telefono associato sotto l\'ingranaggio accanto a questo dispositivo. Lascia vuoto per rilevarlo automaticamente.</string>
+    <string name="invalid_bluetooth_address">Questo non è un indirizzo Bluetooth. Inserisci sei coppie di cifre esadecimali, come 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Ripristina</string>
     <string name="gps_for_navigation">Gps per navigazione</string>
     <string name="gps_for_navigation_description">Usa Gps per la navigazione</string>
@@ -518,6 +520,8 @@
     <string name="media_session_aa_status_placeholder">Connesso</string>
     <string name="sync_media_session_aa_metadata">Brano AA corrente nella sessione multimediale</string>
     <string name="sync_media_session_aa_metadata_description">Mostra titolo, artista, durata e copertina dal telefono nella sessione multimediale di sistema e nella notifica multimediale</string>
+    <string name="auto_resume_playback_on_reconnect">Riprendi riproduzione alla riconnessione</string>
+    <string name="auto_resume_playback_on_reconnect_description">Riprende automaticamente la musica se era in riproduzione attiva prima di una breve disconnessione (entro 60 secondi)</string>
     <string name="error_usb_permission_failed">Errore di sistema: Impossibile richiedere la finestra di dialogo del permesso USB.</string>
 
     <!-- Custom loading screen -->
@@ -864,7 +868,7 @@
     <string name="enter_pixel_aspect_ratio_value">Pixel aspect ratio x10000 (10000 = square pixels)</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="static_bssid_enter_value">Enter BSSID (XX:XX:XX:XX:XX:XX)</string>
-    <string name="static_bssid_desc">Manually set the BSSID for the wireless handshake if auto-detection is blocked by system permissions</string>
+    <string name="static_bssid_desc">Imposta a mano il BSSID per l\'handshake wireless. Serve solo se nessuna fonte su questo dispositivo ne indica uno; il log elenca ogni fonte interrogata.</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
     <string name="media_key_routing">Send Media Buttons To Android Auto</string>
@@ -891,8 +895,6 @@
     <string name="vehicle_make_hint">A real car brand shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps installed from outside the Play Store. Set it back to \"Google\" to get those apps listed again.</string>
     <string name="external_bt_nativeaa">Native Wireless cannot work on this head unit</string>
     <string name="external_bt_nativeaa_desc">This head unit uses its own Bluetooth module (%1$s) instead of the one Android exposes to apps. Your phone pairs with that module, so anything this app sends over Bluetooth never reaches it — the connection will look like it is working and then stall.\n\nThis is a hardware limitation and cannot be worked around from the app. Please use USB, or the \"Wireless Helper\" or \"Auto (Headunit Server)\" mode, which do not need the Bluetooth handshake.</string>
-    <string name="manual_secondary_bt_service_title">Manual Secondary Radio</string>
-    <string name="manual_secondary_bt_service_message">Advanced: force an extra Bluetooth radio, for dual-radio units whose second radio isn\'t found automatically. Find it via \"adb shell service list\" (look for a Bluetooth-sounding entry besides bluetooth_manager) or an engineering menu, then paste either the name before the colon or the interface shown in brackets - both work. Not guaranteed to help on every unit: some head units run a customized Bluetooth stack that this can\'t bridge to no matter what you enter here. Leave blank to disable.</string>
     <string name="native_ap_transport">Network transport</string>
     <string name="native_ap_transport_wifi_direct">WiFi Direct</string>
     <string name="native_ap_transport_hotspot">Hotspot</string>
@@ -902,8 +904,6 @@
     <string name="hotspot_ssid_override_message">Leave blank to read the name from this device\'s hotspot settings automatically. Some devices do not let apps read it - if the log says the name could not be read, type it here exactly as it appears in your hotspot settings.</string>
     <string name="hotspot_password_override">Hotspot password (manual)</string>
     <string name="hotspot_password_override_message">Leave blank to read the password automatically. Needed on devices that do not let apps read the hotspot configuration. The phone will be given this password to join.</string>
-    <string name="native_wifi_version_exchange">Modern handshake (version exchange)</string>
-    <string name="native_wifi_version_exchange_description">Opens the Bluetooth handshake by telling the phone which protocol version this head unit speaks, the way factory head units do, instead of going straight to the connection details. Off by default. Worth trying if wireless worked before an Android Auto update and has failed since; if it makes no difference, turn it back off.</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
     <!-- Auto-added missing translations -->
@@ -954,22 +954,46 @@
     <string name="wifi_direct_band_24ghz">Solo 2.4 GHz</string>
     <string name="wifi_direct_band_hint">Automatico richiede 5 GHz e ripiega su 2.4 GHz.</string>
     <string name="connection_issue_banner_bt_silent">Il telefono si è connesso tramite Bluetooth, ma non ha ricevuto dati. Tocca per passare a USB, Wireless Helper o Auto.</string>
-    <string name="connection_issue_banner_bssid">Questa unità non è riuscita a leggere il proprio MAC WiFi (BSSID). Tocca per attivare la posizione o inserire l\'indirizzo a mano.</string>
+    <string name="connection_issue_banner_bssid">Nessuna fonte su questa unità ha indicato il suo indirizzo MAC WiFi (BSSID), quindi il telefono non ha mai saputo a quale rete collegarsi. Sono state provate tutte, compresa una che non richiede alcun permesso. Tocca per attivare la posizione, che sblocca le altre, o per inserire l\'indirizzo a mano.</string>
     <string name="connection_issue_banner_hotspot_off">L\'hotspot di questa unità è disattivato, quindi non c\'era alcuna rete a cui connettere il telefono. Attiva l\'hotspot prima di connetterti o tocca per consentire all\'app di attivarlo automaticamente.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Il Wi-Fi di questa unità non è riuscito a creare la rete Wi-Fi Direct a cui il telefono doveva connettersi e l\'app non può forzarlo. Se l\'unità è connessa a un\'altra rete Wi-Fi, prova a disconnetterla. Tocca per utilizzare invece l\'hotspot di questa unità.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Un\'altra app di questa unità continua a spegnere e riaccendere il WiFi Direct, quindi non è possibile creare alcuna rete a cui far connettere il telefono. La causa più comune è un\'app di proiezione preinstallata (CarLife, ZLink, CarPlay e simili), vale la pena disattivarla. Tocca per utilizzare invece l\'hotspot di questa unità.</string>
     <string name="connection_issue_banner_hotspot_config">Questa unità non ha fornito nome e password dell\'hotspot. Tocca per inserirli a mano.</string>
+    <string name="narrow_band_profile_cap">Ridurre il video con radio solo a 2,4 GHz</string>
+    <string name="narrow_band_profile_cap_description">Quando il WiFi di questa unità non ha la banda 5 GHz, chiedi al telefono al massimo 720p e 30 fps invece delle impostazioni qui sopra. Su un collegamento simile è stato misurato che un flusso a piena velocità non portava alcuna immagine, mentre uno più basso reggeva. Disattiva questa opzione per ottenere esattamente ciò che hai impostato.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Il telefono ha abbandonato il video prima che arrivasse un solo fotogramma, più volte di seguito. Il collegamento WiFi è troppo lento per trasportare l\'immagine. Tocca per abbassare il limite di FPS a 30; aiutano anche una risoluzione più bassa e l\'audio AAC.</string>
     <string name="connection_issue_banner_dismiss">Ignora</string>
     <string name="connection_issue_remedy_hotspot_query">Nome e password dell\'hotspot</string>
     <string name="preflight_title">Prima di connetterti</string>
     <string name="preflight_intro">Questo dispositivo non può fornire tutti i dati necessari per Android Auto:</string>
     <string name="preflight_item_hotspot_name">Nome hotspot: questo dispositivo non ne consente la lettura alle app.</string>
     <string name="preflight_item_hotspot_password">Password hotspot richiesta.</string>
-    <string name="preflight_item_bssid">Indirizzo WiFi (BSSID) non disponibile.</string>
+    <string name="preflight_item_bssid">Indirizzo WiFi (BSSID). Nessuna fonte ne ha indicato uno, nemmeno quello ricavato dall\'interfaccia di rete di questo dispositivo.</string>
     <string name="preflight_item_location">La posizione è disattivata, nascondendo l\'indirizzo WiFi.</string>
     <string name="preflight_enter_now">Inserisci ora</string>
     <string name="preflight_open_location">Posizione</string>
     <string name="preflight_later">Più tardi</string>
     <string name="preflight_invalid_bssid">Indirizzo WiFi non valido. Inserisci 6 coppie di cifre esadecimali (es. 02:1A:11:FF:3C:4D).</string>
+    <string name="native_wifi_version_exchange">Connetti tramite rete (nuovo handshake AA)</string>
+    <string name="native_wifi_version_exchange_description">Consente al telefono di riconnettersi via WiFi anziché via Bluetooth, usando l\'hotspot di questa unità. Utile sulle unità il cui Bluetooth non riesce a trasportare l\'handshake e con le versioni più recenti di Android Auto. Disattivo per impostazione predefinita, e la prima connessione passa ancora dal Bluetooth.</string>
+    <string name="native_aa_complete_hfp_slc">Completa la connessione Bluetooth</string>
+    <string name="native_aa_complete_hfp_slc_description">Alcuni telefoni non avviano Android Auto wireless finché il Bluetooth di questa unità non risulta connesso, non solo associato. Attivo per impostazione predefinita; disattivalo se le chiamate su questo dispositivo smettono di funzionare.</string>
+    <string name="native_aa_ignore_external_bt">Ignora il controllo di compatibilità Bluetooth</string>
+    <string name="native_aa_ignore_external_bt_description">Questa unità sembra gestire il Bluetooth su un modulo separato che Android non riesce a raggiungere, perciò Android Auto wireless viene disattivato automaticamente. Disattivo per impostazione predefinita. Attivalo solo se ritieni che sia sbagliato: quando il rilevamento è corretto, la connessione fallisce senza segnalare nulla e il log sembra a posto.</string>
+    <string name="native_aa_setup_qr_title">Configura con codice QR</string>
+    <string name="native_aa_setup_qr_description">Mostra un codice che il telefono può scansionare</string>
+    <string name="native_aa_setup_qr_content_description">Codice QR per configurare Android Auto wireless</string>
+    <string name="native_aa_setup_qr_instruction">Inquadralo con la fotocamera del telefono e conferma sul telefono. Serve una sola volta: da quel momento il telefono si connette da solo.</string>
+    <string name="native_aa_setup_qr_not_drawn">Non è stato possibile generare il codice.</string>
+    <string name="native_aa_setup_qr_not_running">Avvia prima la connessione. Il codice contiene la rete attuale di questa unità, che prima non esiste.</string>
+    <string name="native_aa_setup_qr_not_hotspot">Disponibile solo con l\'hotspot. Una rete WiFi Direct viene rinominata a ogni creazione, quindi il telefono ricorderebbe una rete che non esiste più.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">L\'hotspot è selezionato, ma la connessione sta ancora usando il WiFi Direct. Riavvia la connessione e riprova.</string>
+    <string name="native_aa_setup_qr_not_listening">Questa unità non è ancora in attesa del telefono. Riprova tra un momento.</string>
+    <string name="native_aa_setup_qr_no_credentials">Nome o password della rete non sono ancora noti. Attiva l\'hotspot oppure inseriscili a mano qui sopra.</string>
+    <string name="native_aa_setup_qr_no_bssid">Non è stato possibile leggere l\'indirizzo WiFi (BSSID) di questa unità. Android Auto rifiuta una rete che non può ancorare a uno.</string>
+    <string name="native_aa_setup_qr_no_address">L\'indirizzo di questa unità su quella rete non è ancora noto.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">Non è stato possibile leggere l\'indirizzo Bluetooth di questa unità, e il telefono ne ha bisogno per riconoscerla in seguito.</string>
+    <string name="native_aa_setup_qr_dongle">Il nome Bluetooth di questa unità sembra quello di un adattatore wireless, che il telefono tratta come un dispositivo diverso. Rinomina il Bluetooth di questa unità e riprova.</string>
     <string name="category_ui">Interfaccia utente</string>
     <string name="hide_phone_signal_label">Nascondi segnale del telefono</string>
     <string name="hide_battery_level_label">Nascondi livello batteria del telefono</string>

@@ -9,6 +9,8 @@ import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.BluetoothHelper
+import com.andrerinas.openheadunit.utils.ConnectionIssue
+import com.andrerinas.openheadunit.utils.ConnectionIssues
 import com.andrerinas.openheadunit.main.BackgroundNotification
 import com.andrerinas.openheadunit.ssl.SingleKeyKeyManager
 import com.andrerinas.openheadunit.utils.Settings
@@ -120,8 +122,14 @@ class CommManager(
     }
 
     /** IO-bound coroutine scope for all async connection work. SupervisorJob prevents one
-     *  failing child from cancelling the rest. */
-    private val _scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+     *  failing child from cancelling the rest.
+     *
+     *  A var, because [destroy] cancels it and this object outlives the service that destroyed it:
+     *  every disconnect path launches here, so a scope left cancelled makes them all silent no-ops.
+     */
+    private var _scope = newDisconnectScope()
+
+    private fun newDisconnectScope() = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /** Cached answer of the Bluetooth media probe used by media-key routing, and when it was taken. */
     private var btMediaLinkCached: Boolean? = null
@@ -229,6 +237,16 @@ class CommManager(
      */
     val isWirelessSession: Boolean
         get() = _connection is SocketProjectionConnection
+
+    /**
+     * `true` when this session's peer is this device itself — Self Mode, on either of its routes.
+     *
+     * Asked instead of `SelfLauncherManager.isActive`, which is set before the launchers run and
+     * outlives a launch that never connected. A socket session alone cannot answer it: Self Mode
+     * is one too, and only the endpoint separates them.
+     */
+    val isLoopbackSession: Boolean
+        get() = isWirelessSession && lastAttemptedEndpoint?.startsWith("127.0.0.1:") == true
 
     /**
      * Returns `true` if the current USB connection is to [device].
@@ -638,7 +656,7 @@ class CommManager(
         // Only media keys can be held back, so nothing else pays for the Bluetooth probe.
         if (isMedia) {
             val routing = settings.mediaKeyRouting
-            if (!MediaKeyRoutingPolicy.shouldForward(routing, true, btMediaLinkForKeys())) {
+            if (source != "auto-resume" && !MediaKeyRoutingPolicy.shouldForward(routing, true, btMediaLinkForKeys())) {
                 AppLog.v("CommManager: Not sending media key $logicalCode to Android Auto " +
                         "(routing=$routing, src=$source)")
                 return
@@ -932,6 +950,9 @@ class CommManager(
      *
      * The phone gives no reason we can see — it closes the socket and our read reports a plain EOF
      * — so without this the log shows nothing but a healthy connection repeating forever.
+     *
+     * The record is retired by a session that renders, which is the hardware answering the
+     * question. No setting disproves it, so it has no `remedyApplied` entry.
      */
     private fun noteSessionEnded(renderedAnyFrame: Boolean) {
         val reachedHandshake = sessionReachedHandshake
@@ -939,6 +960,9 @@ class CommManager(
         starvedSessionStreak = VideoStarvationPolicy.nextStreak(
             starvedSessionStreak, reachedHandshake, renderedAnyFrame
         )
+        if (reachedHandshake && renderedAnyFrame) {
+            ConnectionIssues.clear(context, ConnectionIssue.VIDEO_LINK_TOO_SLOW)
+        }
         if (VideoStarvationPolicy.shouldAdvise(starvedSessionStreak)) {
             AppLog.w(
                 "CommManager: $starvedSessionStreak sessions in a row ended without a single video " +
@@ -947,15 +971,10 @@ class CommManager(
                     "access point at 1080p/60, where the same link held 800x480/30 indefinitely: move " +
                     "the access point to 5 GHz, or lower the resolution and frame rate in Video settings."
             )
+            ConnectionIssues.raise(context, ConnectionIssue.VIDEO_LINK_TOO_SLOW)
         }
     }
 
-    /**
-     * Performs a final disconnect and cancels the internal coroutine scope.
-     *
-     * Call this when the owning component (e.g. the foreground service) is destroyed.
-     * After [destroy], the CommManager instance must not be used again.
-     */
     /**
      * Closes the session because the link carrying it is about to go away, and blocks until the
      * socket is actually closed or [timeoutMs] elapses. Never call from the main thread.
@@ -981,9 +1000,19 @@ class CommManager(
         runBlocking { withTimeoutOrNull(timeoutMs) { job.join() } }
     }
 
+    /**
+     * Performs a final disconnect and re-arms the internal coroutine scope.
+     *
+     * Call this when the owning component (e.g. the foreground service) is destroyed. It is not
+     * terminal: the next service gets this same instance, and every disconnect path launches on
+     * that scope, so leaving it cancelled would silence them all for the life of the process.
+     */
     fun destroy() {
         doDisconnect()
         _scope.cancel()
+        // Armed again for the next AapService. AppComponent hands out one CommManager per process,
+        // so the instance a destroyed service leaves behind is the one the next service uses.
+        _scope = newDisconnectScope()
     }
 
     companion object {

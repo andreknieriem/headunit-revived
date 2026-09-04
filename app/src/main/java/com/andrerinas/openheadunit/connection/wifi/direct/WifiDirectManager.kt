@@ -28,6 +28,7 @@ import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeHandoffPolicy
 import com.andrerinas.openheadunit.connection.CommManager
+import com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SoftApBssidPolicy
@@ -36,6 +37,7 @@ import com.andrerinas.openheadunit.utils.ToastUtils
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.ConnectionIssue
 import com.andrerinas.openheadunit.utils.ConnectionIssues
+import com.andrerinas.openheadunit.utils.InterfaceMacReader
 import java.io.File
 import java.net.Inet4Address
 import java.net.InetSocketAddress
@@ -85,6 +87,14 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private val burstTriggerCount = 5
     @Volatile private var isGroupCreatingOrCreated = false
 
+    // Fields for the P2P interface churn check in the state receiver below: how many
+    // DISABLED/ENABLED edges arrived in the current window, and how many of those landed while
+    // nothing of ours was outstanding. See P2pInterfaceChurnPolicy.
+    private var churnWindowStartedAtMs = 0L
+    private var churnEventsInWindow = 0
+    private var churnForeignEventsInWindow = 0
+    private var lastChurnReportAtMs = 0L
+
     /**
      * When we last asked the P2P framework for something that can reload the interface, so
      * [P2pStateChangePolicy] can tell the DISABLED/ENABLED pair that follows from the user really
@@ -117,6 +127,16 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private val handler = Handler(Looper.getMainLooper())
     private var localDeviceAddress: String? = null
     private var lastKnownBssid: String? = null
+
+    /**
+     * The interface [lastKnownBssid] was read from. A P2P interface's MAC changes with the group on
+     * plenty of devices, so a cached address from a different interface describes a network that no
+     * longer exists and no beacon carries.
+     */
+    private var lastKnownBssidIface: String? = null
+
+    /** The last SSID the BSSID source dump was printed for; group info arrives several times each. */
+    private var lastBssidDumpSsid: String? = null
     private var isReceiverRegistered = false
     private var discoveredInterface: String? = null
     private var nativeGroupCreationMode = NATIVE_GROUP_MODE_UNKNOWN
@@ -167,6 +187,101 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      * at all. Reset by [stop] rather than by a bring-up, so one refusal is reported per mode.
      */
     private var lastGroupRefusalReportAtMs = 0L
+
+    /**
+     * Set once a pinned 5 GHz channel has failed its whole retry budget on API 29+.
+     *
+     * A pinned frequency is forced all the way down to wpa_supplicant, which fails the group rather
+     * than choosing elsewhere, so a channel this unit will not host costs the connection and not
+     * just the channel. From here on the bring-up asks for the band instead. Cleared by [stop] and
+     * not by [startNativeAaQuietHost], for the same reason [legacyChannelAttempt] is: the handshake
+     * refreshes every ten seconds and each refresh lands back in that method.
+     */
+    @Volatile
+    private var pinnedChannelAbandoned = false
+
+    /**
+     * The frequency this group was asked for, or 0 where the band was asked for instead.
+     *
+     * The request rather than the setting, because the setting can be changed mid-session and the
+     * line that reports it sits beside the frequency the group actually came up on - which is the
+     * one comparison this whole choice exists to let a reader make.
+     */
+    @Volatile
+    private var nativeRequestedFrequency = 0
+
+    /** The identity the current Native AA group was asked for, so the read-back can name a mismatch. */
+    @Volatile
+    private var nativeRequestedIdentity: P2pGroupIdentity? = null
+
+    /**
+     * When the Native AA createGroup was issued and has not yet answered with a group, or 0.
+     * [refreshNativeCredentials] reads it so a refresh landing mid-create waits instead of asking
+     * for a second group underneath the first.
+     */
+    @Volatile
+    private var nativeCreateRequestedAtMs = 0L
+
+    /** Re-asks once a claimed create has had its grace, so a refresh with nothing behind it is not the end of the road. */
+    private val nativeRefreshRecheck = Runnable { refreshNativeCredentials() }
+
+    /**
+     * Whether a group has been asked for and has not answered yet. Callers that decide something
+     * about "the network" before the group can answer need this rather than [hasLiveGroup], which
+     * is false for the whole create.
+     */
+    val isCreatingGroup: Boolean
+        get() = NativeRefreshPolicy.createInFlight(nativeCreateRequestedAtMs, SystemClock.elapsedRealtime())
+
+    /**
+     * Claims the create window. The real createGroup() is several async hops from the call that
+     * asks for one, and until the stamp is set a refresh landing in between sees no group and no
+     * create, remakes one underneath this one, and the two fight over BUSY until the phone is
+     * handed a network that has already been replaced. Every path that abandons a create releases
+     * it again, and the create calls restamp it to an accurate value once they issue the request.
+     */
+    fun claimNativeCreateWindow(why: String) {
+        nativeCreateRequestedAtMs = SystemClock.elapsedRealtime()
+        // Standing the station down reloads the P2P interface just as our own group work does, and
+        // it is claimed here before anything is asked of the framework. Without this stamp the
+        // edges it provokes look like they came from another app.
+        markP2pRequest()
+        AppLog.i("WifiDirectManager: a Native AA group create is claimed ($why); a refresh in the next ${NativeRefreshPolicy.CREATE_GRACE_MS / 1000}s waits for it.")
+    }
+
+    private fun releaseNativeCreateWindow(why: String) {
+        if (nativeCreateRequestedAtMs == 0L) return
+        nativeCreateRequestedAtMs = 0L
+        AppLog.d("WifiDirectManager: the claimed create window is released ($why).")
+    }
+
+    /**
+     * Said before every teardown of the current group. A rung that removed a group without saying
+     * so left the handshake still holding its name, and the phone was handed a network that no
+     * longer existed and scanned for it until it gave up.
+     */
+    private fun invalidateNativeGroupCredentials(why: String) {
+        lastKnownBssid = null
+        lastKnownBssidIface = null
+        forgetPerGroupKeys()
+        credentialsEpoch++
+        onNativeGroupInvalidated?.invoke()
+        AppLog.i("WifiDirectManager: the group is being removed ($why), so its credentials are no longer handed out.")
+    }
+
+    /** The SSID the identity read-back was last printed for; group info arrives several times each. */
+    private var lastIdentityReportSsid: String? = null
+
+    /**
+     * The SSID whose identity has been compared to the last group's, once a BSSID was readable.
+     * Separate from the report key because the first callbacks for a group often carry no address
+     * yet, and comparing a group against itself on the next callback would call it stable.
+     */
+    private var nativeIdentityAssessedSsid: String? = null
+
+    /** The verdict for the current group, handed to the phone beside its credentials. */
+    @Volatile
+    private var nativeIdentityStability = GroupIdentityStability.UNPROVEN
 
     /**
      * Bumped by [stop]. Every P2P callback that continues into another framework call captures this
@@ -223,9 +338,51 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private var lastCoexistenceKey: String? = null
     private var lastNativeGroupStatusMessage: String? = null
 
+    /**
+     * Forgets every "said once per group" key, so the next group says its lines again.
+     *
+     * Those keys are the SSID, which used to change on every create and so reset them for free.
+     * A kept identity gives a recreated group the same SSID as the one it replaces, and without
+     * this the join watchdog would not re-arm for it and its BSSID dump would never print. The
+     * session latch is per group too: a replacement has not carried anything yet.
+     */
+    private fun forgetPerGroupKeys() {
+        nativeGroupHostedSession = false
+        lastBssidDumpSsid = null
+        lastIdentityReportSsid = null
+        nativeIdentityAssessedSsid = null
+        nativeIdentityStability = GroupIdentityStability.UNPROVEN
+        nativeJoinWatchdogSsid = null
+        lastFrequencyUnreadableSsid = null
+        lastUnfriendlyChannelSsid = null
+        lastCoexistenceKey = null
+    }
+
     // Native AA join recovery state. The watchdog fires if the phone never joins our quiet-host
     // group; nativeRecreateCount bounds how many times we recreate before giving up.
     private var nativeRecreateCount = 0
+
+    /**
+     * True once a projection session has run over the current group. The join watchdog recreates
+     * a group no phone joined, and a recreate is what moves the group's address out from under
+     * the profile the phone saved, so a group that has already worked is never put through it.
+     */
+    private var nativeGroupHostedSession = false
+
+    /** Records that a projection session ran over this group. */
+    fun noteSessionHosted() {
+        if (nativeGroupHostedSession) return
+        nativeGroupHostedSession = true
+        AppLog.i("WifiDirectManager: this group has carried a session, so the join watchdog will not recreate it if the phone leaves.")
+    }
+
+    /**
+     * Whether a P2P group we own is up right now, from the state CONNECTION_CHANGED keeps
+     * current. Answered from memory because the caller has to decide on the spot; the
+     * framework's own answer follows from [refreshNativeCredentials], which the caller asks for.
+     */
+    val hasLiveGroup: Boolean get() = isConnected && isGroupOwner
+
     private val nativeJoinWatchdog = Runnable {
         if (isClientConnected) return@Runnable
         if (isNativeSessionConnected?.invoke() == true) {
@@ -246,7 +403,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         recoverNativeGroup("no phone joined within ${NATIVE_JOIN_TIMEOUT_MS / 1000}s")
     }
 
-    private var onCredentialsReady: ((ssid: String, psk: String, ip: String, bssid: String) -> Unit)? = null
+    private var onCredentialsReady: ((ssid: String, psk: String, ip: String, bssid: String, identity: GroupIdentityStability) -> Unit)? = null
     // Set by AapService: whether NativeAaHandshakeManager has a live handshake in progress *or*
     // a delivered handoff still settling (the phone associating/doing DHCP after Type 3), so the
     // join watchdog/self-heal never tears the group down mid-exchange or mid-join.
@@ -258,7 +415,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     // not-yet-captured credentials in NativeAaHandshakeManager.
     private var onNativeGroupInvalidated: (() -> Unit)? = null
 
-    fun setCredentialsListener(callback: (String, String, String, String) -> Unit) {
+    fun setCredentialsListener(callback: (String, String, String, String, GroupIdentityStability) -> Unit) {
         this.onCredentialsReady = callback
     }
 
@@ -280,13 +437,62 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         lastP2pRequestAtMs = System.currentTimeMillis()
     }
 
+    /**
+     * Retire both group records: this unit just hosted a group, which disproves each of them.
+     *
+     * Shared by the two createGroup success paths because only the standard one used to clear, so a
+     * unit that succeeded on a banded request kept a standing record and its banner for good.
+     */
+    private fun noteGroupFormed() {
+        ConnectionIssues.clear(context, ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED)
+        ConnectionIssues.clear(context, ConnectionIssue.WIFI_DIRECT_STACK_CYCLED)
+    }
+
+    /**
+     * Count this state change, and say so once a minute when something else is cycling the stack.
+     *
+     * Edges arriving while a request of ours could still be bouncing the interface are counted but
+     * not attributed, so this can only ever accuse somebody else. The window is closed and judged
+     * on the first edge after it expires rather than on a timer: there is no churn to report when
+     * no broadcasts are arriving.
+     */
+    private fun noteP2pStateChange() {
+        val now = System.currentTimeMillis()
+        val elapsed = now - churnWindowStartedAtMs
+        if (churnWindowStartedAtMs == 0L || elapsed >= P2pInterfaceChurnPolicy.WINDOW_MS || elapsed < 0L) {
+            if (P2pInterfaceChurnPolicy.isForeignChurn(churnForeignEventsInWindow) &&
+                P2pInterfaceChurnPolicy.shouldReport(now, lastChurnReportAtMs)
+            ) {
+                lastChurnReportAtMs = now
+                AppLog.w(
+                    "WifiDirectManager: this unit's WiFi Direct reported " +
+                        "$churnForeignEventsInWindow off/on state changes in the last " +
+                        "${P2pInterfaceChurnPolicy.WINDOW_MS / 1000}s with no request of ours " +
+                        "outstanding, so another app on this unit is cycling it. No group can be " +
+                        "created while that continues."
+                )
+                ConnectionIssues.raise(context, ConnectionIssue.WIFI_DIRECT_STACK_CYCLED)
+            }
+            churnWindowStartedAtMs = now
+            churnEventsInWindow = 0
+            churnForeignEventsInWindow = 0
+        }
+        churnEventsInWindow++
+        if (P2pInterfaceChurnPolicy.countsAsForeign(now, lastP2pRequestAtMs)) {
+            churnForeignEventsInWindow++
+        }
+    }
+
     private val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
                     val state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1)
-                    AppLog.i("WifiDirectManager: WIFI_P2P_STATE_CHANGED_ACTION state=$state")
+                    noteP2pStateChange()
+                    if (P2pInterfaceChurnPolicy.shouldLogEachBroadcast(churnEventsInWindow)) {
+                        AppLog.i("WifiDirectManager: WIFI_P2P_STATE_CHANGED_ACTION state=$state")
+                    }
                     if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
                         val appSettings = App.provide(context).settings
                         val commManager = App.provide(context).commManager
@@ -294,7 +500,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                             commManager.connectionState.value is CommManager.ConnectionState.Connecting
 
                         val busy = isConnected || isConnectingOrConnected || isGroupCreatingOrCreated
-                        if (P2pStateChangePolicy.shouldStartBringUp(busy, System.currentTimeMillis(), lastP2pRequestAtMs)) {
+                        if (P2pStateChangePolicy.shouldStartBringUp(busy, isCreatingGroup, System.currentTimeMillis(), lastP2pRequestAtMs)) {
                             if (appSettings.wifiConnectionMode == WifiLauncherMode.HELPER && appSettings.helperConnectionStrategy == HelperStrategy.WIFI_DIRECT) {
                                 AppLog.i("WifiDirectManager: P2P enabled, auto-starting WiFi Direct visibility")
                                 makeVisible()
@@ -539,7 +745,13 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                     } else {
                         AppLog.i("WifiDirectManager: Client left the Native AA group; staying a quiet host instead of rediscovering.")
                     }
-                    if (isNativeAaMode()) armNativeJoinWatchdog()
+                    if (NativeHandoffPolicy.shouldRearmJoinWatchdogAfterClientLeft(
+                            nativeAaMode = isNativeAaMode(),
+                            groupHasHostedSession = nativeGroupHostedSession)) {
+                        armNativeJoinWatchdog()
+                    } else if (isNativeAaMode()) {
+                        AppLog.i("WifiDirectManager: the phone left a group that has already carried a session, so it is kept as it is rather than recreated.")
+                    }
                 }
             } else {
                 isClientConnected = true
@@ -568,7 +780,42 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             val overrideBssid = SoftApBssidPolicy.choose(rawOverride, null, null)
             val isBssidSet = overrideBssid.isNotEmpty()
 
-            var bssid: String = if (isBssidSet) overrideBssid else getWifiDirectMac(iface)
+            logBssidSourceDump(group, iface, ssid, rawOverride)
+
+            // Two sources ahead of the framework's own MAC, because both survive on a device where
+            // getHardwareAddress() is masked: the group owner's BSSID where the vendor exposes it,
+            // and the MAC the kernel encoded in the interface's IPv6 link-local address. Which one
+            // answered is carried in bssidSource so the log can say so.
+            var bssidSource = "static override"
+            var bssid: String = overrideBssid
+            if (!isBssidSet) {
+                val ownerBssid = SoftApBssidPolicy.choose(null, getGroupOwnerBssid(group), null)
+                val linkLocalBssid =
+                    SoftApBssidPolicy.choose(null, InterfaceMacReader.fromIpv6LinkLocal(iface), null)
+                when {
+                    ownerBssid.isNotEmpty() -> {
+                        bssid = ownerBssid
+                        bssidSource = "getGroupOwnerBssid()"
+                    }
+                    linkLocalBssid.isNotEmpty() -> {
+                        bssid = linkLocalBssid
+                        bssidSource = "IPv6 link-local"
+                        AppLog.i(
+                            "WifiDirectManager: BSSID read from the IPv6 link-local address of " +
+                                "${iface ?: "an access point interface"} (EUI-64): $bssid"
+                        )
+                    }
+                    else -> {
+                        bssid = getWifiDirectMac(iface)
+                        bssidSource = "NetworkInterface.hardwareAddress"
+                        AppLog.i(
+                            "WifiDirectManager: ${iface ?: "no interface"} carries no EUI-64 IPv6 " +
+                                "link-local address, so no MAC can be derived from it - this " +
+                                "interface uses RFC 7217 stable-privacy addressing."
+                        )
+                    }
+                }
+            }
             if (isBssidSet) {
                 AppLog.i("WifiDirectManager: Initial BSSID from App settings: $bssid")
             } else {
@@ -582,46 +829,56 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                             "(XX:XX:XX:XX:XX:XX) or clear it to detect one automatically."
                     )
                 }
-                AppLog.i("WifiDirectManager: Initial BSSID from scan: $bssid")
+                AppLog.i("WifiDirectManager: Initial BSSID from $bssidSource: $bssid")
             }
 
 
 
             // [FIX] Robust BSSID detection for masked MACs (00:00 or 02:00)
-            if (bssid == "00:00:00:00:00:00" || bssid == "02:00:00:00:00:00") {
+            //
+            // The tests below ask SoftApBssidPolicy rather than comparing against the two masking
+            // placeholders: it checks the shape, so a source that answers with something that is
+            // not an address at all - an empty string, a status word, a hostname - is rejected here
+            // instead of winning the chain and being published verbatim.
+            if (!SoftApBssidPolicy.isUsable(bssid)) {
                 AppLog.i("WifiDirectManager: BSSID is masked. Starting fallbacks...")
 
-                // Fallback 1: Use last known valid BSSID
-                if (!lastKnownBssid.isNullOrEmpty() && lastKnownBssid != "00:00:00:00:00:00" && lastKnownBssid != "02:00:00:00:00:00") {
+                // Fallback 1: Use last known valid BSSID, but only from this same interface.
+                if (SoftApBssidPolicy.isUsable(lastKnownBssid) && lastKnownBssidIface == iface) {
                     AppLog.i("WifiDirectManager: Fallback 1 - Using lastKnownBssid: $lastKnownBssid")
                     bssid = lastKnownBssid!!
+                    bssidSource = "lastKnownBssid cache"
                 }
                 // Fallback 2: Use captured localDeviceAddress
-                else if (!localDeviceAddress.isNullOrEmpty() && localDeviceAddress != "00:00:00:00:00:00" && localDeviceAddress != "02:00:00:00:00:00") {
+                else if (SoftApBssidPolicy.isUsable(localDeviceAddress)) {
                     AppLog.i("WifiDirectManager: Fallback 2 - Using localDeviceAddress: $localDeviceAddress")
                     bssid = localDeviceAddress!!
+                    bssidSource = "requestDeviceInfo"
                 }
                 // Fallback 3: Use group.owner.deviceAddress
                 else {
                     val ownerAddr = group.owner?.deviceAddress
                     AppLog.i("WifiDirectManager: Fallback 3 - group.owner.deviceAddress: $ownerAddr")
-                    if (!ownerAddr.isNullOrEmpty() && ownerAddr != "00:00:00:00:00:00" && ownerAddr != "02:00:00:00:00:00") {
+                    if (SoftApBssidPolicy.isUsable(ownerAddr)) {
                         AppLog.i("WifiDirectManager: Fallback 3 - Selected group.owner.deviceAddress: $ownerAddr")
-                        bssid = ownerAddr
+                        bssid = ownerAddr!!
+                        bssidSource = "group.owner.deviceAddress"
                     } else {
                         AppLog.i("WifiDirectManager: Fallback 4 - Attempting shell/sysfs for $iface...")
                         val shellMac = getMacFromShell(iface)
-                        if (shellMac != null) {
+                        if (SoftApBssidPolicy.isUsable(shellMac)) {
                             AppLog.i("WifiDirectManager: Fallback 4 - Selected shell/sysfs MAC: $shellMac")
-                            bssid = shellMac
+                            bssid = shellMac!!
+                            bssidSource = "sysfs / ip link"
                         } else {
                             // Fallback 5: Try Settings.Secure (Samsung/Pixel trick)
                             var resolved = false
                             try {
                                 val secureMac = Settings.Secure.getString(context.contentResolver, "wifi_p2p_device_address")
-                                if (!secureMac.isNullOrEmpty() && secureMac != "00:00:00:00:00:00" && secureMac != "02:00:00:00:00:00") {
+                                if (SoftApBssidPolicy.isUsable(secureMac)) {
                                     AppLog.i("WifiDirectManager: Fallback 5 - Selected MAC from Settings.Secure: $secureMac")
                                     bssid = secureMac
+                                    bssidSource = "Settings.Secure"
                                     resolved = true
                                 }
                             } catch (e: Exception) {
@@ -634,11 +891,12 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                             // internal fields populated).
                             if (!resolved) {
                                 val reflectedMac = getMacFromReflection(group)
-                                if (reflectedMac != null) {
+                                if (SoftApBssidPolicy.isUsable(reflectedMac)) {
                                     AppLog.i("WifiDirectManager: Fallback 6 - Selected MAC via reflection: $reflectedMac")
-                                    bssid = reflectedMac
+                                    bssid = reflectedMac!!
+                                    bssidSource = "field reflection"
                                 } else {
-                                    AppLog.w("WifiDirectManager: All fallbacks failed! BSSID is still zeroed.")
+                                    AppLog.w("WifiDirectManager: every source has been tried and none named an address, including the IPv6 link-local derivation, which needs no permission. The per-source dump above says what each one answered.")
                                 }
                             }
                         }
@@ -646,8 +904,12 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 }
             }
 
-            if (bssid != "00:00:00:00:00:00" && bssid != "02:00:00:00:00:00") {
+            if (SoftApBssidPolicy.isUsable(bssid)) {
+                // Normalised once, here, so every consumer and the cache see the same upper-case
+                // colon form the hotspot route already hands over.
+                bssid = SoftApBssidPolicy.choose(null, bssid, null)
                 lastKnownBssid = bssid
+                lastKnownBssidIface = iface
             }
 
             // Below API 29 there is nothing to read. WifiP2pGroup gained getFrequency() in Q, and
@@ -671,12 +933,48 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
             val band = if (frequency > 4000) "5GHz" else if (frequency > 0) "2.4GHz" else "unknown"
             val channelLabel = if (WifiP2pChannelPolicy.is24GHz(frequency)) ", ${WifiP2pChannelPolicy.describe(frequency)}" else ""
-            AppLog.i("WifiDirectManager: onGroupInfoAvailable: SSID: $ssid, BSSID: $bssid, GO: $isOwner, IFACE: ${iface ?: "null"}, Freq: $frequency MHz ($band$channelLabel)")
+            // Names the request beside the result: a group that came up on 5745 after the user asked
+            // for 5180 is the whole failure this setting exists for, and one line has to answer it.
+            val requestedLabel =
+                if (nativeRequestedFrequency > 0) ", $nativeRequestedFrequency MHz was asked for" else ""
+            AppLog.i("WifiDirectManager: onGroupInfoAvailable: SSID: $ssid, BSSID: $bssid (source=$bssidSource), GO: $isOwner, IFACE: ${iface ?: "null"}, Freq: $frequency MHz ($band$channelLabel)$requestedLabel")
+
+            if (isNativeAaMode() && isOwner) {
+                // The group answered, so a refresh landing now may hand it out rather than wait.
+                nativeCreateRequestedAtMs = 0L
+                // Said once per group, and once more if the address only became readable later.
+                // The comparison is made once per group, on the first callback with an address:
+                // made again on the next callback it would compare the group to itself.
+                val bssidUsable = SoftApBssidPolicy.isUsable(bssid)
+                if (ssid != nativeIdentityAssessedSsid && (bssidUsable || ssid != lastIdentityReportSsid)) {
+                    val verdict = GroupIdentityStabilityPolicy.assess(
+                        keepIdentity = appSettings.wifiDirectStableIdentity,
+                        requestedName = (nativeRequestedIdentity as? P2pGroupIdentity.Named)?.networkName,
+                        ssid = ssid,
+                        bssid = bssid,
+                        bssidUsable = bssidUsable,
+                        staticOverride = isBssidSet,
+                        previous = appSettings.wifiDirectLastGroup,
+                    )
+                    if (bssidUsable) {
+                        nativeIdentityAssessedSsid = ssid
+                        verdict.remember?.let { appSettings.wifiDirectLastGroup = it }
+                    }
+                    nativeIdentityStability = verdict.stability
+                    lastIdentityReportSsid = ssid
+                    AppLog.i(
+                        "WifiDirectManager: " + P2pGroupIdentityPolicy.describeReadBack(
+                            nativeRequestedIdentity, ssid, psk, group.networkId) +
+                            " bssid=$bssid stable=${GroupIdentityStabilityPolicy.label(verdict.stability)}" +
+                            " (${verdict.reason}) source=$bssidSource"
+                    )
+                }
+            }
 
             // Runs before the channel report below, which is the order the Native AA branch used to
             // impose from inside itself: a group that is about to be torn down and remade on 5GHz
-            // must not first tell the user to restart their WiFi. The retry regenerates the SSID
-            // every time, so the report's per-SSID dedupe would not have suppressed the repeats.
+            // must not first tell the user to restart their WiFi. The retry keeps the SSID now, so
+            // the report's per-SSID dedupe is reset by the recreate itself (forgetPerGroupKeys).
             if (isNativeAaMode() && isOwner) {
                 if (frequency > 4000) {
                     native5GhzBandMismatchRetries = 0
@@ -722,6 +1020,9 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             if (ssid.isNotEmpty()) {
                 // Wait for the IP address to be assigned to the interface
                 val deliveryEpoch = credentialsEpoch
+                val deliveryStability =
+                    if (isNativeAaMode() && isOwner) nativeIdentityStability
+                    else GroupIdentityStability.NOT_MEASURED
                 Thread {
                     try {
                         var ip = getWifiDirectIp(iface)
@@ -742,8 +1043,8 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                                     "sent a network that no longer exists."
                             )
                         } else if (finalIp != null) {
-                            AppLog.i("WifiDirectManager: SUCCESS - Providing credentials to listener. SSID=$ssid, IP=$finalIp, BSSID=$bssid")
-                            onCredentialsReady?.invoke(ssid, psk, finalIp, bssid)
+                            AppLog.i("WifiDirectManager: SUCCESS - Providing credentials to listener. SSID=$ssid, IP=$finalIp, BSSID=$bssid, identity stable=${GroupIdentityStabilityPolicy.label(deliveryStability)}")
+                            onCredentialsReady?.invoke(ssid, psk, finalIp, bssid, deliveryStability)
                         } else {
                             AppLog.e("WifiDirectManager: FAILED to get valid IP for credentials delivery.")
                         }
@@ -917,7 +1218,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                     sb.toString()
                 } else "null"
 
-                AppLog.i("WifiDirectManager: Found interface: ${iface.name}, MAC: $macStr")
+                AppLog.d("WifiDirectManager: Found interface: ${iface.name}, MAC: $macStr")
 
                 // If we have a name, it must match.
                 if (ifaceName != null && iface.name != ifaceName) continue
@@ -1041,6 +1342,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
             // MAC — a cached BSSID from the group we're tearing down is now stale and must never
             // be delivered for the new one.
             lastKnownBssid = null
+            lastKnownBssidIface = null
             manager?.removeGroup(channel, object : WifiP2pManager.ActionListener {
                 override fun onSuccess() {
                     checkGroupAndCreateInFlight = false
@@ -1068,6 +1370,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         }
 
         lastKnownBssid = null
+        lastKnownBssidIface = null
 
         mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
@@ -1166,6 +1469,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     fun startNativeAaQuietHost() {
         registerReceiverIfNeeded()
         isGroupCreatingOrCreated = true
+        claimNativeCreateWindow("bringing the Native AA group up")
         markP2pRequest()
         var mgr = manager
         var ch = channel
@@ -1185,11 +1489,13 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 } else {
                     AppLog.e("WifiDirectManager: Re-init failed. Cannot start Quiet Host.")
                     isGroupCreatingOrCreated = false
+                    releaseNativeCreateWindow("the P2P manager could not be re-initialised")
                     return
                 }
             } catch (e: Exception) {
                 AppLog.e("WifiDirectManager: Exception during re-init", e)
                 isGroupCreatingOrCreated = false
+                releaseNativeCreateWindow("the P2P re-init threw")
                 return
             }
         }
@@ -1205,6 +1511,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 showToast("Native AA requires Wi-Fi. Please turn it on.")
                 // We return for now, the user must turn it on. In the future we could open settings.
                 isGroupCreatingOrCreated = false
+                releaseNativeCreateWindow("WiFi is off and only the user can turn it on")
                 return
             }
             // Wait a bit for WiFi to wake up
@@ -1222,17 +1529,73 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         lastNativeGroupStatusMessage = null
         native5GhzBandMismatchRetries = 0
         nativeRequestedBand = NativeGroupBandPolicy.Band.UNSPECIFIED
+        nativeRequestedFrequency = 0
         // legacyChannelAttempt is deliberately not reset here. The handshake calls
         // triggerWifiDirectRefresh() every ten seconds while it waits for credentials, and each one
         // lands back in this method - so resetting made rung 1 the only rung the ladder ever tried.
         // stop() clears it, which ties the ladder to the mode rather than to a refresh.
-        lastUnfriendlyChannelSsid = null
-        lastCoexistenceKey = null
-        lastFrequencyUnreadableSsid = null
-        nativeJoinWatchdogSsid = null
+        forgetPerGroupKeys()
         nativeRecreateCount = 0
         cancelNativeJoinWatchdog()
         recreateNativeGroup(forceStandard = false)
+    }
+
+    /**
+     * What the handshake asks for while it waits for credentials, and before every poke.
+     *
+     * Used to be [startNativeAaQuietHost], a full teardown and recreate, every ten seconds - which
+     * handed the phone a new network name in the very window it was trying to join one, and tore
+     * down the group the first poke's pre-flight found still forming. The rules are
+     * [NativeRefreshPolicy]'s: a group that is up and ours has its credentials read again, one that
+     * was just asked for is left to answer, and only no group at all is worth creating one.
+     */
+    @SuppressLint("MissingPermission")
+    fun refreshNativeCredentials() {
+        val mgr = manager
+        val ch = channel
+        if (mgr == null || ch == null) {
+            startNativeAaQuietHost()
+            return
+        }
+        val gen = generation
+        markP2pRequest()
+        mgr.requestGroupInfo(ch) { group ->
+            if (supersededByStop(gen, "credential refresh")) return@requestGroupInfo
+            val inFlightForMs = nativeCreateRequestedAtMs
+                .takeIf { it != 0L }
+                ?.let { SystemClock.elapsedRealtime() - it }
+            when (NativeRefreshPolicy.decide(
+                groupExists = group != null,
+                isGroupOwner = group?.isGroupOwner == true,
+                createInFlightForMs = inFlightForMs,
+            )) {
+                NativeRefreshPolicy.Action.REDELIVER -> {
+                    AppLog.i(
+                        "WifiDirectManager: refresh: the group ${group?.networkName} is up, so its " +
+                            "credentials are read again rather than the group remade."
+                    )
+                    mgr.requestConnectionInfo(ch, this)
+                    onGroupInfoAvailable(group)
+                }
+                NativeRefreshPolicy.Action.WAIT -> {
+                    AppLog.i(
+                        "WifiDirectManager: refresh: a group was asked for ${inFlightForMs}ms ago and " +
+                            "has not answered yet, so nothing is remade underneath it."
+                    )
+                    // Asked again once the grace is up. The session-end re-arm asks for credentials
+                    // exactly once, so a create that never answers would otherwise leave the mode
+                    // idle with nothing to notice it.
+                    val askAgainInMs = NativeRefreshPolicy.CREATE_GRACE_MS - (inFlightForMs ?: 0L) + 500L
+                    AppLog.i("WifiDirectManager: refresh: asking again in ${askAgainInMs}ms, once that create's grace is up.")
+                    handler.removeCallbacks(nativeRefreshRecheck)
+                    handler.postDelayed(nativeRefreshRecheck, askAgainInMs)
+                }
+                NativeRefreshPolicy.Action.RECREATE -> {
+                    AppLog.i("WifiDirectManager: refresh: no group is up, so one is created.")
+                    startNativeAaQuietHost()
+                }
+            }
+        }
     }
 
     private fun delayedCreateQuietGroup(retryCount: Int) {
@@ -1241,8 +1604,8 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
     @SuppressLint("MissingPermission")
     private fun createQuietGroup(retryCount: Int) {
-        val mgr = manager ?: return
-        val ch = channel ?: return
+        val mgr = manager ?: run { releaseNativeCreateWindow("the P2P manager went away before the create"); return }
+        val ch = channel ?: run { releaseNativeCreateWindow("the P2P channel went away before the create"); return }
 
         // Read once per attempt rather than held in a field: the setting is written between runs on
         // a rig, and a group made after the write must be the one the write asked for.
@@ -1253,6 +1616,13 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         val supports5Ghz = WifiBandCapability.supports5Ghz(context)
         val band = NativeGroupBandPolicy.bandFor(preference, supports5Ghz)
         val bandLabel = NativeGroupBandPolicy.label(band)
+        val chosenChannel = appSettings.fiveGhzChannel
+        // Asking for the 5 GHz *band* is answered by picking a random one of eight frequencies,
+        // four of them in UNII-3, which several regulatory domains forbid phones from joining - so
+        // on those phones half of all bring-ups are invisible. A pinned channel replaces the band
+        // request with a frequency, which the platform treats as forced. 0 means ask for the band.
+        val requestedFrequency = if (pinnedChannelAbandoned) 0
+            else NativeGroupBandPolicy.requestedFrequencyMhz(band, chosenChannel)
 
         AppLog.i("WifiDirectManager: Attempting createGroup for Native AA (Attempt $retryCount)...")
         // Said on every bring-up, including the default one: a line that only appears in the unusual
@@ -1263,27 +1633,46 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
-                // Builder.build() requires networkName+passphrase (or a peer address) or it
-                // throws IllegalStateException — onGroupInfoAvailable() reads the real values
-                // back afterwards, same as the standard-fallback path.
-                val config = WifiP2pConfig.Builder()
-                    .setGroupOperatingBand(
+                // The name and passphrase are ours to choose here, and by default they are kept
+                // between creates and the group asked for as a persistent one, so the phone rejoins
+                // a network it saved rather than being set up for a new one every session. The
+                // rules are P2pGroupIdentityPolicy's. onGroupInfoAvailable() reads back what the
+                // platform actually made and says whether it matches.
+                val identity = chooseNativeGroupIdentity()
+                val builder = WifiP2pConfig.Builder()
+                    .setNetworkName(identity.networkName)
+                    .setPassphrase(identity.passphrase)
+                if (identity.persistent) builder.enablePersistentMode(true)
+                // Exactly one of the two: build() throws IllegalStateException if both are set.
+                if (requestedFrequency > 0) {
+                    builder.setGroupOperatingFrequency(requestedFrequency)
+                } else {
+                    builder.setGroupOperatingBand(
                         if (band == NativeGroupBandPolicy.Band.GHZ_2_4) WifiP2pConfig.GROUP_OWNER_BAND_2GHZ
                         else WifiP2pConfig.GROUP_OWNER_BAND_5GHZ
                     )
-                    .setNetworkName(generateP2pNetworkName())
-                    .setPassphrase(generateP2pPassphrase())
-                    .build()
+                }
+                val config = builder.build()
 
                 // Recorded here and not before the gate: this is the only branch that asks for a
                 // band, so it is the only one whose answer can be mismatched. Below Q the request
                 // does not exist and standardCreateGroup leaves the field UNSPECIFIED.
                 nativeRequestedBand = band
+                nativeRequestedFrequency = requestedFrequency
+                nativeRequestedIdentity = identity
                 AppLog.i("WifiDirectManager: Requesting Native AA P2P group on $bandLabel band.${if (preference != P2pBandPreference.AUTO) " Chosen by the user." else ""}")
+                AppLog.i(
+                    "WifiDirectManager: 5 GHz channel is ${FiveGhzChannelPolicy.describe(chosenChannel)}" +
+                        if (requestedFrequency > 0) ", asked for as a fixed $requestedFrequency MHz."
+                        else if (pinnedChannelAbandoned) ", already refused by this unit, so the band decides."
+                        else ", so the driver picks within the band."
+                )
                 markP2pRequest()
+                nativeCreateRequestedAtMs = SystemClock.elapsedRealtime()
                 mgr.createGroup(ch, config, object : WifiP2pManager.ActionListener {
                     override fun onSuccess() {
                         AppLog.i("WifiDirectManager: $bandLabel createGroup SUCCESS!")
+                        noteGroupFormed()
                         nativeGroupCreationMode =
                             if (band == NativeGroupBandPolicy.Band.GHZ_2_4) NATIVE_GROUP_MODE_24GHZ_REQUESTED
                             else NATIVE_GROUP_MODE_5GHZ_REQUESTED
@@ -1294,47 +1683,14 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                         }, 1000L)
                     }
                     override fun onFailure(reason: Int) {
-                        val reasonStr = getP2pErrorString(reason)
-                        if (retryCount < MAX_NATIVE_5GHZ_CREATE_RETRIES) {
-                            AppLog.w("WifiDirectManager: $bandLabel createGroup failed ($reasonStr), removing group and retrying $bandLabel in 2s (retry ${retryCount + 1}/$MAX_NATIVE_5GHZ_CREATE_RETRIES)...")
-                            markP2pRequest()
-                            mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
-                                override fun onSuccess() { handler.postDelayed({ createQuietGroup(retryCount + 1) }, 2000L) }
-                                override fun onFailure(r: Int) { handler.postDelayed({ createQuietGroup(retryCount + 1) }, 2000L) }
-                            })
-                        } else if (NativeGroupBandPolicy.fallsBackToPlatformChoice(preference)) {
-                            AppLog.w("WifiDirectManager: $bandLabel createGroup retries exhausted ($reasonStr). Falling back to standard createGroup.")
-                            standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_FALLBACK)
-                        } else {
-                            // "5 GHz only" means it. A group on 2.4 GHz can connect, look entirely
-                            // healthy and show nothing, which is harder to diagnose than no group,
-                            // and the user asked not to be given one.
-                            AppLog.e(
-                                "WifiDirectManager: $bandLabel createGroup retries exhausted ($reasonStr) and the " +
-                                    "band is set to 5 GHz only, so no group is created. Set the WiFi Direct band " +
-                                    "to Auto if this unit cannot host one."
-                            )
-                            isGroupCreatingOrCreated = false
-                        }
+                        onQuietGroupFailed(mgr, ch, retryCount, preference, chosenChannel,
+                            requestedFrequency, bandLabel, getP2pErrorString(reason), null)
                     }
                 })
                 return
             } catch (t: Throwable) {
-                if (retryCount < MAX_NATIVE_5GHZ_CREATE_RETRIES) {
-                    AppLog.e("WifiDirectManager: $bandLabel createGroup crashed before async result. Retrying $bandLabel.", t)
-                    handler.postDelayed({ createQuietGroup(retryCount + 1) }, 2000L)
-                    return
-                }
-                if (!NativeGroupBandPolicy.fallsBackToPlatformChoice(preference)) {
-                    AppLog.e(
-                        "WifiDirectManager: 5GHz createGroup crashed, retries are exhausted and the band is set " +
-                            "to 5 GHz only, so no group is created.", t
-                    )
-                    isGroupCreatingOrCreated = false
-                    return
-                }
-                AppLog.e("WifiDirectManager: 5GHz createGroup crashed and retries are exhausted. Falling back to standard.", t)
-                standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_FALLBACK)
+                onQuietGroupFailed(mgr, ch, retryCount, preference, chosenChannel,
+                    requestedFrequency, bandLabel, "crashed before any async result", t)
                 return
             }
         }
@@ -1350,7 +1706,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         val ladder = WifiP2pOperatingChannelPolicy.attemptChannels(
             sdkInt = Build.VERSION.SDK_INT,
             preference = preference,
-            useUpperBand = appSettings.p2pLegacyFiveGhzUpperBand,
+            chosenChannel = FiveGhzChannelPolicy.pinnedChannel(chosenChannel),
             supports5Ghz = supports5Ghz,
         )
         val ladderLabel = ladder.joinToString { channel ->
@@ -1409,18 +1765,124 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         }
     }
 
-    private fun generateP2pNetworkName(): String {
-        val suffix = AapService.wifiDirectName.value
-            ?.filter { it.isLetterOrDigit() }
-            ?.take(20)
-            ?.ifEmpty { null } ?: "HeadUnit"
-        val code = (('A'..'Z') + ('0'..'9')).let { pool -> "${pool.random()}${pool.random()}" }
-        return "DIRECT-$code-$suffix"
+    /**
+     * What a failed Native AA group request does next.
+     *
+     * The ordering is [NativeGroupBandPolicy.nextStepAfterFailure]'s; this only carries it out and
+     * says so in the log. A crash before the async result lands here too, because a request the
+     * platform rejects outright and one it accepts and then fails need the same ladder.
+     */
+    private fun onQuietGroupFailed(
+        mgr: WifiP2pManager,
+        ch: WifiP2pManager.Channel,
+        retryCount: Int,
+        preference: P2pBandPreference,
+        chosenChannel: Int,
+        requestedFrequency: Int,
+        bandLabel: String,
+        reasonStr: String,
+        crash: Throwable?,
+    ) {
+        val requestLabel =
+            if (requestedFrequency > 0) "$bandLabel ${FiveGhzChannelPolicy.describe(chosenChannel)}"
+            else bandLabel
+        when (NativeGroupBandPolicy.nextStepAfterFailure(
+            preference = preference,
+            channelPinned = requestedFrequency > 0,
+            retriesSoFar = retryCount,
+            maxRetries = MAX_NATIVE_5GHZ_CREATE_RETRIES,
+        )) {
+            NativeGroupBandPolicy.NextStep.RETRY -> {
+                val message = "WifiDirectManager: $requestLabel createGroup failed ($reasonStr), " +
+                    "removing group and retrying in 2s " +
+                    "(retry ${retryCount + 1}/$MAX_NATIVE_5GHZ_CREATE_RETRIES)..."
+                if (crash != null) AppLog.e(message, crash) else AppLog.w(message)
+                retryQuietGroup(mgr, ch, retryCount + 1, removeFirst = crash == null)
+            }
+
+            NativeGroupBandPolicy.NextStep.DROP_PINNED_CHANNEL -> {
+                pinnedChannelAbandoned = true
+                AppLog.w(
+                    "WifiDirectManager: $requestLabel createGroup retries exhausted ($reasonStr). This unit " +
+                        "will not host a group on that channel, so the request goes back to the $bandLabel band " +
+                        "and the driver picks the channel. If the phone still cannot see the head unit, that " +
+                        "is why - the channel you chose is not the one it is on."
+                )
+                retryQuietGroup(mgr, ch, 0, removeFirst = crash == null)
+            }
+
+            NativeGroupBandPolicy.NextStep.STANDARD_FALLBACK -> {
+                AppLog.w("WifiDirectManager: $requestLabel createGroup retries exhausted ($reasonStr). Falling back to standard createGroup.")
+                standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_FALLBACK)
+            }
+
+            NativeGroupBandPolicy.NextStep.GIVE_UP -> {
+                // "5 GHz only" means it. A group on 2.4 GHz can connect, look entirely healthy and
+                // show nothing, which is harder to diagnose than no group, and the user asked not
+                // to be given one.
+                AppLog.e(
+                    "WifiDirectManager: $requestLabel createGroup retries exhausted ($reasonStr) and the " +
+                        "band is set to 5 GHz only, so no group is created. Set the WiFi Direct band " +
+                        "to Auto if this unit cannot host one."
+                )
+                isGroupCreatingOrCreated = false
+                releaseNativeCreateWindow("the band is 5 GHz only and no group could be made")
+            }
+        }
     }
 
-    private fun generateP2pPassphrase(): String {
-        val pool = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..12).map { pool.random() }.joinToString("")
+    /**
+     * Ask again in 2 s, clearing any group the platform made first.
+     *
+     * Not after a crash: the request never reached the framework, so there is nothing to remove and
+     * asking would spend a bring-up on the rate instrument for nothing.
+     */
+    private fun retryQuietGroup(
+        mgr: WifiP2pManager,
+        ch: WifiP2pManager.Channel,
+        nextRetry: Int,
+        removeFirst: Boolean,
+    ) {
+        if (!removeFirst) {
+            handler.postDelayed({ createQuietGroup(nextRetry) }, 2000L)
+            return
+        }
+        invalidateNativeGroupCredentials("the create was refused and is being retried")
+        markP2pRequest()
+        mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() { handler.postDelayed({ createQuietGroup(nextRetry) }, 2000L) }
+            override fun onFailure(r: Int) { handler.postDelayed({ createQuietGroup(nextRetry) }, 2000L) }
+        })
+    }
+
+    /**
+     * What the group's name is suffixed with: the P2P device name once the framework has reported
+     * it, else the unit's own device name. A kept pair is drawn once and the first create after an
+     * install runs before the P2P name has arrived, which is how a unit ended up called "HeadUnit"
+     * for good.
+     */
+    private fun nativeGroupNameSuffixSource(): String? =
+        AapService.wifiDirectName.value
+            ?: try {
+                Settings.Global.getString(context.contentResolver, "device_name")
+            } catch (e: Exception) {
+                null
+            }
+
+    /**
+     * The name and passphrase to ask for. The rules are [P2pGroupIdentityPolicy]'s; this only reads
+     * the kept pair, writes one back when the policy has just drawn it, and logs which it was.
+     */
+    private fun chooseNativeGroupIdentity(): P2pGroupIdentity.Named {
+        val appSettings = App.provide(context).settings
+        val choice = P2pGroupIdentityPolicy.decide(
+            keepIdentity = appSettings.wifiDirectStableIdentity,
+            stored = appSettings.wifiDirectGroupIdentity,
+            deviceName = nativeGroupNameSuffixSource(),
+        )
+        choice.toStore?.let { appSettings.wifiDirectGroupIdentity = it }
+        AppLog.i("WifiDirectManager: ${choice.reason}")
+        return choice.identity
     }
 
     private fun getP2pErrorString(reason: Int): String {
@@ -1432,32 +1894,70 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         }
     }
 
+    /**
+     * True once a named, band-free create has failed for a reason other than BUSY, so the rest of
+     * this mode falls back to the platform's own profile. Cleared by [stop].
+     */
+    private var namedFallbackRefused = false
+
     @SuppressLint("MissingPermission")
     private fun standardCreateGroup(mgr: WifiP2pManager, ch: WifiP2pManager.Channel, retryCount: Int, groupMode: String) {
         markP2pRequest()
-        mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
-            override fun onSuccess() {
-                AppLog.i("WifiDirectManager: Standard createGroup SUCCESS!")
-                // The one thing that disproves the record: this unit just hosted a group.
-                ConnectionIssues.clear(context, ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED)
-                nativeGroupCreationMode = groupMode
-                // The platform chose the band here, so there is no mismatch to correct.
-                nativeRequestedBand = NativeGroupBandPolicy.Band.UNSPECIFIED
-                isGroupOwner = true
-                // The restriction is a whitelist of one frequency and it applies to the whole P2P
-                // interface, not just to group creation - while it stands, the 2.4 GHz social
-                // channels are banned and discovery cannot run. The group keeps the channel it was
-                // formed on, so the restriction has done its work and must come off now.
-                releaseLegacyChannelRestriction(mgr, ch)
-                handler.postDelayed({
-                    mgr.requestConnectionInfo(ch, this@WifiDirectManager)
-                    mgr.requestGroupInfo(ch, this@WifiDirectManager)
-                }, 1000L)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !namedFallbackRefused) {
+            // "Standard" means no band request, not no name. The two-argument overload brings up
+            // whatever profile the platform stored last, which on a unit with an older one is a
+            // different network from the kept identity; measured as the join watchdog's fallback
+            // handing the phone a name from a previous install. So the identity is kept here too,
+            // and only the band is left to the platform.
+            try {
+                val identity = chooseNativeGroupIdentity()
+                val builder = WifiP2pConfig.Builder()
+                    .setNetworkName(identity.networkName)
+                    .setPassphrase(identity.passphrase)
+                if (identity.persistent) builder.enablePersistentMode(true)
+                val config = builder.build()
+                nativeRequestedIdentity = identity
+                nativeCreateRequestedAtMs = SystemClock.elapsedRealtime()
+                AppLog.i("WifiDirectManager: standard createGroup as ${identity.networkName}, band left to the platform.")
+                mgr.createGroup(ch, config, object : WifiP2pManager.ActionListener {
+                    override fun onSuccess() { onStandardCreateSucceeded(mgr, ch, groupMode) }
+                    override fun onFailure(reason: Int) {
+                        val reasonStr = getP2pErrorString(reason)
+                        if (reason == 2 && retryCount < MAX_NATIVE_STANDARD_CREATE_RETRIES) {
+                            AppLog.w("WifiDirectManager: standard createGroup failed ($reasonStr), removing group and retrying standard in 2s...")
+                            invalidateNativeGroupCredentials("the standard create was refused and is being retried")
+                            markP2pRequest()
+                            mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
+                                override fun onSuccess() { handler.postDelayed({ standardCreateGroup(mgr, ch, retryCount + 1, groupMode) }, 2000L) }
+                                override fun onFailure(r: Int) { handler.postDelayed({ standardCreateGroup(mgr, ch, retryCount + 1, groupMode) }, 2000L) }
+                            })
+                        } else {
+                            namedFallbackRefused = true
+                            AppLog.w(
+                                "WifiDirectManager: this unit refused a named group with no band " +
+                                    "request ($reasonStr), so the platform's own profile is asked for instead."
+                            )
+                            standardCreateGroup(mgr, ch, 0, groupMode)
+                        }
+                    }
+                })
+                return
+            } catch (t: Throwable) {
+                namedFallbackRefused = true
+                AppLog.e("WifiDirectManager: named standard createGroup crashed before any async result; asking for the platform's own profile instead.", t)
             }
+        }
+        // The two-argument overload asks for the platform's own stored profile, so the name and
+        // passphrase are whatever it kept from the last group this unit owned.
+        nativeRequestedIdentity = P2pGroupIdentity.FrameworkProfile
+        nativeCreateRequestedAtMs = SystemClock.elapsedRealtime()
+        mgr.createGroup(ch, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() { onStandardCreateSucceeded(mgr, ch, groupMode) }
             override fun onFailure(reason: Int) {
                 val reasonStr = getP2pErrorString(reason)
                 if (reason == 2 && retryCount < MAX_NATIVE_STANDARD_CREATE_RETRIES) {
                     AppLog.w("WifiDirectManager: standard createGroup failed ($reasonStr), removing group and retrying standard in 2s...")
+                    invalidateNativeGroupCredentials("the standard create was refused and is being retried")
                     markP2pRequest()
                     mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
                         override fun onSuccess() { handler.postDelayed({ standardCreateGroup(mgr, ch, retryCount + 1, groupMode) }, 2000L) }
@@ -1484,9 +1984,30 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                 } else {
                     reportGroupRefusal(reasonStr)
                     isGroupCreatingOrCreated = false
+                    releaseNativeCreateWindow("the unit refused the group")
                 }
             }
         })
+    }
+
+    private fun onStandardCreateSucceeded(mgr: WifiP2pManager, ch: WifiP2pManager.Channel, groupMode: String) {
+        AppLog.i("WifiDirectManager: Standard createGroup SUCCESS!")
+        noteGroupFormed()
+        nativeGroupCreationMode = groupMode
+        // The platform chose the band here, so there is no mismatch to correct, and no
+        // frequency was named either.
+        nativeRequestedBand = NativeGroupBandPolicy.Band.UNSPECIFIED
+        nativeRequestedFrequency = 0
+        isGroupOwner = true
+        // The restriction is a whitelist of one frequency and it applies to the whole P2P
+        // interface, not just to group creation - while it stands, the 2.4 GHz social
+        // channels are banned and discovery cannot run. The group keeps the channel it was
+        // formed on, so the restriction has done its work and must come off now.
+        releaseLegacyChannelRestriction(mgr, ch)
+        handler.postDelayed({
+            mgr.requestConnectionInfo(ch, this@WifiDirectManager)
+            mgr.requestGroupInfo(ch, this@WifiDirectManager)
+        }, 1000L)
     }
 
     /**
@@ -1527,13 +2048,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private fun removeGroupAndRetryNative5Ghz() {
         val mgr = manager ?: return
         val ch = channel ?: return
-        // The next createGroup() call generates a brand-new GO interface with a new random
-        // MAC — a cached BSSID from the group we're tearing down is now stale and must never
-        // be delivered for the new one.
-        lastKnownBssid = null
-        // The group this replaces is gone; any credential delivery still waiting on it describes a
-        // network that will not exist by the time it lands.
-        credentialsEpoch++
+        invalidateNativeGroupCredentials("retrying the 5 GHz band")
         val gen = generation
         mgr.removeGroup(ch, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
@@ -1553,17 +2068,20 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      * [forceStandard] skips the band request altogether, for phones that can't join a 5GHz group
      * owner. It asks for nothing rather than asking for 2.4 GHz, so the platform decides.
      *
-     * Used to also call deletePersistentGroup() here, as the Helper mode path does, but on-device
-     * that is rejected for every netId — likely a permission this app lacks. Dropped.
+     * Fresh group, same name: the teardown stays, but the create asks for the kept identity (see
+     * [chooseNativeGroupIdentity]), so a recreate costs the phone nothing it saved. Used to also
+     * call deletePersistentGroup() here, as the Helper mode path does, but on-device that is
+     * rejected for every netId - a system permission this app cannot hold. Dropped.
      */
     @SuppressLint("MissingPermission")
     private fun recreateNativeGroup(forceStandard: Boolean) {
         val mgr = manager ?: return
         val ch = channel ?: return
-        lastKnownBssid = null
-        // Let an in-progress credential wait pick up the fresh group's creds, not stale ones.
-        credentialsEpoch++
-        onNativeGroupInvalidated?.invoke()
+        // Before the async removeGroup below, not after it: the manual poke re-inits the mode and
+        // immediately asks for a credential refresh, which landed in this gap and started a second
+        // create chain.
+        claimNativeCreateWindow("recreating the group")
+        invalidateNativeGroupCredentials("recreating the group")
         val gen = generation
         val createFresh = {
             // The removeGroup below is the teardown a user exit relies on. If stop() ran while it was
@@ -1649,6 +2167,53 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
     private val macRegex = Regex("^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
     private val maskedMacs = setOf("00:00:00:00:00:00", "02:00:00:00:00:00")
+
+    /**
+     * The group owner's BSSID as the framework knows it. `getGroupOwnerBssid()` is not in the
+     * public SDK but some vendor trees carry it, and where it exists it is a direct answer rather
+     * than a derivation, so it is asked first.
+     */
+    private fun getGroupOwnerBssid(group: WifiP2pGroup): String? = try {
+        group.javaClass.getMethod("getGroupOwnerBssid").invoke(group)?.toString()
+    } catch (e: Throwable) {
+        null
+    }
+
+    /**
+     * Every BSSID source and what each answered, printed once per group.
+     *
+     * With nine of them in the chain, "all fallbacks failed" tells a reporter's log nothing about
+     * which hardware refused what. This is the block to ask for, and it turns a second test build
+     * into a paste.
+     */
+    private fun logBssidSourceDump(
+        group: WifiP2pGroup,
+        iface: String?,
+        ssid: String?,
+        staticOverride: String?
+    ) {
+        if (ssid != null && ssid == lastBssidDumpSsid) return
+        lastBssidDumpSsid = ssid
+        fun report(label: String, value: String?) =
+            AppLog.i("WifiDirectManager:   ${label.padEnd(32)} = ${value ?: "null"}")
+        AppLog.i("WifiDirectManager: == BSSID source dump (iface=${iface ?: "unknown"}) ==")
+        report("static override (Settings)", staticOverride)
+        report("getGroupOwnerBssid()", getGroupOwnerBssid(group))
+        report("IPv6 link-local ($iface)", InterfaceMacReader.fromIpv6LinkLocal(iface))
+        report("IPv6 link-local (any p2p/ap)", InterfaceMacReader.fromIpv6LinkLocal(null))
+        report("NetworkInterface.hardwareAddress", getWifiDirectMac(iface))
+        report("lastKnownBssid ($lastKnownBssidIface)", lastKnownBssid)
+        report("requestDeviceInfo", localDeviceAddress)
+        report("group.owner.deviceAddress", group.owner?.deviceAddress)
+        report("sysfs / ip link", getMacFromShell(iface))
+        report("Settings.Secure p2p address", try {
+            Settings.Secure.getString(context.contentResolver, "wifi_p2p_device_address")
+        } catch (e: Exception) {
+            "err: ${e.message}"
+        })
+        report("reflection over WifiP2pGroup", getMacFromReflection(group))
+        AppLog.i("WifiDirectManager: == end BSSID source dump ==")
+    }
 
     /**
      * Last-resort BSSID lookup: reflect over every declared field (including inherited ones) of
@@ -1748,21 +2313,27 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         // inside either window latched it true for the life of the process. A flag set in only one
         // direction is how a long-lived manager ends up unable to re-arm.
         checkGroupAndCreateInFlight = false
+        // Same reason as the two above: it marks a create that stop() has just abandoned, and a
+        // stale value would make the next refresh wait CREATE_GRACE_MS for a group that is not coming.
+        releaseNativeCreateWindow("the mode is stopping")
         isClientConnected = false
         nativeGroupCreationMode = NATIVE_GROUP_MODE_UNKNOWN
         native5GhzBandMismatchRetries = 0
-        lastUnfriendlyChannelSsid = null
-        lastCoexistenceKey = null
-        lastFrequencyUnreadableSsid = null
-        nativeJoinWatchdogSsid = null
+        forgetPerGroupKeys()
         nativeRecreateCount = 0
         lastNativeGroupStatusMessage = null
         legacyChannelAttempt = 0
         legacyChannelRequestUnanswered = false
         lastGroupRefusalReportAtMs = 0L
+        churnWindowStartedAtMs = 0L
+        churnEventsInWindow = 0
+        churnForeignEventsInWindow = 0
+        lastChurnReportAtMs = 0L
         // Unconditional, and not gated on legacyChannelRestrictionApplied: a request that never
         // answered may still have been applied, and the restriction is supplicant state that
         // outlives this process.
+        pinnedChannelAbandoned = false
+        namedFallbackRefused = false
         manager?.let { mgr -> channel?.let { ch -> releaseLegacyChannelRestriction(mgr, ch) } }
         AapService.scanningState.value = false
         try { context.unregisterReceiver(receiver) } catch (e: Exception) {}

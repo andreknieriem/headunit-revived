@@ -23,11 +23,19 @@ class SingleKeyKeyManager(certificate: X509Certificate, privateKey: PrivateKey):
 
     private val delegate: X509KeyManager
 
+    /**
+     * The alias as the keystore actually holds it, which is not always the one we asked for: a
+     * PKCS12 store lowercases them where a BKS store does not. Handing the delegate a name it does
+     * not know back gets a null key and chain, and the handshake fails with nothing to present.
+     */
+    private val alias: String
+
     init {
         val ks = KeyStore.getInstance(KeyStore.getDefaultType())
         ks.load(null)
         ks.setCertificateEntry(DEFAULT_ALIAS, certificate)
         ks.setKeyEntry(DEFAULT_ALIAS, privateKey, charArrayOf(), arrayOf(certificate))
+        alias = ks.aliases().toList().firstOrNull() ?: DEFAULT_ALIAS
 
         val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
         kmf.init(ks, charArrayOf())
@@ -42,24 +50,34 @@ class SingleKeyKeyManager(certificate: X509Certificate, privateKey: PrivateKey):
         return delegate.getServerAliases(keyType, issuers)
     }
 
-    override fun chooseServerAlias(keyType: String?, issuers: Array<out Principal>?, socket: Socket?): String {
+    // Nullable, as JSSE declares them: the delegate may legally answer null for an alias it does
+    // not hold, and a non-null Kotlin type turns that into an NPE thrown from inside the handshake
+    // instead of a TLS alert the peer can read.
+    override fun chooseServerAlias(keyType: String?, issuers: Array<out Principal>?, socket: Socket?): String? {
         return delegate.chooseServerAlias(keyType, issuers, socket)
     }
 
-    override fun getCertificateChain(alias: String?): Array<X509Certificate> {
+    override fun getCertificateChain(alias: String?): Array<X509Certificate>? {
         return delegate.getCertificateChain(alias)
     }
 
-    override fun getPrivateKey(alias: String?): PrivateKey {
+    override fun getPrivateKey(alias: String?): PrivateKey? {
         return delegate.getPrivateKey(alias)
     }
 
     override fun chooseClientAlias(keyType: Array<out String>?, issuers: Array<out Principal>?, socket: Socket?): String {
-        return DEFAULT_ALIAS
+        return alias
     }
 
+    // X509ExtendedKeyManager's two engine hooks default to null and do not fall back to the Socket
+    // variants above, and Conscrypt's engine-backed sockets ask the engine hook. Without the server
+    // half we choose no certificate in server mode, send none, and every handshake aborts.
     override fun chooseEngineClientAlias(keyType: Array<out String>?, issuers: Array<out Principal>?, engine: SSLEngine?): String {
-        return DEFAULT_ALIAS
+        return alias
+    }
+
+    override fun chooseEngineServerAlias(keyType: String?, issuers: Array<out Principal>?, engine: SSLEngine?): String {
+        return alias
     }
 
     companion object {

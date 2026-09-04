@@ -97,4 +97,20 @@ class SoftApBandPolicyTest {
                 .contains("2.4 GHz")
         )
     }
+
+    @Test
+    fun `a chosen channel is only ever asked for on the band it belongs to`() {
+        // setChannel throws IllegalArgumentException for a channel outside the band it is given,
+        // and the sweep tries 2.4 GHz with the same setting still set.
+        assertEquals(36, SoftApBandPolicy.softApChannel(36, ApBand.BAND_5GHZ))
+        assertEquals(149, SoftApBandPolicy.softApChannel(149, ApBand.BAND_5GHZ))
+        assertEquals(0, SoftApBandPolicy.softApChannel(36, ApBand.BAND_2GHZ))
+    }
+
+    @Test
+    fun `automatic and anything unrecognised leave the channel to the framework`() {
+        assertEquals(0, SoftApBandPolicy.softApChannel(0, ApBand.BAND_5GHZ))
+        assertEquals(0, SoftApBandPolicy.softApChannel(52, ApBand.BAND_5GHZ))
+        assertEquals(0, SoftApBandPolicy.softApChannel(0, ApBand.BAND_2GHZ))
+    }
 }

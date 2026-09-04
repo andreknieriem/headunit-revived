@@ -69,6 +69,29 @@ object NativeHandoffPolicy {
     fun shouldPoke(settling: Boolean, handshakeInFlight: Boolean, sessionConnected: Boolean): Boolean =
         !settling && !handshakeInFlight && !sessionConnected
 
+    /** What the retry loop does with this pass. */
+    enum class LoopStep { POKE, DEFER, STOP }
+
+    /**
+     * The same question for the retry loop, which has a third answer the single poke does not.
+     *
+     * A poke that works takes the screen: the phone wakes, connects, and the projection is raised
+     * over whatever the user was looking at. While they are configuring the app that is their work
+     * being interrupted, so the loop waits rather than stopping, and pokes again on its own once
+     * they leave. Stopping would need a fresh credential delivery to start it again, which after a
+     * settled group never comes. A poke the user asked for by hand is not the loop and is unaffected.
+     */
+    fun loopStep(
+        settling: Boolean,
+        handshakeInFlight: Boolean,
+        sessionConnected: Boolean,
+        userConfiguring: Boolean,
+    ): LoopStep = when {
+        !shouldPoke(settling, handshakeInFlight, sessionConnected) -> LoopStep.STOP
+        userConfiguring -> LoopStep.DEFER
+        else -> LoopStep.POKE
+    }
+
     /** How many wake pokes the phone may answer without ever opening the Android Auto channel
      *  before we say so in the log. Three is roughly 45 s of the retry cadence — long enough that
      *  a phone which is merely slow to react has had its chance. */
@@ -124,4 +147,14 @@ object NativeHandoffPolicy {
      */
     fun shouldRestartDiscovery(nativeAaMode: Boolean, hadClient: Boolean, hasClient: Boolean): Boolean =
         hadClient && !hasClient && !nativeAaMode
+
+    /**
+     * Whether a client leaving the P2P group should re-arm the join watchdog.
+     *
+     * The watchdog recreates a group no phone ever joined. A group that has carried a session is
+     * proven joinable, and recreating it is what moves its address out from under the profile the
+     * phone saved, so a phone leaving such a group leaves it as it is.
+     */
+    fun shouldRearmJoinWatchdogAfterClientLeft(nativeAaMode: Boolean, groupHasHostedSession: Boolean): Boolean =
+        nativeAaMode && !groupHasHostedSession
 }

@@ -1,5 +1,7 @@
 package com.andrerinas.openheadunit.connection.wifi.direct
 
+import com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy
+
 /** Which band the user wants the Native AA WiFi Direct group brought up on. */
 enum class P2pBandPreference {
     /** Ask for 5 GHz, and take what the platform gives if it will not host one. The default. */
@@ -109,6 +111,64 @@ object NativeGroupBandPolicy {
     ): Boolean = requested == Band.GHZ_5 &&
         frequencyMhz in 1..MAX_24GHZ_FREQUENCY_MHZ &&
         retriesSoFar < maxRetries
+
+    /**
+     * The frequency to pin the group request to on API 29+, or 0 to ask for a band instead.
+     *
+     * `WifiP2pConfig.Builder.setGroupOperatingBand(GROUP_OWNER_BAND_5GHZ)` does not name a channel,
+     * and wpa_supplicant answers it by picking a *random* start index into
+     * {5180, 5200, 5220, 5240, 5745, 5765, 5785, 5805} - so half of all bring-ups land in UNII-3,
+     * which several regulatory domains forbid phones from joining. `setGroupOperatingFrequency` is
+     * public API from 29 and takes a literal MHz, which is the only way to stop that being a coin
+     * flip. The two are mutually exclusive: `build()` throws if both are set.
+     *
+     * Only for a 5 GHz request. A pinned 5 GHz channel on a group deliberately asked for on 2.4 GHz
+     * would be a contradiction, and the setting is shared with the hotspot route, so it is set on
+     * units that are not on this band at all.
+     */
+    fun requestedFrequencyMhz(band: Band, chosenChannel: Int): Int {
+        if (band != Band.GHZ_5) return 0
+        val channel = FiveGhzChannelPolicy.pinnedChannel(chosenChannel)
+        if (channel == FiveGhzChannelPolicy.AUTOMATIC) return 0
+        return WifiP2pOperatingChannelPolicy.frequencyMhzFor(channel)
+    }
+
+    /** What a failed Native AA group request does next. */
+    enum class NextStep {
+        /** Ask again for the same thing. */
+        RETRY,
+
+        /** Keep the band, drop the user's channel, and start the budget over. */
+        DROP_PINNED_CHANNEL,
+
+        /** Ask for nothing and let the platform choose. */
+        STANDARD_FALLBACK,
+
+        /** 5 GHz only, and it will not form one. No group. */
+        GIVE_UP,
+    }
+
+    /**
+     * Which of those a failure leads to.
+     *
+     * A pinned frequency is a *forced* frequency all the way down to wpa_supplicant, which does
+     * `goto fail` rather than choosing something else when the regulatory domain or the driver
+     * refuses it - so a channel the unit will not host costs the group, not the channel. Dropping it
+     * after the budget is spent is what keeps a wrong choice from being a dead unit; the caller says
+     * so in the log, because a link on a channel the phone's own domain forbids is a link that phone
+     * cannot see, and the user needs to know their choice is not what they are looking at.
+     */
+    fun nextStepAfterFailure(
+        preference: P2pBandPreference,
+        channelPinned: Boolean,
+        retriesSoFar: Int,
+        maxRetries: Int,
+    ): NextStep = when {
+        retriesSoFar < maxRetries -> NextStep.RETRY
+        channelPinned -> NextStep.DROP_PINNED_CHANNEL
+        fallsBackToPlatformChoice(preference) -> NextStep.STANDARD_FALLBACK
+        else -> NextStep.GIVE_UP
+    }
 
     /** The band label used in the log, so a capture says which band was asked for and which arrived. */
     fun label(band: Band): String = when (band) {

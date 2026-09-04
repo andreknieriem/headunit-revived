@@ -392,14 +392,19 @@ class SoftApCredentialsProvider(
             AppLog.i("SoftApCredentials: This device does not let apps read the hotspot state; proceeding without confirming the access point is up.")
         }
 
+        // The IPv6 rung sits last: on a unit that runs a real access point sysfs answers, and the
+        // derived address is the same interface's, so it is worth no more than the direct read.
         val bssid = SoftApBssidPolicy.choose(
             staticOverride = settings.staticBSSID,
-            shellMac = InterfaceMacReader.read(iface.name),
-            hardwareAddress = hardwareAddressOf(iface.name)
+            detected = listOf(
+                InterfaceMacReader.read(iface.name),
+                hardwareAddressOf(iface.name),
+                InterfaceMacReader.fromIpv6LinkLocal(iface.name)
+            )
         )
         if (bssid.isEmpty()) {
             // Not fatal on this route — see NativeCredentialsPolicy. The handshake decides.
-            AppLog.w("SoftApCredentials: Could not resolve a real BSSID for ${iface.name}; the credentials will go out without one.")
+            AppLog.w("SoftApCredentials: no source named an address for ${iface.name} - not sysfs, not the interface itself, and not its IPv6 link-local; the credentials will go out without one.")
         }
 
         AppLog.i("SoftApCredentials: SUCCESS - Providing credentials from ${iface.name}: SSID=$ssid, IP=$ip, BSSID=${bssid.ifEmpty { "<none>" }}")

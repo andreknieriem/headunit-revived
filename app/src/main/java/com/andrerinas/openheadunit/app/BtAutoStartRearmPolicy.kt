@@ -3,34 +3,75 @@ package com.andrerinas.openheadunit.app
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 
 /**
- * Whether a Bluetooth auto-start (ACL_CONNECTED from a trusted device) should re-arm the Native
- * AA mode.
- *
- * The mode question is asked of the stored setting, never of the active launcher. A Native user
- * exit stops the launcher and nulls it, which is precisely the state this decision exists to
- * recover from: read off `active`, the answer was no in exactly the state that needed a yes, and
- * the mode stayed dead for the life of the process however often the phone came back.
- *
- * The handshake questions do come from the launcher, so they are nullable here: a null launcher
- * has no handshake running and no attempt in flight, which is the answer that lets the re-arm
- * proceed. Both must be asked - a successful handoff closes the AA listeners, so an active
- * handshake and a settling handoff are different states and either one means tearing down would
- * interrupt work in progress.
- *
- * [sessionUp] covers the whole life of a working session, during which `isActive()` is false;
- * without it, any later ACL_CONNECTED (the phone's own Bluetooth profiles reconnecting, or one of
- * our own pokes) would tear down a session that is projecting fine.
+ * What a Bluetooth auto-start does to the connection stack. Native AA is the only mode that has to
+ * be rebuilt, because a completed handoff closes its listeners for good; the others keep listening
+ * while armed, so there the most to do is arm a launcher that nothing has armed.
+ */
+data class BtAutoStartActions(
+    val clearUserExit: Boolean,
+    val forceRearmWireless: Boolean,
+    val armWirelessIfIdle: Boolean
+) {
+    val doesNothing: Boolean
+        get() = !clearUserExit && !forceRearmWireless && !armWirelessIfIdle
+
+    companion object {
+        val NONE = BtAutoStartActions(clearUserExit = false, forceRearmWireless = false, armWirelessIfIdle = false)
+    }
+}
+
+/**
+ * Decides what a Bluetooth auto-start does, per wireless mode and transport. The mode comes from the
+ * stored setting, never the launcher, which a Native user exit nulls; everything else is asked of the
+ * launcher and is nullable. Native is forced only when it cannot accept at all, so [groupUp] and
+ * [networkComingUp] both veto. USB is excluded: it has its own attach and detach triggers.
  */
 object BtAutoStartRearmPolicy {
 
-    fun shouldRearm(
+    fun actionsFor(
+        mode: WifiLauncherMode,
+        wirelessSelected: Boolean,
+        sessionUp: Boolean,
+        wirelessArmed: Boolean,
+        handshakeActive: Boolean?,
+        attemptInFlight: Boolean?,
+        groupUp: Boolean?,
+        networkComingUp: Boolean?
+    ): BtAutoStartActions {
+        // A network that has been asked for and has not answered is work in progress, exactly like
+        // an attempt in flight: everything below would read it as "cannot accept" and rebuild.
+        if (sessionUp || attemptInFlight == true || networkComingUp == true) return BtAutoStartActions.NONE
+        // An active handshake suppresses everything only while its group is still up; a handshake
+        // stranded with no network is a state to rebuild out of, not one to protect.
+        if (handshakeActive == true && groupUp != false) return BtAutoStartActions.NONE
+
+        val forceRearm = mode == WifiLauncherMode.NATIVE
+        return BtAutoStartActions(
+            clearUserExit = true,
+            forceRearmWireless = forceRearm,
+            armWirelessIfIdle = !forceRearm && wirelessSelected && !wirelessArmed
+        )
+    }
+
+    /**
+     * The Self Mode half of an auto-start. It runs in MainActivity rather than the service, which
+     * owns neither the VPN consent dialog nor a foreground window for the projection activity.
+     *
+     * The two vetoes are the same hazard [actionsFor] guards against, one step later: the ACL may be
+     * our own wake poke, and in Native mode the phone that just arrived is the *source* of a
+     * wireless session, so its head unit server is not running and Self Mode cannot win. Launching
+     * it anyway arms [com.andrerinas.openheadunit.connection.self.SelfLauncherManager], whose
+     * failure then tears the wireless launcher down and latches a user exit that was never one.
+     */
+    fun launchesSelfMode(
+        selfSelected: Boolean,
+        wirelessSelected: Boolean,
         mode: WifiLauncherMode,
         sessionUp: Boolean,
-        handshakeActive: Boolean?,
-        attemptInFlight: Boolean?
-    ): Boolean =
-        mode == WifiLauncherMode.NATIVE &&
-            !sessionUp &&
-            handshakeActive != true &&
-            attemptInFlight != true
+        nativeAttemptInFlight: Boolean?
+    ): Boolean {
+        if (!selfSelected || sessionUp) return false
+        if (nativeAttemptInFlight == true) return false
+        return !(mode == WifiLauncherMode.NATIVE && wirelessSelected)
+    }
 }

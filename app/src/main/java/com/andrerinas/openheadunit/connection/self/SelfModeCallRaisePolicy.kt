@@ -40,10 +40,12 @@ object SelfModeCallRaisePolicy {
     /**
      * How long an episode may wait for the audio mode to report a call.
      *
-     * The cover and the mode change race, so an episode can open a moment before the call registers.
-     * If no call shows up in this window, something else covered us and we leave it alone.
+     * The cover and the call race, and the cover usually wins: the call screen is up as soon as the
+     * call is added, while the audio mode only reports one once the call is dialling, which on an
+     * outgoing call is seconds later. If no call shows up in this window, something else covered us
+     * and we leave it alone.
      */
-    const val CALL_CONFIRM_WINDOW_MS = 2_000L
+    const val CALL_CONFIRM_WINDOW_MS = 5_000L
 
     /**
      * How long an attempt keeps counting after the projection came back.
@@ -68,6 +70,47 @@ object SelfModeCallRaisePolicy {
 
         /** We are back, or there is nothing here to fix. Stop ticking. */
         DONE,
+    }
+
+    /** Whether a cover is one to watch for a call, and if not, why not. */
+    enum class CoverVerdict(val reason: String) {
+        /** Nothing in the way. */
+        OPEN("watching for a call"),
+
+        /** Home or Recents. Someone who chose to leave is not argued with. */
+        USER_LEFT("the user left deliberately"),
+
+        /** Anywhere else the call screen lands on the phone and the projection on the head unit. */
+        NOT_SELF_MODE("not Self Mode"),
+
+        PIP("picture-in-picture owns the screen"),
+
+        DISABLED("the setting is off"),
+
+        /** The episode already running keeps its own clock and budget. */
+        ALREADY_OPEN("already watching this cover"),
+    }
+
+    /**
+     * Whether this cover is one to watch.
+     *
+     * Says nothing about the audio mode on purpose: the cover routinely arrives before the call
+     * registers, so the mode is something the episode observes rather than a condition for opening
+     * one.
+     */
+    fun coverVerdict(
+        userLeft: Boolean,
+        selfMode: Boolean,
+        pipActive: Boolean,
+        enabled: Boolean,
+        episodeOpen: Boolean,
+    ): CoverVerdict = when {
+        episodeOpen -> CoverVerdict.ALREADY_OPEN
+        userLeft -> CoverVerdict.USER_LEFT
+        !selfMode -> CoverVerdict.NOT_SELF_MODE
+        pipActive -> CoverVerdict.PIP
+        !enabled -> CoverVerdict.DISABLED
+        else -> CoverVerdict.OPEN
     }
 
     /**

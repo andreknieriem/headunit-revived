@@ -1,6 +1,8 @@
 package com.andrerinas.openheadunit.utils
 
 import java.io.File
+import java.net.Inet6Address
+import java.net.NetworkInterface
 
 /**
  * Reads an interface's MAC from outside the framework, for when
@@ -11,6 +13,9 @@ import java.io.File
  * annotations and a six-deep chain tuned against specific hardware, and sharing it would risk the
  * WiFi Direct path to serve the hotspot one. ~30 duplicated lines, minus its leak — it never
  * destroys the `ip link` process or closes its streams, and this runs on a poll loop.
+ *
+ * [fromIpv6LinkLocal] is the exception, and both routes call it: it reads an address rather than a
+ * hardware identity, so none of the restrictions the shell chain exists to work around apply to it.
  */
 object InterfaceMacReader {
 
@@ -18,6 +23,27 @@ object InterfaceMacReader {
 
     /** The MAC of [iface] from sysfs, falling back to `ip link`, or null if neither yields a real one. */
     fun read(iface: String): String? = fromSysfs(iface) ?: fromIpLink(iface)
+
+    /**
+     * The MAC encoded in an interface's IPv6 link-local address, [iface] first and then any access
+     * point or P2P interface. Every judgement lives in [Eui64BssidPolicy]; this only enumerates.
+     */
+    fun fromIpv6LinkLocal(iface: String?): String? = try {
+        val candidates = NetworkInterface.getNetworkInterfaces().asSequence().map { nic ->
+            Eui64BssidPolicy.Candidate(
+                name = nic.name.orEmpty(),
+                linkLocalIpv6 = nic.inetAddresses.asSequence()
+                    .filterIsInstance<Inet6Address>()
+                    .filter { it.isLinkLocalAddress }
+                    .map { it.address }
+                    .toList()
+            )
+        }.toList()
+        usableOrNull(Eui64BssidPolicy.choose(candidates, iface)?.mac)
+    } catch (e: Exception) {
+        AppLog.d("InterfaceMacReader: IPv6 link-local scan for ${iface ?: "any"} failed: ${e.message}")
+        null
+    }
 
     /** `/sys/class/net/<iface>/address`. Readable without root on most head units. */
     fun fromSysfs(iface: String): String? = try {

@@ -52,7 +52,7 @@ class WifiLauncherSharedServices(val service: AapService) {
             HotspotManager.setHotspotEnabled(service, false)
         }
 
-        wifiDirectManager?.setCredentialsListener { _, _, _, _ ->
+        wifiDirectManager?.setCredentialsListener { _, _, _, _, _ ->
             AppLog.d("AapService: WiFi credentials received, but not in Native AA mode. Skipping HandshakeManager update.")
         }
     }
