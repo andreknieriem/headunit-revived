@@ -724,6 +724,14 @@ class Settings(private val context: Context) {
         get() = prefs.getInt("fps-limit", 60)
         set(value) { prefs.edit().putInt("fps-limit", value).apply() }
 
+    /**
+     * Whether a wireless session on a radio with no 5 GHz band is asked for less than the settings
+     * above say. On by default: measured on such a link, a full-rate stream carried no frame at all.
+     */
+    var narrowBandProfileCap: Boolean
+        get() = prefs.getBoolean("narrow-band-profile-cap", true)
+        set(value) { prefs.edit().putBoolean("narrow-band-profile-cap", value).apply() }
+
     var hasAcceptedDisclaimer: Boolean
         get() = prefs.getBoolean("has-accepted-disclaimer", false)
         set(value) { prefs.edit().putBoolean("has-accepted-disclaimer", value).apply() }

@@ -1820,6 +1820,20 @@ class SettingsFragment : Fragment() {
             }
         ))
 
+        // Beside the two rows it overrides, because that is where a user looking at 1080p/60 and
+        // not getting it will come looking.
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "narrowBandProfileCap",
+            nameResId = R.string.narrow_band_profile_cap,
+            descriptionResId = R.string.narrow_band_profile_cap_description,
+            isChecked = settings.narrowBandProfileCap,
+            searchKeywords = "2.4 GHz band resolution fps limit hotspot wifi direct video",
+            onCheckedChanged = { isChecked ->
+                settings.narrowBandProfileCap = isChecked
+                updateSettingsList()
+            }
+        ))
+
         // Applied immediately rather than on confirm, unlike the rows above it: the configure
         // ladder falls back on its own if the decoder rejects the key, so there is nothing to
         // weigh up before trying it.

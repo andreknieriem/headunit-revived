@@ -15,6 +15,18 @@ object SoftApConfigCompat {
     private const val TAG = "SoftApConfigCompat"
 
     /**
+     * Why a reflected call failed, in a form worth logging.
+     *
+     * `InvocationTargetException.getMessage()` is always null, so logging `e.message` on a
+     * reflection failure reports `null` and hides the `SecurityException` underneath it. Six such
+     * lines in one user log said nothing at all.
+     */
+    private fun describe(e: Throwable): String {
+        val cause = e.cause ?: e
+        return "${cause.javaClass.simpleName}: ${cause.message ?: "no message"}"
+    }
+
+    /**
      * Enables a Wi‑Fi hotspot with a configurable SSID and a default WPA2‑PSK password.
      * Returns true if the hotspot was successfully configured, false otherwise.
      *
@@ -103,7 +115,7 @@ object SoftApConfigCompat {
                     AppLog.i("SoftApConfigCompat: requesting ${SoftApBandPolicy.describe(band)} for the access point.")
                 }
             } catch (e: Exception) {
-                AppLog.w("SoftApConfigCompat: could not request ${SoftApBandPolicy.describe(band)} (${e.message}); the framework will choose the band.")
+                AppLog.w("SoftApConfigCompat: could not request ${SoftApBandPolicy.describe(band)} (${describe(e)}); the framework will choose the band.")
             }
 
             // Build the configuration object
@@ -122,7 +134,7 @@ object SoftApConfigCompat {
             // Expected on plenty of head units, which refuse setSoftApConfiguration() outright with
             // "App not allowed to read or update stored WiFi Ap config". Not fatal and not worth an
             // error: the caller has other start paths and confirms the access point afterwards.
-            AppLog.w("SoftApConfigCompat: could not configure the access point (${e.message}); leaving it as the device has it and starting it anyway.")
+            AppLog.w("SoftApConfigCompat: could not configure the access point (${describe(e)}); leaving it as the device has it and starting it anyway.")
             false
         }
     }
@@ -131,7 +143,7 @@ object SoftApConfigCompat {
     private fun readSoftApConfiguration(wifiManager: WifiManager): Any? = try {
         wifiManager.javaClass.getMethod("getSoftApConfiguration").invoke(wifiManager)
     } catch (e: Exception) {
-        AppLog.d("SoftApConfigCompat: could not read the current access point configuration: ${e.message}")
+        AppLog.d("SoftApConfigCompat: could not read the current access point configuration: ${describe(e)}")
         null
     }
 
@@ -143,6 +155,12 @@ object SoftApConfigCompat {
      * Reads the current configuration and writes it back with only that field changed, so the
      * SSID and passphrase the user (or the vendor) set stay as they are — this path never owned
      * them, and inventing values here would rename someone's hotspot behind their back.
+     *
+     * **It can only succeed up to API 25.** `WifiServiceImpl` gained `checkConfigOverridePermission`
+     * on both `getWifiApConfiguration` and `setWifiApConfiguration` in `oreo-release`, so from API
+     * 26 an ordinary app gets `SecurityException: App not allowed to read or update stored WiFi Ap
+     * config`. Still worth attempting: `minSdk` is 16 on the `github` flavor, and a head unit that
+     * runs this app as system, or grants OVERRIDE_WIFI_CONFIG, answers on any API.
      */
     private fun configureLegacyBand(context: Context, band: ApBand): Boolean = try {
         val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
@@ -164,7 +182,7 @@ object SoftApConfigCompat {
                     " on channel $apChannel"
                 }
             } catch (e: Exception) {
-                AppLog.w("SoftApConfigCompat: could not ask for a channel here (${e.message}), so it stays the framework's choice.")
+                AppLog.w("SoftApConfigCompat: could not ask for a channel here (${describe(e)}), so it stays the framework's choice.")
                 ""
             }
             val applied = wifiManager.javaClass.getMethod(
@@ -175,7 +193,7 @@ object SoftApConfigCompat {
         }
     } catch (e: Exception) {
         // Expected on plenty of ROMs — the field is hidden and some vendors drop it entirely.
-        AppLog.w("SoftApConfigCompat: could not set ${SoftApBandPolicy.describe(band)} on this API level: ${e.message}")
+        AppLog.w("SoftApConfigCompat: could not set ${SoftApBandPolicy.describe(band)} on this API level: ${describe(e)}")
         false
     }
 }

@@ -3,7 +3,10 @@ package com.andrerinas.openheadunit.utils
 import android.content.Context
 import android.os.Build
 import android.util.DisplayMetrics
+import com.andrerinas.openheadunit.App
+import com.andrerinas.openheadunit.aap.NarrowBandProfilePolicy
 import com.andrerinas.openheadunit.aap.protocol.proto.Control
+import com.andrerinas.openheadunit.connection.wifi.direct.WifiBandCapability
 import com.andrerinas.openheadunit.decoder.video.VideoDecoder
 import kotlin.math.roundToInt
 
@@ -31,6 +34,9 @@ object HeadUnitScreenConfig {
         private set
 
     private lateinit var currentSettings: Settings // Store settings instance
+
+    /** Application context, so [recalculate] can ask the radio what band it has. Never an Activity. */
+    private var appContext: Context? = null
 
     // System Insets (Bars/Cutouts)
     var systemInsetLeft: Int = 0
@@ -130,6 +136,7 @@ object HeadUnitScreenConfig {
         isInitialized = true
         lastSettingsHash = currentHash
         currentSettings = settings
+        appContext = context.applicationContext
 
         // Determine if we are planning to hide the bars (Immersive)
         val immersive = settings.fullscreenMode == Settings.FullscreenMode.IMMERSIVE || 
@@ -243,6 +250,28 @@ object HeadUnitScreenConfig {
         return protoForResolution(SystemOptimizer.panelCeiling(w, h, canHevc), portrait)
     }
 
+    /**
+     * The ceiling a 2.4 GHz-only radio puts on the resolution, or null when it puts none.
+     *
+     * Never throws: this runs on every service discovery, and a band read that fails must leave the
+     * user's choice alone rather than cost the session.
+     */
+    private fun narrowBandCeiling(
+        isPortraitDisplay: Boolean
+    ): Control.Service.MediaSinkService.VideoConfiguration.VideoCodecResolutionType? {
+        val context = appContext ?: return null
+        return try {
+            NarrowBandProfilePolicy.linkCeiling(
+                supports5Ghz = WifiBandCapability.supports5Ghz(context),
+                wirelessSession = App.provide(context).commManager.isWirelessSession,
+                capEnabled = currentSettings.narrowBandProfileCap,
+            )?.let { protoForResolution(it, isPortraitDisplay) }
+        } catch (e: Exception) {
+            AppLog.d("HeadUnitScreenConfig: could not evaluate the band ceiling: ${e.message}")
+            null
+        }
+    }
+
     private fun pixelsOf(type: Control.Service.MediaSinkService.VideoConfiguration.VideoCodecResolutionType): Long {
         val s = type.toString().replace("_", "")
         return try {
@@ -315,11 +344,18 @@ object HeadUnitScreenConfig {
         if (pixelsOf(negotiatedResolutionType) > pixelsOf(panelCeiling)) {
             negotiatedResolutionType = panelCeiling
         }
+        // And to what the link can carry. Same min(current, ceiling) shape as the panel cap above,
+        // so a user already asking for less is never raised to meet it.
+        val linkCeiling = narrowBandCeiling(isPortraitDisplay)
+        if (linkCeiling != null && pixelsOf(negotiatedResolutionType) > pixelsOf(linkCeiling)) {
+            negotiatedResolutionType = linkCeiling
+        }
         AppLog.i(
             "[RES_CAP] resolutionId=${currentSettings.resolutionId} " +
                 "realScreen=${realScreenWidthPx}x${realScreenHeightPx} usable=${screenWidthPx}x${screenHeightPx} " +
                 "portrait=$isPortraitDisplay locked=$isResolutionLocked chosen=$preCapResolution " +
-                "capped=$negotiatedResolutionType changed=${preCapResolution != negotiatedResolutionType}"
+                "capped=$negotiatedResolutionType changed=${preCapResolution != negotiatedResolutionType} " +
+                "linkCapped=${linkCeiling ?: "none"}"
         )
 
         // 2. Perform scaling calculations (now safe because negotiatedResolutionType is set)

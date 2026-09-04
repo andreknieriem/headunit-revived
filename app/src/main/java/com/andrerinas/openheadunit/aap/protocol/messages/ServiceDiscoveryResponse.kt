@@ -104,14 +104,18 @@ class ServiceDiscoveryResponse(private val context: Context)
                     mediaSinkServiceBuilder.audioType = Media.AudioStreamType.NONE
                     mediaSinkServiceBuilder.availableWhileInCall = true
 
+                    // Decided once, above every line that reports it: the probe below must
+                    // describe the profile actually being asked for, not the one in Settings.
+                    val announcedFps = announcedFrameRate(context, settings)
+
                     AppLog.i("[ServiceDiscovery] NegotiatedResolution is: ${HeadUnitScreenConfig.getNegotiatedWidth()}x${HeadUnitScreenConfig.getNegotiatedHeight()}")
-                    logNegotiatedCodecCapability(effectiveCodec, settings)
+                    logNegotiatedCodecCapability(effectiveCodec, announcedFps)
                     logNarrowBandProfile(context, settings)
                     AppLog.i("[ServiceDiscovery] Margins are: ${phoneWidthMargin}x${phoneHeightMargin}")
 
                     mediaSinkServiceBuilder.addVideoConfigs(Control.Service.MediaSinkService.VideoConfiguration.newBuilder().apply {
                         codecResolution = negotiatedResolution
-                        frameRate = when (settings.fpsLimit) {
+                        frameRate = when (announcedFps) {
                             30 -> Control.Service.MediaSinkService.VideoConfiguration.VideoFrameRateType._30
                             else -> Control.Service.MediaSinkService.VideoConfiguration.VideoFrameRateType._60
                         }
@@ -329,7 +333,7 @@ class ServiceDiscoveryResponse(private val context: Context)
          * artifacts coming off the wire instead. Revisit the rule only when a log shows the decoder
          * itself failing behind one of these lines.
          */
-        private fun logNegotiatedCodecCapability(codec: Media.MediaCodecType, settings: com.andrerinas.openheadunit.utils.Settings) {
+        private fun logNegotiatedCodecCapability(codec: Media.MediaCodecType, fps: Int) {
             val mime = when (codec) {
                 Media.MediaCodecType.MEDIA_CODEC_VIDEO_H265 -> VideoDecoder.CodecType.H265.mimeType
                 Media.MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP -> VideoDecoder.CodecType.H264.mimeType
@@ -339,7 +343,7 @@ class ServiceDiscoveryResponse(private val context: Context)
             val height = HeadUnitScreenConfig.getNegotiatedHeight()
             if (width <= 0 || height <= 0) return
             val capability = com.andrerinas.openheadunit.decoder.video.DecoderCapabilityReport
-                .query(mime, width, height, settings.fpsLimit)
+                .query(mime, width, height, fps)
             if (capability == null) {
                 AppLog.i("[ServiceDiscovery] No decoder capability available for $mime at ${width}x$height")
                 return
@@ -355,8 +359,29 @@ class ServiceDiscoveryResponse(private val context: Context)
         }
 
         /**
-         * Names the one case where the band and the frame rate we are about to ask for are known to
-         * be a bad pair. Says nothing on every other unit, and changes nothing on this one.
+         * The frame rate to announce: the user's, lowered on a radio with no 5 GHz band.
+         *
+         * Never throws. A band read that fails leaves the setting alone, because lowering somebody's
+         * picture on a question the platform would not answer is the one outcome worth avoiding.
+         */
+        private fun announcedFrameRate(
+            context: Context,
+            settings: com.andrerinas.openheadunit.utils.Settings
+        ): Int = try {
+            NarrowBandProfilePolicy.cappedFrameRate(
+                fpsLimit = settings.fpsLimit,
+                supports5Ghz = WifiBandCapability.supports5Ghz(context),
+                wirelessSession = App.provide(context).commManager.isWirelessSession,
+                capEnabled = settings.narrowBandProfileCap,
+            )
+        } catch (e: Exception) {
+            AppLog.d("[ServiceDiscovery] could not evaluate the band cap: ${e.message}")
+            settings.fpsLimit
+        }
+
+        /**
+         * Names the one case where the band and the profile we are about to ask for are known to be
+         * a bad pair, and says what was done about it. Says nothing on every other unit.
          *
          * Here rather than in `WifiDirectManager` because this is where the frame rate is decided,
          * and the two halves of the advice have to be read together to mean anything.
@@ -367,6 +392,7 @@ class ServiceDiscoveryResponse(private val context: Context)
                     supports5Ghz = WifiBandCapability.supports5Ghz(context),
                     fpsLimit = settings.fpsLimit,
                     wirelessSession = App.provide(context).commManager.isWirelessSession,
+                    capEnabled = settings.narrowBandProfileCap,
                 )
             } catch (e: Exception) {
                 // Service discovery must not fail over a diagnostic. A missing line is a missing

@@ -994,6 +994,8 @@
     <string name="connection_issue_banner_hotspot_config">This unit will not tell the app its hotspot name and password, so your phone had nothing to join. Tap to enter them by hand.</string>
     <string name="connection_issue_banner_wifi_direct_refused">This unit\'s WiFi would not create the WiFi Direct network your phone was going to join, and the app cannot make it. If this unit is joined to another WiFi network, disconnecting it is worth trying. Tap to use this unit\'s own hotspot instead.</string>
     <string name="connection_issue_banner_wifi_direct_cycled">Another app on this unit keeps switching WiFi Direct off and on, so no network can be created for your phone to join. A preinstalled projection app (CarLife, ZLink, CarPlay and the like) is the usual cause, and disabling it is worth trying. Tap to use this unit\'s own hotspot instead.</string>
+    <string name="narrow_band_profile_cap">Lower video on a 2.4 GHz-only radio</string>
+    <string name="narrow_band_profile_cap_description">When this unit\'s WiFi has no 5 GHz band, ask the phone for at most 720p and 30 fps instead of the settings above. On such a link a full-rate stream was measured to carry no picture at all, while a lower one held. Turn this off to be given what you asked for.</string>
     <string name="connection_issue_banner_video_link_too_slow">Your phone gave up on the video before a single frame arrived, several times in a row. The WiFi link is too slow to carry the picture. Tap to lower the FPS limit to 30; a lower resolution and AAC audio also help.</string>
     <string name="connection_issue_banner_dismiss">Dismiss</string>
     <!-- What the hotspot banner types into the settings search. Both override rows carry it

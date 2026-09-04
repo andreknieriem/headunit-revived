@@ -96,11 +96,12 @@ object SoftApBandPolicy {
      * **This is a request most head units never receive.** `setSoftApConfiguration` is gated on
      * `NETWORK_SETTINGS` or `OVERRIDE_WIFI_CONFIG`, both signature-level, so an ordinary app is
      * refused with a `SecurityException` before the channel is looked at - and has been since
-     * API 28. Where it is accepted, `config_wifiSoftapResetChannelConfig` defaults to true and
-     * resets a forced channel back to band-only anyway, logging `Reset SAP channel configuration`.
-     * Below API 30 the hidden `WifiConfiguration.apChannel` field is the same request on a path
+     * API 26, where `checkConfigOverridePermission` reached `WifiServiceImpl`'s AP-config pair.
+     * Where it is accepted, `config_wifiSoftapResetChannelConfig` defaults to true and resets a
+     * forced channel back to band-only anyway, logging `Reset SAP channel configuration`.
+     * Below that the hidden `WifiConfiguration.apChannel` field is the same request on a path
      * that only needed `CHANGE_WIFI_STATE`, which is why it is the branch that can still deliver
-     * this on Android 6 to 8.1. The setting is honest about that; this object just answers what to
+     * this on Android 6 to 7.1. The setting is honest about that; this object just answers what to
      * ask for.
      */
     fun softApChannel(chosenChannel: Int, band: ApBand): Int {
