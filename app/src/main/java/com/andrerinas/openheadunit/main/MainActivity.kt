@@ -964,6 +964,8 @@ class MainActivity : BaseActivity() {
                     R.string.connection_issue_banner_wifi_direct_refused
                 ConnectionIssue.WIFI_DIRECT_STACK_CYCLED ->
                     R.string.connection_issue_banner_wifi_direct_cycled
+                ConnectionIssue.VIDEO_LINK_TOO_SLOW ->
+                    R.string.connection_issue_banner_video_link_too_slow
             }
         )
         banner.setOnClickListener { openRemedyFor(issue) }
@@ -1005,6 +1007,7 @@ class MainActivity : BaseActivity() {
             ConnectionIssue.HOTSPOT_NOT_RUNNING -> getString(R.string.auto_enable_hotspot)
             ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> getString(R.string.native_ap_transport)
             ConnectionIssue.WIFI_DIRECT_STACK_CYCLED -> getString(R.string.native_ap_transport)
+            ConnectionIssue.VIDEO_LINK_TOO_SLOW -> getString(R.string.fps_limit)
         }
         startActivity(
             Intent(this, SettingsActivity::class.java)

@@ -50,7 +50,18 @@ enum class ConnectionIssue {
      * one is separate because its remedy is different in kind: the unit is capable of hosting a
      * group, and would, if the app cycling the interface out from under it stopped.
      */
-    WIFI_DIRECT_STACK_CYCLED
+    WIFI_DIRECT_STACK_CYCLED,
+
+    /**
+     * Sessions keep starting and then ending without a single video frame ever arriving.
+     *
+     * The one verdict about a link that works. The phone joins, the AAP session and SSL complete,
+     * the video channel opens, and the phone closes the socket seconds later having sent nothing:
+     * measured on a 2.4 GHz access point at 1080p/60, where the same access point carried 800x480/30
+     * indefinitely. The user's levers are the frame rate, the resolution, AAC audio, and 5 GHz on a
+     * radio that has it.
+     */
+    VIDEO_LINK_TOO_SLOW
 }
 
 /** An issue that is currently true, and when it was last raised. */
@@ -148,6 +159,7 @@ object ConnectionIssues {
                 ConnectionIssue.HOTSPOT_NOT_RUNNING -> settings.connectionIssueHotspotOffAtEpochMs
                 ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> settings.connectionIssueWifiDirectRefusedAtEpochMs
                 ConnectionIssue.WIFI_DIRECT_STACK_CYCLED -> settings.connectionIssueWifiDirectCycledAtEpochMs
+                ConnectionIssue.VIDEO_LINK_TOO_SLOW -> settings.connectionIssueVideoLinkTooSlowAtEpochMs
             }
         } catch (e: Exception) {
             0L
@@ -162,6 +174,7 @@ object ConnectionIssues {
                     ConnectionIssue.HOTSPOT_NOT_RUNNING -> settings.connectionIssueHotspotOffAtEpochMs = atEpochMs
                     ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> settings.connectionIssueWifiDirectRefusedAtEpochMs = atEpochMs
                     ConnectionIssue.WIFI_DIRECT_STACK_CYCLED -> settings.connectionIssueWifiDirectCycledAtEpochMs = atEpochMs
+                    ConnectionIssue.VIDEO_LINK_TOO_SLOW -> settings.connectionIssueVideoLinkTooSlowAtEpochMs = atEpochMs
                 }
             } catch (e: Exception) {
                 AppLog.d("ConnectionIssues: could not record $issue: ${e.message}")

@@ -209,6 +209,29 @@ class ConnectionIssueBannerPolicyTest {
     }
 
     @Test
+    fun `a link too slow for the video blocks both transports`() {
+        // The only condition that is not about one route's way of getting a network. Both build one
+        // and hand it to the phone, and either can be too slow to carry the picture over it.
+        for (transport in NativeTransport.values()) {
+            assertTrue(
+                transport.name,
+                ConnectionIssue.VIDEO_LINK_TOO_SLOW in
+                    ConnectionIssueBannerPolicy.relevantNow(3, transport)
+            )
+        }
+    }
+
+    @Test
+    fun `no setting is a remedy for a link too slow for the video`() {
+        // Lowering the frame rate is a guess at the ceiling. Only a session that renders a frame
+        // proves it was enough, and that is what retires the record.
+        assertFalse(
+            ConnectionIssue.VIDEO_LINK_TOO_SLOW in
+                ConnectionIssueBannerPolicy.remedyApplied("ohu", "password", "EC:AB:3E:61:C5:7C")
+        )
+    }
+
+    @Test
     fun `no setting is a remedy for a cycled stack`() {
         // The remedy is another app on the unit, which nothing in these settings reaches.
         assertFalse(

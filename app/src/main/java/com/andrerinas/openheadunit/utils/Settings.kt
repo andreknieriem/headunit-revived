@@ -1954,6 +1954,11 @@ class Settings(private val context: Context) {
         get() = prefs.getLong("connection-issue-p2p-cycled", 0L)
         set(value) = prefs.edit().putLong("connection-issue-p2p-cycled", value).apply()
 
+    /** Sessions kept starting and ending without a single video frame, so the link cannot carry it. */
+    var connectionIssueVideoLinkTooSlowAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-video-starved", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-video-starved", value).apply()
+
     /**
      * When the user last dismissed the failure banner.
      *
