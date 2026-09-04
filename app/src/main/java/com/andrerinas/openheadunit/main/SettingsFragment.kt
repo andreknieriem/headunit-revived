@@ -1333,6 +1333,39 @@ class SettingsFragment : Fragment() {
         }
 
 
+        // Ungated, unlike the static BSSID above: this address is announced as carAddress in
+        // every connection mode, and the setup QR's own refusal deep-links here by searching for
+        // this row's title, which bypasses the Basic and Advanced tiers but not a construction gate.
+        val btAddress = pendingBluetoothAddress.orEmpty()
+        items.add(SettingItem.SettingEntry(
+            stableId = "bluetoothAddress",
+            nameResId = R.string.bluetooth_address_s,
+            value = btAddress.ifEmpty { getString(R.string.not_set) },
+            searchKeywords = "bluetooth mac address car identity hands-free calls qr",
+            onClick = { _ ->
+                DialogUtils.showTextInputDialogWithMessage(
+                    requireContext(),
+                    R.string.enter_bluetooth_mac,
+                    R.string.bluetooth_address_message,
+                    btAddress,
+                    { newVal ->
+                        // Validated at entry, for the reason the static BSSID row records: an
+                        // address that is not MAC-shaped is announced verbatim and fails much later.
+                        val trimmed = newVal.trim()
+                        when {
+                            trimmed.isEmpty() -> pendingBluetoothAddress = ""
+                            SoftApBssidPolicy.isUsable(trimmed) -> pendingBluetoothAddress = trimmed
+                            else -> Toast.makeText(
+                                requireContext(), R.string.invalid_bluetooth_address, Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        checkChanges()
+                        updateSettingsList()
+                    }
+                )
+            }
+        ))
+
         // --- Automation ---
         items.add(SettingItem.CategoryHeader("automation", R.string.category_automation))
 

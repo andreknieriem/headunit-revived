@@ -281,6 +281,8 @@
 
     <string name="bluetooth_address_s">Bluetooth address</string>
     <string name="enter_bluetooth_mac">Enter bluetooth MAC</string>
+    <string name="bluetooth_address_message">This head unit\'s own address, which the phone uses to recognise it. Find it under Settings, About, Status, or on the paired phone under the gear beside this device. Leave empty to detect one automatically.</string>
+    <string name="invalid_bluetooth_address">That is not a Bluetooth address. Enter six pairs of hex digits, like 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Reset</string>
     <string name="reset_settings">Reset to Defaults</string>
     <string name="reset_settings_confirm">Are you sure you want to reset all settings to their default values? This will restart the app.</string>
@@ -1025,7 +1027,7 @@
     <string name="native_aa_setup_qr_no_credentials">This unit\'s network name or password is not known yet. Switch the hotspot on, or enter them by hand above.</string>
     <string name="native_aa_setup_qr_no_bssid">This unit\'s WiFi address (BSSID) could not be read. Android Auto refuses a network it cannot pin to one.</string>
     <string name="native_aa_setup_qr_no_address">This unit\'s own address on that network is not known yet.</string>
-    <string name="native_aa_setup_qr_no_bluetooth">This unit\'s Bluetooth address could not be read, and the phone needs one to recognise this head unit later.</string>
+    <string name="native_aa_setup_qr_no_bluetooth">This unit\'s Bluetooth address could not be read, and the phone needs one to recognise this head unit later. Enter it under Wireless connection; the paired phone shows it under the gear beside this device.</string>
     <string name="native_aa_setup_qr_dongle">This unit\'s Bluetooth name reads as a wireless dongle, which the phone treats as a different kind of device. Rename Bluetooth on this unit and try again.</string>
     <!-- QR Code Generator -->
     <string name="share_hotspot_qr_title">Configure Wireless Helper</string>

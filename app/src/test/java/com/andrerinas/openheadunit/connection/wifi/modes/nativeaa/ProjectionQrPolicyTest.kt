@@ -111,6 +111,27 @@ class ProjectionQrPolicyTest {
         )
     }
 
+    /** The identity the snapshot carries is chosen by SoftApBssidPolicy, so a hand-typed
+     *  address arrives here normalised and a dash-separated one has to reach the link. */
+    @Test
+    fun `a dash-separated Bluetooth address is still an identity`() {
+        val result = ProjectionQrPolicy.decide(
+            snapshot(
+                bluetoothMac = SoftApBssidPolicy.choose("11-22-33-44-55-66", listOf(null))
+            )
+        )
+
+        assertTrue("expected a link, got $result", result is ProjectionQrPolicy.Result.Show)
+    }
+
+    @Test
+    fun `a stored address outranks a masked adapter read`() {
+        assertEquals(
+            "11:22:33:44:55:66",
+            SoftApBssidPolicy.choose("11:22:33:44:55:66", listOf("02:00:00:00:00:00"))
+        )
+    }
+
     @Test
     fun `a dongle name cannot be the identity`() {
         assertEquals(

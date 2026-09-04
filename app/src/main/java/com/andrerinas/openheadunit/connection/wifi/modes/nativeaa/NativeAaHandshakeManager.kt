@@ -303,7 +303,8 @@ class NativeAaHandshakeManager(
      *
      * The live network and the live port, never the settings behind them: the QR writes a record on
      * the phone that outlives this session, so it may only name what something is actually
-     * answering on. [ProjectionQrPolicy] decides whether that is enough.
+     * answering on. The Bluetooth address is the exception, being an identity rather than a route.
+     * [ProjectionQrPolicy] decides whether that is enough.
      */
     @SuppressLint("MissingPermission")
     fun projectionQrSnapshot(): ProjectionQrSnapshot {
@@ -318,7 +319,12 @@ class NativeAaHandshakeManager(
             bssid = creds?.bssid,
             ip = creds?.ip,
             listeningPort = wppTcpServer?.listeningPort,
-            bluetoothMac = BluetoothHelper.getBluetoothMacAddress(context, adapter),
+            // The stored address first, normalised: it is the same question ServiceDiscoveryResponse
+            // asks for carAddress, and on a device that masks its own adapter it is the only answer.
+            bluetoothMac = SoftApBssidPolicy.choose(
+                settings.bluetoothAddress,
+                listOf(BluetoothHelper.getBluetoothMacAddress(context, adapter))
+            ).ifEmpty { null },
             bluetoothName = adapterName,
         )
     }

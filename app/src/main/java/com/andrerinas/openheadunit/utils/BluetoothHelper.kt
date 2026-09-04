@@ -214,51 +214,31 @@ object BluetoothHelper {
     }
 
     /**
-     * Resolves the real Bluetooth MAC address of the headunit's Bluetooth chip.
-     * On Android 6+ (API 23+), adapter.address returns dummy "02:00:00:00:00:00".
-     * We fall back to reflection and Chinese OEM SystemProperties to find the true hardware BDADDR.
+     * Resolves the real Bluetooth MAC address of this head unit's Bluetooth chip, or null.
+     *
+     * `adapter.address` is the fixed placeholder `02:00:00:00:00:00` for any non-privileged app
+     * since Android 6.0, so most of this is fallbacks. When they all fail, [logAddressSourceDump]
+     * says what each one answered, because "could not be read" tells a reporter's log nothing.
      */
     @SuppressLint("MissingPermission", "HardwareIds")
     fun getBluetoothMacAddress(context: Context, adapter: BluetoothAdapter? = null): String? {
         val targetAdapter = adapter ?: getBluetoothAdapter(context)
 
-        // 1. Try standard adapter property if valid
-        try {
-            val addr = targetAdapter?.address
-            if (!addr.isNullOrEmpty() && addr != "02:00:00:00:00:00" && addr != "00:00:00:00:00:00") {
-                return addr.uppercase()
-            }
-        } catch (e: SecurityException) {
-            AppLog.w("BluetoothHelper: SecurityException reading adapter address")
-        } catch (e: Exception) {}
+        // 1. The public API. Masked on every device since API 23, kept for the ones that are not.
+        val direct = adapterAddress(targetAdapter)
+        if (direct != null) return direct.uppercase()
 
-        // 2. Try reflection via hidden getAddress() on BluetoothAdapter / IBluetooth
-        try {
-            if (targetAdapter != null) {
-                val getAddressMethod = targetAdapter.javaClass.getMethod("getAddress")
-                getAddressMethod.isAccessible = true
-                val addr = getAddressMethod.invoke(targetAdapter) as? String
-                if (!addr.isNullOrEmpty() && addr != "02:00:00:00:00:00" && addr != "00:00:00:00:00:00") {
-                    return addr.uppercase()
-                }
-            }
-        } catch (e: Exception) {}
+        // 2. Reflection over getAddress(). Resolves to the same public method on a stock ROM, so it
+        // only differs where a vendor overrode it - which some head units do.
+        val reflected = reflectedAddress(targetAdapter)
+        if (reflected != null) return reflected.uppercase()
 
-        // 3. Fallback to Chinese Headunit Vendor System Properties
-        val propKeys = arrayOf(
-            "persist.sys.bt.mac",
-            "persist.sys.btmac",
-            "persist.vendor.bt.mac",
-            "sys.bt.mac",
-            "persist.sys.bluetooth.mac",
-            "ro.boot.btmacaddr",
-            "vendor.bt.bdaddr",
-            "persist.zj.BTmac",
-            "persist.zlink.carplay.mac",
-            "sys.bt.bdaddr"
-        )
+        // 3. Where Android's own settings screen reads it, and no permission gates it.
+        val secure = secureSettingAddress(context)
+        if (secure != null) return secure.uppercase()
 
-        for (key in propKeys) {
+        // 4. Vendor properties, for head units that publish it.
+        for (key in ADDRESS_PROPERTY_KEYS) {
             val valStr = SystemProperties.get(key, "").trim()
             if (valStr.isNotEmpty() && isValidMacAddress(valStr)) {
                 AppLog.i("BluetoothHelper: Resolved hardware BT MAC $valStr from property $key")
@@ -266,7 +246,86 @@ object BluetoothHelper {
             }
         }
 
+        logAddressSourceDump(context, targetAdapter)
         return null
+    }
+
+    private val ADDRESS_PROPERTY_KEYS = arrayOf(
+        "persist.sys.bt.mac",
+        "persist.sys.btmac",
+        "persist.vendor.bt.mac",
+        "sys.bt.mac",
+        "persist.sys.bluetooth.mac",
+        "ro.boot.btmacaddr",
+        "vendor.bt.bdaddr",
+        "persist.zj.BTmac",
+        "persist.zlink.carplay.mac",
+        "sys.bt.bdaddr"
+    )
+
+    @SuppressLint("MissingPermission", "HardwareIds")
+    private fun adapterAddress(adapter: BluetoothAdapter?): String? = try {
+        adapter?.address?.takeIf { isValidMacAddress(it) }
+    } catch (e: SecurityException) {
+        AppLog.w("BluetoothHelper: SecurityException reading adapter address")
+        null
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun reflectedAddress(adapter: BluetoothAdapter?): String? = try {
+        adapter?.let {
+            val method = it.javaClass.getMethod("getAddress")
+            method.isAccessible = true
+            (method.invoke(it) as? String)?.takeIf { addr -> isValidMacAddress(addr) }
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun secureSettingAddress(context: Context): String? = try {
+        android.provider.Settings.Secure
+            .getString(context.contentResolver, "bluetooth_address")
+            ?.trim()
+            ?.takeIf { isValidMacAddress(it) }
+    } catch (e: Exception) {
+        null
+    }
+
+    /** Once per process: the answer is a property of the hardware, and this is called per row render. */
+    @Volatile
+    private var addressSourceDumped = false
+
+    /**
+     * One line per source with what it answered, in the shape of WifiDirectManager's BSSID dump.
+     * Logged only when every source failed, which is the only time the detail is worth the lines.
+     */
+    private fun logAddressSourceDump(context: Context, adapter: BluetoothAdapter?) {
+        if (addressSourceDumped) return
+        addressSourceDumped = true
+        AppLog.i("BluetoothHelper: == Bluetooth address source dump ==")
+        val sources = linkedMapOf<String, String?>(
+            "adapter.address" to try { adapter?.address } catch (e: Exception) { null },
+            "getAddress() reflection" to try {
+                adapter?.javaClass?.getMethod("getAddress")
+                    ?.also { it.isAccessible = true }
+                    ?.invoke(adapter) as? String
+            } catch (e: Exception) { null },
+            "Settings.Secure bluetooth_address" to try {
+                android.provider.Settings.Secure.getString(context.contentResolver, "bluetooth_address")
+            } catch (e: Exception) { null }
+        )
+        for (key in ADDRESS_PROPERTY_KEYS) {
+            sources["property $key"] = SystemProperties.get(key, "").trim().ifEmpty { null }
+        }
+        for ((label, value) in sources) {
+            AppLog.i("BluetoothHelper:   ${label.padEnd(36)} = ${value ?: "null"}")
+        }
+        AppLog.i("BluetoothHelper: == end Bluetooth address source dump ==")
+        AppLog.w("BluetoothHelper: no source named this unit's Bluetooth address. Read it under " +
+            "Settings/About/Status, or off the paired phone under the gear beside this device, and " +
+            "enter it under Wireless connection. Without it the phone is not told where to connect " +
+            "hands-free and no setup QR can be drawn.")
     }
 
     /**
