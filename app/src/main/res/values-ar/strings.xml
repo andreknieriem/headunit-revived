@@ -70,6 +70,8 @@
 
     <string name="bluetooth_address_s">عنوان البلوتوث</string>
     <string name="enter_bluetooth_mac">أدخل عنوان MAC للبلوتوث</string>
+    <string name="bluetooth_address_message">عنوان هذه الوحدة نفسها، وهو ما يتعرّف به الهاتف عليها. تجده ضمن الإعدادات، حول الجهاز، الحالة، أو على الهاتف المقترن أسفل رمز الترس بجوار هذا الجهاز. اتركه فارغًا لاكتشافه تلقائيًا.</string>
+    <string name="invalid_bluetooth_address">هذا ليس عنوان بلوتوث. أدخل ستة أزواج من الأرقام الست عشرية، مثل 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">إعادة تعيين</string>
     <string name="gps_for_navigation">GPS للملاحة</string>
     <string name="gps_for_navigation_description">استخدام GPS للملاحة</string>
@@ -950,7 +952,11 @@
     <string name="connection_issue_banner_bssid">لم يذكر أي مصدر في هذا الجهاز عنوان MAC الخاص بشبكة WiFi‏ (BSSID)، لذا لم يعرف هاتفك أبدًا بأي شبكة يتصل. جُرّبت كل المصادر، بما فيها مصدر لا يحتاج أي إذن. اضغط لتشغيل الموقع، وهو ما يفتح بقية المصادر، أو لإدخال العنوان يدويًا.</string>
     <string name="connection_issue_banner_hotspot_off">نقطة اتصال هذا الجهاز متوقفة، لذا لم تكن هناك شبكة ليتصل بها هاتفك. قم بتشغيل نقطة الاتصال قبل الاتصال، أو انقر للسماح للتطبيق بتشغيلها نيابة عنك.</string>
     <string name="connection_issue_banner_wifi_direct_refused">تعذر على شبكة WiFi في هذا الجهاز إنشاء شبكة WiFi Direct التي كان هاتفك سينضم إليها، ولا يمكن للتطبيق فرض ذلك. إذا كان هذا الجهاز متصلاً بشبكة WiFi أخرى، فيُرجى محاولة فصلها. انقر لاستخدام نقطة اتصال هذا الجهاز بدلاً من ذلك.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">يقوم تطبيق آخر على هذه الوحدة بإيقاف WiFi Direct وتشغيله باستمرار، لذا يتعذّر إنشاء أي شبكة ينضم إليها هاتفك. السبب المعتاد هو تطبيق عرض مثبّت مسبقًا (CarLife أو ZLink أو CarPlay وما شابه)، ويستحق تعطيله المحاولة. انقر لاستخدام نقطة الاتصال الخاصة بهذه الوحدة بدلاً من ذلك.</string>
     <string name="connection_issue_banner_hotspot_config">تعذر الحصول على اسم نقطة الاتصال وكلمة المرور. انقر لإدخالهما يدويًا.</string>
+    <string name="narrow_band_profile_cap">خفض الفيديو على راديو 2.4 غيغاهرتز فقط</string>
+    <string name="narrow_band_profile_cap_description">عندما لا يدعم WiFi هذه الوحدة نطاق 5 غيغاهرتز، اطلب من الهاتف 720p و30 إطارًا في الثانية كحد أقصى بدلاً من الإعدادات أعلاه. على وصلة كهذه أظهرت القياسات أن البث بالمعدل الكامل لا ينقل أي صورة، بينما يصمد البث الأقل. أوقف هذا الخيار للحصول على ما طلبته بالضبط.</string>
+    <string name="connection_issue_banner_video_link_too_slow">تخلّى هاتفك عن الفيديو قبل وصول إطار واحد، عدة مرات متتالية. وصلة WiFi أبطأ من أن تنقل الصورة. انقر لخفض حد الإطارات إلى 30؛ كما يفيد خفض الدقة واستخدام صوت AAC.</string>
     <string name="connection_issue_banner_dismiss">تجاهل</string>
     <string name="connection_issue_remedy_hotspot_query">اسم نقطة الاتصال وكلمة المرور</string>
     <string name="preflight_title">قبل الاتصال</string>
@@ -976,6 +982,7 @@
     <string name="native_aa_setup_qr_not_drawn">تعذّر إنشاء الرمز.</string>
     <string name="native_aa_setup_qr_not_running">ابدأ الاتصال أولًا. يحمل الرمز الشبكة الحالية لهذا الجهاز، وهي غير موجودة قبل ذلك.</string>
     <string name="native_aa_setup_qr_not_hotspot">متاح فقط عبر نقطة الاتصال. تُعاد تسمية شبكة WiFi Direct عند كل إنشاء، لذا سيتذكر الهاتف شبكة لم تعد موجودة.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">تم اختيار نقطة الاتصال، لكن الاتصال ما زال يعمل عبر WiFi Direct. أعد تشغيل الاتصال ثم حاول مرة أخرى.</string>
     <string name="native_aa_setup_qr_not_listening">هذا الجهاز لا ينتظر الهاتف بعد. أعد المحاولة بعد لحظات.</string>
     <string name="native_aa_setup_qr_no_credentials">اسم الشبكة أو كلمة المرور غير معروفين بعد. شغّل نقطة الاتصال أو أدخلهما يدويًا في الأعلى.</string>
     <string name="native_aa_setup_qr_no_bssid">تعذّرت قراءة عنوان WiFi‏ (BSSID) لهذا الجهاز. يرفض أندرويد أوتو شبكة لا يستطيع ربطها بعنوان.</string>

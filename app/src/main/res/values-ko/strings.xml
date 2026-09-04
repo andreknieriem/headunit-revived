@@ -75,6 +75,8 @@
 
     <string name="bluetooth_address_s">블루투스 주소</string>
     <string name="enter_bluetooth_mac">블루투스 MAC 입력</string>
+    <string name="bluetooth_address_message">이 기기 자체의 주소로, 휴대전화가 이 주소로 기기를 인식합니다. 설정, 기기 정보, 상태에서 확인하거나 페어링된 휴대전화에서 이 기기 옆의 톱니바퀴에서 확인할 수 있습니다. 비워 두면 자동으로 감지합니다.</string>
+    <string name="invalid_bluetooth_address">블루투스 주소가 아닙니다. 0C:32:3A:2D:5D:4A처럼 16진수 두 자리를 여섯 쌍 입력하세요.</string>
     <string name="reset">초기화</string>
     <string name="reset_settings">기본값으로 초기화</string>
     <string name="reset_settings_confirm">모든 설정을 기본값으로 초기화하시겠습니까? 앱이 재시작됩니다.</string>
@@ -949,7 +951,11 @@
     <string name="connection_issue_banner_bssid">이 기기의 어떤 소스도 자체 WiFi MAC 주소(BSSID)를 알려주지 않아, 휴대전화가 어느 네트워크에 연결해야 하는지 알 수 없었습니다. 권한이 필요 없는 소스까지 모두 시도했습니다. 나머지 소스를 사용할 수 있게 하는 위치를 켜거나, 주소를 직접 입력하려면 탭하세요.</string>
     <string name="connection_issue_banner_hotspot_off">이 기기의 핫스팟이 꺼져 있어 휴대전화가 연결할 네트워크가 없습니다. 연결하기 전에 핫스팟을 켜거나, 앱이 대신 켤 수 있도록 탭하세요.</string>
     <string name="connection_issue_banner_wifi_direct_refused">이 기기의 WiFi가 휴대전화가 연결하려는 WiFi Direct 네트워크를 생성하지 못했으며, 앱에서 이를 강제할 수 없습니다. 기기가 다른 WiFi 네트워크에 연결되어 있다면 연결을 해제해 보세요. 이 기기의 자체 핫스팟을 대신 사용하려면 탭하세요.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">이 기기의 다른 앱이 WiFi Direct를 계속 껐다 켜고 있어 휴대전화가 연결할 네트워크를 만들 수 없습니다. 보통 기본 설치된 미러링 앱(CarLife, ZLink, CarPlay 등)이 원인이며, 비활성화해 볼 만합니다. 이 기기의 자체 핫스팟을 대신 사용하려면 탭하세요.</string>
     <string name="connection_issue_banner_hotspot_config">핫스팟 이름과 비밀번호를 읽을 수 없습니다. 직접 입력하려면 탭하세요.</string>
+    <string name="narrow_band_profile_cap">2.4GHz 전용 무선에서 영상 낮추기</string>
+    <string name="narrow_band_profile_cap_description">이 기기의 WiFi에 5GHz 대역이 없으면 위 설정 대신 최대 720p, 30fps를 휴대전화에 요청합니다. 이런 연결에서는 최대 속도 스트림이 화면을 전혀 전달하지 못하고 낮춘 스트림은 유지되는 것으로 측정되었습니다. 설정한 값 그대로 받으려면 끄세요.</string>
+    <string name="connection_issue_banner_video_link_too_slow">휴대전화가 프레임이 하나도 도착하기 전에 영상을 포기하는 일이 연달아 여러 번 있었습니다. WiFi 연결이 화면을 전달하기에 너무 느립니다. 탭하면 FPS 제한을 30으로 낮춥니다. 해상도를 낮추거나 AAC 오디오를 쓰는 것도 도움이 됩니다.</string>
     <string name="connection_issue_banner_dismiss">닫기</string>
     <string name="connection_issue_remedy_hotspot_query">핫스팟 이름 및 비밀번호</string>
     <string name="preflight_title">연결 전 확인</string>
@@ -975,6 +981,7 @@
     <string name="native_aa_setup_qr_not_drawn">코드를 생성하지 못했습니다.</string>
     <string name="native_aa_setup_qr_not_running">먼저 연결을 시작하세요. 코드에는 이 기기의 현재 네트워크가 담기며, 그전에는 존재하지 않습니다.</string>
     <string name="native_aa_setup_qr_not_hotspot">핫스팟에서만 사용할 수 있습니다. WiFi Direct 네트워크는 만들 때마다 이름이 바뀌므로 휴대전화가 더 이상 없는 네트워크를 기억하게 됩니다.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">핫스팟이 선택되어 있지만 연결은 아직 WiFi Direct로 실행 중입니다. 연결을 다시 시작한 후 시도하세요.</string>
     <string name="native_aa_setup_qr_not_listening">이 기기가 아직 휴대전화를 기다리고 있지 않습니다. 잠시 후 다시 시도하세요.</string>
     <string name="native_aa_setup_qr_no_credentials">네트워크 이름이나 비밀번호를 아직 알 수 없습니다. 핫스팟을 켜거나 위에서 직접 입력하세요.</string>
     <string name="native_aa_setup_qr_no_bssid">이 기기의 WiFi 주소(BSSID)를 읽지 못했습니다. Android Auto는 주소를 특정할 수 없는 네트워크를 거부합니다.</string>

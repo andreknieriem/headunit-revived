@@ -103,6 +103,8 @@
 
     <string name="bluetooth_address_s">Bluetooth Adresse</string>
     <string name="enter_bluetooth_mac">Bluetooth MAC eingeben</string>
+    <string name="bluetooth_address_message">Die eigene Adresse dieses Geräts, an der das Telefon es wiedererkennt. Du findest sie unter Einstellungen, Über das Gerät, Status, oder auf dem gekoppelten Telefon über das Zahnrad neben diesem Gerät. Leer lassen, um sie automatisch zu ermitteln.</string>
+    <string name="invalid_bluetooth_address">Das ist keine Bluetooth-Adresse. Gib sechs hexadezimale Zahlenpaare ein, z. B. 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Zurücksetzen</string>
     <string name="gps_for_navigation">GPS für Navigation</string>
     <string name="gps_for_navigation_description">Nutze Tablet-GPS für Navigation</string>
@@ -958,7 +960,11 @@
     <string name="connection_issue_banner_bssid">Keine Quelle auf diesem Gerät hat dessen eigene WLAN-MAC-Adresse (BSSID) genannt, deshalb erfuhr dein Telefon nie, mit welchem Netzwerk es sich verbinden soll. Alle Quellen wurden versucht, auch eine, die keine Berechtigung braucht. Tippe hier, um den Standort einzuschalten, was die übrigen freigibt, oder um die Adresse von Hand einzugeben.</string>
     <string name="connection_issue_banner_hotspot_off">Der Hotspot dieses Geräts ist ausgeschaltet, sodass kein Netzwerk vorhanden war, mit dem sich dein Telefon verbinden konnte. Schalte den Hotspot vor dem Verbinden ein oder tippe hier, damit die App ihn für dich einschaltet.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Das WLAN dieses Geräts konnte das WiFi-Direct-Netzwerk nicht erstellen, mit dem sich dein Telefon verbinden sollte, und die App kann es nicht erzwingen. Wenn dieses Gerät mit einem anderen WLAN verbunden ist, trenne die Verbindung testweise. Tippe hier, um stattdessen den eigenen Hotspot dieses Geräts zu nutzen.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Eine andere App auf diesem Gerät schaltet WiFi Direct ständig aus und wieder ein, deshalb kann kein Netzwerk für dein Telefon erstellt werden. Meist ist eine vorinstallierte Projektions-App (CarLife, ZLink, CarPlay und ähnliche) die Ursache, sie zu deaktivieren ist einen Versuch wert. Tippe hier, um stattdessen den eigenen Hotspot dieses Geräts zu nutzen.</string>
     <string name="connection_issue_banner_hotspot_config">Dieses Gerät kann Hotspot-Name und -Passwort nicht an die App übergeben. Tippe hier, um sie manuell einzugeben.</string>
+    <string name="narrow_band_profile_cap">Video bei reinem 2,4-GHz-Funk verringern</string>
+    <string name="narrow_band_profile_cap_description">Wenn das WLAN dieses Geräts kein 5-GHz-Band hat, statt der Einstellungen oben höchstens 720p und 30 fps vom Telefon anfordern. Auf einer solchen Verbindung wurde gemessen, dass ein Stream mit voller Rate gar kein Bild überträgt, ein niedrigerer dagegen schon. Schalte dies aus, um genau das zu bekommen, was du eingestellt hast.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Dein Telefon hat das Video mehrmals hintereinander abgebrochen, bevor auch nur ein Bild ankam. Die WLAN-Verbindung ist zu langsam für das Bild. Tippe hier, um die FPS-Grenze auf 30 zu senken; eine niedrigere Auflösung und AAC-Audio helfen ebenfalls.</string>
     <string name="connection_issue_banner_dismiss">Schließen</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-Name und Passwort</string>
     <string name="preflight_title">Vor dem Verbinden</string>
@@ -984,6 +990,7 @@
     <string name="native_aa_setup_qr_not_drawn">Der Code konnte nicht erzeugt werden.</string>
     <string name="native_aa_setup_qr_not_running">Starte zuerst die Verbindung. Der Code enthält das aktuelle Netzwerk dieses Geräts, das vorher nicht existiert.</string>
     <string name="native_aa_setup_qr_not_hotspot">Nur über den Hotspot verfügbar. Ein WiFi-Direct-Netzwerk bekommt bei jedem Erstellen einen neuen Namen, das Telefon würde sich also eines merken, das es nicht mehr gibt.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Der Hotspot ist ausgewählt, die Verbindung läuft aber noch über WiFi Direct. Starte die Verbindung neu und versuche es dann erneut.</string>
     <string name="native_aa_setup_qr_not_listening">Dieses Gerät wartet noch nicht auf das Telefon. Versuche es gleich noch einmal.</string>
     <string name="native_aa_setup_qr_no_credentials">Name oder Passwort des Netzwerks sind noch nicht bekannt. Schalte den Hotspot ein oder gib sie oben von Hand ein.</string>
     <string name="native_aa_setup_qr_no_bssid">Die WLAN-Adresse (BSSID) dieses Geräts konnte nicht gelesen werden. Android Auto lehnt ein Netzwerk ab, das es daran nicht festmachen kann.</string>

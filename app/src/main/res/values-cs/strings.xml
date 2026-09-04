@@ -70,6 +70,8 @@
 
     <string name="bluetooth_address_s">Bluetooth adresa</string>
     <string name="enter_bluetooth_mac">Zadejte MAC adresu Bluetooth</string>
+    <string name="bluetooth_address_message">Vlastní adresa této jednotky, podle které ji telefon pozná. Najdete ji v Nastavení, Informace, Stav, nebo na spárovaném telefonu pod ozubeným kolečkem vedle tohoto zařízení. Ponechte prázdné pro automatické zjištění.</string>
+    <string name="invalid_bluetooth_address">To není adresa Bluetooth. Zadejte šest dvojic šestnáctkových číslic, například 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Resetovat</string>
     <string name="gps_for_navigation">GPS pro navigaci</string>
     <string name="gps_for_navigation_description">Použít GPS tohoto zařízení pro navigaci</string>
@@ -952,7 +954,11 @@
     <string name="connection_issue_banner_bssid">Žádný zdroj v této jednotce neuvedl její vlastní WiFi MAC adresu (BSSID), takže se telefon nikdy nedozvěděl, k jaké síti se má připojit. Vyzkoušeny byly všechny, včetně jednoho, který nepotřebuje žádné oprávnění. Klepnutím zapněte polohu, což odemkne ostatní, nebo zadejte adresu ručně.</string>
     <string name="connection_issue_banner_hotspot_off">Hotspot této jednotky je vypnutý, takže telefon neměl síť, ke které by se připojil. Před připojením hotspot zapněte nebo klepněte, aby jej aplikace zapnula za vás.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi této jednotky nemohla vytvořit síť Wi-Fi Direct, ke které se měl telefon připojit, a aplikace to nemůže vynutit. Pokud je jednotka připojena k jiné síti Wi-Fi, zkuste ji odpojit. Klepnutím použijte vlastní hotspot této jednotky.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Jiná aplikace v této jednotce stále vypíná a zapíná Wi-Fi Direct, takže nelze vytvořit žádnou síť, ke které by se telefon připojil. Obvyklou příčinou je předinstalovaná projekční aplikace (CarLife, ZLink, CarPlay a podobné) a stojí za to ji vypnout. Klepnutím použijte vlastní hotspot této jednotky.</string>
     <string name="connection_issue_banner_hotspot_config">Jednotka neposkytla název a heslo hotspotu. Klepnutím je zadejte ručně.</string>
+    <string name="narrow_band_profile_cap">Snížit video na rádiu jen s 2,4 GHz</string>
+    <string name="narrow_band_profile_cap_description">Když Wi-Fi této jednotky nemá pásmo 5 GHz, žádat telefon nejvýše o 720p a 30 fps místo nastavení výše. Na takovém spoji bylo naměřeno, že plný datový tok nepřenesl vůbec žádný obraz, zatímco nižší vydržel. Vypněte to, pokud chcete dostat přesně to, co jste nastavili.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Telefon několikrát po sobě vzdal video dřív, než dorazil jediný snímek. Spoj Wi-Fi je pro přenos obrazu příliš pomalý. Klepnutím snížíte limit FPS na 30; pomůže i nižší rozlišení a zvuk AAC.</string>
     <string name="connection_issue_banner_dismiss">Zavřít</string>
     <string name="connection_issue_remedy_hotspot_query">Název a heslo hotspotu</string>
     <string name="preflight_title">Před připojením</string>
@@ -978,6 +984,7 @@
     <string name="native_aa_setup_qr_not_drawn">Kód se nepodařilo vytvořit.</string>
     <string name="native_aa_setup_qr_not_running">Nejprve spusťte připojení. Kód nese aktuální síť této jednotky, která do té doby neexistuje.</string>
     <string name="native_aa_setup_qr_not_hotspot">Dostupné jen přes hotspot. Síť WiFi Direct se při každém vytvoření přejmenuje, telefon by si tak zapamatoval síť, která už neexistuje.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Hotspot je zvolený, ale spojení stále běží přes Wi-Fi Direct. Restartujte spojení a zkuste to znovu.</string>
     <string name="native_aa_setup_qr_not_listening">Tato jednotka zatím na telefon nečeká. Zkuste to za okamžik znovu.</string>
     <string name="native_aa_setup_qr_no_credentials">Název ani heslo sítě zatím nejsou známé. Zapněte hotspot nebo je zadejte ručně výše.</string>
     <string name="native_aa_setup_qr_no_bssid">Adresu WiFi (BSSID) této jednotky se nepodařilo přečíst. Android Auto odmítá síť, kterou k ní nedokáže přiřadit.</string>

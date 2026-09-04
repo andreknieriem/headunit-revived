@@ -69,6 +69,8 @@
     <string name="reconnection_required_message">Az eszköz várakozó állapotban van. Kérlek húzd ki, majd dugd vissza az USB-kábelt az Android Auto újraindításához.</string>
     <string name="bluetooth_address_s">Bluetooth cím</string>
     <string name="enter_bluetooth_mac">Add meg a Bluetooth MAC-et</string>
+    <string name="bluetooth_address_message">Ennek az egységnek a saját címe, amelyről a telefon felismeri. Megtalálható a Beállítások, Névjegy, Állapot alatt, vagy a párosított telefonon az eszköz melletti fogaskeréknél. Hagyja üresen az automatikus felismeréshez.</string>
+    <string name="invalid_bluetooth_address">Ez nem Bluetooth-cím. Adjon meg hat pár hexadecimális számjegyet, például 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Visszaállítás</string>
     <string name="gps_for_navigation">GPS a navigációhoz</string>
     <string name="gps_for_navigation_description">GPS használata a navigációhoz.</string>
@@ -948,7 +950,11 @@
     <string name="connection_issue_banner_bssid">Az egységen egyetlen forrás sem adta meg a saját WiFi MAC-címét (BSSID), így a telefon soha nem tudta meg, melyik hálózathoz csatlakozzon. Mindegyiket megpróbáltuk, azt is, amelyik nem igényel engedélyt. Koppintson a helymeghatározás bekapcsolásához, ami a többit feloldja, vagy a cím kézi megadásához.</string>
     <string name="connection_issue_banner_hotspot_off">Az egység hotspotja ki van kapcsolva, így a telefonnak nem volt mihez csatlakoznia. Kapcsolja be a hotspotot a csatlakozás előtt, vagy érintse meg, hogy az alkalmazás bekapcsolja Ön helyett.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Az egység Wi-Fi-je nem tudta létrehozni a Wi-Fi Direct hálózatot, amelyhez a telefon csatlakozott volna, és az alkalmazás nem tudja ezt kényszeríteni. Ha az egység másik Wi-Fi-hálózathoz csatlakozik, próbálja meg lecsatlakoztatni. Érintse meg az egység saját hotspotjának használatához.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Egy másik alkalmazás ezen az egységen folyamatosan ki- és bekapcsolja a Wi-Fi Directet, így nem hozható létre hálózat, amelyhez a telefon csatlakozhatna. Ezt általában egy gyárilag telepített vetítőalkalmazás (CarLife, ZLink, CarPlay és hasonlók) okozza, érdemes letiltani. Érintse meg az egység saját hotspotjának használatához.</string>
     <string name="connection_issue_banner_hotspot_config">A készülék nem adta meg a hotspot nevét és jelszavát. Érintse meg a kézi megadáshoz.</string>
+    <string name="narrow_band_profile_cap">Gyengébb kép csak 2,4 GHz-es rádiónál</string>
+    <string name="narrow_band_profile_cap_description">Ha az egység Wi-Fi-je nem tud 5 GHz-et, a fenti beállítások helyett legfeljebb 720p és 30 fps kérése a telefontól. Ilyen kapcsolaton a mérések szerint a teljes sebességű adatfolyam egyáltalán nem vitt képet, az alacsonyabb viszont igen. Kapcsolja ki, ha pontosan a beállított értékeket szeretné.</string>
+    <string name="connection_issue_banner_video_link_too_slow">A telefon egymás után többször feladta a videót, mielőtt egyetlen képkocka megérkezett volna. A Wi-Fi kapcsolat túl lassú a képhez. Érintse meg az FPS-korlát 30-ra csökkentéséhez; az alacsonyabb felbontás és az AAC hang is segít.</string>
     <string name="connection_issue_banner_dismiss">Elvetés</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot neve és jelszava</string>
     <string name="preflight_title">Csatlakozás előtt</string>
@@ -974,6 +980,7 @@
     <string name="native_aa_setup_qr_not_drawn">A kódot nem sikerült létrehozni.</string>
     <string name="native_aa_setup_qr_not_running">Előbb indítsa el a kapcsolatot. A kód az egység aktuális hálózatát tartalmazza, ami addig nem létezik.</string>
     <string name="native_aa_setup_qr_not_hotspot">Csak hotspoton érhető el. A WiFi Direct hálózat minden létrehozáskor új nevet kap, így a telefon olyat jegyezne meg, ami már nincs.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">A hotspot van kiválasztva, de a kapcsolat még Wi-Fi Directen fut. Indítsa újra a kapcsolatot, majd próbálja meg ismét.</string>
     <string name="native_aa_setup_qr_not_listening">Ez az egység még nem várja a telefont. Próbálja újra egy pillanat múlva.</string>
     <string name="native_aa_setup_qr_no_credentials">A hálózat neve vagy jelszava még nem ismert. Kapcsolja be a hotspotot, vagy adja meg őket kézzel fent.</string>
     <string name="native_aa_setup_qr_no_bssid">Az egység WiFi-címét (BSSID) nem sikerült kiolvasni. Az Android Auto elutasít egy hálózatot, amelyet nem tud ehhez kötni.</string>

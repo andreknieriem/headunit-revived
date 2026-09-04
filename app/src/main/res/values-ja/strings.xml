@@ -74,6 +74,8 @@
 
     <string name="bluetooth_address_s">Bluetoothアドレス</string>
     <string name="enter_bluetooth_mac">Bluetooth MACアドレスを入力してください</string>
+    <string name="bluetooth_address_message">このユニット自身のアドレスで、スマートフォンはこれでユニットを識別します。設定、端末情報、ステータスの順に開くか、ペア設定済みのスマートフォンでこの機器の横にある歯車から確認できます。空欄にすると自動的に検出します。</string>
+    <string name="invalid_bluetooth_address">Bluetoothアドレスではありません。0C:32:3A:2D:5D:4A のように16進数2桁を6組で入力してください。</string>
     <string name="reset">Reset</string>
     <string name="gps_for_navigation">ナビゲーション用のGPS</string>
     <string name="gps_for_navigation_description">ナビゲーションにGPSを利用する</string>
@@ -956,7 +958,11 @@
     <string name="connection_issue_banner_bssid">このユニットのどのソースも自身のWiFi MACアドレス（BSSID）を返さなかったため、スマートフォンはどのネットワークに接続すべきか分かりませんでした。権限が不要なものも含め、すべてのソースを試しています。タップすると、他のソースの取得を可能にする位置情報をオンにするか、アドレスを手動で入力できます。</string>
     <string name="connection_issue_banner_hotspot_off">このユニットのホットスポットがオフになっているため、スマートフォンが接続するネットワークがありませんでした。接続する前にホットスポットをオンにするか、タップしてアプリにオンにさせてください。</string>
     <string name="connection_issue_banner_wifi_direct_refused">このユニットのWiFiはスマートフォンが接続しようとしたWiFi Directネットワークを作成できず、アプリ側で強制することもできません。このユニットが別のWiFiネットワークに接続されている場合は、切断してみてください。タップしてこのユニット独自のホットスポットを代わりに使用します。</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">このユニット上の別のアプリがWiFi Directのオンとオフを繰り返しているため、スマートフォンが接続するネットワークを作成できません。原因は多くの場合プリインストールのミラーリングアプリ（CarLife、ZLink、CarPlayなど）で、無効化を試す価値があります。タップしてこのユニット自身のホットスポットを使用します。</string>
     <string name="connection_issue_banner_hotspot_config">ホットスポット名とパスワードを取得できませんでした。タップして手動で入力してください。</string>
+    <string name="narrow_band_profile_cap">2.4 GHzのみの無線では映像を下げる</string>
+    <string name="narrow_band_profile_cap_description">このユニットのWiFiに5 GHz帯がない場合、上の設定ではなく最大720p、30 fpsをスマートフォンに要求します。この種の回線では、フルレートの映像がまったく届かない一方、低いレートでは維持されることが確認されています。設定どおりの値を使いたい場合はオフにしてください。</string>
+    <string name="connection_issue_banner_video_link_too_slow">スマートフォンが1フレームも届かないうちに映像を断念する状態が数回続きました。WiFi回線が映像を運ぶには遅すぎます。タップするとFPS上限を30に下げます。解像度を下げることやAAC音声も有効です。</string>
     <string name="connection_issue_banner_dismiss">閉じる</string>
     <string name="connection_issue_remedy_hotspot_query">ホットスポット名とパスワード</string>
     <string name="preflight_title">接続前の確認</string>
@@ -982,6 +988,7 @@
     <string name="native_aa_setup_qr_not_drawn">コードを生成できませんでした。</string>
     <string name="native_aa_setup_qr_not_running">先に接続を開始してください。コードにはこのユニットの現在のネットワークが含まれ、それまでは存在しません。</string>
     <string name="native_aa_setup_qr_not_hotspot">ホットスポットでのみ利用できます。WiFi Directのネットワークは作成のたびに名前が変わるため、スマートフォンは存在しないネットワークを記憶することになります。</string>
+    <string name="native_aa_setup_qr_transport_not_applied">ホットスポットが選択されていますが、接続はまだWiFi Directで動作しています。接続を再起動してからもう一度お試しください。</string>
     <string name="native_aa_setup_qr_not_listening">このユニットはまだスマートフォンを待ち受けていません。少し待ってからもう一度お試しください。</string>
     <string name="native_aa_setup_qr_no_credentials">ネットワーク名またはパスワードがまだ分かりません。ホットスポットをオンにするか、上で手動で入力してください。</string>
     <string name="native_aa_setup_qr_no_bssid">このユニットのWiFiアドレス（BSSID）を読み取れませんでした。Android Autoは、それに結び付けられないネットワークを拒否します。</string>

@@ -75,6 +75,8 @@
 
     <string name="bluetooth_address_s">Địa chỉ Bluetooth</string>
     <string name="enter_bluetooth_mac">Nhập MAC Bluetooth</string>
+    <string name="bluetooth_address_message">Địa chỉ của chính thiết bị này, điện thoại dùng nó để nhận ra thiết bị. Bạn tìm thấy nó trong Cài đặt, Giới thiệu, Trạng thái, hoặc trên điện thoại đã ghép nối ở biểu tượng bánh răng cạnh thiết bị này. Để trống để tự động phát hiện.</string>
+    <string name="invalid_bluetooth_address">Đây không phải địa chỉ Bluetooth. Hãy nhập sáu cặp chữ số thập lục phân, ví dụ 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Đặt lại</string>
     <string name="gps_for_navigation">GPS cho điều hướng</string>
     <string name="gps_for_navigation_description">Dùng GPS cho điều hướng</string>
@@ -955,7 +957,11 @@
     <string name="connection_issue_banner_bssid">Không nguồn nào trên thiết bị này cho biết địa chỉ MAC WiFi (BSSID) của chính nó, nên điện thoại không bao giờ biết cần tham gia mạng nào. Tất cả đều đã được thử, kể cả một nguồn không cần quyền nào. Chạm để bật Vị trí, thứ mở khóa các nguồn còn lại, hoặc để nhập địa chỉ thủ công.</string>
     <string name="connection_issue_banner_hotspot_off">Điểm phát sóng của thiết bị này đang tắt nên không có mạng để điện thoại kết nối. Hãy bật điểm phát sóng trước khi kết nối hoặc nhấn để ứng dụng tự bật giúp bạn.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi của thiết bị này không thể tạo mạng Wi-Fi Direct để điện thoại kết nối và ứng dụng không thể ép buộc. Nếu thiết bị đang kết nối với mạng Wi-Fi khác, hãy thử ngắt kết nối. Nhấn để sử dụng điểm phát sóng của thiết bị này.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Một ứng dụng khác trên thiết bị này liên tục tắt rồi bật Wi-Fi Direct, nên không thể tạo mạng cho điện thoại kết nối. Nguyên nhân thường gặp là ứng dụng chiếu màn hình cài sẵn (CarLife, ZLink, CarPlay và tương tự), nên thử tắt nó. Nhấn để sử dụng điểm phát sóng của thiết bị này.</string>
     <string name="connection_issue_banner_hotspot_config">Không thể lấy tên và mật khẩu điểm phát sóng. Nhấn để nhập thủ công.</string>
+    <string name="narrow_band_profile_cap">Giảm video khi sóng chỉ có 2,4 GHz</string>
+    <string name="narrow_band_profile_cap_description">Khi Wi-Fi của thiết bị này không có băng tần 5 GHz, yêu cầu điện thoại tối đa 720p và 30 fps thay cho các cài đặt ở trên. Trên đường truyền như vậy, đo được luồng ở tốc độ đầy đủ không mang được hình ảnh nào, còn luồng thấp hơn thì trụ được. Tắt tùy chọn này để nhận đúng những gì bạn đã đặt.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Điện thoại đã bỏ dở video trước khi có dù chỉ một khung hình, nhiều lần liên tiếp. Đường truyền Wi-Fi quá chậm để tải hình ảnh. Nhấn để hạ giới hạn FPS xuống 30; giảm độ phân giải và dùng âm thanh AAC cũng có ích.</string>
     <string name="connection_issue_banner_dismiss">Bỏ qua</string>
     <string name="connection_issue_remedy_hotspot_query">Tên và mật khẩu điểm phát sóng</string>
     <string name="preflight_title">Trước khi kết nối</string>
@@ -981,6 +987,7 @@
     <string name="native_aa_setup_qr_not_drawn">Không tạo được mã.</string>
     <string name="native_aa_setup_qr_not_running">Hãy bắt đầu kết nối trước. Mã chứa mạng hiện tại của thiết bị này, vốn chưa tồn tại trước đó.</string>
     <string name="native_aa_setup_qr_not_hotspot">Chỉ dùng được với điểm phát sóng. Mạng WiFi Direct được đổi tên mỗi lần tạo, nên điện thoại sẽ nhớ một mạng không còn tồn tại.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Đã chọn điểm phát sóng, nhưng kết nối vẫn đang chạy trên Wi-Fi Direct. Hãy khởi động lại kết nối rồi thử lại.</string>
     <string name="native_aa_setup_qr_not_listening">Thiết bị này chưa chờ điện thoại. Hãy thử lại sau giây lát.</string>
     <string name="native_aa_setup_qr_no_credentials">Chưa biết tên hoặc mật khẩu của mạng. Hãy bật điểm phát sóng hoặc nhập thủ công ở trên.</string>
     <string name="native_aa_setup_qr_no_bssid">Không đọc được địa chỉ WiFi (BSSID) của thiết bị này. Android Auto từ chối mạng mà nó không gắn được với một địa chỉ.</string>

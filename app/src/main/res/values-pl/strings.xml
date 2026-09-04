@@ -70,6 +70,8 @@
 
     <string name="bluetooth_address_s">Adres Bluetooth</string>
     <string name="enter_bluetooth_mac">Wprowadź adres MAC Bluetooth</string>
+    <string name="bluetooth_address_message">Własny adres tego urządzenia, po którym rozpoznaje je telefon. Znajdziesz go w Ustawieniach, Informacje, Stan, albo na sparowanym telefonie pod kołem zębatym obok tego urządzenia. Zostaw puste, aby wykryć go automatycznie.</string>
+    <string name="invalid_bluetooth_address">To nie jest adres Bluetooth. Wprowadź sześć par cyfr szesnastkowych, na przykład 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Resetuj</string>
     <string name="gps_for_navigation">GPS do nawigacji</string>
     <string name="gps_for_navigation_description">Używaj GPS tego urządzenia do nawigacji</string>
@@ -951,7 +953,11 @@
     <string name="connection_issue_banner_bssid">Żadne źródło w tym urządzeniu nie podało jego własnego adresu MAC WiFi (BSSID), więc telefon nigdy nie dowiedział się, z jaką siecią ma się połączyć. Sprawdzono wszystkie, w tym jedno, które nie wymaga żadnych uprawnień. Dotknij, aby włączyć lokalizację, co odblokowuje pozostałe, albo aby wpisać adres ręcznie.</string>
     <string name="connection_issue_banner_hotspot_off">Hotspot tego urządzenia jest wyłączony, więc telefon nie miał sieci, z którą mógłby się połączyć. Włącz hotspot przed połączeniem lub dotknij, aby aplikacja włączyła go za Ciebie.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Moduł Wi-Fi tego urządzenia nie mógł utworzyć sieci Wi-Fi Direct, z którą miał połączyć się telefon, a aplikacja nie może tego wymusić. Jeśli urządzenie jest połączone z inną siecią Wi-Fi, spróbuj ją rozłączyć. Dotknij, aby użyć hotspotu tego urządzenia.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Inna aplikacja na tym urządzeniu bez przerwy wyłącza i włącza Wi-Fi Direct, więc nie da się utworzyć sieci, z którą połączy się telefon. Zwykle przyczyną jest fabrycznie zainstalowana aplikacja do projekcji (CarLife, ZLink, CarPlay i podobne) i warto ją wyłączyć. Dotknij, aby użyć hotspotu tego urządzenia.</string>
     <string name="connection_issue_banner_hotspot_config">Nie udało się uzyskać nazwy i hasła hotspotu. Dotknij, aby wprowadzić je ręcznie.</string>
+    <string name="narrow_band_profile_cap">Niższy obraz przy radiu tylko 2,4 GHz</string>
+    <string name="narrow_band_profile_cap_description">Gdy Wi-Fi tego urządzenia nie ma pasma 5 GHz, żądaj od telefonu najwyżej 720p i 30 kl./s zamiast ustawień powyżej. Na takim łączu zmierzono, że strumień o pełnej przepływności nie przenosił obrazu w ogóle, a niższy działał. Wyłącz to, aby dostać dokładnie to, co ustawiono.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Telefon kilka razy z rzędu porzucił obraz, zanim dotarła choć jedna klatka. Łącze Wi-Fi jest za wolne, aby przenieść obraz. Dotknij, aby obniżyć limit FPS do 30; pomoże też niższa rozdzielczość i dźwięk AAC.</string>
     <string name="connection_issue_banner_dismiss">Zamknij</string>
     <string name="connection_issue_remedy_hotspot_query">Nazwa i hasło hotspotu</string>
     <string name="preflight_title">Przed połączeniem</string>
@@ -977,6 +983,7 @@
     <string name="native_aa_setup_qr_not_drawn">Nie udało się wygenerować kodu.</string>
     <string name="native_aa_setup_qr_not_running">Najpierw uruchom połączenie. Kod zawiera bieżącą sieć tego urządzenia, która wcześniej nie istnieje.</string>
     <string name="native_aa_setup_qr_not_hotspot">Dostępne tylko przez hotspot. Sieć WiFi Direct przy każdym utworzeniu dostaje nową nazwę, więc telefon zapamiętałby taką, której już nie ma.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Wybrano hotspot, ale połączenie nadal działa przez Wi-Fi Direct. Uruchom połączenie ponownie i spróbuj jeszcze raz.</string>
     <string name="native_aa_setup_qr_not_listening">To urządzenie jeszcze nie czeka na telefon. Spróbuj ponownie za chwilę.</string>
     <string name="native_aa_setup_qr_no_credentials">Nazwa lub hasło sieci nie są jeszcze znane. Włącz hotspot albo wpisz je ręcznie powyżej.</string>
     <string name="native_aa_setup_qr_no_bssid">Nie udało się odczytać adresu WiFi (BSSID) tego urządzenia. Android Auto odrzuca sieć, której nie może z nim powiązać.</string>

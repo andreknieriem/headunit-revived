@@ -238,6 +238,8 @@
 
     <string name="bluetooth_address_s">Adresse Bluetooth</string>
     <string name="enter_bluetooth_mac">Entrer l\'adresse MAC Bluetooth</string>
+    <string name="bluetooth_address_message">L\'adresse propre à cet appareil, celle qui permet au téléphone de le reconnaître. Vous la trouverez dans Paramètres, À propos, État, ou sur le téléphone appairé sous l\'engrenage à côté de cet appareil. Laissez vide pour la détecter automatiquement.</string>
+    <string name="invalid_bluetooth_address">Ce n\'est pas une adresse Bluetooth. Saisissez six paires de chiffres hexadécimaux, par exemple 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Réinitialiser</string>
     <string name="reset_settings">Réinitialiser aux valeurs par défaut</string>
     <string name="reset_settings_confirm">Es-tu sûr de vouloir réinitialiser tous les paramètres à leurs valeurs par défaut ? Cela redémarrera l\'application.</string>
@@ -999,7 +1001,11 @@
     <string name="connection_issue_banner_bssid">Aucune source de cet appareil n\'a donné sa propre adresse MAC WiFi (BSSID), votre téléphone n\'a donc jamais su à quel réseau se connecter. Toutes les sources ont été essayées, dont une qui ne demande aucune autorisation. Touchez pour activer la localisation, ce qui débloque les autres, ou pour saisir l\'adresse à la main.</string>
     <string name="connection_issue_banner_hotspot_off">Le point d\'accès de cet appareil est désactivé, aucun réseau n\'était donc disponible pour votre téléphone. Activez le point d\'accès avant de vous connecter ou touchez pour laisser l\'application l\'activer pour vous.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Le Wi-Fi de cet appareil n\'a pas pu créer le réseau Wi-Fi Direct que votre téléphone devait rejoindre, et l\'application ne peut pas le forcer. Si cet appareil est connecté à un autre réseau Wi-Fi, essayez de le déconnecter. Touchez pour utiliser le point d\'accès de cet appareil à la place.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Une autre application de cet appareil désactive et réactive sans cesse le WiFi Direct, aucun réseau ne peut donc être créé pour votre téléphone. Une application de projection préinstallée (CarLife, ZLink, CarPlay et similaires) en est la cause habituelle, et il vaut la peine de la désactiver. Touchez pour utiliser le point d\'accès de cet appareil à la place.</string>
     <string name="connection_issue_banner_hotspot_config">Cet appareil ne peut pas transmettre le nom et le mot de passe du point d\'accès. Touchez pour les saisir manuellement.</string>
+    <string name="narrow_band_profile_cap">Réduire la vidéo sur une radio 2,4 GHz uniquement</string>
+    <string name="narrow_band_profile_cap_description">Quand le WiFi de cet appareil n\'a pas de bande 5 GHz, demander au téléphone au maximum 720p et 30 fps au lieu des réglages ci-dessus. Sur une telle liaison, un flux à pleine cadence ne transportait aucune image lors des mesures, alors qu\'un flux réduit tenait. Désactivez ceci pour obtenir exactement ce que vous avez demandé.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Votre téléphone a abandonné la vidéo avant la moindre image, plusieurs fois de suite. La liaison WiFi est trop lente pour transporter l\'image. Touchez pour abaisser la limite de FPS à 30 ; une résolution plus basse et l\'audio AAC aident aussi.</string>
     <string name="connection_issue_banner_dismiss">Ignorer</string>
     <string name="connection_issue_remedy_hotspot_query">Nom et mot de passe du point d\'accès</string>
     <string name="preflight_title">Avant de vous connecter</string>
@@ -1025,6 +1031,7 @@
     <string name="native_aa_setup_qr_not_drawn">Le code n\'a pas pu être généré.</string>
     <string name="native_aa_setup_qr_not_running">Démarrez d\'abord la connexion. Le code contient le réseau actuel de cet appareil, qui n\'existe pas avant cela.</string>
     <string name="native_aa_setup_qr_not_hotspot">Disponible uniquement avec le point d\'accès. Un réseau WiFi Direct est renommé à chaque création : le téléphone retiendrait donc un réseau qui n\'existe plus.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Le point d\'accès est sélectionné, mais la connexion tourne encore en WiFi Direct. Redémarrez la connexion, puis réessayez.</string>
     <string name="native_aa_setup_qr_not_listening">Cet appareil n\'attend pas encore le téléphone. Réessayez dans un instant.</string>
     <string name="native_aa_setup_qr_no_credentials">Le nom ou le mot de passe du réseau ne sont pas encore connus. Activez le point d\'accès ou saisissez-les ci-dessus.</string>
     <string name="native_aa_setup_qr_no_bssid">L\'adresse WiFi (BSSID) de cet appareil n\'a pas pu être lue. Android Auto refuse un réseau qu\'il ne peut pas y rattacher.</string>

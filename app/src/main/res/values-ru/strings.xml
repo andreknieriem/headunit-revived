@@ -70,6 +70,8 @@
 
     <string name="bluetooth_address_s">Адрес Bluetooth</string>
     <string name="enter_bluetooth_mac">Введите MAC-адрес Bluetooth</string>
+    <string name="bluetooth_address_message">Собственный адрес этого устройства, по которому телефон его узнаёт. Найдите его в Настройках, О телефоне, Состояние, либо на сопряжённом телефоне под шестерёнкой рядом с этим устройством. Оставьте пустым для автоматического определения.</string>
+    <string name="invalid_bluetooth_address">Это не адрес Bluetooth. Введите шесть пар шестнадцатеричных цифр, например 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Сброс</string>
     <string name="gps_for_navigation">Использовать GPS</string>
     <string name="gps_for_navigation_description">Использовать GPS для навигации</string>
@@ -951,7 +953,11 @@
     <string name="connection_issue_banner_bssid">Ни один источник на этом устройстве не назвал его собственный MAC-адрес WiFi (BSSID), поэтому телефон так и не узнал, к какой сети подключаться. Проверены все, включая тот, которому не нужны разрешения. Нажмите, чтобы включить геолокацию, которая разблокирует остальные, или чтобы ввести адрес вручную.</string>
     <string name="connection_issue_banner_hotspot_off">Точка доступа этого устройства выключена, поэтому телефону не к чему подключиться. Включите точку доступа перед подключением или нажмите, чтобы приложение включило ее за вас.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Wi-Fi этого устройства не смог создать сеть Wi-Fi Direct для подключения телефона, и приложение не может сделать это принудительно. Если устройство подключено к другой сети Wi-Fi, попробуйте отключить ее. Нажмите, чтобы использовать точку доступа этого устройства.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Другое приложение на этом устройстве постоянно выключает и включает Wi-Fi Direct, поэтому сеть для подключения телефона создать не удаётся. Обычно причиной является предустановленное приложение проекции (CarLife, ZLink, CarPlay и подобные), и его стоит отключить. Нажмите, чтобы использовать собственную точку доступа этого устройства.</string>
     <string name="connection_issue_banner_hotspot_config">Не удалось получить имя и пароль точки доступа. Нажмите для ввода вручную.</string>
+    <string name="narrow_band_profile_cap">Снижать видео при радио только 2,4 ГГц</string>
+    <string name="narrow_band_profile_cap_description">Когда у Wi-Fi этого устройства нет диапазона 5 ГГц, запрашивать у телефона не более 720p и 30 кадр/с вместо настроек выше. На такой линии связи измерения показали, что поток на полной скорости не передавал изображение вовсе, а более низкий работал. Отключите, чтобы получать именно то, что вы задали.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Ваш телефон несколько раз подряд прекращал видео, не дождавшись ни одного кадра. Соединение Wi-Fi слишком медленное для изображения. Нажмите, чтобы снизить ограничение FPS до 30; также помогут меньшее разрешение и звук AAC.</string>
     <string name="connection_issue_banner_dismiss">Закрыть</string>
     <string name="connection_issue_remedy_hotspot_query">Имя и пароль точки доступа</string>
     <string name="preflight_title">Перед подключением</string>
@@ -977,6 +983,7 @@
     <string name="native_aa_setup_qr_not_drawn">Не удалось создать код.</string>
     <string name="native_aa_setup_qr_not_running">Сначала запустите подключение. Код содержит текущую сеть этого устройства, которой до этого нет.</string>
     <string name="native_aa_setup_qr_not_hotspot">Доступно только через точку доступа. Сеть WiFi Direct переименовывается при каждом создании, поэтому телефон запомнил бы ту, которой уже нет.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Точка доступа выбрана, но соединение всё ещё работает через Wi-Fi Direct. Перезапустите соединение и повторите попытку.</string>
     <string name="native_aa_setup_qr_not_listening">Это устройство ещё не ждёт телефон. Повторите попытку через мгновение.</string>
     <string name="native_aa_setup_qr_no_credentials">Имя или пароль сети пока неизвестны. Включите точку доступа или введите их вручную выше.</string>
     <string name="native_aa_setup_qr_no_bssid">Не удалось прочитать WiFi-адрес (BSSID) этого устройства. Android Auto отклоняет сеть, которую не может к нему привязать.</string>

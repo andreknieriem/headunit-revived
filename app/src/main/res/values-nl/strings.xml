@@ -69,6 +69,8 @@
 
     <string name="bluetooth_address_s">Bluetooth adres</string>
     <string name="enter_bluetooth_mac">Geef bluetooth MAC in</string>
+    <string name="bluetooth_address_message">Het eigen adres van dit apparaat, waaraan de telefoon het herkent. Je vindt het onder Instellingen, Over, Status, of op de gekoppelde telefoon onder het tandwiel naast dit apparaat. Laat leeg om het automatisch te laten detecteren.</string>
+    <string name="invalid_bluetooth_address">Dat is geen Bluetooth-adres. Geef zes paren hexadecimale tekens in, bijvoorbeeld 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Reset</string>
     <string name="gps_for_navigation">Gps for navigatie</string>
     <string name="gps_for_navigation_description">Gebruik Gps for navigatie</string>
@@ -952,7 +954,11 @@
     <string name="connection_issue_banner_bssid">Geen enkele bron op dit apparaat noemde het eigen WiFi-MAC-adres (BSSID), dus je telefoon hoorde nooit met welk netwerk hij moest verbinden. Alle bronnen zijn geprobeerd, ook een die geen toestemming nodig heeft. Tik om locatie aan te zetten, wat de rest vrijgeeft, of om het adres met de hand in te voeren.</string>
     <string name="connection_issue_banner_hotspot_off">De hotspot van dit apparaat staat uit, dus er was geen netwerk om je telefoon mee te verbinden. Schakel de hotspot in voordat je verbinding maakt, of tik om de app deze voor je te laten inschakelen.</string>
     <string name="connection_issue_banner_wifi_direct_refused">De wifi van dit apparaat kon het Wi-Fi Direct-netwerk niet aanmaken waarmee je telefoon verbinding wilde maken, en de app kan dit niet forceren. Als dit apparaat verbonden is met een ander wifi-netwerk, verbreek dan die verbinding om te testen. Tik om in plaats daarvan de hotspot van dit apparaat te gebruiken.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Een andere app op dit apparaat zet Wi-Fi Direct steeds uit en weer aan, waardoor er geen netwerk kan worden aangemaakt voor je telefoon. Meestal is een voorgeïnstalleerde projectie-app (CarLife, ZLink, CarPlay en dergelijke) de oorzaak, die uitschakelen is het proberen waard. Tik om in plaats daarvan de hotspot van dit apparaat te gebruiken.</string>
     <string name="connection_issue_banner_hotspot_config">Hotspot-naam en wachtwoord konden niet worden gelezen. Tik om handmatig in te voeren.</string>
+    <string name="narrow_band_profile_cap">Lagere video bij een radio met alleen 2,4 GHz</string>
+    <string name="narrow_band_profile_cap_description">Als de wifi van dit apparaat geen 5GHz-band heeft, vraag de telefoon dan om maximaal 720p en 30 fps in plaats van de instellingen hierboven. Op zo\'n verbinding bleek uit metingen dat een stream op volle snelheid helemaal geen beeld doorgaf, terwijl een lagere het wel volhield. Zet dit uit om precies te krijgen wat je hebt ingesteld.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Je telefoon heeft de video meerdere keren achter elkaar opgegeven voordat er ook maar één beeld binnenkwam. De wifi-verbinding is te traag voor het beeld. Tik om de FPS-limiet naar 30 te verlagen; een lagere resolutie en AAC-audio helpen ook.</string>
     <string name="connection_issue_banner_dismiss">Sluiten</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-naam en wachtwoord</string>
     <string name="preflight_title">Voordat je verbindt</string>
@@ -978,6 +984,7 @@
     <string name="native_aa_setup_qr_not_drawn">De code kon niet worden gemaakt.</string>
     <string name="native_aa_setup_qr_not_running">Start eerst de verbinding. De code bevat het huidige netwerk van dit apparaat, dat er daarvoor niet is.</string>
     <string name="native_aa_setup_qr_not_hotspot">Alleen beschikbaar via de hotspot. Een WiFi Direct-netwerk krijgt bij elke aanmaak een nieuwe naam, dus de telefoon zou er een onthouden die niet meer bestaat.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">De hotspot is gekozen, maar de verbinding loopt nog via Wi-Fi Direct. Start de verbinding opnieuw en probeer het dan nogmaals.</string>
     <string name="native_aa_setup_qr_not_listening">Dit apparaat wacht nog niet op de telefoon. Probeer het zo nog eens.</string>
     <string name="native_aa_setup_qr_no_credentials">De naam of het wachtwoord van het netwerk zijn nog niet bekend. Zet de hotspot aan of vul ze hierboven handmatig in.</string>
     <string name="native_aa_setup_qr_no_bssid">Het WiFi-adres (BSSID) van dit apparaat kon niet worden gelezen. Android Auto weigert een netwerk dat het daar niet aan kan koppelen.</string>

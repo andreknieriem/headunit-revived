@@ -69,6 +69,8 @@
 
     <string name="bluetooth_address_s">藍牙位址</string>
     <string name="enter_bluetooth_mac">輸入藍牙 MAC</string>
+    <string name="bluetooth_address_message">此主機自身的位址，手機以此辨識它。可在設定、關於、狀態中找到，或在已配對的手機上此裝置旁的齒輪圖示中查看。留空則自動偵測。</string>
+    <string name="invalid_bluetooth_address">這不是藍牙位址。請輸入六組十六進位數字，例如 0C:32:3A:2D:5D:4A。</string>
     <string name="reset">重置</string>
     <string name="gps_for_navigation">用於導航的 GPS</string>
     <string name="gps_for_navigation_description">使用 GPS 進行導航</string>
@@ -951,7 +953,11 @@
     <string name="connection_issue_banner_bssid">此主機沒有任何來源回報自己的 WiFi MAC 位址（BSSID），因此手機始終不知道該加入哪個網路。所有來源都已嘗試，包括一個不需要權限的來源。輕觸以開啟定位（可解除其餘來源的封鎖），或手動輸入位址。</string>
     <string name="connection_issue_banner_hotspot_off">此主機的熱點已關閉，因此沒有可供手機加入的網路。連線前請先開啟熱點，或輕觸讓應用程式為您開啟。</string>
     <string name="connection_issue_banner_wifi_direct_refused">此主機的 WiFi 無法建立手機要加入的 WiFi Direct 網路，且應用程式無法強制建立。若此主機已連線至其他 WiFi 網路，建議嘗試中斷連線。輕觸以改用此主機本身的熱點。</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">此主機上的其他應用程式不斷關閉又開啟 WiFi Direct，因此無法建立手機要加入的網路。通常原因是預先安裝的投影應用程式（CarLife、ZLink、CarPlay 之類），建議停用試試。輕觸以改用此主機本身的熱點。</string>
     <string name="connection_issue_banner_hotspot_config">無法取得熱點名稱與密碼。輕觸以手動輸入。</string>
+    <string name="narrow_band_profile_cap">僅有 2.4 GHz 無線時降低影像</string>
+    <string name="narrow_band_profile_cap_description">當此主機的 WiFi 沒有 5 GHz 頻段時，改為向手機要求最高 720p 與 30 fps，而非上方的設定。實測顯示在這種連線上，全速串流完全傳不出畫面，較低的設定則能維持。若要完全依照您的設定，請關閉此選項。</string>
+    <string name="connection_issue_banner_video_link_too_slow">手機連續多次在第一個影格送達前就放棄影像。WiFi 連線太慢，無法承載畫面。輕觸以將 FPS 上限降為 30；降低解析度與改用 AAC 音訊也有幫助。</string>
     <string name="connection_issue_banner_dismiss">關閉</string>
     <string name="connection_issue_remedy_hotspot_query">熱點名稱與密碼</string>
     <string name="preflight_title">連線前檢查</string>
@@ -977,6 +983,7 @@
     <string name="native_aa_setup_qr_not_drawn">無法產生代碼。</string>
     <string name="native_aa_setup_qr_not_running">請先開始連線。代碼帶有此主機目前的網路，在那之前並不存在。</string>
     <string name="native_aa_setup_qr_not_hotspot">僅在熱點模式下可用。WiFi Direct 網路每次建立都會重新命名，手機會記住一個已不存在的網路。</string>
+    <string name="native_aa_setup_qr_transport_not_applied">已選擇熱點，但連線仍在 WiFi Direct 上執行。請重新啟動連線後再試一次。</string>
     <string name="native_aa_setup_qr_not_listening">此主機尚未等待手機連入。請稍候再試。</string>
     <string name="native_aa_setup_qr_no_credentials">尚不知道網路名稱或密碼。請開啟熱點，或在上方手動輸入。</string>
     <string name="native_aa_setup_qr_no_bssid">無法讀取此主機的 WiFi 位址（BSSID）。Android Auto 會拒絕無法對應到位址的網路。</string>

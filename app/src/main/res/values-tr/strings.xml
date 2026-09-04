@@ -75,6 +75,8 @@
 
     <string name="bluetooth_address_s">Bluetooth adresi</string>
     <string name="enter_bluetooth_mac">Bluetooth MAC adresi girin</string>
+    <string name="bluetooth_address_message">Bu cihazın kendi adresi; telefon onu bu adresle tanır. Ayarlar, Hakkında, Durum bölümünde ya da eşleştirilmiş telefonda bu cihazın yanındaki dişli simgesinde bulabilirsiniz. Otomatik olarak algılanması için boş bırakın.</string>
+    <string name="invalid_bluetooth_address">Bu bir Bluetooth adresi değil. Altı çift onaltılık rakam girin, örneğin 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">Sıfırla</string>
     <string name="gps_for_navigation">Navigasyon için GPS</string>
     <string name="gps_for_navigation_description">Navigasyon için GPS kullan</string>
@@ -947,7 +949,11 @@
     <string name="connection_issue_banner_bssid">Bu cihazdaki hiçbir kaynak kendi WiFi MAC adresini (BSSID) bildirmedi, bu yüzden telefonunuz hangi ağa katılacağını hiç öğrenemedi. Hepsi denendi, izin gerektirmeyen biri de dahil. Diğerlerinin önünü açan konumu açmak ya da adresi elle girmek için dokunun.</string>
     <string name="connection_issue_banner_hotspot_off">Bu cihazın erişim noktası kapalı olduğundan telefonun bağlanacağı bir ağ yoktu. Bağlanmadan önce erişim noktasını açın veya uygulamanın sizin için açması için dokunun.</string>
     <string name="connection_issue_banner_wifi_direct_refused">Bu cihazın Wi-Fi\'ı, telefonunuzun katılacağı Wi-Fi Direct ağını oluşturamadı ve uygulama bunu zorlayamaz. Cihaz başka bir Wi-Fi ağına bağlıysa bağlantısını kesmeyi deneyin. Bunun yerine bu cihazın kendi erişim noktasını kullanmak için dokunun.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">Bu cihazdaki başka bir uygulama Wi-Fi Direct\'i sürekli kapatıp açıyor, bu yüzden telefonunuzun katılacağı bir ağ oluşturulamıyor. Genellikle önceden yüklü bir yansıtma uygulaması (CarLife, ZLink, CarPlay ve benzerleri) buna yol açar, devre dışı bırakmayı denemeye değer. Bunun yerine bu cihazın kendi erişim noktasını kullanmak için dokunun.</string>
     <string name="connection_issue_banner_hotspot_config">Erişim noktası adı ve şifresi alınamadı. Manuel girmek için dokunun.</string>
+    <string name="narrow_band_profile_cap">Yalnızca 2,4 GHz radyoda videoyu düşür</string>
+    <string name="narrow_band_profile_cap_description">Bu cihazın Wi-Fi\'ında 5 GHz bandı yoksa, yukarıdaki ayarlar yerine telefondan en fazla 720p ve 30 fps iste. Böyle bir bağlantıda tam hızlı akışın hiç görüntü taşımadığı, daha düşüğünün ise tutunduğu ölçüldü. İstediğiniz ayarların aynen uygulanması için bunu kapatın.</string>
+    <string name="connection_issue_banner_video_link_too_slow">Telefonunuz üst üste birkaç kez, tek bir kare bile gelmeden videodan vazgeçti. Wi-Fi bağlantısı görüntüyü taşıyamayacak kadar yavaş. FPS sınırını 30\'a düşürmek için dokunun; daha düşük çözünürlük ve AAC ses de yardımcı olur.</string>
     <string name="connection_issue_banner_dismiss">Kapat</string>
     <string name="connection_issue_remedy_hotspot_query">Erişim noktası adı ve şifresi</string>
     <string name="preflight_title">Bağlanmadan önce</string>
@@ -973,6 +979,7 @@
     <string name="native_aa_setup_qr_not_drawn">Kod oluşturulamadı.</string>
     <string name="native_aa_setup_qr_not_running">Önce bağlantıyı başlatın. Kod, bu cihazın güncel ağını taşır; o ana kadar böyle bir ağ yoktur.</string>
     <string name="native_aa_setup_qr_not_hotspot">Yalnızca erişim noktası ile kullanılabilir. WiFi Direct ağı her oluşturulduğunda yeniden adlandırılır, bu yüzden telefon artık var olmayan bir ağı hatırlardı.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">Erişim noktası seçili, ancak bağlantı hâlâ Wi-Fi Direct üzerinden çalışıyor. Bağlantıyı yeniden başlatıp tekrar deneyin.</string>
     <string name="native_aa_setup_qr_not_listening">Bu cihaz henüz telefonu beklemiyor. Birazdan tekrar deneyin.</string>
     <string name="native_aa_setup_qr_no_credentials">Ağın adı veya parolası henüz bilinmiyor. Erişim noktasını açın ya da yukarıdan elle girin.</string>
     <string name="native_aa_setup_qr_no_bssid">Bu cihazın WiFi adresi (BSSID) okunamadı. Android Auto, bir adrese bağlayamadığı ağı kabul etmez.</string>

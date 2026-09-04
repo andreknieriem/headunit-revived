@@ -76,6 +76,8 @@
 
     <string name="bluetooth_address_s">Bluetooth მისამართი</string>
     <string name="enter_bluetooth_mac">შეიყვანეთ Bluetooth MAC</string>
+    <string name="bluetooth_address_message">ამ მოწყობილობის საკუთარი მისამართი, რომლითაც ტელეფონი ცნობს მას. იხილეთ პარამეტრებში, შესახებ, სტატუსი, ან დაწყვილებულ ტელეფონში ამ მოწყობილობის გვერდით არსებულ კბილანაზე. დატოვეთ ცარიელი ავტომატური აღმოჩენისთვის.</string>
+    <string name="invalid_bluetooth_address">ეს არ არის Bluetooth-ის მისამართი. შეიყვანეთ თექვსმეტობითი ციფრების ექვსი წყვილი, მაგალითად 0C:32:3A:2D:5D:4A.</string>
     <string name="reset">ჩამოყრა</string>
     <string name="reset_settings">ნაგულისხმევ პარამეტრებზე დაბრუნება</string>
     <string name="reset_settings_confirm">დარწმუნებული ხართ, რომ გსურთ ყველა პარამეტრის საწყის მნიშვნელობებზე ჩამოყრა? ეს გადატვირთავს აპლიკაციას.</string>
@@ -933,7 +935,11 @@
     <string name="connection_issue_banner_bssid">ამ მოწყობილობის არცერთმა წყარომ არ დაასახელა მისივე WiFi MAC მისამართი (BSSID), ამიტომ ტელეფონმა ვერასდროს გაიგო, რომელ ქსელს უნდა დაუკავშირდეს. ყველა წყარო შემოწმდა, მათ შორის ის, რომელსაც ნებართვა არ სჭირდება. შეეხეთ, რომ ჩართოთ მდებარეობა, რაც დანარჩენებს გახსნის, ან რომ მისამართი ხელით შეიყვანოთ.</string>
     <string name="connection_issue_banner_hotspot_off">ამ მოწყობილობის Hotspot გამორთულია, ამიტომ ქსელი არ იყო ხელმისაწვდომი ტელეფონის დასაკავშირებლად. ჩართეთ Hotspot დაკავშირებამდე ან შეეხეთ, რათა აპმა ჩართოს თქვენ ნაცვლად.</string>
     <string name="connection_issue_banner_wifi_direct_refused">ამ მოწყობილობის WiFi-მ ვერ შექმნა WiFi Direct ქსელი, რომელსაც თქვენი ტელეფონი უნდა შეერთებოდა, და აპლიკაციას არ შეუძლია ამის იძულება. თუ მოწყობილობა სხვა WiFi-ს უკავშირდება, სცადეთ მისი გათიშვა. შეეხეთ, რათა გამოიყენოთ ამ მოწყობილობის საკუთარი Hotspot.</string>
+    <string name="connection_issue_banner_wifi_direct_cycled">ამ მოწყობილობაზე სხვა აპლიკაცია მუდმივად თიშავს და რთავს WiFi Direct-ს, ამიტომ ვერ იქმნება ქსელი, რომელსაც თქვენი ტელეფონი შეუერთდებოდა. ჩვეულებრივ მიზეზი წინასწარ დაყენებული პროექციის აპლიკაციაა (CarLife, ZLink, CarPlay და მსგავსები) და ღირს მისი გათიშვა. შეეხეთ ამ მოწყობილობის საკუთარი Hotspot-ის გამოსაყენებლად.</string>
     <string name="connection_issue_banner_hotspot_config">Hotspot-ის სახელი და პაროლი ვერ მოიძებნა. შეიყვანეთ ხელით.</string>
+    <string name="narrow_band_profile_cap">ვიდეოს დაწევა მხოლოდ 2.4 გჰც რადიოზე</string>
+    <string name="narrow_band_profile_cap_description">როცა ამ მოწყობილობის WiFi-ს არ აქვს 5 გჰც დიაპაზონი, ზემოთ მითითებული პარამეტრების ნაცვლად ტელეფონს მოთხოვეთ მაქსიმუმ 720p და წამში 30 კადრი. ასეთ კავშირზე გაზომვამ აჩვენა, რომ სრული სიჩქარის ნაკადი საერთოდ არ გადმოსცემდა სურათს, დაბალი კი ინარჩუნებდა. გამორთეთ, რომ ზუსტად ის მიიღოთ, რაც მიუთითეთ.</string>
+    <string name="connection_issue_banner_video_link_too_slow">თქვენმა ტელეფონმა ზედიზედ რამდენჯერმე შეწყვიტა ვიდეო ერთი კადრის მოსვლამდეც კი. WiFi კავშირი ძალიან ნელია სურათის გადასაცემად. შეეხეთ FPS-ის ზღვრის 30-მდე დასაწევად; ასევე დაეხმარება დაბალი გარჩევადობა და AAC აუდიო.</string>
     <string name="connection_issue_banner_dismiss">დახურვა</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-ის სახელი და პაროლი</string>
     <string name="preflight_title">დაკავშირებამდე</string>
@@ -959,6 +965,7 @@
     <string name="native_aa_setup_qr_not_drawn">კოდის შექმნა ვერ მოხერხდა.</string>
     <string name="native_aa_setup_qr_not_running">ჯერ დაიწყეთ კავშირი. კოდი შეიცავს ამ მოწყობილობის მიმდინარე ქსელს, რომელიც მანამდე არ არსებობს.</string>
     <string name="native_aa_setup_qr_not_hotspot">ხელმისაწვდომია მხოლოდ Hotspot-ით. WiFi Direct-ის ქსელს ყოველი შექმნისას ეცვლება სახელი, ამიტომ ტელეფონი დაიმახსოვრებდა ქსელს, რომელიც აღარ არსებობს.</string>
+    <string name="native_aa_setup_qr_transport_not_applied">არჩეულია Hotspot, მაგრამ კავშირი ჯერ კიდევ WiFi Direct-ზე მუშაობს. გადატვირთეთ კავშირი და კვლავ სცადეთ.</string>
     <string name="native_aa_setup_qr_not_listening">ეს მოწყობილობა ჯერ არ ელოდება ტელეფონს. სცადეთ ისევ ცოტა ხანში.</string>
     <string name="native_aa_setup_qr_no_credentials">ქსელის სახელი ან პაროლი ჯერ უცნობია. ჩართეთ Hotspot ან შეიყვანეთ ისინი ხელით ზემოთ.</string>
     <string name="native_aa_setup_qr_no_bssid">ამ მოწყობილობის WiFi მისამართის (BSSID) წაკითხვა ვერ მოხერხდა. Android Auto უარყოფს ქსელს, რომელსაც მისამართს ვერ დაუკავშირებს.</string>
