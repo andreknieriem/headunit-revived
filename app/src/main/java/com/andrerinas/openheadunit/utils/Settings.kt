@@ -1986,6 +1986,11 @@ class Settings(private val context: Context) {
         get() = prefs.getLong("connection-issue-video-starved", 0L)
         set(value) = prefs.edit().putLong("connection-issue-video-starved", value).apply()
 
+    /** Every 5 GHz channel the pinned one was walked across was refused a group owner. */
+    var connectionIssueFiveGhzChannelRefusedAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-5ghz-channel-refused", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-5ghz-channel-refused", value).apply()
+
     /**
      * When the user last dismissed the failure banner.
      *

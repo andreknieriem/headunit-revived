@@ -2082,7 +2082,11 @@ class NativeAaHandshakeManager(
                     val device = if (v.hasDeviceInfo()) {
                         " device=${v.deviceInfo.deviceId} lifetime=${v.deviceInfo.connectivityLifetimeId}"
                     } else ""
-                    AppLog.i("NativeAA: [RX] WifiVersionResponse v${v.major}.${v.minor} status=${WppStatus.describe(if (v.hasStatus()) v.status else null)}$device")
+                    // The phone's own answer to which band it wants (2.4-only / 5-only / dual). The
+                    // one place it says so, and the only check on a channel we cannot read back.
+                    val channelType =
+                        if (v.hasSelectedWifiChannelType()) " channelType=${v.selectedWifiChannelType}" else ""
+                    AppLog.i("NativeAA: [RX] WifiVersionResponse v${v.major}.${v.minor} status=${WppStatus.describe(if (v.hasStatus()) v.status else null)}$channelType$device")
                 }
                 WppMessageType.CONNECT_STATUS -> {
                     val s = Wireless.WifiConnectStatus.parseFrom(msg.payload)

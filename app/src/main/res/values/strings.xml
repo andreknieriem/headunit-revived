@@ -803,6 +803,7 @@
     <string name="five_ghz_channel">5 GHz channel</string>
     <string name="five_ghz_channel_auto">Automatic</string>
     <string name="five_ghz_channel_option">Channel %1$d (%2$d MHz)</string>
+    <string name="five_ghz_channel_hint">A channel is a request, not a guarantee. Many units will only host a network where their own WiFi driver chooses, and the app can only tell you so after trying. If no 5 GHz channel works and your phone still cannot see the network, the band above is the setting that will.</string>
     <string name="stand_down_station">Leave this unit\'s WiFi network while connecting</string>
     <string name="stand_down_station_description">Disconnects this head unit from its own WiFi network just before the WiFi Direct group is created, and reconnects it when the session ends. On a single-radio unit a joined network leaves the group no free channel, so the group is forced onto that network\'s channel or is refused outright. Try this if your phone never joins. Note that most units measured so far run better with the network joined, so turn it back off if the picture gets worse.</string>
     <string name="stand_down_station_needs_overlay">Needs the \"display over other apps\" permission on this Android version.</string>
@@ -997,6 +998,7 @@
     <string name="narrow_band_profile_cap">Lower video on a 2.4 GHz-only radio</string>
     <string name="narrow_band_profile_cap_description">When this unit\'s WiFi has no 5 GHz band, ask the phone for at most 720p and 30 fps instead of the settings above. On such a link a full-rate stream was measured to carry no picture at all, while a lower one held. Turn this off to be given what you asked for.</string>
     <string name="connection_issue_banner_video_link_too_slow">Your phone gave up on the video before a single frame arrived, several times in a row. The WiFi link is too slow to carry the picture. Tap to lower the FPS limit to 30; a lower resolution and AAC audio also help.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">This unit refused to put its WiFi Direct network on any 5 GHz channel you chose, so it went up on the one its own WiFi driver picked. That channel is often one phones in stricter countries cannot even see. Tap to set the WiFi Direct band to 2.4 GHz, which every country allows; expect 720p rather than 1080p on it.</string>
     <string name="connection_issue_banner_dismiss">Dismiss</string>
     <!-- What the hotspot banner types into the settings search. Both override rows carry it
          as a search keyword, so this one string is what makes the tap reach the pair. -->

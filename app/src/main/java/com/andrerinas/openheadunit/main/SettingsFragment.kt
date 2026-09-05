@@ -3876,6 +3876,10 @@ class SettingsFragment : Fragment() {
                     .show()
             }
         ))
+        items.add(SettingItem.InfoBanner(
+            stableId = "fiveGhzChannelHint",
+            textResId = R.string.five_ghz_channel_hint
+        ))
     }
 
     /**
