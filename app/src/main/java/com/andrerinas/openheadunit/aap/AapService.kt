@@ -2352,12 +2352,21 @@ class AapService : Service() {
             ACTION_NATIVE_AA_SWITCH_DEVICE -> {
                 val targetMac = intent?.getStringExtra(EXTRA_MAC)
                 AppLog.i("AapService: ACTION_NATIVE_AA_SWITCH_DEVICE received (targetMac=$targetMac)")
+                // The phone projecting now is the one the driver is moving away from, and ending
+                // the session reopens the Android Auto listeners it comes straight back through.
+                (wifiLauncherManager.active as? WifiLauncherNative)
+                    ?.handshakeManager?.beginDriverSwitch(settings.lastConnectedNativeMac)
                 serviceScope.launch {
                     if (commManager.isConnected) {
+                        // Not a user exit: that answer makes SessionEndGroupPolicy STOP the
+                        // launcher, and the network the next driver's phone is about to be sent to
+                        // goes with it. And the switch outlives "close app on disconnect", or there
+                        // is nothing left to show a selector on.
                         commManager.disconnect(
                             sendByeBye = true,
-                            isUserExit = true,
-                            byeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.DEVICE_SWITCH
+                            isUserExit = false,
+                            byeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.DEVICE_SWITCH,
+                            honorKillOnDisconnect = false
                         )
                         commManager.awaitDisconnectComplete()
                     }
@@ -2388,11 +2397,16 @@ class AapService : Service() {
                 AppLog.i("AapService: ACTION_NATIVE_AA_PROMPT_SHOWN received")
                 val launcher = wifiLauncherManager.active
                 if (launcher is WifiLauncherNative) {
-                    launcher.handshakeManager?.let { hm ->
-                        hm.isSelectionPromptActive = true
-                        hm.isSelectionCanceled = false
-                        hm.cancelActivePokeLoop()
-                    }
+                    launcher.handshakeManager?.onSelectionPromptShown()
+                }
+            }
+            ACTION_NATIVE_AA_PROMPT_DISMISSED -> {
+                // The mirror of the line above, and the only signal that covers a dialog dismissed
+                // by leaving the app: that path reaches onDismiss, never onCancel.
+                AppLog.i("AapService: ACTION_NATIVE_AA_PROMPT_DISMISSED received")
+                val launcher = wifiLauncherManager.active
+                if (launcher is WifiLauncherNative) {
+                    launcher.handshakeManager?.onSelectionPromptDismissed()
                 }
             }
             ACTION_BT_AUTO_START          -> {
@@ -2403,6 +2417,9 @@ class AapService : Service() {
                 val sessionUp = commManager.isConnected ||
                     commManager.connectionState.value is CommManager.ConnectionState.Connecting
                 val launcher = wifiLauncherManager.active as? WifiLauncherNative
+                // Before the policy, and unconditionally: a cancelled prompt otherwise refuses the
+                // very phone whose arrival raised this.
+                launcher?.handshakeManager?.clearSelectionCancel()
                 val attemptInFlight = launcher?.handshakeManager?.isAttemptInFlight()
 
                 val networkComingUp = launcher?.networkComingUp()
@@ -2789,6 +2806,7 @@ class AapService : Service() {
         const val ACTION_NATIVE_AA_SWITCH_DEVICE   = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_SWITCH_DEVICE"
         const val ACTION_NATIVE_AA_CANCEL_POKE      = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_CANCEL_POKE"
         const val ACTION_NATIVE_AA_PROMPT_SHOWN     = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_PROMPT_SHOWN"
+        const val ACTION_NATIVE_AA_PROMPT_DISMISSED = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_PROMPT_DISMISSED"
         const val ACTION_NEARBY_CONNECT             = "com.andrerinas.openheadunit.ACTION_NEARBY_CONNECT"
         const val ACTION_CHECK_USB                 = "com.andrerinas.openheadunit.ACTION_CHECK_USB"
         const val ACTION_STOP_SERVICE              = "com.andrerinas.openheadunit.aap.action.STOP_SERVICE"

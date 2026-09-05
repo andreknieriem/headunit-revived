@@ -855,7 +855,10 @@ class CommManager(
     fun disconnect(
         sendByeBye: Boolean = true,
         isUserExit: Boolean = true,
-        byeByeReason: com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.USER_SELECTION
+        byeByeReason: com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.USER_SELECTION,
+        // A disconnect the app itself takes in order to show something next cannot honour "close
+        // app on disconnect": there would be nothing left to show it on.
+        honorKillOnDisconnect: Boolean = true
     ) {
         if (_connectionState.value is ConnectionState.Disconnected) return
 
@@ -866,7 +869,7 @@ class CommManager(
             _transport?.wasUserExit = true
         }
         _disconnectJob = _scope.launch { doDisconnect(sendByeBye, byeByeReason) }
-        if (settings.killOnDisconnect) {
+        if (settings.killOnDisconnect && honorKillOnDisconnect) {
             context.sendBroadcast(android.content.Intent("com.andrerinas.openheadunit.ACTION_FINISH_ACTIVITIES").apply {
                 setPackage(context.packageName)
             })

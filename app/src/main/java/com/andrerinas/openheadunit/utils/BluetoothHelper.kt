@@ -224,19 +224,28 @@ object BluetoothHelper {
     }
 
     /**
-     * Checks whether a specific Bluetooth device is currently connected to this unit.
+     * Whether [device] is connected to this unit, or null when that cannot be read.
      *
-     * Uses reflection on the hidden `@hide` [BluetoothDevice.isConnected] method (available since
-     * Android 4.0 / API 14), making it compatible from SDK 16 up to Android 15. Catches any security
-     * or reflection exceptions and returns false if unreadable.
+     * Reflection on the hidden `BluetoothDevice.isConnected`, which needs only BLUETOOTH_CONNECT and
+     * carries no `maxTargetSdk`, so it answers on API 21 through 36. It does not exist before API 21,
+     * where this returns null rather than a wrong "not connected".
      */
-    fun isDeviceConnected(device: BluetoothDevice): Boolean {
+    fun deviceConnectionState(device: BluetoothDevice): Boolean? {
+        val method = isConnectedMethod ?: return null
         return try {
-            isConnectedMethod?.invoke(device) as? Boolean ?: false
+            method.invoke(device) as? Boolean
         } catch (e: Exception) {
-            false
+            null
         }
     }
+
+    /**
+     * Checks whether a specific Bluetooth device is currently connected to this unit.
+     *
+     * An unreadable answer counts as not connected. Callers that must tell those apart - a guard
+     * that would act on absence - ask [deviceConnectionState] instead.
+     */
+    fun isDeviceConnected(device: BluetoothDevice): Boolean = deviceConnectionState(device) == true
 
     /**
      * Determines whether a Bluetooth device is likely to be a smartphone / Android Auto candidate,

@@ -85,8 +85,13 @@ object BluetoothWakePolicy {
      * to create. Units where the poke is load-bearing have no such link to read, so they keep
      * today's behaviour — as does [HandsFreeLink.UNREADABLE], since an adapter that will not report
      * its profiles must not silently disable a mechanism some units cannot connect without.
+     *
+     * That reasoning only holds while the link could be the poke target's own. The read is
+     * adapter-wide, so during a driver switch it reports the phone being left, and standing the wake
+     * down for it strands the switch: [linkIsAnotherPhones] says the link is somebody else's.
      */
-    fun shouldPoke(handsFreeLink: HandsFreeLink): Boolean = handsFreeLink != HandsFreeLink.CONNECTED
+    fun shouldPoke(handsFreeLink: HandsFreeLink, linkIsAnotherPhones: Boolean = false): Boolean =
+        handsFreeLink != HandsFreeLink.CONNECTED || linkIsAnotherPhones
 
     /** What a stored Auto Start MAC's pairing state read as, when the poke went looking for it. */
     enum class BondReading {
