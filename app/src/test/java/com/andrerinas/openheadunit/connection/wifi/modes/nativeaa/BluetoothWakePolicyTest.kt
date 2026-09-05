@@ -80,6 +80,37 @@ class BluetoothWakePolicyTest {
         assertEquals(listOf(BluetoothWakePolicy.HandsFreeLink.CONNECTED), suppressed)
     }
 
+    /**
+     * The driver-switch case. The hands-free read is adapter-wide, so during a switch it reports the
+     * phone being left; standing the incoming phone's wake down for it stranded the whole switch.
+     */
+    @Test
+    fun `a hands-free link that is another phone's does not suppress the poke`() {
+        assertTrue(BluetoothWakePolicy.shouldPoke(BluetoothWakePolicy.HandsFreeLink.CONNECTED, true))
+    }
+
+    @Test
+    fun `a hands-free link that could be this phone's still suppresses the poke`() {
+        assertFalse(BluetoothWakePolicy.shouldPoke(BluetoothWakePolicy.HandsFreeLink.CONNECTED, false))
+    }
+
+    /** Only a connected link was ever the reason to stand down, so the new input changes nothing else. */
+    @Test
+    fun `whose link it is only matters while one is up`() {
+        for (owned in listOf(true, false)) {
+            assertTrue(BluetoothWakePolicy.shouldPoke(BluetoothWakePolicy.HandsFreeLink.ABSENT, owned))
+            assertTrue(BluetoothWakePolicy.shouldPoke(BluetoothWakePolicy.HandsFreeLink.UNREADABLE, owned))
+        }
+    }
+
+    /** Every existing caller passes one argument and must keep today's answer. */
+    @Test
+    fun `the default is that the link may be the poke target's own`() {
+        for (state in BluetoothWakePolicy.HandsFreeLink.values()) {
+            assertEquals(BluetoothWakePolicy.shouldPoke(state, false), BluetoothWakePolicy.shouldPoke(state))
+        }
+    }
+
     // --- pairing: strict about poking, lenient about forgetting ---
 
     private val BONDED = BluetoothWakePolicy.BondReading.BONDED

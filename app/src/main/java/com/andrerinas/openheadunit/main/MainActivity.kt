@@ -74,9 +74,11 @@ class MainActivity : BaseActivity() {
      * non-blocking status indicator at the top of the home screen used for
      * fully automatic background attempts so the home buttons stay tappable.
      * OVERLAY is the full-screen custom loading screen used for connections
-     * the user explicitly triggered with a button.
+     * the user explicitly triggered with a button. PILL_THEN_OVERLAY starts as
+     * the pill and becomes the overlay once the connection actually advances,
+     * for an attempt whose phone still has to be woken and may never answer.
      */
-    enum class ConnectionUiMode { PILL, OVERLAY }
+    enum class ConnectionUiMode { PILL, OVERLAY, PILL_THEN_OVERLAY }
 
     private val finishReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
@@ -291,7 +293,8 @@ class MainActivity : BaseActivity() {
      */
     private fun showAutoConnectUi() {
         when (autoConnectMode) {
-            ConnectionUiMode.PILL -> showAutoConnectPill()
+            ConnectionUiMode.PILL,
+            ConnectionUiMode.PILL_THEN_OVERLAY -> showAutoConnectPill()
             ConnectionUiMode.OVERLAY -> showAutoConnectOverlay()
         }
     }
@@ -336,6 +339,17 @@ class MainActivity : BaseActivity() {
                             // was requested); ensure it is in case the request raced with
                             // setContentView or the activity was recreated mid-attempt.
                             if (autoConnectInProgress) {
+                                // A deferred attempt has now proven a phone is answering, so it
+                                // may take the full screen.
+                                if (autoConnectMode == ConnectionUiMode.PILL_THEN_OVERLAY) {
+                                    AppLog.i("Auto-connect: a phone is answering, taking the full screen.")
+                                    autoConnectMode = ConnectionUiMode.OVERLAY
+                                    hideAutoConnectPill()
+                                    // The pill said this phone was disconnected. It is answering now,
+                                    // so that text must not follow it onto the projection screen.
+                                    autoConnectStatusText = null
+                                    AapProjectionActivity.pendingStatusText = null
+                                }
                                 showAutoConnectUi()
                             }
                         }
@@ -689,6 +703,12 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    fun dismissSplashImmediately() {
+        val overlay = findViewById<View>(R.id.splash_overlay) ?: return
+        overlay.animate().cancel()
+        overlay.visibility = View.GONE
+    }
+
     private fun setupWifiDirectInfo() {
         val tvInfo = findViewById<android.widget.TextView>(R.id.wifi_direct_info)
         val settings = Settings(this)
@@ -782,6 +802,12 @@ class MainActivity : BaseActivity() {
 
     private fun handleLaunchIntent(intent: Intent?) {
         if (intent == null) return
+
+        if (intent.getBooleanExtra(EXTRA_SHOW_DRIVER_SELECTOR, false)) {
+            AppLog.i("MainActivity: EXTRA_SHOW_DRIVER_SELECTOR received")
+            HomeFragment.requestDriverSelection = true
+            intent.removeExtra(EXTRA_SHOW_DRIVER_SELECTOR)
+        }
 
         val intentData = intent.data
         val intentAction = intent.action
@@ -1106,6 +1132,7 @@ class MainActivity : BaseActivity() {
         private const val permissionRequestCode = 97
         const val EXTRA_LAUNCH_SOURCE = "launch_source"
         const val LAUNCH_SOURCE_BLUETOOTH = "Bluetooth auto-start"
+        const val EXTRA_SHOW_DRIVER_SELECTOR = "show_driver_selector"
 
         /** Launch sources that mean the app opened itself, with nobody necessarily watching. */
         private val AUTOMATIC_LAUNCH_SOURCES = setOf(

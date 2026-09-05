@@ -33,17 +33,25 @@ object BluetoothDevicePicker {
     /**
      * Shows the list with [selectedMacs] ticked. OK commits the working set, "Remove" the empty set,
      * Cancel nothing. Returns false when there was nothing to show: no adapter, off, or unpaired.
+     *
+     * [deviceFilter] narrows the paired rows for a list only some devices belong in. Ignored when it
+     * would leave the list empty, and never applied to a stored MAC's own row.
      */
     fun show(
         context: Context,
         @StringRes titleResId: Int,
         selectedMacs: Set<String>,
+        deviceFilter: ((BluetoothDevice) -> Boolean)? = null,
         onCommit: (Set<String>) -> Unit
     ): Boolean {
         val adapter = BluetoothHelper.getBluetoothAdapter(context)
         if (adapter == null || !adapter.isEnabled) return false
 
-        val bondedDevices = adapter.bondedDevices.toList()
+        val allBonded = adapter.bondedDevices.toList()
+        val bondedDevices = deviceFilter
+            ?.let { f -> allBonded.filter { f(it) || it.address in selectedMacs } }
+            ?.ifEmpty { allBonded }
+            ?: allBonded
         // A stored address whose device is no longer paired still gets a row, by address, or the
         // only way to clear it would be to pair the device again.
         val bondedMacs = bondedDevices.map { it.address }.toSet()

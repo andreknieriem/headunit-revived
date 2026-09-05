@@ -852,7 +852,14 @@ class CommManager(
      * immediately, then schedules async cleanup via [doDisconnect]. A ByeByeRequest is sent
      * to the phone before closing the connection.
      */
-    fun disconnect(sendByeBye: Boolean = true, isUserExit: Boolean = true) {
+    fun disconnect(
+        sendByeBye: Boolean = true,
+        isUserExit: Boolean = true,
+        byeByeReason: com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.USER_SELECTION,
+        // A disconnect the app itself takes in order to show something next cannot honour "close
+        // app on disconnect": there would be nothing left to show it on.
+        honorKillOnDisconnect: Boolean = true
+    ) {
         if (_connectionState.value is ConnectionState.Disconnected) return
 
         HeadUnitScreenConfig.unlockResolution()
@@ -861,8 +868,8 @@ class CommManager(
         if (isUserExit) {
             _transport?.wasUserExit = true
         }
-        _disconnectJob = _scope.launch { doDisconnect(sendByeBye) }
-        if (settings.killOnDisconnect) {
+        _disconnectJob = _scope.launch { doDisconnect(sendByeBye, byeByeReason) }
+        if (settings.killOnDisconnect && honorKillOnDisconnect) {
             context.sendBroadcast(android.content.Intent("com.andrerinas.openheadunit.ACTION_FINISH_ACTIVITIES").apply {
                 setPackage(context.packageName)
             })
@@ -907,7 +914,10 @@ class CommManager(
      *   the connection is already dead, so `AapTransport.quit()` is called directly to skip
      *   the send and the sleep.
      */
-    private fun doDisconnect(sendByeBye: Boolean = true) {
+    private fun doDisconnect(
+        sendByeBye: Boolean = true,
+        byeByeReason: com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.USER_SELECTION
+    ) {
         // Capture and null out immediately to prevent a second doDisconnect() call
         // (from transportedQuited firing onQuit during stop()) from double-stopping.
         val transport = _transport
@@ -928,7 +938,7 @@ class CommManager(
             // Only send ByeByeRequest when we are initiating the disconnect (e.g. user pressed
             // disconnect). When the transport self-quit (read error, soTimeout), the connection
             // is already dead — skip the send and the 150 ms sleep inside stop().
-            if (sendByeBye) transport?.stop() else transport?.quit()
+            if (sendByeBye) transport?.stop(byeByeReason) else transport?.quit()
 
             // Explicitly stop and release decoders to prevent MediaCodec finalize() timeouts
             videoDecoder.stop("CommManager: doDisconnect")
