@@ -97,10 +97,14 @@ android {
         create("playstore") {
             dimension = "distribution"
             minSdk = 21
+            manifestPlaceholders["appLabel"] = "@string/title"
+            buildConfigField("Boolean", "OPTIMIZE_ULTRAWIDE", "false")
         }
-        create("github") {
+        create("emzoom") {
             dimension = "distribution"
-            // Default minSdk 16 from defaultConfig is used
+            applicationId = "com.sesam.emzoomaa"
+            manifestPlaceholders["appLabel"] = "Emzoom AA"
+            buildConfigField("Boolean", "OPTIMIZE_ULTRAWIDE", "true")
         }
     }
 
@@ -203,20 +207,35 @@ android {
         variant.outputs
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
-                var outputFileName = "${variant.applicationId}_${variant.versionName}_debug.apk"
-                if(variant.buildType.name == "release") {
-                    outputFileName = "${variant.applicationId}_${variant.versionName}.apk"
-                    output.outputFileName = outputFileName
-                }
+                val outputFileName = "${variant.name}_v${variant.versionName}.apk"
                 output.outputFileName = outputFileName
             }
+    }
+
+    // Auto-save Emzoom Debug APK to Desktop as "Emzoom AA.apk"
+    tasks.register<Copy>("saveEmzoomToDesktop") {
+        group = "distribution"
+        from(layout.buildDirectory.dir("outputs/apk/emzoom/debug"))
+        include("*.apk")
+        into(File("/Users/hussamselmy/Desktop"))
+        rename { "Emzoom AA.apk" }
+        dependsOn("assembleEmzoomDebug")
+    }
+
+    // Save Emzoom Release APK to Desktop
+    tasks.register<Copy>("saveEmzoomReleaseToDesktop") {
+        group = "distribution"
+        from(layout.buildDirectory.dir("outputs/apk/emzoom/release"))
+        include("*.apk")
+        into(File("/Users/hussamselmy/Desktop"))
+        dependsOn("assembleEmzoomRelease")
     }
 }
 
 dependencies {
     // Conscrypt (Flavor specific: 2.6.1 for Playstore 16KB alignment; 2.5.3 for Github minSdk 16)
     "playstoreImplementation"("org.conscrypt:conscrypt-android:2.6.1")
-    "githubImplementation"("org.conscrypt:conscrypt-android:2.5.3")
+    "emzoomImplementation"("org.conscrypt:conscrypt-android:2.5.3")
 
     implementation("com.google.protobuf:protobuf-java:3.25.1")
     implementation("androidx.activity:activity-ktx:1.8.2")

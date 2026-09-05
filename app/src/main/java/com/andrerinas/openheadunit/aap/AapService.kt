@@ -70,8 +70,8 @@ import android.media.AudioFocusRequest
 import android.view.View
 import android.view.WindowManager
 import android.media.AudioManager
-import com.andrerinas.openheadunit.connection.self.SelfLauncherManager
 import com.andrerinas.openheadunit.connection.usb.UsbLauncherManager
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.ProjectionQrSnapshot
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTeardownPolicy
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTrigger
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
@@ -116,7 +116,6 @@ class AapService : Service() {
     private var mediaSession: MediaSessionCompat? = null
     private val wifiLauncherManager = WifiLauncherManager(this)
     private val usbLauncherManager = UsbLauncherManager(this)
-    private val selfLauncherManager = SelfLauncherManager(this, wifiLauncherManager)
 
     /**
      * Set when a link-loss teardown closed the session because station WiFi was going away.
@@ -280,7 +279,11 @@ class AapService : Service() {
 
     private val commManager get() = App.provide(this).commManager
 
-    fun isSelfModeActive() = selfLauncherManager.isActive
+    fun nativeAttemptInFlight(): Boolean? =
+        (wifiLauncherManager.active as? WifiLauncherNative)?.handshakeManager?.isAttemptInFlight()
+
+    fun projectionQrSnapshot(): ProjectionQrSnapshot? =
+        (wifiLauncherManager.active as? WifiLauncherNative)?.handshakeManager?.projectionQrSnapshot()
 
     fun updateMediaSessionState(isPlaying: Boolean) {
         mediaSessionIsPlaying = isPlaying
@@ -1441,16 +1444,6 @@ class AapService : Service() {
      * disconnect) produce `isClean = false`.
      */
     private fun scheduleReconnectIfNeeded(state: CommManager.ConnectionState.Disconnected) {
-        if (selfLauncherManager.isActive) {
-            AppLog.i("AapService: Self Mode disconnected. Not restarting.")
-            selfLauncherManager.isActive = false
-            // Beside isActive, so a disconnect that lands mid-launch cannot leave Self Mode
-            // refusing every later request.
-            selfLauncherManager.clearLaunchInFlight()
-            wifiLauncherManager.stop()
-            return
-        }
-
         val settings = App.provide(this).settings
 
         if (wifiLauncherManager.isActive) {
@@ -1842,7 +1835,6 @@ class AapService : Service() {
         AppLog.i("AapService: releasing the dummy VPN (owner=$owner, reason=$reason)")
         VpnControl.stopVpn(this)
         dummyVpnOwner = null
-        selfLauncherManager.stopDummyVpnWatchdog()
     }
 
     /**
@@ -1854,21 +1846,13 @@ class AapService : Service() {
      * session.
      */
     private fun maybeStartSessionDummyVpn() {
-        selfLauncherManager.stopDummyVpnWatchdog()
-
         val available = VpnControl.isVpnAvailable()
         val wanted = DummyVpnPolicy.shouldStartForSession(
             keepDuringSession = App.provide(this).settings.keepDummyVpnDuringSession,
-            // The same value the settings list gates the toggle on, so what a user can see and
-            // what runs cannot drift. activeWifiMode is deliberately not used: stopWirelessServer()
-            // resets it to -1, and a session that outlives one of those would go unprotected.
             nativeWirelessSession = commManager.isWirelessSession &&
                 App.provide(this).settings.wifiConnectionMode == WifiLauncherMode.NATIVE,
             currentOwner = dummyVpnOwner,
-            selfMode = selfLauncherManager.isActive,
             vpnAvailable = available,
-            // Short-circuited on purpose: the Play Store flavor must not reach a prepare() call
-            // at all, and the stub would answer false anyway.
             alreadyPrepared = available && VpnControl.isPrepared(this),
         )
         if (wanted) startDummyVpn(DummyVpnPolicy.Owner.SESSION)
@@ -1920,8 +1904,6 @@ class AapService : Service() {
     override fun onDestroy() {
         AppLog.i("AapService destroying... (wakeLock held=${bootWakeLock?.isHeld == true})")
         isDestroying = true
-        // Nothing else clears it here, and the manager outlives the service instance.
-        selfLauncherManager.isActive = false
         mediaMetadataDecodeJob?.cancel()
         cachedAaAlbumArtBitmap = null
         mediaNotification.cancel()
@@ -2043,7 +2025,6 @@ class AapService : Service() {
         }
 
         when (intent?.action) {
-            ACTION_START_SELF_MODE       -> selfLauncherManager.start()
             ACTION_START_WIRELESS        -> {
                 // Asked for from the UI, so the user is present: release the boot-loop pause
                 // rather than silently ignoring them.
@@ -2118,16 +2099,26 @@ class AapService : Service() {
                 val sessionUp = commManager.isConnected ||
                     commManager.connectionState.value is CommManager.ConnectionState.Connecting
                 val launcher = wifiLauncherManager.active as? WifiLauncherNative
-
-                if (BtAutoStartRearmPolicy.shouldRearm(
-                        settings.wifiConnectionMode,
-                        sessionUp,
-                        launcher?.handshakeManager?.isActive(),
-                        launcher?.handshakeManager?.isAttemptInFlight())) {
-                    AppLog.i("AapService: Bluetooth auto-start — Native AA handshake manager was stopped, re-arming.")
+                val actions = BtAutoStartRearmPolicy.actionsFor(
+                    settings.wifiConnectionMode,
+                    settings.showsWifi(),
+                    sessionUp,
+                    wifiLauncherManager.isActive,
+                    launcher?.handshakeManager?.isActive(),
+                    launcher?.handshakeManager?.isAttemptInFlight(),
+                    null,
+                    null
+                )
+                if (actions.clearUserExit) {
                     userExitedAA = false
                     userExitCooldownUntil = 0L
+                }
+                if (actions.forceRearmWireless) {
+                    AppLog.i("AapService: Bluetooth auto-start — re-arming Native AA.")
                     wifiLauncherManager.setActiveFromSettings(force = true)
+                } else if (actions.armWirelessIfIdle) {
+                    AppLog.i("AapService: Bluetooth auto-start — arming wireless launcher.")
+                    wifiLauncherManager.setActiveFromSettings(force = false)
                 }
             }
             ACTION_NEARBY_CONNECT         -> {

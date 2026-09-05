@@ -784,15 +784,7 @@ class MainActivity : BaseActivity() {
             return
         }
 
-        if (intentAction == AapService.ACTION_START_SELF_MODE ||
-           (intentData?.scheme == "headunit" && intentData.host == "selfmode")) {
-            AppLog.i("MainActivity: Forced self-mode start requested")
-            HomeFragment.forceSelfModeLaunch = true
-            val selfModeIntent = Intent(this, AapService::class.java).apply {
-                this.action = AapService.ACTION_START_SELF_MODE
-            }
-            ContextCompat.startForegroundService(this, selfModeIntent)
-        }
+
 
         if (intent.action == Intent.ACTION_VIEW) {
             if (intentData?.scheme == "headunit" && intentData.host == "connect") {
@@ -928,8 +920,8 @@ class MainActivity : BaseActivity() {
                 ConnectionIssue.BSSID_UNAVAILABLE -> R.string.connection_issue_banner_bssid
                 ConnectionIssue.HOTSPOT_CONFIG_UNREADABLE -> R.string.connection_issue_banner_hotspot_config
                 ConnectionIssue.HOTSPOT_NOT_RUNNING -> R.string.connection_issue_banner_hotspot_off
-                ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED ->
-                    R.string.connection_issue_banner_wifi_direct_refused
+                ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> R.string.connection_issue_banner_wifi_direct_refused
+                else -> R.string.connection_issue_banner_bt_silent
             }
         )
         banner.setOnClickListener { openRemedyFor(issue) }
@@ -970,6 +962,7 @@ class MainActivity : BaseActivity() {
                 getString(R.string.connection_issue_remedy_hotspot_query)
             ConnectionIssue.HOTSPOT_NOT_RUNNING -> getString(R.string.auto_enable_hotspot)
             ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> getString(R.string.native_ap_transport)
+            else -> getString(R.string.wireless_mode)
         }
         startActivity(
             Intent(this, SettingsActivity::class.java)
@@ -1067,6 +1060,7 @@ class MainActivity : BaseActivity() {
     companion object {
         private const val permissionRequestCode = 97
         const val EXTRA_LAUNCH_SOURCE = "launch_source"
+        const val LAUNCH_SOURCE_BLUETOOTH = "Bluetooth auto-start"
 
         /** Launch sources that mean the app opened itself, with nobody necessarily watching. */
         private val AUTOMATIC_LAUNCH_SOURCES = setOf(
