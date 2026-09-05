@@ -1083,9 +1083,6 @@
     <string name="five_ghz_channel">5GHzチャンネル</string>
     <string name="five_ghz_channel_auto">自動</string>
     <string name="five_ghz_channel_option">チャンネル %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">接続中にユニット自身のWi-Fiを切断</string>
-    <string name="stand_down_station_description">Wi-Fi Directグループの作成直前にこのユニット自身のWi-Fiを切断し、セッション終了時に再接続します。</string>
-    <string name="stand_down_station_needs_overlay">このAndroidバージョンでは「他のアプリの上に重ねて表示」の権限が必要です。</string>
     <string name="wifi_direct_stable_identity">同じWi-Fi Directネットワークを維持</string>
     <string name="wifi_direct_stable_identity_description">毎回同じ名前とパスワードでグループを作成し、ドライブごとに再設定することなく既知のネットワークに再接続します。</string>
     <string name="wifi_direct_new_identity">新しいWi-Fi DirectネットワークID</string>

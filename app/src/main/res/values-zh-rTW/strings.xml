@@ -1078,9 +1078,6 @@
     <string name="five_ghz_channel">5 GHz 頻道</string>
     <string name="five_ghz_channel_auto">自動</string>
     <string name="five_ghz_channel_option">頻道 %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">連線時中斷車機本身的 Wi-Fi</string>
-    <string name="stand_down_station_description">在建立 Wi-Fi Direct 群組前中斷車機與其自身 Wi-Fi 網路的連線，並在工作階段結束後重新連線。</string>
-    <string name="stand_down_station_needs_overlay">在此 Android 版本上需要「顯示在其他應用程式上層」的權限。</string>
     <string name="wifi_direct_stable_identity">保持相同的 Wi-Fi Direct 網路</string>
     <string name="wifi_direct_stable_identity_description">每次都使用相同的名稱和密碼建立群組，讓您的手機重新連接已知的網路，而無需在每次行程中重新設定。</string>
     <string name="wifi_direct_new_identity">新的 Wi-Fi Direct 網路識別碼</string>

@@ -1078,9 +1078,6 @@
     <string name="five_ghz_channel">Kanał 5 GHz</string>
     <string name="five_ghz_channel_auto">Automatyczny</string>
     <string name="five_ghz_channel_option">Kanał %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Odłącz od własnego Wi-Fi podczas łączenia</string>
-    <string name="stand_down_station_description">Odłącza tę stację od własnej sieci Wi-Fi tuż przed utworzeniem grupy Wi-Fi Direct i łączy ponownie po zakończeniu sesji. Przydatne w urządzeniach z jednym układem Wi-Fi.</string>
-    <string name="stand_down_station_needs_overlay">Wymaga uprawnienia «wyświetlanie nad innymi aplikacjami» w tej wersji Androida.</string>
     <string name="wifi_direct_stable_identity">Zachowaj tę samą sieć Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Używa tej samej nazwy i hasła grupy za każdym razem, dzięki czemu telefon łączy się ze znaną siecią bez ponownej konfiguracji przy każdej jeździe.</string>
     <string name="wifi_direct_new_identity">Nowa tożsamość sieci Wi-Fi Direct</string>

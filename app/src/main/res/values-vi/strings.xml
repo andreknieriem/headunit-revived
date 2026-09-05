@@ -1082,9 +1082,6 @@
     <string name="five_ghz_channel">Kênh 5 GHz</string>
     <string name="five_ghz_channel_auto">Tự động</string>
     <string name="five_ghz_channel_option">Kênh %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Ngắt kết nối Wi-Fi riêng khi kết nối</string>
-    <string name="stand_down_station_description">Ngắt kết nối màn hình khỏi mạng Wi-Fi riêng ngay trước khi tạo nhóm Wi-Fi Direct và kết nối lại sau khi phiên kết thúc.</string>
-    <string name="stand_down_station_needs_overlay">Cần có quyền «hiển thị trên các ứng dụng khác» trên phiên bản Android này.</string>
     <string name="wifi_direct_stable_identity">Giữ nguyên mạng Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Tạo nhóm với cùng tên và mật khẩu mỗi lần để điện thoại kết nối lại với mạng đã biết mà không cần thiết lập lại ở mỗi chuyến đi.</string>
     <string name="wifi_direct_new_identity">Danh tính mạng Wi-Fi Direct mới</string>

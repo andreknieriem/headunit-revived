@@ -804,9 +804,6 @@
     <string name="five_ghz_channel_auto">Automatic</string>
     <string name="five_ghz_channel_option">Channel %1$d (%2$d MHz)</string>
     <string name="five_ghz_channel_hint">A channel is a request, not a guarantee. Many units will only host a network where their own WiFi driver chooses, and the app can only tell you so after trying. If no 5 GHz channel works and your phone still cannot see the network, the band above is the setting that will.</string>
-    <string name="stand_down_station">Leave this unit\'s WiFi network while connecting</string>
-    <string name="stand_down_station_description">Disconnects this head unit from its own WiFi network just before the WiFi Direct group is created, and reconnects it when the session ends. On a single-radio unit a joined network leaves the group no free channel, so the group is forced onto that network\'s channel or is refused outright. Try this if your phone never joins. Note that most units measured so far run better with the network joined, so turn it back off if the picture gets worse.</string>
-    <string name="stand_down_station_needs_overlay">Needs the \"display over other apps\" permission on this Android version.</string>
     <string name="wifi_direct_stable_identity">Keep the same WiFi Direct network</string>
     <string name="wifi_direct_stable_identity_description">Asks for the group with the same name and password every time, so your phone rejoins a network it already knows instead of being set up for a new one on every drive. Turn it off to get a new network on every connection, which is how versions 3.2 and 3.3 worked, if a phone keeps refusing the saved one. Trying a new identity below is the lighter fix.</string>
     <string name="wifi_direct_new_identity">New WiFi Direct network identity</string>

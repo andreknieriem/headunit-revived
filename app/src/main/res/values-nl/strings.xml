@@ -1079,9 +1079,6 @@
     <string name="five_ghz_channel">5 GHz-kanaal</string>
     <string name="five_ghz_channel_auto">Automatisch</string>
     <string name="five_ghz_channel_option">Kanaal %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Verbinding met eigen Wi-Fi verbreken tijdens verbinden</string>
-    <string name="stand_down_station_description">Verbreekt de verbinding met het eigen Wi-Fi-netwerk net voordat de Wi-Fi Direct-groep wordt aangemaakt en herstelt deze na de sessie. Handig bij apparaten met één Wi-Fi-chip.</string>
-    <string name="stand_down_station_needs_overlay">Vereist de toestemming «weergeven over andere apps» op deze Android-versie.</string>
     <string name="wifi_direct_stable_identity">Hetzelfde Wi-Fi Direct-netwerk behouden</string>
     <string name="wifi_direct_stable_identity_description">Vraagt de groep telkens op met dezelfde naam en wachtwoord, zodat je telefoon opnieuw verbindt met een bekend netwerk. Schakel dit uit als je telefoon het opgeslagen netwerk blijft weigeren.</string>
     <string name="wifi_direct_new_identity">Nieuwe Wi-Fi Direct-netwerkidentiteit</string>

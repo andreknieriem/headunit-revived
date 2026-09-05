@@ -1078,9 +1078,6 @@
     <string name="five_ghz_channel">Канал 5 ГГц</string>
     <string name="five_ghz_channel_auto">Автоматически</string>
     <string name="five_ghz_channel_option">Канал %1$d (%2$d МГц)</string>
-    <string name="stand_down_station">Отключать собственный Wi-Fi при подключении</string>
-    <string name="stand_down_station_description">Отключает магнитолу от собственной сети Wi-Fi перед созданием группы Wi-Fi Direct и подключает обратно после завершения сеанса.</string>
-    <string name="stand_down_station_needs_overlay">Требуется разрешение «поверх других приложений» на этой версии Android.</string>
     <string name="wifi_direct_stable_identity">Сохранять ту же сеть Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Создает группу с одним и тем же именем и паролем, чтобы телефон подключался к уже известной сети без повторной настройки при каждой поездке.</string>
     <string name="wifi_direct_new_identity">Новые параметры сети Wi-Fi Direct</string>

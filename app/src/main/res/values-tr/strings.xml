@@ -1074,9 +1074,6 @@
     <string name="five_ghz_channel">5 GHz kanalı</string>
     <string name="five_ghz_channel_auto">Otomatik</string>
     <string name="five_ghz_channel_option">Kanal %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Bağlanırken ünitenin kendi Wi-Fi ağından ayrıl</string>
-    <string name="stand_down_station_description">Wi-Fi Direct grubu oluşturulmadan hemen önce bu ana ünitenin kendi Wi-Fi ağından bağlantısını keser ve oturum bittiğinde yeniden bağlar.</string>
-    <string name="stand_down_station_needs_overlay">Bu Android sürümünde «diğer uygulamaların üzerinde görüntüleme» izni gerektirir.</string>
     <string name="wifi_direct_stable_identity">Aynı Wi-Fi Direct ağını koru</string>
     <string name="wifi_direct_stable_identity_description">Her sürüşte yeni bir kurulum yerine, telefonunuzun bildiği bir ağa yeniden bağlanması için grubu her seferinde aynı ad ve şifreyle ister.</string>
     <string name="wifi_direct_new_identity">Yeni Wi-Fi Direct ağ kimliği</string>

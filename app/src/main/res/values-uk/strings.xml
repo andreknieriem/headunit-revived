@@ -1080,9 +1080,6 @@
     <string name="five_ghz_channel">Канал 5 ГГц</string>
     <string name="five_ghz_channel_auto">Автоматично</string>
     <string name="five_ghz_channel_option">Канал %1$d (%2$d МГц)</string>
-    <string name="stand_down_station">Відключати власний Wi-Fi під час з\'єднання</string>
-    <string name="stand_down_station_description">Відключає цей пристрій від власної мережі Wi-Fi перед створенням групи Wi-Fi Direct та відновлює з\'єднання після сеансу.</string>
-    <string name="stand_down_station_needs_overlay">Потрібен дозвіл «відображення поверх інших додатків» на цій версії Android.</string>
     <string name="wifi_direct_stable_identity">Зберігати ту саму мережу Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Запитує групу з тим самим ім\'ям та паролем щоразу, щоб телефон підключався до знайомої мережі без повторного налаштування.</string>
     <string name="wifi_direct_new_identity">Нова ідентичність мережі Wi-Fi Direct</string>

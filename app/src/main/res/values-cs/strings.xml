@@ -1079,9 +1079,6 @@
     <string name="five_ghz_channel">Kanál 5 GHz</string>
     <string name="five_ghz_channel_auto">Automaticky</string>
     <string name="five_ghz_channel_option">Kanál %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Odpojit vlastní Wi-Fi během připojování</string>
-    <string name="stand_down_station_description">Odpojí tuto jednotku od vlastní sítě Wi-Fi těsně před vytvořením skupiny Wi-Fi Direct a po skončení relace ji znovu připojí.</string>
-    <string name="stand_down_station_needs_overlay">Vyžaduje oprávnění «zobrazit přes ostatní aplikace» na této verzi Androidu.</string>
     <string name="wifi_direct_stable_identity">Ponechat stejnou síť Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Vytváří skupinu pokaždé se stejným názvem a heslem, aby se telefon připojil ke známé síti bez nového nastavování při každé jízdě.</string>
     <string name="wifi_direct_new_identity">Nová identita sítě Wi-Fi Direct</string>

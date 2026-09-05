@@ -1075,9 +1075,6 @@
     <string name="five_ghz_channel">5 GHz-es csatorna</string>
     <string name="five_ghz_channel_auto">Automatikus</string>
     <string name="five_ghz_channel_option">%1$d. csatorna (%2$d MHz)</string>
-    <string name="stand_down_station">Saját Wi-Fi lekapcsolása csatlakozáskor</string>
-    <string name="stand_down_station_description">Lecsatlakoztatja a fejegységet a saját Wi-Fi hálózatáról a Wi-Fi Direct csoport létrehozása előtt, majd a munkamenet végén visszacsatlakoztatja.</string>
-    <string name="stand_down_station_needs_overlay">Ehhez az Android-verzióhoz a «megjelenítés más alkalmazások felett» engedély szükséges.</string>
     <string name="wifi_direct_stable_identity">Ugyanazon Wi-Fi Direct hálózat megtartása</string>
     <string name="wifi_direct_stable_identity_description">Minden alkalommal azonos névvel és jelszóval hozza létre a csoportot, így a telefon egy már ismert hálózathoz csatlakozik újra.</string>
     <string name="wifi_direct_new_identity">Új Wi-Fi Direct hálózati identitás</string>

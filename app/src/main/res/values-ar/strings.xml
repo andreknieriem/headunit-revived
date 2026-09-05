@@ -1077,9 +1077,6 @@
     <string name="five_ghz_channel">قناة 5 جيجاهرتز</string>
     <string name="five_ghz_channel_auto">تلقائي</string>
     <string name="five_ghz_channel_option">القناة %1$d (%2$d ميجاهرتز)</string>
-    <string name="stand_down_station">قطع اتصال Wi-Fi للوحدة أثناء الاتصال</string>
-    <string name="stand_down_station_description">يفصل هذه الوحدة عن شبكة Wi-Fi الخاصة بها قبل إنشاء مجموعة Wi-Fi Direct مباشرة، ويعيد الاتصال بها عند انتهاء الجلسة.</string>
-    <string name="stand_down_station_needs_overlay">يتطلب إذن «الظهور فوق التطبيقات الأخرى» في هذا الإصدار من أندرويد.</string>
     <string name="wifi_direct_stable_identity">الاحتفاظ بنفس شبكة Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">يطلب المجموعة بنفس الاسم وكلمة المرور في كل مرة، حتى يعاود هاتفك الاتصال بشبكة معروفة بدلاً من إعداد واحدة جديدة في كل رحلة.</string>
     <string name="wifi_direct_new_identity">هوية جديدة لشبكة Wi-Fi Direct</string>

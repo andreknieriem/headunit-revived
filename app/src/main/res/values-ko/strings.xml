@@ -1076,9 +1076,6 @@
     <string name="five_ghz_channel">5GHz 채널</string>
     <string name="five_ghz_channel_auto">자동</string>
     <string name="five_ghz_channel_option">채널 %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">연결 시 자체 Wi-Fi 연결 해제</string>
-    <string name="stand_down_station_description">Wi-Fi Direct 그룹 생성 직전에 본 기기의 Wi-Fi 네트워크를 해제하고 세션 종료 시 다시 연결합니다.</string>
-    <string name="stand_down_station_needs_overlay">이 Android 버전에서는 «다른 앱 위에 표시» 권한이 필요합니다.</string>
     <string name="wifi_direct_stable_identity">동일한 Wi-Fi Direct 네트워크 유지</string>
     <string name="wifi_direct_stable_identity_description">매번 동일한 이름과 비밀번호로 그룹을 생성하여 주행마다 새로 설정할 필요 없이 기존 네트워크에 다시 연결합니다.</string>
     <string name="wifi_direct_new_identity">새 Wi-Fi Direct 네트워크 식별자</string>

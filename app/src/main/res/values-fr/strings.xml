@@ -1122,9 +1122,6 @@
     <string name="five_ghz_channel">Canal 5 GHz</string>
     <string name="five_ghz_channel_auto">Automatique</string>
     <string name="five_ghz_channel_option">Canal %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Quitter le réseau Wi-Fi de l\'appareil lors de la connexion</string>
-    <string name="stand_down_station_description">Déconnecte cet autoradio de son propre réseau Wi-Fi juste avant la création du groupe Wi-Fi Direct, et le reconnecte à la fin de la session. Sur un appareil à puce unique, un réseau connecté ne laisse aucun canal libre au groupe, qui est forcé sur ce canal ou refusé. Essayez ceci si votre téléphone ne se connecte jamais.</string>
-    <string name="stand_down_station_needs_overlay">Nécessite l\'autorisation « afficher sur d\'autres applications » sur cette version d\'Android.</string>
     <string name="wifi_direct_stable_identity">Conserver le même réseau Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Demande le groupe avec le même nom et mot de passe à chaque fois, afin que votre téléphone rejoigne un réseau connu au lieu d\'en configurer un nouveau à chaque trajet. Désactivez cette option pour obtenir un nouveau réseau à chaque connexion (comme dans les versions 3.2 et 3.3) si le téléphone refuse le réseau enregistré. Essayer une nouvelle identité ci-dessous est la solution la plus simple.</string>
     <string name="wifi_direct_new_identity">Nouvelle identité réseau Wi-Fi Direct</string>

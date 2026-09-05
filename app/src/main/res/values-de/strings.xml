@@ -1080,9 +1080,6 @@
     <string name="five_ghz_channel">5-GHz-Kanal</string>
     <string name="five_ghz_channel_auto">Automatisch</string>
     <string name="five_ghz_channel_option">Kanal %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">WLAN-Verbindung dieses Geräts beim Verbinden trennen</string>
-    <string name="stand_down_station_description">Trennt dieses Headunit kurz vor dem Erstellen der Wi-Fi Direct-Gruppe vom eigenen WLAN-Netzwerk und verbindet es wieder, wenn die Sitzung endet. Bei Geräten mit nur einem WLAN-Chip bleibt für die Gruppe kein freier Kanal, sodass sie auf den Kanal dieses Netzwerks gezwungen oder ganz verweigert wird. Probiere dies aus, falls dein Smartphone nie beitritt. Die meisten bisher gemessenen Geräte laufen jedoch besser, wenn das Netzwerk verbunden bleibt. Schalte es also wieder aus, falls sich das Bild verschlechtert.</string>
-    <string name="stand_down_station_needs_overlay">Erfordert auf dieser Android-Version die Berechtigung „Über anderen Apps anzeigen“.</string>
     <string name="wifi_direct_stable_identity">Dasselbe Wi-Fi Direct-Netzwerk beibehalten</string>
     <string name="wifi_direct_stable_identity_description">Erstellt die Gruppe jedes Mal mit demselben Namen und Passwort, sodass sich dein Smartphone wieder mit einem bekannten Netzwerk verbindet, anstatt bei jeder Fahrt neu eingerichtet zu werden. Deaktiviere dies, um bei jeder Verbindung ein neues Netzwerk zu erstellen (wie in Version 3.2 und 3.3), falls ein Smartphone das gespeicherte Netzwerk verweigert. Eine neue Identität unten auszuwählen ist die einfachere Lösung.</string>
     <string name="wifi_direct_new_identity">Neue Wi-Fi Direct-Netzwerkidentität</string>
