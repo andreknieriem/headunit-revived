@@ -10,7 +10,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 34
     ndkVersion = "29.0.14206865"
     namespace = "com.andrerinas.openheadunit"
 
@@ -67,15 +67,11 @@ android {
     }
 
     defaultConfig {
-        // Keep the original Play Store application id so the app stays the same listing (reviews,
-        // installs, testers) and existing users just get a normal update. Only the display name
-        // changed to Open Headunit. The code package and namespace stay openheadunit, so the
-        // applicationId deliberately differs from the namespace, like com.google.talk for Hangouts.
-        applicationId = "com.andrerinas.headunitrevived"
+        applicationId = "com.sesam.emzoomaa"
         minSdk = 16
-        targetSdk = 36
-        versionCode = 103
-        versionName = "3.3.0"
+        targetSdk = 28
+        versionCode = 106
+        versionName = "1.6.0"
         setProperty("archivesBaseName", "${applicationId}_${versionName}")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
@@ -133,7 +129,11 @@ android {
                 val keyprops = Properties()
                 keyprops.load(FileInputStream(keyfile))
 
-                if (keyprops.containsKey("storeFile")) storeFile = file(keyprops.getProperty("storeFile"))
+                if (keyprops.containsKey("storeFile")) {
+                    val storePath = keyprops.getProperty("storeFile")
+                    val sf = file(storePath)
+                    storeFile = if (sf.isAbsolute) sf else rootProject.file(storePath)
+                }
                 if (keyprops.containsKey("storePassword")) storePassword = keyprops.getProperty("storePassword")
                 if (keyprops.containsKey("keyAlias")) keyAlias = keyprops.getProperty("keyAlias")
                 if (keyprops.containsKey("keyPassword")) keyPassword = keyprops.getProperty("keyPassword")
@@ -168,11 +168,17 @@ android {
         }
 
         getByName("debug") {
-            // debugging setup
+            val relConfig = signingConfigs.getByName("release")
+            if (relConfig.storeFile != null && relConfig.storeFile!!.exists()) {
+                signingConfig = relConfig
+            }
         }
     }
 
     packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
         resources {
             excludes += "META-INF/DEPENDENCIES"
             excludes += "META-INF/LICENSE"
