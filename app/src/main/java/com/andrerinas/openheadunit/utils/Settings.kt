@@ -757,11 +757,11 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("narrow-band-profile-cap", value).apply() }
 
     var hasAcceptedDisclaimer: Boolean
-        get() = prefs.getBoolean("has-accepted-disclaimer", true) // Skip disclaimer (Emzoom Defaults)
+        get() = prefs.getBoolean("has-accepted-disclaimer", false)
         set(value) { prefs.edit().putBoolean("has-accepted-disclaimer", value).apply() }
 
     var hasCompletedSetupWizard: Boolean
-        get() = prefs.getBoolean("has-completed-setup-wizard", true) // Skip wizard (Emzoom Defaults)
+        get() = prefs.getBoolean("has-completed-setup-wizard", false)
         set(value) { prefs.edit().putBoolean("has-completed-setup-wizard", value).apply() }
 
     // Version of the onboarding flow the user has already seen. When this is lower than
@@ -770,10 +770,10 @@ class Settings(private val context: Context) {
     var onboardingVersion: Int
         get() {
             if (!prefs.contains("onboarding-version") &&
-                prefs.getBoolean("has-completed-setup-wizard", true)) {
-                return 2
+                prefs.getBoolean("has-completed-setup-wizard", false)) {
+                return 1
             }
-            return prefs.getInt("onboarding-version", 2) // Default 2 (Emzoom Defaults)
+            return prefs.getInt("onboarding-version", 0)
         }
         set(value) { prefs.edit().putInt("onboarding-version", value).apply() }
 
