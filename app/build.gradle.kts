@@ -70,8 +70,8 @@ android {
         applicationId = "com.sesam.emzoomaa"
         minSdk = 16
         targetSdk = 28
-        versionCode = 106
-        versionName = "1.6.0"
+        versionCode = 107
+        versionName = "1.7.0(3.3.1"
         setProperty("archivesBaseName", "${applicationId}_${versionName}")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
