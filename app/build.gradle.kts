@@ -213,7 +213,10 @@ android {
         variant.outputs
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
-                val outputFileName = "${variant.name}_v${variant.versionName}.apk"
+                var outputFileName = "${variant.applicationId}_${variant.versionName}_debug.apk"
+                if (variant.buildType.name == "release") {
+                    outputFileName = "${variant.applicationId}_${variant.versionName}.apk"
+                }
                 output.outputFileName = outputFileName
             }
     }
