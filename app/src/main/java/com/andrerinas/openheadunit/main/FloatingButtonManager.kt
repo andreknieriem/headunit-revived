@@ -40,7 +40,11 @@ object FloatingButtonManager {
         val settings = App.provide(context).settings
 
         val enabled = settings.enableFloatingButton
-        val hasPermission = AndroidSettings.canDrawOverlays(context)
+        val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            AndroidSettings.canDrawOverlays(context)
+        } else {
+            true
+        }
 
         // Button should ONLY show if enabled, permission granted, and app is in BACKGROUND
         val shouldShow = enabled && hasPermission && !isAppForeground
@@ -160,7 +164,7 @@ object FloatingButtonManager {
     }
 
     fun requestOverlayPermission(context: Context) {
-        if (!AndroidSettings.canDrawOverlays(context)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !AndroidSettings.canDrawOverlays(context)) {
             val intent = Intent(
                 AndroidSettings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:${context.packageName}"),
