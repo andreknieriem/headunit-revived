@@ -108,6 +108,7 @@
     <string name="onb_vehicle_help_sideload">Picking a real car brand also shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps you installed from outside the Play Store. Keep \"Google\" or \"Open Headunit\" if you use those apps.</string>
     <string name="onb_vehicle_help_advanced">You can fine-tune your vehicle details in the Advanced tab. We do not use this data; it is only sent to Android Auto because it requires it.</string>
     <string-array name="vehicle_brands">
+        <item>GAC</item>
         <item>Google</item>
         <item>Android</item>
         <item>Audi</item>
