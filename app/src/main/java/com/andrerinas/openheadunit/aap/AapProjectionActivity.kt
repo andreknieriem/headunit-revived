@@ -821,9 +821,6 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
         // before we lock it.
         applyOrientationSettings()
 
-        // In onCreate and not onStart: the whole point is to hear a call while the activity is
-        // stopped behind the phone's call screen.
-        registerAudioModeListener()
 
         setContentView(R.layout.activity_headunit)
 
@@ -1521,38 +1518,23 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     }
 
     /**
-     * Opens a call-raise episode when something covered the projection, in Self Mode.
+     * Opens a call-raise episode when something covered the projection during a call, in Self Mode.
      *
      * Self Mode is the only place this can happen: everywhere else the call screen lands on the
-     * phone and the projection is on the head unit. The audio mode is the episode's first
-     * observation rather than a condition for opening one, because the call screen covers us before
-     * the call registers. An episode that never sees a call closes itself.
+     * phone and the projection is on the head unit.
      */
-    private fun maybeOpenCallRaiseEpisode(fromModeChange: Boolean = false) {
-        if (!fromModeChange) closeCallRaiseEpisode("covered again")
-
-        val verdict = SelfModeCallRaisePolicy.coverVerdict(
-            userLeft = userLeftDeliberately,
-            selfMode = AapService.instance?.isSelfModeActive() == true,
-            pipActive = App.isPiPActive,
-            enabled = settings.raiseProjectionDuringCall,
-            episodeOpen = callRaiseEpisode != null,
-        )
-        if (verdict != SelfModeCallRaisePolicy.CoverVerdict.OPEN) {
-            // Every cover accounts for itself, or a raise that never happens leaves nothing to read
-            // in the log. A later look at the same cover has nothing new to say.
-            if (!fromModeChange) {
-                AppLog.i("AapProjectionActivity: leaving this cover alone - ${verdict.reason}")
-            }
-            return
-        }
+    private fun maybeOpenCallRaiseEpisode() {
+        closeCallRaiseEpisode("covered again")
+        if (userLeftDeliberately || AapService.instance?.isSelfModeActive() != true || App.isPiPActive) return
+        if (!settings.raiseProjectionDuringCall) return
 
         val audioMode = audioModeOrNormal()
         val callActive = CallState.isCallActive(audioMode, MicRecorder.holdsCommunicationMode)
+        if (!callActive && !CallState.isCallStarting(audioMode)) return
+
         val nowMs = SystemClock.elapsedRealtime()
         val carried = SelfModeCallRaisePolicy.carriedAttempts(lastCallRaiseAttempts, lastCallRaiseAtMs, nowMs)
-        val what = if (callActive) "covered during a call" else "covered, watching for a call"
-        AppLog.i("AapProjectionActivity: $what (audioMode=$audioMode, $carried attempts already spent)")
+        AppLog.i("AapProjectionActivity: covered during a call, will raise the projection ($carried attempts already spent)")
         callRaiseEpisode = SelfModeCallRaisePolicy.Episode(
             startedAtMs = nowMs,
             sawCallActive = callActive,
@@ -1618,41 +1600,6 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     } catch (e: Exception) {
         AppLog.w("AapProjectionActivity: Could not read the audio mode: ${e.message}")
         android.media.AudioManager.MODE_NORMAL
-    }
-
-    /**
-     * The second way into an episode: a call that only registers after the cover.
-     *
-     * Exact where the confirm window is a guess, and it is what catches an outgoing call whose
-     * dialling outlasts the window. API 31+; below it the window is the whole story.
-     */
-    private var audioModeListener: android.media.AudioManager.OnModeChangedListener? = null
-
-    private fun registerAudioModeListener() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-        try {
-            val listener = android.media.AudioManager.OnModeChangedListener { mode ->
-                val callish = CallState.isCallActive(mode, MicRecorder.holdsCommunicationMode) ||
-                    CallState.isCallStarting(mode)
-                if (!isForeground && callish) maybeOpenCallRaiseEpisode(fromModeChange = true)
-            }
-            (getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager)
-                .addOnModeChangedListener(ContextCompat.getMainExecutor(this), listener)
-            audioModeListener = listener
-        } catch (e: Exception) {
-            AppLog.w("AapProjectionActivity: Could not watch the audio mode: ${e.message}")
-        }
-    }
-
-    private fun unregisterAudioModeListener() {
-        val listener = audioModeListener ?: return
-        audioModeListener = null
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-        try {
-            (getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager)
-                .removeOnModeChangedListener(listener)
-        } catch (_: Exception) {
-        }
     }
 
     override fun onUserLeaveHint() {
@@ -2018,7 +1965,6 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
     override fun onDestroy() {
         super.onDestroy()
         closeCallRaiseEpisode("the projection is going away")
-        unregisterAudioModeListener()
         if (isFinishReceiverRegistered) {
             unregisterReceiver(finishReceiver)
             isFinishReceiverRegistered = false

@@ -22,7 +22,7 @@ class MainViewModel(application: Application): AndroidViewModel(application), Us
     private val usbReceiver = UsbReceiver(this)
 
     fun register() {
-        ContextCompat.registerReceiver(app, usbReceiver, UsbReceiver.createFilter(), ContextCompat.RECEIVER_NOT_EXPORTED)
+        ContextCompat.registerReceiver(app, usbReceiver, UsbReceiver.createFilter(), ContextCompat.RECEIVER_EXPORTED)
         usbDevices.value = createDeviceList(settings.allowedDevices)
     }
 

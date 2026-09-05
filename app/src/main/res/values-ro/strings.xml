@@ -10,7 +10,6 @@
     <string name="ignored">Ignorat</string>
     <string name="exit">Ieșire</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Mod local</string>
     <string name="to_android_auto">Către Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Elimină</string>
@@ -176,8 +175,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Generale</string>
-    <string name="auto_start_self_mode">Pornire automată Mod local</string>
-    <string name="auto_start_self_mode_description">Pornește automat Modul local când se deschide aplicația.</string>
     <string name="usb_auto_connect">Conectare automată USB</string>
     <string name="usb_auto_connect_description">Conectează automat un dispozitiv USB cunoscut când deschizi aplicația.</string>
     <string name="auto_start_bt_label">Pornire automată pe Bluetooth</string>
@@ -339,7 +336,6 @@
     <string name="success">Succes</string>
     <string name="failed">Eșuat</string>
     <string name="failed_start_android_auto">Pornirea Android Auto a eșuat</string>
-    <string name="failed_self_mode_android10">Modul Self-mode este probabil blocat de Google pe Android 10 (AA 16.4+). Vezi README.</string>
     <string name="android_auto_starting">Android Auto pornește…</string>
     <string name="connection_interrupted">Conexiune pierdută</string>
     <string name="connection_interrupted_detail">Se reîncearcă…</string>
@@ -469,8 +465,6 @@
 
     <string name="not_supported_nativeaa">Conexiunea Wireless Nativă pare să nu fie suportată</string>
     <string name="not_supported_nativeaa_desc">Este posibil ca dispozitivul tău să nu suporte funcțiile Bluetooth sau Wi-Fi necesare pentru Wireless Nativ. Poți încerca oricum, dar dacă nu reușești, te rugăm să folosești modul „Wireless Helper” sau „Auto (Headunit Server)”.</string>
-    <string name="shortcut_selfmode_title">Mod Self</string>
-    <string name="shortcut_selfmode_desc">Pornește Android Auto pe acest dispozitiv</string>
     <string name="wait_for_wifi">Așteaptă WiFi înainte de WiFi Direct</string>
     <string name="wait_for_wifi_description">La pornire, așteaptă conectarea WiFi înainte de a porni WiFi Direct. Util dacă headunit-ul tău are nevoie de câteva secunde pentru a se conecta la WiFi după pornire.</string>
     <string name="wait_for_wifi_timeout">Limita de așteptare WiFi</string>
@@ -622,8 +616,6 @@
     <string name="renderer_confirm_yes">Da</string>
     <string name="renderer_confirm_switch">Schimbă randarea</string>
     <string name="renderer_switched_to">Randare: %1$s</string>
-
-    <string name="self_mode_overlay_permission_description">Pentru a permite Modului Personal să pornească fiabil în fundal, activați permisiunea „Afișare peste alte aplicații” în ecranul următor.</string>
 
     <string name="delete">Șterge</string>
     <string name="night_mode_coordinates">Coordonate</string>
@@ -909,7 +901,6 @@
     <string name="usb_device_action_title">Acțiune dispozitiv USB</string>
     <string name="home_button_colors">Culori butoane și degradeuri</string>
     <string name="home_button_colors_description">Personalizează culorile și degradeurile celor 4 butoane principale</string>
-    <string name="btn_color_self_mode">Buton Mod Autonom</string>
     <string name="btn_color_usb">Buton USB</string>
     <string name="btn_color_wifi">Buton WiFi</string>
     <string name="btn_color_settings">Buton Setări</string>

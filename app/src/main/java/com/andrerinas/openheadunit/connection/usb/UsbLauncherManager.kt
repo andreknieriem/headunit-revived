@@ -50,7 +50,7 @@ class UsbLauncherManager(val service: AapService) {
         ContextCompat.registerReceiver(
             service, receiver,
             UsbReceiver.createFilter(),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
     }
 

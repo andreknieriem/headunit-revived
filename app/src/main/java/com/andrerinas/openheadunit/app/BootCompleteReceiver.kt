@@ -18,7 +18,7 @@ class BootCompleteReceiver : BroadcastReceiver() {
 
         AppLog.i("Boot auto-start: received action=$action")
 
-        val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && 
+        val isLocked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                       !(context.getSystemService(Context.USER_SERVICE) as UserManager).isUserUnlocked
 
         if (isLocked) {
@@ -30,6 +30,7 @@ class BootCompleteReceiver : BroadcastReceiver() {
         val screenOnEnabled = Settings.isAutoStartOnScreenOnEnabled(context)
         val usbEnabled = Settings.isAutoStartOnUsbEnabled(context)
         val wifiEnabled = Settings.isAutoStartOnWifiEnabled(context)
+        val floatingButtonEnabled = Settings(context).enableFloatingButton
 
         if (bootEnabled) {
             // Take a strike before starting. The service clears it once this run has lasted long
@@ -63,6 +64,10 @@ class BootCompleteReceiver : BroadcastReceiver() {
         } else if (wifiEnabled) {
             // Start the service to listen for WiFi connectivity changes dynamically.
             AppLog.i("Boot auto-start: WiFi auto-start enabled, starting AapService to listen for WiFi (trigger=$action)")
+            val serviceIntent = Intent(context, AapService::class.java)
+            ContextCompat.startForegroundService(context, serviceIntent)
+        } else if (floatingButtonEnabled) {
+            AppLog.i("Boot auto-start: floating button enabled, starting AapService for overlay (trigger=$action)")
             val serviceIntent = Intent(context, AapService::class.java)
             ContextCompat.startForegroundService(context, serviceIntent)
         } else {

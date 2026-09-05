@@ -9,7 +9,6 @@
     <string name="ignored">Genegeerd</string>
     <string name="exit">Exit</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Self Mode</string>
     <string name="to_android_auto">Naar Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Verwijder</string>
@@ -156,8 +155,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Algemeen</string>
-    <string name="auto_start_self_mode">Auto start Self-Mode</string>
-    <string name="auto_start_self_mode_description">Start de zelfmodus automatisch wanneer de applicatie wordt geopend.</string>
     <string name="usb_auto_connect">Automatisch verbinden met USB</string>
     <string name="usb_auto_connect_description">Automatisch verbinden met een bekend USB-apparaat wanneer de applicatie wordt geopend.</string>
     <string name="auto_start_bt_label">Automatisch starten bij Bluetooth</string>
@@ -319,7 +316,6 @@
     <string name="success">Succes</string>
     <string name="failed">Mislukt</string>
     <string name="failed_start_android_auto">Starten van Android Auto mislukt</string>
-    <string name="failed_self_mode_android10">Self-mode wordt waarschijnlijk geblokkeerd door Google op Android 10 (AA 16.4+). Zie de README.</string>
     <string name="android_auto_starting">Android Auto start op…</string>
     <string name="connection_interrupted">Verbinding verloren</string>
     <string name="connection_interrupted_detail">Opnieuw proberen…</string>
@@ -468,8 +464,6 @@
 
     <string name="not_supported_nativeaa">Native Draadloos lijkt niet ondersteund</string>
     <string name="not_supported_nativeaa_desc">Je apparaat ondersteunt mogelijk de vereiste Bluetooth- of Wi-Fi-functies voor Native Draadloos niet. Je kunt het toch proberen, maar als het mislukt, gebruik dan de \"Wireless Helper\"- of \"Auto (Headunit Server)\"-modus.</string>
-    <string name="shortcut_selfmode_title">Self Mode</string>
-    <string name="shortcut_selfmode_desc">Start Android Auto op dit apparaat</string>
     <string name="wait_for_wifi">Wacht op WiFi voor WiFi Direct</string>
     <string name="wait_for_wifi_description">Wacht bij het opstarten tot WiFi verbonden is voordat WiFi Direct wordt gestart. Handig als uw headunit een paar seconden nodig heeft om verbinding te maken met WiFi na het opstarten.</string>
     <string name="wait_for_wifi_timeout">WiFi wachttijd</string>
@@ -621,8 +615,6 @@
     <string name="renderer_confirm_yes">Ja</string>
     <string name="renderer_confirm_switch">Renderer wisselen</string>
     <string name="renderer_switched_to">Renderer: %1$s</string>
-
-    <string name="self_mode_overlay_permission_description">Om de Self-modus betrouwbaar op de achtergrond te laten starten, schakelt u de machtiging \"Weergeven over andere apps\" in op het volgende scherm.</string>
 
     <string name="delete">Verwijderen</string>
     <string name="night_mode_coordinates">Coördinaten</string>
@@ -912,7 +904,6 @@
     <string name="usb_device_action_title">USB-apparaat actie</string>
     <string name="home_button_colors">Knopkleuren &amp; verlopen</string>
     <string name="home_button_colors_description">Pas de kleuren en kleurverlopen van de 4 hoofdknoppen aan</string>
-    <string name="btn_color_self_mode">Knop Zelfstandige modus</string>
     <string name="btn_color_usb">USB-knop</string>
     <string name="btn_color_wifi">WiFi-knop</string>
     <string name="btn_color_settings">Instellingenknop</string>

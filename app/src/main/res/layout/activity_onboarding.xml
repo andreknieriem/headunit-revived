@@ -138,14 +138,7 @@
                         app:icon="@drawable/ic_wifi"
                         app:iconGravity="textStart"
                         android:text="@string/connection_kind_wifi" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/onb_conn_self"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:icon="@drawable/ic_directions_car"
-                        app:iconGravity="textStart"
-                        android:text="@string/self_mode" />
+
                 </com.google.android.material.button.MaterialButtonToggleGroup>
                 <TextView
                     android:id="@+id/onb_conn_detail"

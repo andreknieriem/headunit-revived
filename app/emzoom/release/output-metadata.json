@@ -1,0 +1,37 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.sesam.emzoomaa",
+  "variantName": "emzoomRelease",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 107,
+      "versionName": "3.3.0",
+      "outputFile": "com.sesam.emzoomaa_3.3.0.apk"
+    }
+  ],
+  "elementType": "File",
+  "baselineProfiles": [
+    {
+      "minApi": 28,
+      "maxApi": 30,
+      "baselineProfiles": [
+        "baselineProfiles/1/com.sesam.emzoomaa_3.3.0.dm"
+      ]
+    },
+    {
+      "minApi": 31,
+      "maxApi": 2147483647,
+      "baselineProfiles": [
+        "baselineProfiles/0/com.sesam.emzoomaa_3.3.0.dm"
+      ]
+    }
+  ],
+  "minSdkVersionForDexing": 16
+}

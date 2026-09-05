@@ -181,7 +181,6 @@
     <string name="ignored">Ignoré</string>
     <string name="exit">Quitter</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Self Mode</string>
     <string name="to_android_auto">Vers Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Retirer</string>
@@ -347,8 +346,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Général</string>
-    <string name="auto_start_self_mode">Démarrage auto du Self-Mode</string>
-    <string name="auto_start_self_mode_description">Démarrer automatiquement le Self-Mode lorsque l\'application s\'ouvre.</string>
     <string name="usb_auto_connect">Connexion auto USB</string>
     <string name="usb_auto_connect_description">Se connecter automatiquement à un appareil USB connu lorsque l\'application s\'ouvre.</string>
     <string name="auto_start_bt_label">Démarrage auto sur Bluetooth</string>
@@ -615,7 +612,6 @@
     <string name="success">Succès</string>
     <string name="failed">Échec</string>
     <string name="failed_start_android_auto">Échec du démarrage d\'Android Auto</string>
-    <string name="failed_self_mode_android10">Le Self-mode est probablement bloqué par Google sur Android 10 (AA 16.4+).</string>
     <string name="android_auto_starting">Android Auto démarre…</string>
     <string name="connection_interrupted">Connexion perdue</string>
     <string name="connection_interrupted_detail">Nouvelle tentative…</string>
@@ -630,8 +626,6 @@
     <string name="notification_projection_active">Android Auto est projeté</string>
     <string name="shortcut_connect_title">Connecter</string>
     <string name="shortcut_connect_desc">Auto-connexion au dernier téléphone</string>
-    <string name="shortcut_selfmode_title">Self Mode</string>
-    <string name="shortcut_selfmode_desc">Démarrer Android Auto sur cet appareil</string>
     <string name="shortcut_disconnect_title">Déconnecter</string>
     <string name="shortcut_disconnect_desc">Mettre fin à la session en cours</string>
     <string name="shortcut_exit_title">Quitter l\'application</string>
@@ -869,8 +863,6 @@
     <string name="btn_show_qr">Afficher le code QR</string>
     <string name="su_needed_keymaps_warning">Avertissement : Ton autoradio doit être rooté, ou avoir Shizuku installé. Si c\'est le cas, tu dois autoriser les droits SU quand on te le demande. Les boutons au volant ne seront probablement pas fonctionnels tant que ce n\'est pas réglé.</string>
 
-    <string name="self_mode_overlay_permission_description">Pour permettre au Self Mode de démarrer de manière fiable en arrière-plan, active la permission \"Afficher sur les autres applications\" sur l\'écran suivant.</string>
-
     <!-- Manual coordinates (night mode) and geofenced locations -->
     <string name="delete">Supprimer</string>
     <string name="night_mode_coordinates">Coordonnées</string>
@@ -961,7 +953,6 @@
     <string name="btn_reset_default">Rétablir par défaut</string>
     <string name="home_button_colors">Couleurs des boutons et dégradés</string>
     <string name="home_button_colors_description">Personnalisez les couleurs et dégradés des 4 boutons d\'accueil</string>
-    <string name="btn_color_self_mode">Bouton Mode autonome</string>
     <string name="btn_color_usb">Bouton USB</string>
     <string name="btn_color_wifi">Bouton Wi-Fi</string>
     <string name="btn_color_settings">Bouton Paramètres</string>

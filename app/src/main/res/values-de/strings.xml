@@ -10,7 +10,6 @@
     <string name="ignored">Ignoriert</string>
     <string name="exit">Beenden</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Self Mode</string>
     <string name="to_android_auto">Zu Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Entfernen</string>
@@ -58,7 +57,6 @@
     <string name="btn_reset_default">Auf Standard zurücksetzen</string>
     <string name="home_button_colors">Button-Farben &amp; Verläufe</string>
     <string name="home_button_colors_description">Passe die Farben und Verläufe der 4 Startseiten-Buttons individuell an</string>
-    <string name="btn_color_self_mode">Self Mode Button</string>
     <string name="btn_color_usb">USB Button</string>
     <string name="btn_color_wifi">WiFi Button</string>
     <string name="btn_color_settings">Einstellungen Button</string>
@@ -210,8 +208,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Allgemein</string>
-    <string name="auto_start_self_mode">Auto-Start Self-Mode</string>
-    <string name="auto_start_self_mode_description">Startet den Self-Mode automatisch beim Öffnen der App.</string>
     <string name="usb_auto_connect">USB Auto-Verbindung</string>
     <string name="usb_auto_connect_description">Verbindet sich automatisch mit einem bekannten USB-Gerät, sobald die App geöffnet wird.</string>
     <string name="auto_start_bt_label">Auto-Start bei Bluetooth</string>
@@ -396,7 +392,6 @@
     <string name="success">Erfolg</string>
     <string name="failed">Fehlgeschlagen</string>
     <string name="failed_start_android_auto">Start von Android Auto fehlgeschlagen</string>
-    <string name="failed_self_mode_android10">Self-mode wird wahrscheinlich von Google auf Android 10 (AA 16.4+) blockiert. Siehe README.</string>
     <string name="android_auto_starting">Android Auto startet…</string>
     <string name="connection_interrupted">Verbindung verloren</string>
     <string name="connection_interrupted_detail">Erneuter Versuch…</string>
@@ -407,8 +402,6 @@
     <string name="notification_projection_active">Android Auto wird projiziert</string>
     <string name="shortcut_connect_title">Verbinden</string>
     <string name="shortcut_connect_desc">Mit letztem Handy verbinden</string>
-    <string name="shortcut_selfmode_title">Self Mode</string>
-    <string name="shortcut_selfmode_desc">Android Auto auf diesem Gerät starten</string>
     <string name="shortcut_disconnect_title">Trennen</string>
     <string name="shortcut_disconnect_desc">Aktuelle Sitzung beenden</string>
     <string name="shortcut_exit_title">App beenden</string>
@@ -665,8 +658,6 @@
     <string name="renderer_confirm_switch">Renderer wechseln</string>
     <string name="renderer_switched_to">Renderer: %1$s</string>
     <string name="su_needed_keymaps_warning">Warnung: Dein Headunit muss entweder gerooted sein oder Shizuku installiert haben. Falls das der Fall ist, musst du die SU-Privilegien erlauben, sobald danach gefragt wird. Lenkradtasten werden keine Funktion haben, solange dies nicht behoben ist.</string>
-
-    <string name="self_mode_overlay_permission_description">Damit der Self Mode zuverlässig im Hintergrund starten kann, aktivieren Sie bitte die Berechtigung \"Über anderen Apps einblenden\" im nächsten Bildschirm.</string>
 
     <string name="delete">Löschen</string>
     <string name="night_mode_coordinates">Koordinaten</string>

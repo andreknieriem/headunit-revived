@@ -19,11 +19,9 @@ object HomeUiHelper {
         val validScale = if (scalePercent in 60..120) scalePercent else 100
         val scaleFactor = validScale / 100.0f
 
-        val selfBtn = rootView.findViewById<View>(R.id.self_mode_button)
         val usbBtn = rootView.findViewById<View>(R.id.usb_button)
         val wifiBtn = rootView.findViewById<View>(R.id.wifi_button)
-        val settingsBtn = rootView.findViewById<View>(R.id.settings_button)
-        val buttons = listOfNotNull(selfBtn, usbBtn, wifiBtn, settingsBtn)
+        val buttons = listOfNotNull(usbBtn, wifiBtn)
 
         if (isPortrait) {
             val basePaddingDp = 12f
@@ -56,11 +54,9 @@ object HomeUiHelper {
         settings: Settings,
         isNightActive: Boolean
     ) {
-        val selfBtn = rootView.findViewById<MaterialButton>(R.id.self_mode_button)
         val usbBtn = rootView.findViewById<MaterialButton>(R.id.usb_button)
         val wifiBtn = rootView.findViewById<MaterialButton>(R.id.wifi_button)
-        val settingsBtn = rootView.findViewById<MaterialButton>(R.id.settings_button)
-        val buttons = listOfNotNull(selfBtn, usbBtn, wifiBtn, settingsBtn)
+        val buttons = listOfNotNull(usbBtn, wifiBtn)
 
         val isDarkTheme = settings.appTheme == Settings.AppTheme.DARK ||
                 settings.appTheme == Settings.AppTheme.EXTREME_DARK ||
@@ -76,10 +72,8 @@ object HomeUiHelper {
         } else {
             val whiteTint = ColorStateList.valueOf(0xFFFFFFFF.toInt())
             val configs = listOf(
-                Triple(selfBtn, R.drawable.gradient_blue, settings.customSelfModeButtonColor),
                 Triple(usbBtn, R.drawable.gradient_orange, settings.customUsbButtonColor),
-                Triple(wifiBtn, R.drawable.gradient_purple, settings.customWifiButtonColor),
-                Triple(settingsBtn, R.drawable.gradient_darkblue, settings.customSettingsButtonColor)
+                Triple(wifiBtn, R.drawable.gradient_purple, settings.customWifiButtonColor)
             )
             configs.forEach { (button, defaultDrawableRes, customColor) ->
                 if (button != null) {

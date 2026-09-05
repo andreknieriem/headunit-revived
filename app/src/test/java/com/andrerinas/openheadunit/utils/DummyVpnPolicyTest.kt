@@ -21,7 +21,6 @@ class DummyVpnPolicyTest {
         assertEquals(
             setOf(
                 Reason.SESSION_ENDED,
-                Reason.SELF_MODE_NEVER_CONNECTED,
                 Reason.SERVICE_DESTROYED,
             ),
             Reason.entries.toSet()
@@ -36,14 +35,6 @@ class DummyVpnPolicyTest {
                 DummyVpnPolicy.shouldStop(owner = null, reason = reason)
             )
         }
-    }
-
-    @Test
-    fun `the self mode watchdog stops only a self mode VPN`() {
-        // It fires 120s after Self Mode started with no phone. A session VPN is by definition
-        // attached to a live connection, so the watchdog must never reach one.
-        assertTrue(DummyVpnPolicy.shouldStop(Owner.SELF_MODE, Reason.SELF_MODE_NEVER_CONNECTED))
-        assertFalse(DummyVpnPolicy.shouldStop(Owner.SESSION, Reason.SELF_MODE_NEVER_CONNECTED))
     }
 
     @Test
@@ -68,14 +59,12 @@ class DummyVpnPolicyTest {
         keepDuringSession: Boolean = true,
         nativeWirelessSession: Boolean = true,
         currentOwner: Owner? = null,
-        selfMode: Boolean = false,
         vpnAvailable: Boolean = true,
         alreadyPrepared: Boolean = true,
     ) = DummyVpnPolicy.shouldStartForSession(
         keepDuringSession = keepDuringSession,
         nativeWirelessSession = nativeWirelessSession,
         currentOwner = currentOwner,
-        selfMode = selfMode,
         vpnAvailable = vpnAvailable,
         alreadyPrepared = alreadyPrepared,
     )
@@ -84,11 +73,9 @@ class DummyVpnPolicyTest {
     fun `a session VPN starts only when it was asked for`() {
         assertTrue(start())
         assertFalse("the setting is the trigger", start(keepDuringSession = false))
-        assertFalse("self mode brings its own", start(selfMode = true))
         assertFalse("no consent, no VPN", start(alreadyPrepared = false))
         assertFalse("not in this flavour", start(vpnAvailable = false))
         assertFalse("already up", start(currentOwner = Owner.SESSION))
-        assertFalse("already up", start(currentOwner = Owner.SELF_MODE))
     }
 
     @Test
@@ -97,7 +84,6 @@ class DummyVpnPolicyTest {
         // switches connection mode keeps a preference they can no longer see. Without this gate
         // that preference would put a blackholing tun on a USB session.
         assertFalse(start(nativeWirelessSession = false))
-        assertFalse(start(nativeWirelessSession = false, selfMode = true))
         assertFalse(start(nativeWirelessSession = false, alreadyPrepared = false))
     }
 }

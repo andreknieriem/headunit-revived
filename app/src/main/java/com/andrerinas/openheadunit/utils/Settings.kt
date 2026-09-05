@@ -80,7 +80,7 @@ class Settings(private val context: Context) {
         }
 
     var resolutionId: Int
-        get() = prefs.getInt("resolutionId", 0)
+        get() = prefs.getInt("resolutionId", 0) // Default to Auto
         set(value) = prefs.edit().putInt("resolutionId", value).apply()
 
     // Flag to determine if the projection should stretch and ignore aspect ratio to fill the screen
@@ -102,14 +102,38 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("use_measured_touch_surface", false)
         set(value) { prefs.edit().putBoolean("use_measured_touch_surface", value).apply() }
 
+    var optimizeUltrawide: Boolean
+        get() = prefs.getBoolean("optimize-ultrawide", com.andrerinas.openheadunit.BuildConfig.OPTIMIZE_ULTRAWIDE)
+        set(value) { prefs.edit().putBoolean("optimize-ultrawide", value).apply() }
+
+    var enableFloatingButton: Boolean
+        get() = prefs.getBoolean("enable-floating-button", true) // Default true (Emzoom Defaults)
+        set(value) { prefs.edit().putBoolean("enable-floating-button", value).apply() }
+
+    var floatingButtonXPercent: Int
+        get() = prefs.getInt("floating-button-x-percent", 0) // Default 0% (Emzoom Defaults)
+        set(value) { prefs.edit().putInt("floating-button-x-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonYPercent: Int
+        get() = prefs.getInt("floating-button-y-percent", 54) // Default 54%
+        set(value) { prefs.edit().putInt("floating-button-y-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonOpacityPercent: Int
+        get() = prefs.getInt("floating-button-opacity-percent", 80)
+        set(value) { prefs.edit().putInt("floating-button-opacity-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonSizeDp: Int
+        get() = prefs.getInt("floating-button-size-dp", 60) // Default 60dp
+        set(value) { prefs.edit().putInt("floating-button-size-dp", value.coerceIn(32, 120)).apply() }
+
     // UI Scale percentage for Home
     var uiScaleHomePercent: Int
-        get() = prefs.getInt("ui-scale-home-percent", 100)
+        get() = prefs.getInt("ui-scale-home-percent", 125) // Default to 125% (Emzoom Defaults)
         set(value) { prefs.edit().putInt("ui-scale-home-percent", value).apply() }
 
     // UI Scale percentage for Settings
     var uiScaleSettingsPercent: Int
-        get() = prefs.getInt("ui-scale-settings-percent", 100)
+        get() = prefs.getInt("ui-scale-settings-percent", 125) // Default to 125% (Emzoom Defaults)
         set(value) { prefs.edit().putInt("ui-scale-settings-percent", value).apply() }
 
     /**
@@ -131,7 +155,7 @@ class Settings(private val context: Context) {
         }
 
     var useGpsForNavigation: Boolean
-        get() = prefs.getBoolean("gps-navigation", true)
+        get() = prefs.getBoolean("gps-navigation", false) // Default to phone GPS (Emzoom Defaults)
         set(value) {
             prefs.edit().putBoolean("gps-navigation", value).apply()
         }
@@ -246,11 +270,20 @@ class Settings(private val context: Context) {
 
     var viewMode: ViewMode
         get() {
-            val value = prefs.getInt("view-mode", 1)
+            val value = prefs.getInt("view-mode", 0) // Default to Surface
             return ViewMode.fromInt(value)!!
         }
         set(viewMode) {
             prefs.edit().putInt("view-mode", viewMode.value).apply()
+        }
+
+    var aaExitAction: ExitAction
+        get() {
+            val value = prefs.getInt("aa-exit-action", ExitAction.OEM_LAUNCHER.value)
+            return ExitAction.fromInt(value)
+        }
+        set(action) {
+            prefs.edit().putInt("aa-exit-action", action.value).apply()
         }
 
     var screenOrientation: ScreenOrientation
@@ -263,7 +296,7 @@ class Settings(private val context: Context) {
         }
 
     var dpiPixelDensity: Int
-        get() = prefs.getInt("dpi-pixel-density", 0) // Default 0 for Auto
+        get() = prefs.getInt("dpi-pixel-density", 200) // Default to 200 DPI
         set(value) {
             prefs.edit().putInt("dpi-pixel-density", value).apply()
         }
@@ -364,8 +397,8 @@ class Settings(private val context: Context) {
                 prefs.edit().putInt("fullscreen-mode", migrated.value).apply()
                 return migrated
             }
-            val value = prefs.getInt("fullscreen-mode", FullscreenMode.IMMERSIVE.value)
-            return FullscreenMode.fromInt(value) ?: FullscreenMode.IMMERSIVE
+            val value = prefs.getInt("fullscreen-mode", FullscreenMode.NONE.value) // Default to NONE (Emzoom Defaults)
+            return FullscreenMode.fromInt(value) ?: FullscreenMode.NONE
         }
         set(value) { prefs.edit().putInt("fullscreen-mode", value.value).apply() }
 
@@ -442,16 +475,7 @@ class Settings(private val context: Context) {
     var wifiDirectBand: Int
         get() {
             if (prefs.contains("wifi-direct-band")) return prefs.getInt("wifi-direct-band", 0)
-            // One-time migration off the two booleans this replaces. 2.4 GHz wins because it was the
-            // deliberate override; the 5 GHz opt-in only ever meant "ask for it on pre-Q", which is
-            // now what position 1 says.
-            val migrated = when {
-                prefs.getBoolean("debug-force-p2p-band-24", false) -> 2
-                prefs.getBoolean("p2p-legacy-5ghz", false) -> 1
-                else -> 0
-            }
-            prefs.edit().putInt("wifi-direct-band", migrated).apply()
-            return migrated
+            return 2 // Default to 2.4GHz (Emzoom Defaults)
         }
         set(value) = prefs.edit().putInt("wifi-direct-band", value).apply()
 
@@ -654,7 +678,7 @@ class Settings(private val context: Context) {
         // Cosmetic: the phone shows this in its connection history and on the Android Auto
         // welcome screen. It is not the reported manufacturer, which stays "Google" unless
         // the user picks a real car brand — see the car step in OnboardingActivity.
-        get() = prefs.getString("vehicle-display-name", "Open Headunit")!!
+        get() = prefs.getString("vehicle-display-name", "Emzoom AA")!!
         set(value) { prefs.edit().putString("vehicle-display-name", value).apply() }
 
     var vehicleMake: String
@@ -712,7 +736,7 @@ class Settings(private val context: Context) {
                 prefs.edit().putInt("wifi-connection-mode", 3).remove("native-aa-wireless").apply()
                 return WifiLauncherMode.NATIVE
             }
-            return WifiLauncherMode.byIdOrDefault(prefs.getInt("wifi-connection-mode", -1))
+            return WifiLauncherMode.byIdOrDefault(prefs.getInt("wifi-connection-mode", 3)) // Default to Native AA (Emzoom Defaults)
         }
         set(value) { prefs.edit().putInt("wifi-connection-mode", value.id).apply() }
 
@@ -721,7 +745,7 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putString("video-codec", value).apply() }
 
     var fpsLimit: Int
-        get() = prefs.getInt("fps-limit", 60)
+        get() = prefs.getInt("fps-limit", 30)
         set(value) { prefs.edit().putInt("fps-limit", value).apply() }
 
     /**
@@ -733,11 +757,11 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("narrow-band-profile-cap", value).apply() }
 
     var hasAcceptedDisclaimer: Boolean
-        get() = prefs.getBoolean("has-accepted-disclaimer", false)
+        get() = prefs.getBoolean("has-accepted-disclaimer", true) // Skip disclaimer (Emzoom Defaults)
         set(value) { prefs.edit().putBoolean("has-accepted-disclaimer", value).apply() }
 
     var hasCompletedSetupWizard: Boolean
-        get() = prefs.getBoolean("has-completed-setup-wizard", false)
+        get() = prefs.getBoolean("has-completed-setup-wizard", true) // Skip wizard (Emzoom Defaults)
         set(value) { prefs.edit().putBoolean("has-completed-setup-wizard", value).apply() }
 
     // Version of the onboarding flow the user has already seen. When this is lower than
@@ -746,10 +770,10 @@ class Settings(private val context: Context) {
     var onboardingVersion: Int
         get() {
             if (!prefs.contains("onboarding-version") &&
-                prefs.getBoolean("has-completed-setup-wizard", false)) {
-                return 1
+                prefs.getBoolean("has-completed-setup-wizard", true)) {
+                return 2
             }
-            return prefs.getInt("onboarding-version", 0)
+            return prefs.getInt("onboarding-version", 2) // Default 2 (Emzoom Defaults)
         }
         set(value) { prefs.edit().putInt("onboarding-version", value).apply() }
 
@@ -786,20 +810,16 @@ class Settings(private val context: Context) {
     private fun migrateLegacyConnectionModes(): Set<ConnectionMode> = when (primaryConnection) {
         ConnectionKind.USB_CABLE, ConnectionKind.USB_WIRELESS_ADAPTER -> setOf(ConnectionMode.USB)
         ConnectionKind.WIFI, ConnectionKind.NATIVE_AA -> setOf(ConnectionMode.WIFI)
-        ConnectionKind.SELF_MODE -> setOf(ConnectionMode.SELF)
         ConnectionKind.ALL -> setOf(ConnectionMode.USB, ConnectionMode.WIFI)
-        ConnectionKind.UNSET -> emptySet()
+        else -> setOf(ConnectionMode.WIFI)
     }
 
-    /** Whether USB-related settings should be shown (empty selection shows everything). */
-    fun showsUsb(): Boolean = connectionModes.isEmpty() || ConnectionMode.USB in connectionModes
-    /** Whether WiFi/wireless settings should be shown (empty selection shows everything). */
+    /** Whether USB-related settings should be shown. Defaults to false when connectionModes is default WiFi-only. */
+    fun showsUsb(): Boolean = ConnectionMode.USB in connectionModes
+    /** Whether WiFi/wireless settings should be shown. Defaults to true if nothing selected or WiFi selected. */
     fun showsWifi(): Boolean = connectionModes.isEmpty() || ConnectionMode.WIFI in connectionModes
-    /** The external-GPS choice only applies when a phone is connected; false only for Self-only. */
+    /** The external-GPS choice only applies when a phone is connected. */
     fun showsExternalGps(): Boolean = showsUsb() || showsWifi()
-
-    /** Whether Self Mode settings should be shown (empty selection shows everything). */
-    fun showsSelf(): Boolean = connectionModes.isEmpty() || ConnectionMode.SELF in connectionModes
 
     var autoConnectLastSession: Boolean
         get() = prefs.getBoolean("auto-connect-last-session", false)
@@ -847,7 +867,7 @@ class Settings(private val context: Context) {
         }
 
     var enableAudioSink: Boolean
-        get() = prefs.getBoolean("enable-audio-sink", true)
+        get() = prefs.getBoolean("enable-audio-sink", false) // Default to false (Emzoom Defaults)
         set(value) { prefs.edit().putBoolean("enable-audio-sink", value).apply() }
 
     var staticAudioFocus: Boolean
@@ -958,10 +978,6 @@ class Settings(private val context: Context) {
     var useNativeSsl: Boolean
         get() = prefs.getBoolean("use-native-ssl", false)
         set(value) { prefs.edit().putBoolean("use-native-ssl", value).apply() }
-
-    var autoStartSelfMode: Boolean
-        get() = prefs.getBoolean("auto-start-self-mode", false)
-        set(value) { prefs.edit().putBoolean("auto-start-self-mode", value).apply() }
 
     var autoConnectDelaySeconds: Int
         get() = prefs.getInt("auto-connect-delay-seconds", 0)
@@ -1182,10 +1198,6 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putString("home-background-image-path", value).apply() }
 
     // Custom button colors for Home screen (0 = default gradient)
-    var customSelfModeButtonColor: Int
-        get() = prefs.getInt("custom-self-mode-button-color", 0)
-        set(value) { prefs.edit().putInt("custom-self-mode-button-color", value).apply() }
-
     var customUsbButtonColor: Int
         get() = prefs.getInt("custom-usb-button-color", 0)
         set(value) { prefs.edit().putInt("custom-usb-button-color", value).apply() }
@@ -1265,18 +1277,17 @@ class Settings(private val context: Context) {
         USB_WIRELESS_ADAPTER(1),
         WIFI(2),
         NATIVE_AA(3),
-        SELF_MODE(4),
         ALL(5);
 
         val isWireless: Boolean
             get() = this == USB_WIRELESS_ADAPTER || this == WIFI || this == NATIVE_AA
 
         /** Whether USB-only settings should be hidden for this connection choice. */
-        fun hidesUsb(): Boolean = this == WIFI || this == NATIVE_AA || this == SELF_MODE
+        fun hidesUsb(): Boolean = this == WIFI || this == NATIVE_AA
 
         /** Whether WiFi/Bluetooth settings should be hidden for this connection choice.
          * (Bluetooth is used to bridge WiFi, so it counts as WiFi scope.) */
-        fun hidesWifi(): Boolean = this == USB_CABLE || this == USB_WIRELESS_ADAPTER || this == SELF_MODE
+        fun hidesWifi(): Boolean = this == USB_CABLE || this == USB_WIRELESS_ADAPTER
 
         companion object {
             private val map = values().associateBy(ConnectionKind::value)
@@ -1284,9 +1295,9 @@ class Settings(private val context: Context) {
         }
     }
 
-    /** A connection type the user can pick in the multi-select (USB, WiFi or Self Mode). */
+    /** A connection type the user can pick in the multi-select (USB or WiFi). */
     enum class ConnectionMode(val key: String) {
-        USB("usb"), WIFI("wifi"), SELF("self");
+        USB("usb"), WIFI("wifi");
 
         companion object {
             fun fromKey(k: String) = values().firstOrNull { it.key == k }
@@ -1389,6 +1400,30 @@ class Settings(private val context: Context) {
             prefs.edit().putBoolean("show-fps-counter", value).apply()
         }
 
+    var redirectCarbitLink: Boolean
+        get() = prefs.getBoolean("redirect-carbitlink", false)
+        set(value) {
+            prefs.edit().putBoolean("redirect-carbitlink", value).apply()
+        }
+
+    var doubleTapHomeToOpen: Boolean
+        get() = prefs.getBoolean("double-tap-home-to-open", false)
+        set(value) {
+            prefs.edit().putBoolean("double-tap-home-to-open", value).apply()
+        }
+
+    var performanceEnhancementMode: Boolean
+        get() = prefs.getBoolean("performance-enhancement-mode", true)
+        set(value) {
+            prefs.edit().putBoolean("performance-enhancement-mode", value).apply()
+        }
+
+    var floatingButtonDoubleTap: Boolean
+        get() = prefs.getBoolean("floating-button-double-tap", false)
+        set(value) {
+            prefs.edit().putBoolean("floating-button-double-tap", value).apply()
+        }
+
     companion object {
         const val PREFS_NAME = "settings"
 
@@ -1412,12 +1447,10 @@ class Settings(private val context: Context) {
         const val KEY_NAVIGATION_VOLUME_OFFSET = "navigation-volume-offset"
 
         const val AUTO_CONNECT_LAST_SESSION = "last-session"
-        const val AUTO_CONNECT_SELF_MODE = "self-mode"
         const val AUTO_CONNECT_SINGLE_USB = "single-usb"
 
         val DEFAULT_AUTO_CONNECT_ORDER = listOf(
             AUTO_CONNECT_LAST_SESSION,
-            AUTO_CONNECT_SELF_MODE,
             AUTO_CONNECT_SINGLE_USB
         )
 
@@ -1765,6 +1798,17 @@ class Settings(private val context: Context) {
         }
     }
 
+    enum class ExitAction(val value: Int) {
+        OEM_LAUNCHER(0),
+        APP_HOME(1),
+        DISCONNECT(2);
+
+        companion object {
+            private val map = values().associateBy(ExitAction::value)
+            fun fromInt(value: Int) = map[value] ?: OEM_LAUNCHER
+        }
+    }
+
     enum class ScreenOrientation(val value: Int, val androidOrientation: Int) {
         SYSTEM(0, android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER),
         AUTO(1, android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR),
@@ -1830,7 +1874,7 @@ class Settings(private val context: Context) {
         }
 
     var autoMonochromeButtonsAtNight: Boolean
-        get() = prefs.getBoolean("auto-monochrome-buttons-at-night", false)
+        get() = prefs.getBoolean("auto-monochrome-buttons-at-night", true) // Default to true (Emzoom Defaults)
         set(value) { prefs.edit().putBoolean("auto-monochrome-buttons-at-night", value).apply() }
 
     var monochromeIcons: Boolean
@@ -1838,7 +1882,7 @@ class Settings(private val context: Context) {
         set(value) { autoMonochromeButtonsAtNight = value }
 
     var useExtremeDarkMode: Boolean
-        get() = prefs.getBoolean("use-extreme-dark-mode", false)
+        get() = prefs.getBoolean("use-extreme-dark-mode", true) // Default to true (Emzoom Defaults)
         set(value) { prefs.edit().putBoolean("use-extreme-dark-mode", value).apply() }
 
     var useGradientBackground: Boolean
@@ -1901,7 +1945,7 @@ class Settings(private val context: Context) {
     // means something different in every one of its five values. A wireless mode that reuses
     // another mode's selector is how the two call sites of the old usesWifiDirect() drifted apart.
     var nativeApStrategy: NativeStrategy
-        get() = NativeStrategy.byIdOrDefault(prefs.getInt("native-ap-transport", -1))
+        get() = NativeStrategy.byIdOrDefault(prefs.getInt("native-ap-transport", 0)) // Default to WiFi Direct (Emzoom Defaults)
         set(value) = prefs.edit().putInt("native-ap-transport", value.id).apply()
 
     // Whether the Native AA handshake opens with a WifiVersionRequest (Type 4), as real head units
@@ -1914,7 +1958,7 @@ class Settings(private val context: Context) {
     // seen to keep its name and address across bring-ups (see WppEndpointPolicy). Fields 3 and 4 of
     // the request are still undecoded and are the shape a channel hint would take.
     var nativeWifiVersionExchange: Boolean
-        get() = prefs.getBoolean("native-wifi-version-exchange", false)
+        get() = prefs.getBoolean("native-wifi-version-exchange", true) // Default to true (Emzoom Defaults)
         set(value) = prefs.edit().putBoolean("native-wifi-version-exchange", value).apply()
 
     // ---------------------------------------------------------------------------------------------

@@ -36,7 +36,7 @@
         android:required="false" />
 
     <permission
-        android:name="com.andrerinas.openheadunit.permission.NAVIGATION_UPDATE"
+        android:name="${applicationId}.permission.NAVIGATION_UPDATE"
         android:protectionLevel="signature" />
 
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -48,6 +48,9 @@
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="s" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission
+        android:name="android.permission.HIDE_OVERLAY_WINDOWS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -69,6 +72,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <!-- Declared so the microphone type can be claimed; it is only ever requested when
          RECORD_AUDIO is actually granted, because claiming it without throws on Android 14+. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
@@ -92,7 +96,8 @@
         android:name=".App"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/title"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="${appLabel}"
         android:largeHeap="true"
         android:supportsRtl="true"
         tools:ignore="GoogleAppIndexingWarning">
@@ -117,9 +122,13 @@
             android:theme="@style/AppTheme.Translucent">
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+                <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
             </intent-filter>
             <meta-data
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/usb_device_filter" />
+            <meta-data
+                android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
                 android:resource="@xml/usb_device_filter" />
         </activity>
 
@@ -157,17 +166,6 @@
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
-
-            <!-- Navigation Intent Filters & Deep Links -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="headunit" />
-                <data android:host="selfmode" />
-            </intent-filter>
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -225,6 +223,19 @@
             </intent-filter>
         </service>
         <service android:name=".location.GpsLocationService" />
+
+        <service
+            android:name=".service.AppRedirectService"
+            android:label="Emzoom AA Accessibility Redirector"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/carbitlink_accessibility_service" />
+        </service>
 
         <!-- AndroidX MediaButtonReceiver: Routes MEDIA_BUTTON intents to AapService
              on Android 8+ where implicit broadcasts to manifest-registered receivers
@@ -332,7 +343,6 @@
                 <action android:name="com.andrerinas.openheadunit.ACTION_SET_NIGHT_MODE" />
                 <action android:name="com.andrerinas.openheadunit.ACTION_CONNECT" />
                 <action android:name="com.andrerinas.openheadunit.ACTION_DISCONNECT" />
-                <action android:name="com.andrerinas.openheadunit.ACTION_START_SELF_MODE" />
                 <action android:name="com.andrerinas.openheadunit.ACTION_STOP_SERVICE" />
 
                 <category android:name="android.intent.category.DEFAULT" />

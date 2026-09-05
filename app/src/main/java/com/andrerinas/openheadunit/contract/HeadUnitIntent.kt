@@ -12,7 +12,7 @@ import android.view.KeyEvent
  */
 
 object HeadUnit {
-    const val packageName = "com.andrerinas.headunitrevived"
+    const val packageName = "com.sesam.emzoomaa"
 }
 
 class ConnectedIntent: Intent(action) {

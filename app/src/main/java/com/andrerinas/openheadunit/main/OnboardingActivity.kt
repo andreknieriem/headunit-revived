@@ -226,13 +226,12 @@ class OnboardingActivity : BaseActivity() {
             }
         }
 
-        // --- Connection: multi-select of USB / WiFi / Self Mode ---
+        // --- Connection: multi-select of USB / WiFi ---
         val connGroup = findViewById<MaterialButtonToggleGroup>(R.id.onb_conn_group)
         isBinding = true
         val modes = settings.connectionModes
         if (Settings.ConnectionMode.USB in modes) connGroup.check(R.id.onb_conn_usb)
         if (Settings.ConnectionMode.WIFI in modes) connGroup.check(R.id.onb_conn_wifi)
-        if (Settings.ConnectionMode.SELF in modes) connGroup.check(R.id.onb_conn_self)
         isBinding = false
         updateConnectionDetail()
         connGroup.addOnButtonCheckedListener { group, _, _ ->
@@ -241,7 +240,6 @@ class OnboardingActivity : BaseActivity() {
             val selected = buildSet {
                 if (R.id.onb_conn_usb in checked) add(Settings.ConnectionMode.USB)
                 if (R.id.onb_conn_wifi in checked) add(Settings.ConnectionMode.WIFI)
-                if (R.id.onb_conn_self in checked) add(Settings.ConnectionMode.SELF)
             }
             settings.connectionModes = selected
             updateConnectionDetail()
@@ -646,7 +644,6 @@ class OnboardingActivity : BaseActivity() {
         val parts = mutableListOf<String>()
         if (Settings.ConnectionMode.USB in modes) parts.add(getString(R.string.connection_kind_usb))
         if (Settings.ConnectionMode.WIFI in modes) parts.add(getString(R.string.connection_kind_wifi))
-        if (Settings.ConnectionMode.SELF in modes) parts.add(getString(R.string.self_mode))
         return parts.joinToString(", ")
     }
 
@@ -842,6 +839,6 @@ class OnboardingActivity : BaseActivity() {
         private const val DHU_MAKE = "Google"
         // Names the car step offers that are not car brands: the head unit make itself and
         // the app's own name. Lowercase, compared against a lowercased input.
-        private val NOT_A_MANUFACTURER = setOf("google", "open headunit")
+        private val NOT_A_MANUFACTURER = setOf("google", "open headunit", "emzoom aa")
     }
 }

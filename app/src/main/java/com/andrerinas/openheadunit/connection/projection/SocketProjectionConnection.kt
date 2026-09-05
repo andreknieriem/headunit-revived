@@ -6,6 +6,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
+import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.NearbySocket
 import com.andrerinas.openheadunit.utils.AppLog
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +44,13 @@ class SocketProjectionConnection(
         transport = Socket()
     }
 
-    constructor(socket: Socket, context: Context) : this(socket.inetAddress.hostAddress ?: "", socket.port, context) {
+    constructor(socket: Socket, context: Context) : this(socket.inetAddress?.hostAddress ?: "", socket.port, context) {
         this.transport = socket
         this.singleMessage = socket is NearbySocket
+        if (App.provide(context).settings.performanceEnhancementMode) {
+            applyLowLatencySocketOptions(beforeConnect = true)
+            applyLowLatencySocketOptions(beforeConnect = false)
+        }
         // Pre-connected sockets (like NearbySocket) need their streams initialized immediately
         // because connect() might not be called or might be bypassed.
         if (socket.isConnected) {

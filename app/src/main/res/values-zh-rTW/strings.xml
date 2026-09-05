@@ -9,7 +9,6 @@
     <string name="ignored">已忽略</string>
     <string name="exit">離開</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">自我模式</string>
     <string name="to_android_auto">到 Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">移除</string>
@@ -156,8 +155,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">一般</string>
-    <string name="auto_start_self_mode">自動開始自我模式</string>
-    <string name="auto_start_self_mode_description">應用程式開啟時自動開始自我模式。</string>
     <string name="usb_auto_connect">USB 自動連接</string>
     <string name="usb_auto_connect_description">應用程式開啟時自動連接到已知的 USB 裝置。</string>
     <string name="auto_start_bt_label">藍牙自動啟動</string>
@@ -319,7 +316,6 @@
     <string name="success">成功</string>
     <string name="failed">失敗</string>
     <string name="failed_start_android_auto">啟動 Android Auto 失敗</string>
-    <string name="failed_self_mode_android10">Google 可能在 Android 10 (AA 16.4+) 上封鎖了自我模式。請參閱 README。</string>
     <string name="android_auto_starting">Android Auto 啟動中…</string>
     <string name="connection_interrupted">連線中斷</string>
     <string name="connection_interrupted_detail">正在重試…</string>
@@ -468,8 +464,6 @@
 
     <string name="not_supported_nativeaa">似乎不支援原生無線連接</string>
     <string name="not_supported_nativeaa_desc">您的裝置可能不支援原生無線所需的藍牙或 Wi-Fi 功能。您可以嘗試連線，但如果失敗，請改用「Wireless Helper」或「Auto (主機伺服器)」模式。</string>
-    <string name="shortcut_selfmode_title">本機模式</string>
-    <string name="shortcut_selfmode_desc">在此裝置上啟動 Android Auto</string>
     <string name="wait_for_wifi">啟動 WiFi Direct 前等待 WiFi</string>
     <string name="wait_for_wifi_description">開機時，在啟動 WiFi Direct 之前等待 WiFi 連接。適用於主機開機後需要幾秒才能連上 WiFi 的情況。</string>
     <string name="wait_for_wifi_timeout">WiFi 等待逾時</string>
@@ -622,7 +616,6 @@
     <string name="renderer_confirm_switch">切換轉譯器</string>
     <string name="renderer_switched_to">轉譯器：%1$s</string>
 
-    <string name="self_mode_overlay_permission_description">為使單獨模式能在背景穩定啟動，請在下一個畫面啟用「顯示在其他應用程式上層」的權限。</string>
     <string name="delete">刪除</string>
     <string name="night_mode_coordinates">座標</string>
     <string name="geofence_locations_title">位置</string>
@@ -911,7 +904,6 @@
     <string name="usb_device_action_title">USB 裝置操作</string>
     <string name="home_button_colors">按鈕顏色與漸層</string>
     <string name="home_button_colors_description">自訂主畫面 4 個按鈕的顏色與漸層</string>
-    <string name="btn_color_self_mode">獨立模式按鈕</string>
     <string name="btn_color_usb">USB 按鈕</string>
     <string name="btn_color_wifi">WiFi 按鈕</string>
     <string name="btn_color_settings">設定按鈕</string>

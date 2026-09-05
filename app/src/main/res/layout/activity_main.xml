@@ -250,7 +250,7 @@
         android:id="@+id/splash_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/color_projection_blue"
+        android:background="@android:color/black"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center">

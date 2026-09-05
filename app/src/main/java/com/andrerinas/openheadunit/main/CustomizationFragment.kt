@@ -66,17 +66,14 @@ class CustomizationFragment : Fragment() {
     private var btnNightNone: MaterialButton? = null
 
     // Button color previews & rows
-    private var previewBtnSelfMode: MaterialButton? = null
     private var previewBtnUsb: MaterialButton? = null
     private var previewBtnWifi: MaterialButton? = null
     private var previewBtnSettings: MaterialButton? = null
 
-    private var indicatorSelfMode: View? = null
     private var indicatorUsb: View? = null
     private var indicatorWifi: View? = null
     private var indicatorSettings: View? = null
 
-    private var rowColorSelfMode: View? = null
     private var rowColorUsb: View? = null
     private var rowColorWifi: View? = null
     private var rowColorSettings: View? = null
@@ -167,17 +164,14 @@ class CustomizationFragment : Fragment() {
         btnNightNone = view.findViewById(R.id.btn_night_none)
 
         // Button Color views
-        previewBtnSelfMode = view.findViewById(R.id.preview_btn_self_mode)
         previewBtnUsb = view.findViewById(R.id.preview_btn_usb)
         previewBtnWifi = view.findViewById(R.id.preview_btn_wifi)
         previewBtnSettings = view.findViewById(R.id.preview_btn_settings)
 
-        indicatorSelfMode = view.findViewById(R.id.indicator_self_mode)
         indicatorUsb = view.findViewById(R.id.indicator_usb)
         indicatorWifi = view.findViewById(R.id.indicator_wifi)
         indicatorSettings = view.findViewById(R.id.indicator_settings)
 
-        rowColorSelfMode = view.findViewById(R.id.row_color_self_mode)
         rowColorUsb = view.findViewById(R.id.row_color_usb)
         rowColorWifi = view.findViewById(R.id.row_color_wifi)
         rowColorSettings = view.findViewById(R.id.row_color_settings)
@@ -212,17 +206,6 @@ class CustomizationFragment : Fragment() {
         }
 
         // Button Color listeners
-        rowColorSelfMode?.setOnClickListener {
-            showColorPickerDialog(
-                R.string.btn_color_self_mode,
-                settings.customSelfModeButtonColor,
-                R.drawable.gradient_blue,
-                R.drawable.ic_launch_white
-            ) { color ->
-                settings.customSelfModeButtonColor = color
-            }
-        }
-
         rowColorUsb?.setOnClickListener {
             showColorPickerDialog(
                 R.string.btn_color_usb,
@@ -312,7 +295,6 @@ class CustomizationFragment : Fragment() {
 
         btnMakeAllMonochrome?.setOnClickListener {
             val grayColor = 0xFF555555.toInt()
-            settings.customSelfModeButtonColor = grayColor
             settings.customUsbButtonColor = grayColor
             settings.customWifiButtonColor = grayColor
             settings.customSettingsButtonColor = grayColor
@@ -422,6 +404,12 @@ class CustomizationFragment : Fragment() {
         val density = resources.displayMetrics.density
         val isPortrait = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         HomeUiHelper.applyButtonScale(homeView, validScale, isPortrait, density)
+
+        // 4. Sync USB button visibility
+        val showsUsb = settings.showsUsb()
+        val usbVisibility = if (showsUsb) View.VISIBLE else View.GONE
+        homeView.findViewById<View>(R.id.usb_button)?.visibility = usbVisibility
+        homeView.findViewById<View>(R.id.usb_text)?.visibility = usbVisibility
     }
 
     private fun handleImageSelected(uri: Uri) {
@@ -493,7 +481,6 @@ class CustomizationFragment : Fragment() {
     }
 
     private fun resetAllButtonColors() {
-        settings.customSelfModeButtonColor = 0
         settings.customUsbButtonColor = 0
         settings.customWifiButtonColor = 0
         settings.customSettingsButtonColor = 0
@@ -566,13 +553,6 @@ class CustomizationFragment : Fragment() {
 
         // Update button color previews & indicators
         updateButtonPreview(
-            previewBtnSelfMode,
-            indicatorSelfMode,
-            settings.customSelfModeButtonColor,
-            R.drawable.gradient_blue,
-            ctx
-        )
-        updateButtonPreview(
             previewBtnUsb,
             indicatorUsb,
             settings.customUsbButtonColor,
@@ -594,8 +574,7 @@ class CustomizationFragment : Fragment() {
             ctx
         )
 
-        val hasCustomColors = settings.customSelfModeButtonColor != 0 ||
-                settings.customUsbButtonColor != 0 ||
+        val hasCustomColors = settings.customUsbButtonColor != 0 ||
                 settings.customWifiButtonColor != 0 ||
                 settings.customSettingsButtonColor != 0
         btnResetColors?.isEnabled = hasCustomColors

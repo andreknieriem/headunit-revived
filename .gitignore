@@ -40,8 +40,9 @@ captures/
 
 # Keystore files
 *.jks
-
-# Secrets configuration file
+*.keystore
+*.jkc
+key.properties
 secrets.properties
 
 src/main/obj

@@ -10,7 +10,6 @@
     <string name="ignored">Ignorado</string>
     <string name="exit">Salir</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Modo autónomo</string>
     <string name="to_android_auto">A Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Eliminar</string>
@@ -157,8 +156,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">General</string>
-    <string name="auto_start_self_mode">Autoinicio modo autónomo</string>
-    <string name="auto_start_self_mode_description">Inicia el modo autónomo automáticamente al abrir la app.</string>
     <string name="usb_auto_connect">Conexión automática USB</string>
     <string name="usb_auto_connect_description">Se conecta automáticamente a un dispositivo USB conocido tan pronto como se abre la aplicación.</string>
     <string name="auto_start_bt_label">Autoinicio por Bluetooth</string>
@@ -320,7 +317,6 @@
     <string name="success">Éxito</string>
     <string name="failed">Fallo</string>
     <string name="failed_start_android_auto">Error al iniciar Android Auto</string>
-    <string name="failed_self_mode_android10">Es probable que Google bloquee el modo autónomo en Android 10 (AA 16.4+). Consulta el README.</string>
     <string name="android_auto_starting">Iniciando Android Auto…</string>
     <string name="connection_interrupted">Conexión perdida</string>
     <string name="connection_interrupted_detail">Reintentando…</string>
@@ -329,8 +325,6 @@
     <string name="notification_projection_active">Android Auto proyectado</string>
     <string name="shortcut_connect_title">Conectar</string>
     <string name="shortcut_connect_desc">Conectar al último dispositivo</string>
-    <string name="shortcut_selfmode_title">Modo Autónomo</string>
-    <string name="shortcut_selfmode_desc">Iniciar Android Auto en este dispositivo</string>
     <string name="shortcut_disconnect_title">Desconectar</string>
     <string name="shortcut_disconnect_desc">Finalizar sesión actual</string>
     <string name="shortcut_exit_title">Salir de la aplicación</string>
@@ -630,8 +624,6 @@
     <string name="renderer_confirm_switch">Cambiar renderizador</string>
     <string name="renderer_switched_to">Renderizador: %1$s</string>
 
-    <string name="self_mode_overlay_permission_description">Para permitir que el Modo autónomo se inicie de manera confiable en segundo plano, active el permiso \"Mostrar sobre outras aplicaciones\" en la siguiente pantalla.</string>
-
     <!-- Geofence / coordinates -->
     <string name="delete">Eliminar</string>
     <string name="night_mode_coordinates">Coordenadas</string>
@@ -921,7 +913,6 @@
     <string name="usb_device_action_title">Acción del dispositivo USB</string>
     <string name="home_button_colors">Colores de botones y degradados</string>
     <string name="home_button_colors_description">Personaliza los colores y degradados de los 4 botones principales</string>
-    <string name="btn_color_self_mode">Botón Modo Autónomo</string>
     <string name="btn_color_usb">Botón USB</string>
     <string name="btn_color_wifi">Botón WiFi</string>
     <string name="btn_color_settings">Botón Ajustes</string>

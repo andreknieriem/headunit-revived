@@ -123,8 +123,13 @@ class CarFYTReceiver : CarKeyReceiver {
                 return
             }
 
-            // obtain key focus
+            // obtain key focus and suppress FYT floating call windows
             suExecutor.setProp("sys.carlink.type", "2")
+            suExecutor.setProp("persist.syu.floatcall", "0")
+            suExecutor.setProp("sys.syu.floatcall", "0")
+            suExecutor.setProp("sys.fyt.floatcall", "0")
+            suExecutor.setProp("persist.sys.floatcall", "0")
+            suExecutor.setProp("sys.fyt.floatwin", "0")
         }
 
         fun observe(moduleCode: Int, codes: IntArray): Boolean {

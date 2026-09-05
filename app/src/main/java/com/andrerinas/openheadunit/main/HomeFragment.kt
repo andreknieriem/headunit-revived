@@ -52,16 +52,7 @@ class HomeFragment : Fragment() {
 
     private val commManager get() = App.provide(requireContext()).commManager
 
-    private val vpnPermissionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            AppLog.i("VPN permission granted. Starting DummyVpnService and Self Mode.")
-            VpnControl.startVpn(requireContext());
-            startSelfModeInternal()
-        } else {
-            AppLog.w("VPN permission denied. Offline Self Mode might fail.")
-            Toast.makeText(requireContext(), getString(R.string.failed_start_android_auto), Toast.LENGTH_LONG).show()
-        }
-    }
+
 
     private val bluetoothPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) {
@@ -71,13 +62,11 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private lateinit var self_mode_button: Button
     private lateinit var usb: Button
     private lateinit var settings: Button
     private lateinit var wifi: Button
     private lateinit var wifi_text_view: TextView
     private lateinit var exitButton: Button
-    private lateinit var self_mode_text: TextView
     private var hasAttemptedAutoConnect = false
     private var hasAttemptedSingleUsbAutoConnect = false
     private var activeDialog: androidx.appcompat.app.AlertDialog? = null
@@ -100,13 +89,11 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        self_mode_button = view.findViewById(R.id.self_mode_button)
         usb = view.findViewById(R.id.usb_button)
         settings = view.findViewById(R.id.settings_button)
         wifi = view.findViewById(R.id.wifi_button)
         wifi_text_view = view.findViewById(R.id.wifi_text)
         exitButton = view.findViewById(R.id.exit_button)
-        self_mode_text = view.findViewById(R.id.self_mode_text)
 
         // Portrait layout: cap grid width so square buttons never overflow
         // into the WiFi-pill or Exit-button areas on compact/square devices.
@@ -115,15 +102,9 @@ class HomeFragment : Fragment() {
         }
 
         setupListeners()
-        updateProjectionButtonText()
         updateButtonStyle()
         updateButtonScale()
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                commManager.connectionState.collect { updateProjectionButtonText() }
-            }
-        }
+        updateUsbButtonVisibility()
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -139,12 +120,11 @@ class HomeFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val isAutoConnectEnabled = appSettings.autoStartSelfMode ||
-                appSettings.autoConnectLastSession ||
+            val isAutoConnectEnabled = appSettings.autoConnectLastSession ||
                 appSettings.autoConnectSingleUsbDevice
 
             val delaySec = appSettings.autoConnectDelaySeconds
-            if (isAutoConnectEnabled && delaySec > 0 && !forceSelfModeLaunch && !commManager.isConnected) {
+            if (isAutoConnectEnabled && delaySec > 0 && !commManager.isConnected) {
                 AppLog.i("HomeFragment: Waiting ${delaySec}s before attempting auto-connect...")
                 delay(delaySec * 1000L)
             }
@@ -165,17 +145,6 @@ class HomeFragment : Fragment() {
                             }
                         }
                     }
-                    Settings.AUTO_CONNECT_SELF_MODE -> {
-                        if ((appSettings.autoStartSelfMode || forceSelfModeLaunch) && !hasAutoStarted && !commManager.isConnected) {
-                            hasAutoStarted = true
-                            forceSelfModeLaunch = false // Reset once processed
-                            (requireActivity() as? MainActivity)?.beginAutoConnect(
-                                "auto-start self mode",
-                                MainActivity.ConnectionUiMode.OVERLAY
-                            )
-                            startSelfMode()
-                        }
-                    }
                     Settings.AUTO_CONNECT_SINGLE_USB -> {
                         if (appSettings.autoConnectSingleUsbDevice && !hasAttemptedSingleUsbAutoConnect && !commManager.isConnected) {
                             hasAttemptedSingleUsbAutoConnect = true
@@ -190,35 +159,6 @@ class HomeFragment : Fragment() {
                 }
             }
         }
-    }
-
-    private fun startSelfModeInternal() {
-        val intent = Intent(requireContext(), AapService::class.java)
-        intent.action = AapService.ACTION_START_SELF_MODE
-        ContextCompat.startForegroundService(requireContext(), intent)
-        AppLog.i("Auto start selfmode")
-    }
-
-    private fun startSelfMode() {
-        val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetwork = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            connectivityManager.activeNetwork
-        } else null
-
-        if (activeNetwork == null && VpnControl.isVpnAvailable()) {
-            AppLog.i("Device is offline. Preparing Dummy VPN for Self Mode.")
-            val vpnIntent = VpnControl.consentIntent(requireContext())
-            if (vpnIntent != null) {
-                vpnPermissionLauncher.launch(vpnIntent)
-                return
-            } else {
-                AppLog.i("VPN permission already granted. Starting VPN service.")
-                VpnControl.startVpn(requireContext());
-            }
-        } else if (activeNetwork == null) {
-            AppLog.i("Device is offline and VPN is not available in this build. Self Mode may fail.")
-        }
-        startSelfModeInternal()
     }
 
     /**
@@ -357,34 +297,7 @@ class HomeFragment : Fragment() {
             requireActivity().finishAffinity()
         }
 
-        self_mode_button.setOnClickListener {
-            if (commManager.isConnected) {
-                val aapIntent = Intent(requireContext(), AapProjectionActivity::class.java)
-                aapIntent.putExtra(AapProjectionActivity.EXTRA_FOCUS, true)
-                startActivity(aapIntent)
-            } else {
-                if (!AppPermissions.isOverlayGranted(requireContext())) {
-                    MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
-                        .setTitle(R.string.overlay_permission_title)
-                        .setMessage(R.string.self_mode_overlay_permission_description)
-                        .setPositiveButton(R.string.open_settings) { _, _ ->
-                            val intent = Intent(
-                                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                android.net.Uri.parse("package:${requireContext().packageName}")
-                            )
-                            startActivity(intent)
-                        }
-                        .setNegativeButton(R.string.cancel, null)
-                        .show()
-                } else {
-                    (requireActivity() as? MainActivity)?.beginAutoConnect(
-                        "manual self mode",
-                        MainActivity.ConnectionUiMode.OVERLAY
-                    )
-                    startSelfMode()
-                }
-            }
-        }
+
 
         usb.setOnClickListener {
             // Already connected to Android Auto - just show projection
@@ -600,21 +513,15 @@ class HomeFragment : Fragment() {
         gridLayout.viewTreeObserver.addOnGlobalLayoutListener(listener)
     }
 
-    private fun updateProjectionButtonText() {
-        if (commManager.isConnected) {
-            self_mode_text.text = getString(R.string.to_android_auto)
-        } else {
-            self_mode_text.text = getString(R.string.self_mode)
-        }
-    }
+
 
     override fun onResume() {
         super.onResume()
         AppLog.i("HomeFragment: onResume. isConnected=${commManager.isConnected}")
-        updateProjectionButtonText()
         updateButtonStyle()
         updateButtonScale()
         updateTextColors()
+        updateUsbButtonVisibility()
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             view?.let { constrainPortraitGridWidth(it) }
         }
@@ -792,14 +699,23 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun updateUsbButtonVisibility() {
+        val ctx = context ?: return
+        val appSettings = App.provide(ctx).settings
+        val showsUsb = appSettings.showsUsb()
+        val visibility = if (showsUsb) View.VISIBLE else View.GONE
+        usb.visibility = visibility
+        view?.findViewById<View>(R.id.usb_text)?.visibility = visibility
+        view?.findViewById<View>(R.id.usb_cell)?.visibility = visibility
+    }
+
     private fun updateTextColors() {
         val appSettings = App.provide(requireContext()).settings
         val nightModeFlags = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         val isLightMode = nightModeFlags != Configuration.UI_MODE_NIGHT_YES
 
-        val labelViews = listOf(self_mode_text, wifi_text_view,
-            view?.findViewById<TextView>(R.id.usb_text),
-            view?.findViewById<TextView>(R.id.settings_text))
+        val labelViews = listOf(wifi_text_view,
+            view?.findViewById<TextView>(R.id.usb_text))
 
         if (appSettings.useGradientBackground && isLightMode) {
             val darkColor = Color.parseColor("#1a1a1a")
@@ -816,11 +732,11 @@ class HomeFragment : Fragment() {
         }
 
         exitButton.setTextColor(Color.WHITE)
+        settings.setTextColor(Color.WHITE)
     }
 
     companion object {
         private var hasAutoStarted = false
-        var forceSelfModeLaunch = false
         fun resetAutoStart() {
             hasAutoStarted = false
         }
