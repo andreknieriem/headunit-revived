@@ -74,9 +74,11 @@ class MainActivity : BaseActivity() {
      * non-blocking status indicator at the top of the home screen used for
      * fully automatic background attempts so the home buttons stay tappable.
      * OVERLAY is the full-screen custom loading screen used for connections
-     * the user explicitly triggered with a button.
+     * the user explicitly triggered with a button. PILL_THEN_OVERLAY starts as
+     * the pill and becomes the overlay once the connection actually advances,
+     * for an attempt whose phone still has to be woken and may never answer.
      */
-    enum class ConnectionUiMode { PILL, OVERLAY }
+    enum class ConnectionUiMode { PILL, OVERLAY, PILL_THEN_OVERLAY }
 
     private val finishReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
@@ -291,7 +293,8 @@ class MainActivity : BaseActivity() {
      */
     private fun showAutoConnectUi() {
         when (autoConnectMode) {
-            ConnectionUiMode.PILL -> showAutoConnectPill()
+            ConnectionUiMode.PILL,
+            ConnectionUiMode.PILL_THEN_OVERLAY -> showAutoConnectPill()
             ConnectionUiMode.OVERLAY -> showAutoConnectOverlay()
         }
     }
@@ -336,6 +339,17 @@ class MainActivity : BaseActivity() {
                             // was requested); ensure it is in case the request raced with
                             // setContentView or the activity was recreated mid-attempt.
                             if (autoConnectInProgress) {
+                                // A deferred attempt has now proven a phone is answering, so it
+                                // may take the full screen.
+                                if (autoConnectMode == ConnectionUiMode.PILL_THEN_OVERLAY) {
+                                    AppLog.i("Auto-connect: a phone is answering, taking the full screen.")
+                                    autoConnectMode = ConnectionUiMode.OVERLAY
+                                    hideAutoConnectPill()
+                                    // The pill said this phone was disconnected. It is answering now,
+                                    // so that text must not follow it onto the projection screen.
+                                    autoConnectStatusText = null
+                                    AapProjectionActivity.pendingStatusText = null
+                                }
                                 showAutoConnectUi()
                             }
                         }

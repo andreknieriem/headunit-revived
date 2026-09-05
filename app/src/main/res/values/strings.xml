@@ -1142,11 +1142,14 @@
     <string name="switch_driver">Switch Phone</string>
     <string name="driver_device_connected">In vehicle / Connected</string>
     <string name="driver_device_paired">Paired</string>
+    <string name="driver_device_disconnected">Disconnected, will be woken</string>
     <string name="driver_device_preferred">Preferred</string>
     <string name="driver_device_last_used">Last Connected</string>
     <string name="driver_selection_auto_in">Auto-connecting to %2$s in %1$ds...</string>
     <string name="driver_selection_dialog_title">Select Driver Phone</string>
     <string name="connecting_to_device">Connecting to %s...</string>
+    <string name="connecting_driver">Starting Android Auto with %s</string>
+    <string name="connecting_driver_disconnected">%s is disconnected, waking it...</string>
     <string name="driver_none">None</string>
     <string name="show_all_devices">Show all Bluetooth devices</string>
     <string name="show_only_phones">Show only phones</string>
