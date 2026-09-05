@@ -361,6 +361,8 @@
     <string name="fullscreen_immersive_avoid_notch">Immersief (Notch vermijden)</string>
     <string name="fullscreen_immersive_avoid_notch_desc">Verbergt alle balken en voegt opvulling toe om te voorkomen dat de projectie wordt afgedekt door de Notch/Uitsparing.</string>
     <string name="fullscreen_status_only">Alleen statusbalk verbergen</string>
+    <string name="allow_external_configuration">Externe configuratie toestaan</string>
+    <string name="allow_external_configuration_description">Laat automatiseringsapps zoals Tasker of MacroDroid instellingen wijzigen, het logniveau instellen en logs exporteren. Verbinden en verbreken werkt altijd; dit geldt alleen voor opdrachten die de configuratie van de headunit wijzigen.</string>
     <string name="log_level">Logboekniveau</string>
     <string name="log_level_description">Kies het detailniveau van de loguitvoer voor foutopsporing.</string>
     <string name="log_source">Logbron</string>

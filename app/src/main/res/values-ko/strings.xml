@@ -131,6 +131,8 @@
     <string name="back">뒤로</string>
     <string name="debug_mode">디버그 모드</string>
     <string name="debug_mode_description">자세한 로그 기록을 활성화합니다.</string>
+    <string name="allow_external_configuration">외부 설정 변경 허용</string>
+    <string name="allow_external_configuration_description">Tasker나 MacroDroid 같은 자동화 앱이 설정을 변경하고 로그 수준을 지정하며 로그를 내보낼 수 있도록 합니다. 연결과 연결 해제는 항상 동작하며, 이 설정은 헤드유닛 구성을 바꾸는 명령에만 적용됩니다.</string>
     <string name="log_level">로그 레벨</string>
     <string name="log_level_description">내보낼 로그 레벨을 선택합니다.</string>
     <string name="log_source">로그 수집 방식</string>

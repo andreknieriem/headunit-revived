@@ -364,6 +364,8 @@
     <string name="fullscreen_immersive_avoid_notch">غامر (تجنب النوتش)</string>
     <string name="fullscreen_immersive_avoid_notch_desc">يخفي جميع الأعمدة ويضيف حشوة لمنع تغطية العرض بواسطة النوتش أو الانقطاع.</string>
     <string name="fullscreen_status_only">إخفاء شريط الحالة فقط</string>
+    <string name="allow_external_configuration">السماح بالتهيئة الخارجية</string>
+    <string name="allow_external_configuration_description">اسمح لتطبيقات الأتمتة مثل Tasker أو MacroDroid بتغيير الإعدادات وضبط مستوى السجل وتصدير السجلات. الاتصال وقطع الاتصال يعملان دائمًا؛ هذا يخص فقط الأوامر التي تغيّر طريقة إعداد الوحدة.</string>
     <string name="log_level">مستوى السجل</string>
     <string name="log_level_description">اختر مستوى تفصيل مخرجات السجل للتصحيح.</string>
     <string name="log_source">مصدر السجلات</string>

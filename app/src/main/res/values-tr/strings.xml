@@ -128,6 +128,8 @@
     <string name="back">Geri</string>
     <string name="debug_mode">Hata Ayıklama Modu</string>
     <string name="debug_mode_description">Daha fazla günlük kaydı (Log) tut</string>
+    <string name="allow_external_configuration">Harici yapılandırmaya izin ver</string>
+    <string name="allow_external_configuration_description">Tasker veya MacroDroid gibi otomasyon uygulamalarının ayarları değiştirmesine, günlük seviyesini belirlemesine ve günlükleri dışa aktarmasına izin verir. Bağlanma ve bağlantıyı kesme her zaman çalışır; bu yalnızca ünitenin yapılandırmasını değiştiren komutlar için geçerlidir.</string>
     <string name="log_level">Günlük Seviyesi</string>
     <string name="log_level_description">Dışa aktarırken günlük seviyesini filtrele</string>
     <string name="log_source">Günlük kaynağı</string>

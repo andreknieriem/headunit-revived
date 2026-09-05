@@ -361,6 +361,8 @@
     <string name="fullscreen_immersive_avoid_notch">沈浸模式 (避開瀏海)</string>
     <string name="fullscreen_immersive_avoid_notch_desc">隱藏所有工具列並增加間距，以防止投影被瀏海或切口遮擋。</string>
     <string name="fullscreen_status_only">僅隱藏狀態列</string>
+    <string name="allow_external_configuration">允許外部設定</string>
+    <string name="allow_external_configuration_description">讓 Tasker 或 MacroDroid 等自動化應用程式變更設定、設定記錄層級並匯出記錄。連線與中斷連線一律可用；此項僅適用於會變更主機設定的指令。</string>
     <string name="log_level">日誌級別</string>
     <string name="log_level_description">選擇日誌輸出的詳細程度以進行偵錯。</string>
     <string name="log_source">日誌來源</string>

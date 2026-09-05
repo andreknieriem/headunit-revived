@@ -123,6 +123,8 @@
     <string name="back">Înapoi</string>
     <string name="debug_mode">Mod depanare (Debug)</string>
     <string name="debug_mode_description">Activează loguri detaliate</string>
+    <string name="allow_external_configuration">Permite configurarea externă</string>
+    <string name="allow_external_configuration_description">Permite aplicațiilor de automatizare precum Tasker sau MacroDroid să modifice setările, să seteze nivelul de jurnalizare și să exporte jurnalele. Conectarea și deconectarea funcționează întotdeauna; aceasta se aplică doar comenzilor care schimbă configurația unității.</string>
     <string name="log_level">Nivel logare</string>
     <string name="log_level_description">Filtrează nivelul logurilor la export</string>
     <string name="log_source">Sursă de jurnalizare</string>

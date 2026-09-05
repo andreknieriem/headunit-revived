@@ -2419,6 +2419,20 @@ class SettingsFragment : Fragment() {
             ))
         }
 
+        // Sits beside the log settings because those are half of what it unlocks: with this off,
+        // another app can still connect and disconnect, but cannot rewrite this unit's setup or
+        // drive the capture.
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "allowExternalConfiguration",
+            nameResId = R.string.allow_external_configuration,
+            descriptionResId = R.string.allow_external_configuration_description,
+            isChecked = settings.allowExternalConfiguration,
+            onCheckedChanged = { isChecked ->
+                settings.allowExternalConfiguration = isChecked
+                updateSettingsList()
+            }
+        ))
+
         val logLevels = LogExporter.LogLevel.entries
         val logLevelNames = logLevels.map { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } }.toTypedArray()
         items.add(SettingItem.SettingEntry(

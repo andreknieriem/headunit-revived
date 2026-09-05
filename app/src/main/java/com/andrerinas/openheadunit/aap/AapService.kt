@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.SystemClock
+import com.andrerinas.openheadunit.contract.SessionStateIntent
 import android.app.NotificationManager
 import android.graphics.PixelFormat
 import android.media.AudioAttributes
@@ -242,6 +243,15 @@ class AapService : Service() {
      */
     private var isDestroying = false
     private var hasEverConnected = false
+
+    /**
+     * Set by a `no_ui` automation command, which asks for the session without the screen.
+     * Consumed by the next raise only, so an ordinary reconnect still comes to the front.
+     */
+    @Volatile private var suppressNextProjectionRaise = false
+
+    /** When the live session started projecting, for [SessionStateIntent.EXTRA_UPTIME_MS]. */
+    @Volatile private var projectingSinceMs = 0L
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -911,6 +921,10 @@ class AapService : Service() {
         StationStandDown.restore(this)
         setupCarMode()
         setupNightMode()
+        commManager.onSessionFailure = { reason ->
+            emitSessionState(SessionStateIntent.STATE_FAILED, reason)
+            projectingSinceMs = 0L
+        }
         observeConnectionState()
         registerReceivers()
 
@@ -981,6 +995,30 @@ class AapService : Service() {
     }
 
     /**
+     * Tells automation tools what the session is doing. Implicit and unguarded, because automation
+     * apps cannot hold an app-declared permission; it carries no credentials and never names the phone.
+     */
+    private fun emitSessionState(state: String, reason: String = SessionStateIntent.REASON_NONE) {
+        // isLoopbackSession, not selfLauncherManager.isActive: the launcher flag is set before the
+        // launchers run and outlives a launch that never connected, which is exactly the state this
+        // reports on. A loopback session is a socket session too, so it has to be asked first.
+        val transport = when {
+            commManager.isLoopbackSession -> "self"
+            commManager.isWirelessSession -> "wifi"
+            commManager.isConnected -> "usb"
+            else -> "unknown"
+        }
+        val uptime =
+            if (projectingSinceMs == 0L) 0L else SystemClock.elapsedRealtime() - projectingSinceMs
+        AppLog.i("AapService: session state $state${if (reason.isEmpty()) "" else " ($reason)"}")
+        try {
+            sendBroadcast(SessionStateIntent(state, transport, reason, uptime))
+        } catch (e: Exception) {
+            AppLog.w("AapService: could not broadcast session state: ${e.message}")
+        }
+    }
+
+    /**
      * Single observer for all [CommManager.ConnectionState] transitions.
      *
      * Uses [hasEverConnected] to skip the initial [ConnectionState.Disconnected] emission
@@ -990,8 +1028,11 @@ class AapService : Service() {
         serviceScope.launch {
             commManager.connectionState.collect { state ->
                 when (state) {
+                    is CommManager.ConnectionState.Connecting ->
+                        emitSessionState(SessionStateIntent.STATE_CONNECTING)
                     is CommManager.ConnectionState.Connected -> {
                         sessionConnectedAt = SystemClock.elapsedRealtime()
+                        emitSessionState(SessionStateIntent.STATE_CONNECTED)
                         onConnected()
                     }
                     is CommManager.ConnectionState.HandshakeComplete -> {
@@ -999,7 +1040,9 @@ class AapService : Service() {
                     }
                     is CommManager.ConnectionState.TransportStarted -> {
                         hasEverConnected = true
+                        projectingSinceMs = SystemClock.elapsedRealtime()
                         usbLauncherManager.projectionHandshakeFailures = 0
+                        emitSessionState(SessionStateIntent.STATE_PROJECTING)
                         sendBroadcast(Intent(ACTION_REQUEST_NIGHT_MODE_UPDATE).apply {
                             setPackage(packageName)
                         })
@@ -1019,7 +1062,18 @@ class AapService : Service() {
                         }
                     }
                     is CommManager.ConnectionState.Disconnected -> {
-                        if (hasEverConnected) onDisconnected(state)
+                        if (hasEverConnected) {
+                            emitSessionState(
+                                SessionStateIntent.STATE_DISCONNECTED,
+                                when {
+                                    state.isUserExit -> SessionStateIntent.REASON_USER_EXIT
+                                    !state.isClean -> SessionStateIntent.REASON_LINK_LOST
+                                    else -> SessionStateIntent.REASON_PHONE_LEFT
+                                }
+                            )
+                            projectingSinceMs = 0L
+                            onDisconnected(state)
+                        }
                     }
                     else -> {}
                 }
@@ -1249,6 +1303,12 @@ class AapService : Service() {
     private fun launchAapProjectionActivity(allowNotificationFallback: Boolean = true) {
         if (App.isPiPActive) {
             AppLog.i("AapService: Skipping projection launch because PiP is active")
+            return
+        }
+
+        if (suppressNextProjectionRaise) {
+            suppressNextProjectionRaise = false
+            AppLog.i("AapService: Not raising the projection, a no_ui command asked for the session only")
             return
         }
 
@@ -2243,6 +2303,12 @@ class AapService : Service() {
             return START_NOT_STICKY
         }
 
+        // An automation command may ask for the session without the screen; latch it before any
+        // branch below can reach a raise.
+        if (intent?.getBooleanExtra(EXTRA_NO_UI, false) == true) {
+            suppressNextProjectionRaise = true
+        }
+
         // Handle stop before re-posting the notification to avoid a flash
         if (intent?.action == ACTION_STOP_SERVICE) {
             AppLog.i("Stop action received. Broadcasting finish request to activities.")
@@ -2850,6 +2916,8 @@ class AapService : Service() {
          *  60 seconds filters out normal screen timeouts while catching any hibernate/quick boot. */
         private const val HIBERNATE_WAKE_THRESHOLD_MS = 60_000L
 
+        /** Ask for the session without raising the projection. See [suppressNextProjectionRaise]. */
+        const val EXTRA_NO_UI = "no_ui"
         const val EXTRA_MAC = "extra_mac"
         const val EXTRA_ENDPOINT_ID = "extra_endpoint_id"
     }

@@ -338,6 +338,8 @@
     <string name="back">Back</string>
     <string name="debug_mode">Debug Mode</string>
     <string name="debug_mode_description">Toggle more Logging</string>
+    <string name="allow_external_configuration">Allow external configuration</string>
+    <string name="allow_external_configuration_description">Let automation apps such as Tasker or MacroDroid change settings, set the log level and export logs. Connecting and disconnecting always works; this is only for commands that change how the head unit is set up.</string>
     <string name="log_level">Log Level</string>
     <string name="log_level_description">Filter log level when exporting</string>
     <string name="log_source">Log Source</string>

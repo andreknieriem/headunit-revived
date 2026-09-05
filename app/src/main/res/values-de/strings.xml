@@ -157,6 +157,8 @@
     <string name="back">Zurück</string>
     <string name="debug_mode">Debug Modus</string>
     <string name="debug_mode_description">Erweitertes Logging aktivieren</string>
+    <string name="allow_external_configuration">Externe Konfiguration zulassen</string>
+    <string name="allow_external_configuration_description">Erlaubt Automatisierungs-Apps wie Tasker oder MacroDroid, Einstellungen zu ändern, das Log-Level zu setzen und Logs zu exportieren. Verbinden und Trennen funktioniert immer; dies betrifft nur Befehle, die die Einrichtung der Haupteinheit ändern.</string>
     <string name="log_level">Log-Level</string>
     <string name="log_level_description">Filtert den Detailgrad beim Log-Export</string>
     <string name="log_source">Logquelle</string>

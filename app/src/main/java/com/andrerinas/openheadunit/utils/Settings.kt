@@ -245,6 +245,13 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean(KEY_LOG_CAPTURE_ENABLED, value).apply() }
     val logLevel: Int get() = exporterLogLevel.logLevel
 
+    // Lets another app on the device rewrite this unit's settings and drive the log capture through
+    // AutomationReceiver. Off by default: the control verbs are harmless to fire by accident, these
+    // are not.
+    var allowExternalConfiguration: Boolean
+        get() = prefs.getBoolean(KEY_ALLOW_EXTERNAL_CONFIGURATION, false)
+        set(value) = prefs.edit().putBoolean(KEY_ALLOW_EXTERNAL_CONFIGURATION, value).apply()
+
     var viewMode: ViewMode
         get() {
             val value = prefs.getInt("view-mode", 1)
@@ -1403,6 +1410,7 @@ class Settings(private val context: Context) {
 
         /** SharedPreferences key; also used by [com.andrerinas.openheadunit.aap.AapService] for change listener. */
         const val KEY_LOG_LEVEL = "log-level"
+        const val KEY_ALLOW_EXTERNAL_CONFIGURATION = "allow-external-configuration"
         const val KEY_LOG_SOURCE = "log-source"
         const val KEY_LOG_LOCATION = "log-location"
         /** Persist whether log capture should be active across restarts. */

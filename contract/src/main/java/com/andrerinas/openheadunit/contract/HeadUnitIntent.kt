@@ -15,24 +15,6 @@ object HeadUnit {
     const val packageName = "com.andrerinas.headunitrevived"
 }
 
-class ConnectedIntent: Intent(action) {
-    companion object {
-        const val action = "${HeadUnit.packageName}.ACTION_CONNECTED"
-    }
-}
-
-class DisconnectIntent(isClean: Boolean = false) : Intent(action) {
-    init {
-        setPackage(HeadUnit.packageName)
-        putExtra(EXTRA_CLEAN, isClean)
-    }
-
-    companion object {
-        const val action = "${HeadUnit.packageName}.ACTION_DISCONNECT"
-        const val EXTRA_CLEAN = "is_clean"
-    }
-}
-
 class KeyIntent(event: KeyEvent): Intent(action) {
     init {
         putExtra(extraEvent, event)
@@ -176,5 +158,149 @@ class NavigationUpdateIntent(
          * Receivers must request this permission using <uses-permission> and should enforce it in their manifest declaration.
          */
         const val BROADCAST_PERMISSION = "${HeadUnit.packageName}.permission.NAVIGATION_UPDATE"
+    }
+}
+
+/**
+ * The commands [HeadUnitCommand.RECEIVER_CLASS] accepts. The component is in [HeadUnit.packageName]
+ * but actions are prefixed `com.andrerinas.openheadunit`: applicationId and namespace deliberately
+ * differ, and the wrong one silently does nothing. Worked examples are in `contract/README.md`.
+ */
+object HeadUnitCommand {
+    const val RECEIVER_CLASS = "com.andrerinas.openheadunit.automation.AutomationReceiver"
+
+    private const val PREFIX = "com.andrerinas.openheadunit"
+
+    // Control. Open to any caller, like the OEM key receivers already are.
+    const val ACTION_CONNECT = "$PREFIX.ACTION_CONNECT"
+    const val ACTION_DISCONNECT = "$PREFIX.ACTION_DISCONNECT"
+    const val ACTION_START_SELF_MODE = "$PREFIX.ACTION_START_SELF_MODE"
+    /**
+     * Ends the session and stops the service. The public name, which the shortcuts and existing
+     * automations already send; the service uses a different string internally.
+     */
+    const val ACTION_STOP_SERVICE = "$PREFIX.ACTION_STOP_SERVICE"
+
+    /** Older alias for [ACTION_STOP_SERVICE], still accepted. */
+    const val ACTION_EXIT = "$PREFIX.ACTION_EXIT"
+    const val ACTION_SET_NIGHT_MODE = "$PREFIX.ACTION_SET_NIGHT_MODE"
+    const val ACTION_START_WIRELESS = "$PREFIX.ACTION_START_WIRELESS"
+    const val ACTION_STOP_WIRELESS = "$PREFIX.ACTION_STOP_WIRELESS"
+    const val ACTION_START_WIRELESS_SCAN = "$PREFIX.ACTION_START_WIRELESS_SCAN"
+    const val ACTION_NATIVE_AA_POKE = "$PREFIX.ACTION_NATIVE_AA_POKE"
+
+    /**
+     * Cancels a Native AA wake in progress, as the driver selector's own Cancel does. Inert on a
+     * build without the driver-selection feature, which is where the service handler lives.
+     */
+    const val ACTION_NATIVE_AA_CANCEL_POKE = "$PREFIX.ACTION_NATIVE_AA_CANCEL_POKE"
+    const val ACTION_NEARBY_CONNECT = "$PREFIX.ACTION_NEARBY_CONNECT"
+    const val ACTION_CHECK_USB = "$PREFIX.ACTION_CHECK_USB"
+    const val ACTION_REFRESH_SENSORS = "$PREFIX.ACTION_REFRESH_SENSORS"
+    const val ACTION_RESTART_AUDIO = "$PREFIX.ACTION_RESTART_AUDIO"
+    const val ACTION_RAISE_PROJECTION = "$PREFIX.ACTION_RAISE_PROJECTION"
+
+    /**
+     * The original spellings of the three above, still accepted. They were the internal service
+     * actions before this surface existed, so anything already scripted against them keeps working.
+     */
+    const val LEGACY_ACTION_REFRESH_SENSORS = "$PREFIX.aap.action.REFRESH_SENSORS"
+    const val LEGACY_ACTION_RESTART_AUDIO = "$PREFIX.aap.action.RESTART_AUDIO"
+    const val LEGACY_ACTION_RAISE_PROJECTION = "$PREFIX.aap.action.RAISE_PROJECTION"
+    const val ACTION_QUERY_STATE = "$PREFIX.ACTION_QUERY_STATE"
+
+    // Configuration. Refused unless the user has turned on "Allow external configuration",
+    // because these rewrite the unit's setup and drive the log capture.
+    const val ACTION_SET_SETTINGS = "$PREFIX.ACTION_SET_SETTINGS"
+    const val ACTION_GET_SETTINGS = "$PREFIX.ACTION_GET_SETTINGS"
+    const val ACTION_RESET_SETTINGS = "$PREFIX.ACTION_RESET_SETTINGS"
+    const val ACTION_SET_LOG_LEVEL = "$PREFIX.ACTION_SET_LOG_LEVEL"
+    const val ACTION_START_LOG_CAPTURE = "$PREFIX.ACTION_START_LOG_CAPTURE"
+    const val ACTION_STOP_LOG_CAPTURE = "$PREFIX.ACTION_STOP_LOG_CAPTURE"
+    const val ACTION_EXPORT_LOG = "$PREFIX.ACTION_EXPORT_LOG"
+    const val ACTION_LOG_MARKER = "$PREFIX.ACTION_LOG_MARKER"
+
+    /** Target address for [ACTION_CONNECT]; without it the USB path is checked instead. */
+    const val EXTRA_IP = "ip"
+
+    /** [ACTION_CONNECT] and [ACTION_START_SELF_MODE]: connect without raising the projection. */
+    const val EXTRA_NO_UI = "no_ui"
+
+    /** `day`, `night` or `auto` for [ACTION_SET_NIGHT_MODE]. */
+    const val EXTRA_STATE = "state"
+
+    /** Bluetooth MAC for [ACTION_NATIVE_AA_POKE]. */
+    const val EXTRA_MAC = "extra_mac"
+
+    /** Google Nearby endpoint for [ACTION_NEARBY_CONNECT]. */
+    const val EXTRA_ENDPOINT_ID = "extra_endpoint_id"
+
+    /** Inline settings JSON for [ACTION_SET_SETTINGS], in the settings-backup format. */
+    const val EXTRA_JSON = "json"
+
+    /** File to read or write, for [ACTION_SET_SETTINGS], [ACTION_GET_SETTINGS], [ACTION_EXPORT_LOG]. */
+    const val EXTRA_PATH = "path"
+
+    /** `verbose`, `debug`, `info`, `warn`, `error` or `silent` for [ACTION_SET_LOG_LEVEL]. */
+    const val EXTRA_LEVEL = "level"
+
+    /** The text [ACTION_LOG_MARKER] writes into the log. */
+    const val EXTRA_TEXT = "text"
+}
+
+/**
+ * Broadcast when the session changes state, so automation can react without polling. Sent implicitly
+ * and unguarded, because an automation app cannot hold an app-declared permission; everything here is
+ * readable by any app, which is why it carries no credentials and never names the phone.
+ * Receive with `registerReceiver(r, IntentFilter(SessionStateIntent.action), RECEIVER_EXPORTED)`.
+ */
+class SessionStateIntent(
+    state: String,
+    transport: String,
+    reason: String,
+    uptimeMs: Long
+) : Intent(action) {
+    init {
+        putExtra(EXTRA_STATE, state)
+        putExtra(EXTRA_TRANSPORT, transport)
+        putExtra(EXTRA_REASON, reason)
+        putExtra(EXTRA_UPTIME_MS, uptimeMs)
+    }
+
+    companion object {
+        const val action = "${HeadUnit.packageName}.SESSION_STATE"
+
+        /** One of [STATE_CONNECTING], [STATE_CONNECTED], [STATE_PROJECTING], [STATE_DISCONNECTED], [STATE_FAILED]. */
+        const val EXTRA_STATE = "state"
+
+        /** `usb`, `wifi`, `self` or `unknown`. */
+        const val EXTRA_TRANSPORT = "transport"
+
+        /**
+         * Why the state changed. An open string, not a closed set: treat an unrecognised value as
+         * "some other reason" rather than failing.
+         */
+        const val EXTRA_REASON = "reason"
+
+        /** Milliseconds the session had been up, or 0 outside a session. */
+        const val EXTRA_UPTIME_MS = "uptime_ms"
+
+        const val STATE_CONNECTING = "connecting"
+        const val STATE_CONNECTED = "connected"
+
+        /** The session is live and carrying video; this is what "Android Auto is running" means. */
+        const val STATE_PROJECTING = "projecting"
+        const val STATE_DISCONNECTED = "disconnected"
+
+        /** The session never started. [EXTRA_REASON] says what failed. */
+        const val STATE_FAILED = "failed"
+
+        const val REASON_USER_EXIT = "user_exit"
+        const val REASON_LINK_LOST = "link_lost"
+        const val REASON_PHONE_LEFT = "phone_left"
+        const val REASON_HANDSHAKE_FAILED = "handshake_failed"
+        const val REASON_PEER_SILENT = "peer_silent"
+        const val REASON_CONNECT_FAILED = "connect_failed"
+        const val REASON_NONE = ""
     }
 }

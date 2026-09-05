@@ -364,6 +364,8 @@
     <string name="fullscreen_immersive_avoid_notch">Imerzivní (Vyhnout se Notch)</string>
     <string name="fullscreen_immersive_avoid_notch_desc">Skryje všechny lišty a přidá odsazení, aby se zabránilo zakrytí projekce výřezem (Notch).</string>
     <string name="fullscreen_status_only">Skrýt pouze stavovou lištu</string>
+    <string name="allow_external_configuration">Povolit externí konfiguraci</string>
+    <string name="allow_external_configuration_description">Umožní automatizačním aplikacím jako Tasker nebo MacroDroid měnit nastavení, nastavit úroveň protokolu a exportovat protokoly. Připojení a odpojení funguje vždy; toto se týká pouze příkazů, které mění nastavení jednotky.</string>
     <string name="log_level">Úroveň protokolování</string>
     <string name="log_level_description">Vyberte úroveň podrobnosti výstupu protokolu pro ladění.</string>
     <string name="log_source">Zdroj logů</string>
