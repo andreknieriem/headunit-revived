@@ -72,7 +72,7 @@ android {
         targetSdk = 28
         versionCode = 107
         versionName = "1.7.0(3.3.1)"
-        setProperty("archivesBaseName", "${applicationId}_${versionName}")
+        setProperty("archivesBaseName", "Emzoom AA_v${versionName}")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
         vectorDrawables.useSupportLibrary = true
@@ -213,9 +213,9 @@ android {
         variant.outputs
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
-                var outputFileName = "${variant.applicationId}_${variant.versionName}_debug.apk"
+                var outputFileName = "Emzoom AA_v${variant.versionName}_debug.apk"
                 if (variant.buildType.name == "release") {
-                    outputFileName = "${variant.applicationId}_${variant.versionName}.apk"
+                    outputFileName = "Emzoom AA_v${variant.versionName}.apk"
                 }
                 output.outputFileName = outputFileName
             }
