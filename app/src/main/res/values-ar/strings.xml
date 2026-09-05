@@ -957,6 +957,7 @@
     <string name="narrow_band_profile_cap">خفض الفيديو على راديو 2.4 غيغاهرتز فقط</string>
     <string name="narrow_band_profile_cap_description">عندما لا يدعم WiFi هذه الوحدة نطاق 5 غيغاهرتز، اطلب من الهاتف 720p و30 إطارًا في الثانية كحد أقصى بدلاً من الإعدادات أعلاه. على وصلة كهذه أظهرت القياسات أن البث بالمعدل الكامل لا ينقل أي صورة، بينما يصمد البث الأقل. أوقف هذا الخيار للحصول على ما طلبته بالضبط.</string>
     <string name="connection_issue_banner_video_link_too_slow">تخلّى هاتفك عن الفيديو قبل وصول إطار واحد، عدة مرات متتالية. وصلة WiFi أبطأ من أن تنقل الصورة. انقر لخفض حد الإطارات إلى 30؛ كما يفيد خفض الدقة واستخدام صوت AAC.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">رفض هذا الجهاز وضع شبكة WiFi Direct على أي قناة 5 غيغاهرتز اخترتها، فبدأت على القناة التي اختارها برنامج تشغيل الواي فاي الخاص به. غالباً ما تكون تلك القناة غير مرئية للهواتف في الدول ذات القيود الأشد. اضغط هنا لضبط نطاق WiFi Direct على 2.4 غيغاهرتز، وهو مسموح في كل الدول؛ توقع جودة 720p بدلاً من 1080p عليه.</string>
     <string name="connection_issue_banner_dismiss">تجاهل</string>
     <string name="connection_issue_remedy_hotspot_query">اسم نقطة الاتصال وكلمة المرور</string>
     <string name="preflight_title">قبل الاتصال</string>
@@ -1077,6 +1078,7 @@
     <string name="five_ghz_channel">قناة 5 جيجاهرتز</string>
     <string name="five_ghz_channel_auto">تلقائي</string>
     <string name="five_ghz_channel_option">القناة %1$d (%2$d ميجاهرتز)</string>
+    <string name="five_ghz_channel_hint">القناة طلب وليست ضماناً. كثير من الأجهزة لا تنشئ الشبكة إلا على القناة التي يختارها برنامج تشغيل الواي فاي الخاص بها، ولا يمكن للتطبيق إخبارك بذلك إلا بعد المحاولة. إذا لم تنجح أي قناة 5 غيغاهرتز وظل هاتفك لا يرى الشبكة، فإن النطاق أعلاه هو الإعداد الذي سينجح.</string>
     <string name="wifi_direct_stable_identity">الاحتفاظ بنفس شبكة Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">يطلب المجموعة بنفس الاسم وكلمة المرور في كل مرة، حتى يعاود هاتفك الاتصال بشبكة معروفة بدلاً من إعداد واحدة جديدة في كل رحلة.</string>
     <string name="wifi_direct_new_identity">هوية جديدة لشبكة Wi-Fi Direct</string>

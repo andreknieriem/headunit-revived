@@ -959,6 +959,7 @@
     <string name="narrow_band_profile_cap">Lagere video bij een radio met alleen 2,4 GHz</string>
     <string name="narrow_band_profile_cap_description">Als de wifi van dit apparaat geen 5GHz-band heeft, vraag de telefoon dan om maximaal 720p en 30 fps in plaats van de instellingen hierboven. Op zo\'n verbinding bleek uit metingen dat een stream op volle snelheid helemaal geen beeld doorgaf, terwijl een lagere het wel volhield. Zet dit uit om precies te krijgen wat je hebt ingesteld.</string>
     <string name="connection_issue_banner_video_link_too_slow">Je telefoon heeft de video meerdere keren achter elkaar opgegeven voordat er ook maar één beeld binnenkwam. De wifi-verbinding is te traag voor het beeld. Tik om de FPS-limiet naar 30 te verlagen; een lagere resolutie en AAC-audio helpen ook.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Deze unit weigerde het WiFi Direct-netwerk op een door jou gekozen 5 GHz-kanaal te zetten en startte het op het kanaal dat de eigen wifi-driver koos. Dat kanaal is vaak een kanaal dat telefoons in strengere landen niet eens kunnen zien. Tik hier om de WiFi Direct-band op 2,4 GHz te zetten, wat overal is toegestaan; verwacht daar 720p in plaats van 1080p.</string>
     <string name="connection_issue_banner_dismiss">Sluiten</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-naam en wachtwoord</string>
     <string name="preflight_title">Voordat je verbindt</string>
@@ -1079,6 +1080,7 @@
     <string name="five_ghz_channel">5 GHz-kanaal</string>
     <string name="five_ghz_channel_auto">Automatisch</string>
     <string name="five_ghz_channel_option">Kanaal %1$d (%2$d MHz)</string>
+    <string name="five_ghz_channel_hint">Een kanaal is een verzoek, geen garantie. Veel units maken het netwerk alleen aan op het kanaal dat hun eigen wifi-driver kiest, en de app kan je dat pas na een poging vertellen. Werkt geen enkel 5 GHz-kanaal en ziet je telefoon het netwerk nog steeds niet, dan is de band hierboven de instelling die dat wel oplost.</string>
     <string name="wifi_direct_stable_identity">Hetzelfde Wi-Fi Direct-netwerk behouden</string>
     <string name="wifi_direct_stable_identity_description">Vraagt de groep telkens op met dezelfde naam en wachtwoord, zodat je telefoon opnieuw verbindt met een bekend netwerk. Schakel dit uit als je telefoon het opgeslagen netwerk blijft weigeren.</string>
     <string name="wifi_direct_new_identity">Nieuwe Wi-Fi Direct-netwerkidentiteit</string>

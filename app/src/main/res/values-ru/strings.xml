@@ -958,6 +958,7 @@
     <string name="narrow_band_profile_cap">Снижать видео при радио только 2,4 ГГц</string>
     <string name="narrow_band_profile_cap_description">Когда у Wi-Fi этого устройства нет диапазона 5 ГГц, запрашивать у телефона не более 720p и 30 кадр/с вместо настроек выше. На такой линии связи измерения показали, что поток на полной скорости не передавал изображение вовсе, а более низкий работал. Отключите, чтобы получать именно то, что вы задали.</string>
     <string name="connection_issue_banner_video_link_too_slow">Ваш телефон несколько раз подряд прекращал видео, не дождавшись ни одного кадра. Соединение Wi-Fi слишком медленное для изображения. Нажмите, чтобы снизить ограничение FPS до 30; также помогут меньшее разрешение и звук AAC.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Это устройство отказалось разместить сеть WiFi Direct на любом выбранном вами канале 5 ГГц и запустило её на канале, который выбрал его собственный драйвер Wi-Fi. Этот канал часто не виден телефонам в странах со строгими правилами. Нажмите, чтобы установить диапазон WiFi Direct на 2,4 ГГц, который разрешён во всех странах; ожидайте 720p вместо 1080p.</string>
     <string name="connection_issue_banner_dismiss">Закрыть</string>
     <string name="connection_issue_remedy_hotspot_query">Имя и пароль точки доступа</string>
     <string name="preflight_title">Перед подключением</string>
@@ -1078,6 +1079,7 @@
     <string name="five_ghz_channel">Канал 5 ГГц</string>
     <string name="five_ghz_channel_auto">Автоматически</string>
     <string name="five_ghz_channel_option">Канал %1$d (%2$d МГц)</string>
+    <string name="five_ghz_channel_hint">Канал является запросом, а не гарантией. Многие устройства создают сеть только на том канале, который выбирает их собственный драйвер Wi-Fi, и приложение может сообщить об этом лишь после попытки. Если ни один канал 5 ГГц не работает и телефон по-прежнему не видит сеть, поможет настройка диапазона выше.</string>
     <string name="wifi_direct_stable_identity">Сохранять ту же сеть Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Создает группу с одним и тем же именем и паролем, чтобы телефон подключался к уже известной сети без повторной настройки при каждой поездке.</string>
     <string name="wifi_direct_new_identity">Новые параметры сети Wi-Fi Direct</string>

@@ -958,6 +958,7 @@
     <string name="narrow_band_profile_cap">僅有 2.4 GHz 無線時降低影像</string>
     <string name="narrow_band_profile_cap_description">當此主機的 WiFi 沒有 5 GHz 頻段時，改為向手機要求最高 720p 與 30 fps，而非上方的設定。實測顯示在這種連線上，全速串流完全傳不出畫面，較低的設定則能維持。若要完全依照您的設定，請關閉此選項。</string>
     <string name="connection_issue_banner_video_link_too_slow">手機連續多次在第一個影格送達前就放棄影像。WiFi 連線太慢，無法承載畫面。輕觸以將 FPS 上限降為 30；降低解析度與改用 AAC 音訊也有幫助。</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">這台主機拒絕將 WiFi Direct 網路建立在你所選的任何 5 GHz 頻道上，因此改用它自己的 WiFi 驅動程式挑選的頻道。該頻道往往是法規較嚴格國家的手機根本看不到的頻道。點選以將 WiFi Direct 頻段設為 2.4 GHz，這是所有國家都允許的頻段；在該頻段上預期為 720p 而非 1080p。</string>
     <string name="connection_issue_banner_dismiss">關閉</string>
     <string name="connection_issue_remedy_hotspot_query">熱點名稱與密碼</string>
     <string name="preflight_title">連線前檢查</string>
@@ -1078,6 +1079,7 @@
     <string name="five_ghz_channel">5 GHz 頻道</string>
     <string name="five_ghz_channel_auto">自動</string>
     <string name="five_ghz_channel_option">頻道 %1$d (%2$d MHz)</string>
+    <string name="five_ghz_channel_hint">頻道只是請求，並非保證。許多主機只會在自己的 WiFi 驅動程式所選的頻道上建立網路，而應用程式只能在嘗試之後才能告訴你結果。如果沒有任何 5 GHz 頻道可用，而手機仍然看不到網路，上方的頻段才是能解決問題的設定。</string>
     <string name="wifi_direct_stable_identity">保持相同的 Wi-Fi Direct 網路</string>
     <string name="wifi_direct_stable_identity_description">每次都使用相同的名稱和密碼建立群組，讓您的手機重新連接已知的網路，而無需在每次行程中重新設定。</string>
     <string name="wifi_direct_new_identity">新的 Wi-Fi Direct 網路識別碼</string>

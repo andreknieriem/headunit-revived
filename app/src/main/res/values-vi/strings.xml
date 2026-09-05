@@ -962,6 +962,7 @@
     <string name="narrow_band_profile_cap">Giảm video khi sóng chỉ có 2,4 GHz</string>
     <string name="narrow_band_profile_cap_description">Khi Wi-Fi của thiết bị này không có băng tần 5 GHz, yêu cầu điện thoại tối đa 720p và 30 fps thay cho các cài đặt ở trên. Trên đường truyền như vậy, đo được luồng ở tốc độ đầy đủ không mang được hình ảnh nào, còn luồng thấp hơn thì trụ được. Tắt tùy chọn này để nhận đúng những gì bạn đã đặt.</string>
     <string name="connection_issue_banner_video_link_too_slow">Điện thoại đã bỏ dở video trước khi có dù chỉ một khung hình, nhiều lần liên tiếp. Đường truyền Wi-Fi quá chậm để tải hình ảnh. Nhấn để hạ giới hạn FPS xuống 30; giảm độ phân giải và dùng âm thanh AAC cũng có ích.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Thiết bị này đã từ chối đặt mạng WiFi Direct trên bất kỳ kênh 5 GHz nào bạn chọn, nên nó khởi tạo trên kênh do trình điều khiển WiFi của chính nó chọn. Kênh đó thường là kênh mà điện thoại ở các nước có quy định nghiêm ngặt hơn thậm chí không thấy được. Chạm để đặt băng tần WiFi Direct thành 2,4 GHz, được phép ở mọi quốc gia; hãy chờ đợi 720p thay vì 1080p.</string>
     <string name="connection_issue_banner_dismiss">Bỏ qua</string>
     <string name="connection_issue_remedy_hotspot_query">Tên và mật khẩu điểm phát sóng</string>
     <string name="preflight_title">Trước khi kết nối</string>
@@ -1082,6 +1083,7 @@
     <string name="five_ghz_channel">Kênh 5 GHz</string>
     <string name="five_ghz_channel_auto">Tự động</string>
     <string name="five_ghz_channel_option">Kênh %1$d (%2$d MHz)</string>
+    <string name="five_ghz_channel_hint">Kênh chỉ là một yêu cầu, không phải điều bảo đảm. Nhiều thiết bị chỉ tạo mạng trên kênh do trình điều khiển WiFi của chính nó chọn, và ứng dụng chỉ có thể cho bạn biết điều đó sau khi đã thử. Nếu không kênh 5 GHz nào hoạt động và điện thoại vẫn không thấy mạng, băng tần ở trên là thiết lập sẽ giải quyết được.</string>
     <string name="wifi_direct_stable_identity">Giữ nguyên mạng Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Tạo nhóm với cùng tên và mật khẩu mỗi lần để điện thoại kết nối lại với mạng đã biết mà không cần thiết lập lại ở mỗi chuyến đi.</string>
     <string name="wifi_direct_new_identity">Danh tính mạng Wi-Fi Direct mới</string>

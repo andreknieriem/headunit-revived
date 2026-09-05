@@ -967,6 +967,7 @@
     <string name="narrow_band_profile_cap">Bajar el vídeo con radio solo de 2,4 GHz</string>
     <string name="narrow_band_profile_cap_description">Cuando el WiFi de esta unidad no tiene banda de 5 GHz, pedir al teléfono como máximo 720p y 30 fps en lugar de los ajustes de arriba. En un enlace así se midió que un flujo a plena velocidad no llevaba imagen alguna, mientras que uno más bajo sí aguantaba. Desactive esto para recibir exactamente lo que pidió.</string>
     <string name="connection_issue_banner_video_link_too_slow">Su teléfono abandonó el vídeo antes de que llegara un solo fotograma, varias veces seguidas. El enlace WiFi es demasiado lento para llevar la imagen. Toque para bajar el límite de FPS a 30; una resolución menor y el audio AAC también ayudan.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Esta unidad se negó a poner su red WiFi Direct en cualquier canal de 5 GHz que elegiste, así que la creó en el que eligió su propio controlador WiFi. Ese canal a menudo es uno que los teléfonos de países más restrictivos ni siquiera pueden ver. Toca para poner la banda de WiFi Direct en 2,4 GHz, permitida en todos los países; espera 720p en lugar de 1080p.</string>
     <string name="connection_issue_banner_dismiss">Descartar</string>
     <string name="connection_issue_remedy_hotspot_query">Nombre y contraseña del punto de acceso</string>
     <string name="preflight_title">Antes de conectar</string>
@@ -1087,6 +1088,7 @@
     <string name="five_ghz_channel">Canal de 5 GHz</string>
     <string name="five_ghz_channel_auto">Automático</string>
     <string name="five_ghz_channel_option">Canal %1$d (%2$d MHz)</string>
+    <string name="five_ghz_channel_hint">Un canal es una petición, no una garantía. Muchas unidades solo crean la red en el canal que elige su propio controlador WiFi, y la aplicación solo puede decírtelo después de intentarlo. Si ningún canal de 5 GHz funciona y tu teléfono sigue sin ver la red, la banda de arriba es el ajuste que sí lo hará.</string>
     <string name="wifi_direct_stable_identity">Mantener la misma red Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Solicita el grupo con el mismo nombre y contraseña cada vez, para que el teléfono vuelva a conectarse a una red conocida en lugar de configurarse de nuevo en cada viaje. Desactívalo para obtener una red nueva en cada conexión si el teléfono rechaza la guardada. Probar una nueva identidad abajo es la solución más sencilla.</string>
     <string name="wifi_direct_new_identity">Nueva identidad de red Wi-Fi Direct</string>

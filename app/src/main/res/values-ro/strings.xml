@@ -956,6 +956,7 @@
     <string name="narrow_band_profile_cap">Video redus pe radio doar de 2,4 GHz</string>
     <string name="narrow_band_profile_cap_description">Când Wi-Fi-ul acestei unități nu are banda de 5 GHz, cere telefonului cel mult 720p și 30 fps în locul setărilor de mai sus. Pe o astfel de legătură s-a măsurat că fluxul la rată completă nu transporta deloc imagine, în timp ce unul mai mic rezista. Dezactivați pentru a primi exact ce ați cerut.</string>
     <string name="connection_issue_banner_video_link_too_slow">Telefonul a renunțat la video de mai multe ori la rând, înainte să ajungă vreun cadru. Legătura Wi-Fi este prea lentă pentru imagine. Atingeți pentru a coborî limita de FPS la 30; ajută și o rezoluție mai mică, precum și sunetul AAC.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Această unitate a refuzat să pună rețeaua WiFi Direct pe oricare canal de 5 GHz ales de tine, așa că a pornit-o pe cel ales de propriul driver WiFi. Acel canal este adesea unul pe care telefoanele din țările mai stricte nici măcar nu îl văd. Atinge pentru a seta banda WiFi Direct la 2,4 GHz, permisă în toate țările; așteaptă-te la 720p în loc de 1080p.</string>
     <string name="connection_issue_banner_dismiss">Închide</string>
     <string name="connection_issue_remedy_hotspot_query">Nume și parolă hotspot</string>
     <string name="preflight_title">Înainte de conectare</string>
@@ -1076,6 +1077,7 @@
     <string name="five_ghz_channel">Canal 5 GHz</string>
     <string name="five_ghz_channel_auto">Automat</string>
     <string name="five_ghz_channel_option">Canal %1$d (%2$d MHz)</string>
+    <string name="five_ghz_channel_hint">Un canal este o cerere, nu o garanție. Multe unități creează rețeaua doar pe canalul ales de propriul driver WiFi, iar aplicația îți poate spune asta abia după încercare. Dacă niciun canal de 5 GHz nu funcționează și telefonul tot nu vede rețeaua, banda de mai sus este setarea care va rezolva.</string>
     <string name="wifi_direct_stable_identity">Păstrează aceeași rețea Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Solicită grupul cu același nume și parolă de fiecare dată, astfel încât telefonul să se reconecteze la o rețea cunoscută fără reconfigurare la fiecare călătorie.</string>
     <string name="wifi_direct_new_identity">Nouă identitate de rețea Wi-Fi Direct</string>

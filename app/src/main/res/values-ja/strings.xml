@@ -963,6 +963,7 @@
     <string name="narrow_band_profile_cap">2.4 GHzのみの無線では映像を下げる</string>
     <string name="narrow_band_profile_cap_description">このユニットのWiFiに5 GHz帯がない場合、上の設定ではなく最大720p、30 fpsをスマートフォンに要求します。この種の回線では、フルレートの映像がまったく届かない一方、低いレートでは維持されることが確認されています。設定どおりの値を使いたい場合はオフにしてください。</string>
     <string name="connection_issue_banner_video_link_too_slow">スマートフォンが1フレームも届かないうちに映像を断念する状態が数回続きました。WiFi回線が映像を運ぶには遅すぎます。タップするとFPS上限を30に下げます。解像度を下げることやAAC音声も有効です。</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">この機器は選択したどの5 GHzチャンネルでもWiFi Directネットワークを作成せず、自身のWi-Fiドライバーが選んだチャンネルで開始しました。そのチャンネルは、規制の厳しい国のスマートフォンからは見えないことがよくあります。タップしてWiFi Directの帯域を2.4 GHzに設定してください。すべての国で許可されていますが、1080pではなく720pになります。</string>
     <string name="connection_issue_banner_dismiss">閉じる</string>
     <string name="connection_issue_remedy_hotspot_query">ホットスポット名とパスワード</string>
     <string name="preflight_title">接続前の確認</string>
@@ -1083,6 +1084,7 @@
     <string name="five_ghz_channel">5GHzチャンネル</string>
     <string name="five_ghz_channel_auto">自動</string>
     <string name="five_ghz_channel_option">チャンネル %1$d (%2$d MHz)</string>
+    <string name="five_ghz_channel_hint">チャンネルはあくまで要求であり、保証ではありません。多くの機器は自身のWi-Fiドライバーが選んだチャンネルでしかネットワークを作成せず、アプリは試した後にしかそれを伝えられません。どの5 GHzチャンネルでもうまくいかず、スマートフォンがネットワークを見つけられない場合は、上の帯域の設定が解決します。</string>
     <string name="wifi_direct_stable_identity">同じWi-Fi Directネットワークを維持</string>
     <string name="wifi_direct_stable_identity_description">毎回同じ名前とパスワードでグループを作成し、ドライブごとに再設定することなく既知のネットワークに再接続します。</string>
     <string name="wifi_direct_new_identity">新しいWi-Fi DirectネットワークID</string>
