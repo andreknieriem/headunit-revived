@@ -239,6 +239,45 @@
 
         <!-- Handles proprietary headunit command intents (com.android.music.*,
              com.syu.*, etc). MEDIA_BUTTON is handled by MediaButtonReceiver above. -->
+        <!-- The command surface for automation tools and shell scripts. A receiver rather than
+             an activity because Tasker and MacroDroid can send to one without holding "Display
+             over other apps", which an activity target needs on Android 10+. The configuring
+             actions are refused unless the user turns on "Allow external configuration". -->
+        <receiver
+            android:name=".automation.AutomationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.andrerinas.openheadunit.ACTION_CONNECT" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_DISCONNECT" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_START_SELF_MODE" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_STOP_SERVICE" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_EXIT" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_SET_NIGHT_MODE" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_START_WIRELESS" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_STOP_WIRELESS" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_START_WIRELESS_SCAN" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_NATIVE_AA_POKE" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_NATIVE_AA_CANCEL_POKE" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_NEARBY_CONNECT" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_CHECK_USB" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_REFRESH_SENSORS" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_RESTART_AUDIO" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_RAISE_PROJECTION" />
+                <action android:name="com.andrerinas.openheadunit.aap.action.REFRESH_SENSORS" />
+                <action android:name="com.andrerinas.openheadunit.aap.action.RESTART_AUDIO" />
+                <action android:name="com.andrerinas.openheadunit.aap.action.RAISE_PROJECTION" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_QUERY_STATE" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_SET_SETTINGS" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_GET_SETTINGS" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_RESET_SETTINGS" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_SET_LOG_LEVEL" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_START_LOG_CAPTURE" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_STOP_LOG_CAPTURE" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_EXPORT_LOG" />
+                <action android:name="com.andrerinas.openheadunit.ACTION_LOG_MARKER" />
+            </intent-filter>
+        </receiver>
+
         <receiver
             android:name=".app.RemoteControlReceiver"
             android:exported="true">

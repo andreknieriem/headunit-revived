@@ -128,6 +128,8 @@
     <string name="back">Quay lại</string>
     <string name="debug_mode">Chế độ gỡ lỗi</string>
     <string name="debug_mode_description">Bật/tắt ghi log chi tiết</string>
+    <string name="allow_external_configuration">Cho phép cấu hình từ bên ngoài</string>
+    <string name="allow_external_configuration_description">Cho phép các ứng dụng tự động hoá như Tasker hoặc MacroDroid thay đổi cài đặt, đặt mức nhật ký và xuất nhật ký. Kết nối và ngắt kết nối luôn hoạt động; mục này chỉ áp dụng cho các lệnh thay đổi cấu hình của đầu máy.</string>
     <string name="log_level">Mức log</string>
     <string name="log_level_description">Lọc mức log khi xuất</string>
     <string name="start_log_capture">Bắt đầu ghi log</string>

@@ -127,6 +127,8 @@
     <string name="back">戻る</string>
     <string name="debug_mode">デバッグモード</string>
     <string name="debug_mode_description">ログのエクスポート</string>
+    <string name="allow_external_configuration">外部からの設定変更を許可</string>
+    <string name="allow_external_configuration_description">Tasker や MacroDroid などの自動化アプリが設定の変更、ログレベルの設定、ログのエクスポートを行えるようにします。接続と切断は常に可能です。これはヘッドユニットの設定を変更するコマンドにのみ適用されます。</string>
     <string name="log_level">ログレベル</string>
     <string name="log_level_description">エクスポート時にログレベルをフィルタリングする</string>
     <string name="log_source">ログソース</string>

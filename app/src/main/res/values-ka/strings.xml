@@ -132,6 +132,8 @@
     <string name="back">უკან</string>
     <string name="debug_mode">გამართვის რეჟიმი (Debug)</string>
     <string name="debug_mode_description">ლოგირების გაძლიერება</string>
+    <string name="allow_external_configuration">გარე კონფიგურაციის დაშვება</string>
+    <string name="allow_external_configuration_description">საშუალებას აძლევს ავტომატიზაციის აპებს, როგორიცაა Tasker ან MacroDroid, შეცვალონ პარამეტრები, დააყენონ ჟურნალის დონე და გაიტანონ ჟურნალები. დაკავშირება და გათიშვა ყოველთვის მუშაობს; ეს ეხება მხოლოდ იმ ბრძანებებს, რომლებიც ცვლიან მოწყობილობის კონფიგურაციას.</string>
     <string name="log_level">ლოგის დონე</string>
     <string name="log_level_description">ლოგის დონის ფილტრაცია ექსპორტისას</string>
     <string name="log_source">ლოგის წყარო</string>

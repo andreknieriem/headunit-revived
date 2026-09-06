@@ -134,7 +134,10 @@ object LogExporter {
         val settings = Settings(context)
         return "LogExporter: session | " +
             "build=${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) " +
-            "${BuildConfig.FLAVOR}/${BuildConfig.BUILD_TYPE} | " +
+            "${BuildConfig.FLAVOR}/${BuildConfig.BUILD_TYPE} " +
+            // The commit is the only field that separates two candidates of the same fix: the
+            // version name and code do not move between them.
+            "commit=${BuildConfig.GIT_SHA} | " +
             "device=${Build.MANUFACTURER} ${Build.MODEL} board=${Build.BOARD} api=${Build.VERSION.SDK_INT} | " +
             "video=codec:${settings.videoCodec} fps:${settings.fpsLimit} resId:${settings.resolutionId} " +
             "view:${settings.viewMode.name} forceSw:${settings.forceSoftwareDecoding} " +

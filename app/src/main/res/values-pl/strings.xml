@@ -362,6 +362,8 @@
     <string name="fullscreen_immersive_avoid_notch">Immersyjny (Unikaj Notch)</string>
     <string name="fullscreen_immersive_avoid_notch_desc">Ukrywa wszystkie paski i dodaje wypełnienie, aby zapobiec zasłanianiu projekcji przez Notch/Wycięcie.</string>
     <string name="fullscreen_status_only">Ukryj tylko pasek stanu</string>
+    <string name="allow_external_configuration">Zezwalaj na konfigurację zewnętrzną</string>
+    <string name="allow_external_configuration_description">Pozwala aplikacjom automatyzującym, takim jak Tasker czy MacroDroid, zmieniać ustawienia, ustawiać poziom logowania i eksportować logi. Łączenie i rozłączanie działa zawsze; dotyczy to tylko poleceń zmieniających konfigurację urządzenia.</string>
     <string name="log_level">Poziom logowania</string>
     <string name="log_level_description">Wybierz poziom szczegółowości logów do debugowania.</string>
     <string name="log_source">Źródło logów</string>

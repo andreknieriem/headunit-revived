@@ -363,6 +363,8 @@
     <string name="fullscreen_immersive_avoid_notch">Immerzív (Notch elkerülése)</string>
     <string name="fullscreen_immersive_avoid_notch_desc">Elrejti az összes sávot, és kitöltést ad hozzá, hogy megakadályozza a vetítés Notch/Kivágás általi lefedését.</string>
     <string name="fullscreen_status_only">Csak az állapotsor elrejtése</string>
+    <string name="allow_external_configuration">Külső konfiguráció engedélyezése</string>
+    <string name="allow_external_configuration_description">Lehetővé teszi az automatizáló alkalmazásoknak, például a Taskernek vagy a MacroDroidnak, hogy módosítsák a beállításokat, beállítsák a naplózási szintet és exportálják a naplókat. A csatlakozás és a bontás mindig működik; ez csak a fejegység beállítását módosító parancsokra vonatkozik.</string>
     <string name="log_level">Naplózási szint</string>
     <string name="log_level_description">A hibaelhárításhoz szükséges részletesség beállítása.</string>
     <string name="log_source">Naplóforrás</string>

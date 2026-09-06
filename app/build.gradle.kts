@@ -50,6 +50,30 @@ android {
 
     println("Detected available locales: $availableLocales")
 
+    // Which commit an APK was built from. versionName and versionCode do not move between two
+    // candidates of the same fix, so they cannot identify a build; this can. A "-dirty" suffix
+    // means the tree had uncommitted changes, which is the other thing worth knowing.
+    val gitDescription: String = try {
+        fun git(vararg args: String): String {
+            val process = ProcessBuilder(listOf("git") + args)
+                .directory(rootDir)
+                .redirectErrorStream(true)
+                .start()
+            val text = process.inputStream.bufferedReader().readText().trim()
+            return if (process.waitFor() == 0) text else ""
+        }
+        val sha = git("rev-parse", "--short=12", "HEAD")
+        when {
+            sha.isEmpty() -> "unknown"
+            git("status", "--porcelain").isNotEmpty() -> "$sha-dirty"
+            else -> sha
+        }
+    } catch (e: Exception) {
+        "unknown"
+    }
+
+    println("Building from commit: $gitDescription")
+
     sourceSets {
         getByName("main") {
             assets.srcDirs("${project.layout.buildDirectory.get().asFile}/generated/assets/root")
@@ -84,6 +108,7 @@ android {
         // Store available locales in BuildConfig for runtime access
         // This is scanned at build time from values-XX directories
         buildConfigField("String", "AVAILABLE_LOCALES", "\"${availableLocales.joinToString(",")}\"")
+        buildConfigField("String", "GIT_SHA", "\"$gitDescription\"")
 
         externalNativeBuild {
             cmake {

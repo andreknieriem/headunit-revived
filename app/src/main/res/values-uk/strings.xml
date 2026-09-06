@@ -362,6 +362,8 @@
     <string name="fullscreen_immersive_avoid_notch">Іммерсивний (Уникати вирізу)</string>
     <string name="fullscreen_immersive_avoid_notch_desc">Приховує всі панелі та додає відступи, щоб запобігти перекриттю проекції вирізом або чубчиком.</string>
     <string name="fullscreen_status_only">Приховати лише рядок стану</string>
+    <string name="allow_external_configuration">Дозволити зовнішнє налаштування</string>
+    <string name="allow_external_configuration_description">Дозволяє застосункам автоматизації, як-от Tasker чи MacroDroid, змінювати налаштування, задавати рівень журналу та експортувати журнали. Підключення й відключення працюють завжди; це стосується лише команд, які змінюють налаштування головного пристрою.</string>
     <string name="log_level">Рівень логування</string>
     <string name="log_level_description">Виберіть рівень деталізації виводу логів для налагодження.</string>
     <string name="log_source">Джерело логів</string>

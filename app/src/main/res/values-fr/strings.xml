@@ -295,6 +295,8 @@
     <string name="back">Retour</string>
     <string name="debug_mode">Mode débogage</string>
     <string name="debug_mode_description">Activer plus de journaux (Logging)</string>
+    <string name="allow_external_configuration">Autoriser la configuration externe</string>
+    <string name="allow_external_configuration_description">Permet aux applications d\'automatisation comme Tasker ou MacroDroid de modifier les réglages, de définir le niveau de journalisation et d\'exporter les journaux. La connexion et la déconnexion fonctionnent toujours ; cela ne concerne que les commandes qui modifient la configuration de l\'autoradio.</string>
     <string name="log_level">Niveau de journalisation</string>
     <string name="log_level_description">Filtrer le niveau de journalisation lors de l\'exportation</string>
     <string name="log_source">Source du journal</string>

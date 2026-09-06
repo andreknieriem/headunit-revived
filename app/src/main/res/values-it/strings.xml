@@ -127,6 +127,8 @@
     <string name="back">Indietro</string>
     <string name="debug_mode">Modalità Debug</string>
     <string name="debug_mode_description">Attiva più log</string>
+    <string name="allow_external_configuration">Consenti configurazione esterna</string>
+    <string name="allow_external_configuration_description">Permette ad app di automazione come Tasker o MacroDroid di modificare le impostazioni, impostare il livello di log ed esportare i log. Connessione e disconnessione funzionano sempre; questo riguarda solo i comandi che cambiano la configurazione dell\'unità.</string>
     <string name="log_level">Livello Log</string>
     <string name="log_level_description">Filtra livello log durante l\'esportazione</string>
     <string name="log_source">Origine dei log</string>

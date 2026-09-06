@@ -362,6 +362,8 @@
     <string name="fullscreen_immersive_avoid_notch">Imersivo (Evitar Notch)</string>
     <string name="fullscreen_immersive_avoid_notch_desc">Oculta todas as barras e adiciona preenchimento para evitar que a projeção seja coberta pelo Notch/Recorte.</string>
     <string name="fullscreen_status_only">Ocultar apenas a barra de status</string>
+    <string name="allow_external_configuration">Permitir configuração externa</string>
+    <string name="allow_external_configuration_description">Permite que aplicativos de automação como Tasker ou MacroDroid alterem configurações, definam o nível de log e exportem logs. Conectar e desconectar sempre funciona; isto vale apenas para comandos que mudam a configuração da central.</string>
     <string name="log_level">Nível de Log</string>
     <string name="log_level_description">Escolha o nível de detalhe da saída de log para depuração.</string>
     <string name="log_source">Fonte de logs</string>
