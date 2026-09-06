@@ -113,8 +113,8 @@ android {
         }
         create("release") {
             val defaultStoreFile = when {
-                rootProject.file("headunit-release-key.jks").exists() -> rootProject.file("headunit-release-key.jks")
-                file("../headunit-release-key.jks").exists() -> file("../headunit-release-key.jks")
+                rootProject.file("Sesam.jks").exists() -> rootProject.file("Sesam.jks")
+                file("../Sesam.jks").exists() -> file("../Sesam.jks")
                 else -> null
             }
             if (defaultStoreFile != null) {
