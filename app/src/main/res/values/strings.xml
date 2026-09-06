@@ -8,11 +8,20 @@
     <string name="settings_tab_advanced">Advanced</string>
     <string name="settings_search_hint">Search settings</string>
 
+    <string name="category_more_features" translatable="false">More Features</string>
+
     <string name="pref_optimize_ultrawide_title" translatable="false">Optimize for Ultrawide Displays</string>
     <string name="pref_optimize_ultrawide_summary" translatable="false">Adapts 720p negotiation, pixel aspect ratio, and 1:1 touch alignment for 1920x720 / 1780x720 ultrawide screens.</string>
 
     <string name="pref_floating_button_title" translatable="false">Floating Launcher Button</string>
     <string name="pref_floating_button_summary" translatable="false">Shows a floating button on the OEM home screen when the app is in the background to quickly return to Android Auto.</string>
+    <string name="pref_floating_button_x_title" translatable="false">Button Horizontal Position (X)</string>
+    <string name="pref_floating_button_y_title" translatable="false">Button Vertical Position (Y)</string>
+    <string name="pref_floating_button_opacity_title" translatable="false">Button Opacity</string>
+    <string name="pref_floating_button_size_title" translatable="false">Button Size</string>
+    <string name="pref_floating_button_permission_action" translatable="false">Grant Overlay Permission</string>
+    <string name="pref_floating_button_double_tap_title" translatable="false">Double Tap to Open</string>
+    <string name="pref_floating_button_double_tap_summary" translatable="false">Require a double tap on the floating button to open the app.</string>
 
     <!-- Connection mode selector -->
     <string name="connection_mode">Connection mode</string>

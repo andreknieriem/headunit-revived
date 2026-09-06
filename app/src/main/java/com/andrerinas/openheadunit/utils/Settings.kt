@@ -107,6 +107,30 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("optimize-ultrawide", true)
         set(value) { prefs.edit().putBoolean("optimize-ultrawide", value).apply() }
 
+    var enableFloatingButton: Boolean
+        get() = prefs.getBoolean("enable-floating-button", true)
+        set(value) { prefs.edit().putBoolean("enable-floating-button", value).apply() }
+
+    var floatingButtonXPercent: Int
+        get() = prefs.getInt("floating-button-x-percent", 0)
+        set(value) { prefs.edit().putInt("floating-button-x-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonYPercent: Int
+        get() = prefs.getInt("floating-button-y-percent", 54)
+        set(value) { prefs.edit().putInt("floating-button-y-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonOpacityPercent: Int
+        get() = prefs.getInt("floating-button-opacity-percent", 80)
+        set(value) { prefs.edit().putInt("floating-button-opacity-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonSizeDp: Int
+        get() = prefs.getInt("floating-button-size-dp", 60)
+        set(value) { prefs.edit().putInt("floating-button-size-dp", value.coerceIn(32, 120)).apply() }
+
+    var floatingButtonDoubleTap: Boolean
+        get() = prefs.getBoolean("floating-button-double-tap", false)
+        set(value) { prefs.edit().putBoolean("floating-button-double-tap", value).apply() }
+
     // UI Scale percentage for Home
     var uiScaleHomePercent: Int
         get() = prefs.getInt("ui-scale-home-percent", 100)
