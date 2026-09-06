@@ -66,6 +66,7 @@ import com.andrerinas.openheadunit.main.QuickSettingsFragment
 import com.andrerinas.openheadunit.main.RenameNotice
 import com.andrerinas.openheadunit.main.Aa174Notice
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.andrerinas.openheadunit.main.MainActivity
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -2083,6 +2084,29 @@ class AapProjectionActivity : SurfaceActivity(), IProjectionView.Callbacks, Vide
             val aapIntent = Intent(context, AapProjectionActivity::class.java)
             aapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             return aapIntent
+        }
+
+        fun minimizeToHome(context: Context) {
+            try {
+                val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(homeIntent)
+            } catch (e: Exception) {
+                AppLog.w("[AapProjectionActivity] minimizeToHome failed: ${e.message}")
+            }
+        }
+
+        fun returnToAppHome(context: Context) {
+            try {
+                val mainIntent = Intent(context, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                }
+                context.startActivity(mainIntent)
+            } catch (e: Exception) {
+                AppLog.w("[AapProjectionActivity] returnToAppHome failed: ${e.message}")
+            }
         }
     }
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {

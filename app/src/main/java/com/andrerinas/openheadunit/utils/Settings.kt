@@ -103,6 +103,46 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("use_measured_touch_surface", false)
         set(value) { prefs.edit().putBoolean("use_measured_touch_surface", value).apply() }
 
+    var optimizeUltrawide: Boolean
+        get() = prefs.getBoolean("optimize-ultrawide", true)
+        set(value) { prefs.edit().putBoolean("optimize-ultrawide", value).apply() }
+
+    var enableFloatingButton: Boolean
+        get() = prefs.getBoolean("enable-floating-button", true)
+        set(value) { prefs.edit().putBoolean("enable-floating-button", value).apply() }
+
+    var floatingButtonXPercent: Int
+        get() = prefs.getInt("floating-button-x-percent", 0)
+        set(value) { prefs.edit().putInt("floating-button-x-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonYPercent: Int
+        get() = prefs.getInt("floating-button-y-percent", 54)
+        set(value) { prefs.edit().putInt("floating-button-y-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonOpacityPercent: Int
+        get() = prefs.getInt("floating-button-opacity-percent", 80)
+        set(value) { prefs.edit().putInt("floating-button-opacity-percent", value.coerceIn(0, 100)).apply() }
+
+    var floatingButtonSizeDp: Int
+        get() = prefs.getInt("floating-button-size-dp", 60)
+        set(value) { prefs.edit().putInt("floating-button-size-dp", value.coerceIn(32, 120)).apply() }
+
+    var floatingButtonDoubleTap: Boolean
+        get() = prefs.getBoolean("floating-button-double-tap", false)
+        set(value) { prefs.edit().putBoolean("floating-button-double-tap", value).apply() }
+
+    var enableRedirectPlugin: Boolean
+        get() = prefs.getBoolean("redirect-enabled", false)
+        set(value) { prefs.edit().putBoolean("redirect-enabled", value).apply() }
+
+    var redirectAppsSet: Set<String>
+        get() = prefs.getStringSet("redirect-apps-set", emptySet()) ?: emptySet()
+        set(value) { prefs.edit().putStringSet("redirect-apps-set", value).apply() }
+
+    var redirectDoubleTapHome: Boolean
+        get() = prefs.getBoolean("redirect-double-tap-home", false)
+        set(value) { prefs.edit().putBoolean("redirect-double-tap-home", value).apply() }
+
     // UI Scale percentage for Home
     var uiScaleHomePercent: Int
         get() = prefs.getInt("ui-scale-home-percent", 100)
@@ -2081,5 +2121,25 @@ class Settings(private val context: Context) {
     var nativeAaIgnoreExternalBt: Boolean
         get() = prefs.getBoolean("native-aa-ignore-external-bt", false)
         set(value) = prefs.edit().putBoolean("native-aa-ignore-external-bt", value).apply()
+
+    enum class ExitAction(val value: Int) {
+        OEM_LAUNCHER(0),
+        APP_HOME(1),
+        DISCONNECT(2);
+
+        companion object {
+            private val map = values().associateBy(ExitAction::value)
+            fun fromInt(value: Int) = map[value] ?: OEM_LAUNCHER
+        }
+    }
+
+    var aaExitAction: ExitAction
+        get() {
+            val value = prefs.getInt("aa-exit-action", ExitAction.OEM_LAUNCHER.value)
+            return ExitAction.fromInt(value)
+        }
+        set(action) {
+            prefs.edit().putInt("aa-exit-action", action.value).apply()
+        }
 
 }

@@ -23,6 +23,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.andrerinas.openheadunit.App
+import com.sesam17.openheadunit.floatingbutton.FloatingButtonManager
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialField
@@ -65,6 +66,7 @@ import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.WirelessRearmPolicy
+import com.sesam17.openheadunit.SesAM17Plugin
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -139,6 +141,10 @@ class SettingsFragment : Fragment() {
     private var pendingResolution: Int? = null
     private var pendingDpi: Int? = null
     private var pendingPixelAspectRatioE4: Int? = null
+    private var pendingOptimizeUltrawide: Boolean? = null
+    private var pendingEnableRedirectPlugin: Boolean? = null
+    private var pendingRedirectAppsSet: Set<String>? = null
+    private var pendingRedirectDoubleTapHome: Boolean? = null
     private var pendingStaticBSSID: String? = null
     private var pendingFullscreenMode: Settings.FullscreenMode? = null
     private var pendingViewMode: Settings.ViewMode? = null
@@ -163,6 +169,13 @@ class SettingsFragment : Fragment() {
     private var pendingScreenOrientation: Settings.ScreenOrientation? = null
     private var pendingAppLanguage: String? = null
     private var pendingFakeSpeed: Boolean? = null
+
+    private var pendingEnableFloatingButton: Boolean? = null
+    private var pendingFloatingButtonXPercent: Int? = null
+    private var pendingFloatingButtonYPercent: Int? = null
+    private var pendingFloatingButtonOpacityPercent: Int? = null
+    private var pendingFloatingButtonSizeDp: Int? = null
+    private var pendingFloatingButtonDoubleTap: Boolean? = null
 
     private var pendingWifiConnectionMode: WifiLauncherMode? = null
     private var pendingHelperConnectionStrategy: HelperStrategy? = null
@@ -191,6 +204,7 @@ class SettingsFragment : Fragment() {
     private var pendingUseMeasuredTouchSurface: Boolean? = null
 
     private var pendingKillOnDisconnect: Boolean? = null
+    private var pendingAaExitAction: Settings.ExitAction? = null
     private var pendingRaiseProjectionDuringCall: Boolean? = null
 
     // Custom Insets
@@ -291,6 +305,10 @@ class SettingsFragment : Fragment() {
         pendingResolution = settings.resolutionId
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
+        pendingOptimizeUltrawide = settings.optimizeUltrawide
+        pendingEnableRedirectPlugin = settings.enableRedirectPlugin
+        pendingRedirectAppsSet = settings.redirectAppsSet
+        pendingRedirectDoubleTapHome = settings.redirectDoubleTapHome
         pendingStaticBSSID = settings.staticBSSID
         pendingFullscreenMode = settings.fullscreenMode
         pendingViewMode = settings.viewMode
@@ -321,10 +339,18 @@ class SettingsFragment : Fragment() {
         pendingUseMeasuredTouchSurface = settings.useMeasuredTouchSurface
 
         pendingKillOnDisconnect = settings.killOnDisconnect
+        pendingAaExitAction = settings.aaExitAction
         pendingRaiseProjectionDuringCall = settings.raiseProjectionDuringCall
         pendingAutoEnableHotspot = settings.autoEnableHotspot
         pendingFakeSpeed = settings.fakeSpeed
         pendingUseLibusb = settings.useLibusb
+
+        pendingEnableFloatingButton = settings.enableFloatingButton
+        pendingFloatingButtonXPercent = settings.floatingButtonXPercent
+        pendingFloatingButtonYPercent = settings.floatingButtonYPercent
+        pendingFloatingButtonOpacityPercent = settings.floatingButtonOpacityPercent
+        pendingFloatingButtonSizeDp = settings.floatingButtonSizeDp
+        pendingFloatingButtonDoubleTap = settings.floatingButtonDoubleTap
 
         pendingWifiConnectionMode = settings.wifiConnectionMode
         pendingHelperConnectionStrategy = settings.helperConnectionStrategy
@@ -417,6 +443,10 @@ class SettingsFragment : Fragment() {
         pendingResolution = settings.resolutionId
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
+        pendingOptimizeUltrawide = settings.optimizeUltrawide
+        pendingEnableRedirectPlugin = settings.enableRedirectPlugin
+        pendingRedirectAppsSet = settings.redirectAppsSet
+        pendingRedirectDoubleTapHome = settings.redirectDoubleTapHome
         pendingFullscreenMode = settings.fullscreenMode
         pendingViewMode = settings.viewMode
         pendingForceSoftware = settings.forceSoftwareDecoding
@@ -442,9 +472,17 @@ class SettingsFragment : Fragment() {
         pendingHudMirroring = settings.hudMirroring
         pendingUseMeasuredTouchSurface = settings.useMeasuredTouchSurface
         pendingKillOnDisconnect = settings.killOnDisconnect
+        pendingAaExitAction = settings.aaExitAction
         pendingRaiseProjectionDuringCall = settings.raiseProjectionDuringCall
         pendingAutoEnableHotspot = settings.autoEnableHotspot
         pendingFakeSpeed = settings.fakeSpeed
+
+        pendingEnableFloatingButton = settings.enableFloatingButton
+        pendingFloatingButtonXPercent = settings.floatingButtonXPercent
+        pendingFloatingButtonYPercent = settings.floatingButtonYPercent
+        pendingFloatingButtonOpacityPercent = settings.floatingButtonOpacityPercent
+        pendingFloatingButtonSizeDp = settings.floatingButtonSizeDp
+        pendingFloatingButtonDoubleTap = settings.floatingButtonDoubleTap
         pendingUseLibusb = settings.useLibusb
         pendingWifiConnectionMode = settings.wifiConnectionMode
         pendingHelperConnectionStrategy = settings.helperConnectionStrategy
@@ -549,6 +587,10 @@ class SettingsFragment : Fragment() {
         pendingResolution?.let { settings.resolutionId = it }
         pendingDpi?.let { settings.dpiPixelDensity = it }
         pendingPixelAspectRatioE4?.let { settings.pixelAspectRatioE4 = it }
+        pendingOptimizeUltrawide?.let { settings.optimizeUltrawide = it }
+        pendingEnableRedirectPlugin?.let { settings.enableRedirectPlugin = it }
+        pendingRedirectAppsSet?.let { settings.redirectAppsSet = it }
+        pendingRedirectDoubleTapHome?.let { settings.redirectDoubleTapHome = it }
         pendingStaticBSSID?.let { settings.staticBSSID = it }
         pendingFullscreenMode?.let { settings.fullscreenMode = it }
         val oldViewMode = settings.viewMode
@@ -593,7 +635,15 @@ class SettingsFragment : Fragment() {
         pendingUseMeasuredTouchSurface?.let { settings.useMeasuredTouchSurface = it }
 
         pendingKillOnDisconnect?.let { settings.killOnDisconnect = it }
+        pendingAaExitAction?.let { settings.aaExitAction = it }
         pendingRaiseProjectionDuringCall?.let { settings.raiseProjectionDuringCall = it }
+
+        pendingEnableFloatingButton?.let { settings.enableFloatingButton = it }
+        pendingFloatingButtonXPercent?.let { settings.floatingButtonXPercent = it }
+        pendingFloatingButtonYPercent?.let { settings.floatingButtonYPercent = it }
+        pendingFloatingButtonOpacityPercent?.let { settings.floatingButtonOpacityPercent = it }
+        pendingFloatingButtonSizeDp?.let { settings.floatingButtonSizeDp = it }
+        pendingFloatingButtonDoubleTap?.let { settings.floatingButtonDoubleTap = it }
         pendingAutoEnableHotspot?.let { settings.autoEnableHotspot = it }
         pendingFakeSpeed?.let { settings.fakeSpeed = it }
         pendingUseLibusb?.let { settings.useLibusb = it }
@@ -682,6 +732,10 @@ class SettingsFragment : Fragment() {
                         pendingResolution != settings.resolutionId ||
                         pendingDpi != settings.dpiPixelDensity ||
                         pendingPixelAspectRatioE4 != settings.pixelAspectRatioE4 ||
+                        pendingOptimizeUltrawide != settings.optimizeUltrawide ||
+                        pendingEnableRedirectPlugin != settings.enableRedirectPlugin ||
+                        pendingRedirectAppsSet != settings.redirectAppsSet ||
+                        pendingRedirectDoubleTapHome != settings.redirectDoubleTapHome ||
                         pendingStaticBSSID != settings.staticBSSID ||
                         pendingFullscreenMode != settings.fullscreenMode ||
                         pendingViewMode != settings.viewMode ||
@@ -716,7 +770,14 @@ class SettingsFragment : Fragment() {
                         pendingGuidanceVolumeOffset != settings.guidanceVolumeOffset ||
                         pendingSystemVolumeOffset != settings.systemVolumeOffset ||
                         pendingKillOnDisconnect != settings.killOnDisconnect ||
+                        pendingAaExitAction != settings.aaExitAction ||
                         pendingRaiseProjectionDuringCall != settings.raiseProjectionDuringCall ||
+                        pendingEnableFloatingButton != settings.enableFloatingButton ||
+                        pendingFloatingButtonXPercent != settings.floatingButtonXPercent ||
+                        pendingFloatingButtonYPercent != settings.floatingButtonYPercent ||
+                        pendingFloatingButtonOpacityPercent != settings.floatingButtonOpacityPercent ||
+                        pendingFloatingButtonSizeDp != settings.floatingButtonSizeDp ||
+                        pendingFloatingButtonDoubleTap != settings.floatingButtonDoubleTap ||
                         pendingAutoEnableHotspot != settings.autoEnableHotspot ||
                         pendingFakeSpeed != settings.fakeSpeed ||
                         pendingWifiConnectionMode != settings.wifiConnectionMode ||
@@ -1496,6 +1557,30 @@ class SettingsFragment : Fragment() {
             }
         ))
 
+        val exitActions = arrayOf(
+            getString(R.string.aa_exit_action_oem_launcher),
+            getString(R.string.aa_exit_action_app_home),
+            getString(R.string.aa_exit_action_disconnect)
+        )
+        val currentExitActionIdx = (pendingAaExitAction ?: settings.aaExitAction).value
+        items.add(SettingItem.SettingEntry(
+            stableId = "aaExitAction",
+            nameResId = R.string.pref_aa_exit_action_title,
+            value = exitActions.getOrElse(currentExitActionIdx) { exitActions[0] },
+            searchKeywords = getString(R.string.pref_aa_exit_action_summary),
+            onClick = { _ ->
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.pref_aa_exit_action_title)
+                    .setSingleChoiceItems(exitActions, currentExitActionIdx) { dialog, which ->
+                        pendingAaExitAction = Settings.ExitAction.fromInt(which)
+                        checkChanges()
+                        dialog.dismiss()
+                        updateSettingsList()
+                    }
+                    .show()
+            }
+        ))
+
         // Self Mode is the only mode where the phone's call screen and the projection share a
         // screen, so it is the only mode this can do anything in.
         if (settings.showsSelf()) {
@@ -1508,6 +1593,179 @@ class SettingsFragment : Fragment() {
                     pendingRaiseProjectionDuringCall = isChecked
                     checkChanges()
                     updateSettingsList()
+                }
+            ))
+        }
+
+        // --- More Features ---
+        items.add(SettingItem.CategoryHeader("more_features", R.string.category_more_features))
+
+        val floatingEnabled = pendingEnableFloatingButton ?: settings.enableFloatingButton
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "enableFloatingButton",
+            nameResId = R.string.pref_floating_button_title,
+            descriptionResId = R.string.pref_floating_button_summary,
+            isChecked = floatingEnabled,
+            onCheckedChanged = { isChecked ->
+                pendingEnableFloatingButton = isChecked
+                checkChanges()
+                updateSettingsList()
+            }
+        ))
+
+        if (floatingEnabled) {
+            val hasOverlayPermission = SystemSettings.canDrawOverlays(requireContext())
+            if (!hasOverlayPermission) {
+                items.add(SettingItem.SettingEntry(
+                    stableId = "floatingButtonPermission",
+                    nameResId = R.string.pref_floating_button_permission_action,
+                    value = getString(R.string.perm_overlay_title),
+                    onClick = {
+                        FloatingButtonManager.requestOverlayPermission(requireContext())
+                    }
+                ))
+            }
+
+            items.add(SettingItem.SliderSettingEntry(
+                stableId = "floatingButtonXPercent",
+                nameResId = R.string.pref_floating_button_x_title,
+                value = "${pendingFloatingButtonXPercent ?: settings.floatingButtonXPercent}%",
+                sliderValue = (pendingFloatingButtonXPercent ?: settings.floatingButtonXPercent).toFloat(),
+                valueFrom = 0f,
+                valueTo = 100f,
+                stepSize = 1f,
+                onValueChanged = { valVal ->
+                    pendingFloatingButtonXPercent = valVal.toInt()
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            items.add(SettingItem.SliderSettingEntry(
+                stableId = "floatingButtonYPercent",
+                nameResId = R.string.pref_floating_button_y_title,
+                value = "${pendingFloatingButtonYPercent ?: settings.floatingButtonYPercent}%",
+                sliderValue = (pendingFloatingButtonYPercent ?: settings.floatingButtonYPercent).toFloat(),
+                valueFrom = 0f,
+                valueTo = 100f,
+                stepSize = 1f,
+                onValueChanged = { valVal ->
+                    pendingFloatingButtonYPercent = valVal.toInt()
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            items.add(SettingItem.SliderSettingEntry(
+                stableId = "floatingButtonOpacityPercent",
+                nameResId = R.string.pref_floating_button_opacity_title,
+                value = "${pendingFloatingButtonOpacityPercent ?: settings.floatingButtonOpacityPercent}%",
+                sliderValue = (pendingFloatingButtonOpacityPercent ?: settings.floatingButtonOpacityPercent).toFloat(),
+                valueFrom = 10f,
+                valueTo = 100f,
+                stepSize = 5f,
+                onValueChanged = { valVal ->
+                    pendingFloatingButtonOpacityPercent = valVal.toInt()
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            items.add(SettingItem.SliderSettingEntry(
+                stableId = "floatingButtonSizeDp",
+                nameResId = R.string.pref_floating_button_size_title,
+                value = "${pendingFloatingButtonSizeDp ?: settings.floatingButtonSizeDp} dp",
+                sliderValue = (pendingFloatingButtonSizeDp ?: settings.floatingButtonSizeDp).toFloat(),
+                valueFrom = 32f,
+                valueTo = 120f,
+                stepSize = 4f,
+                onValueChanged = { valVal ->
+                    pendingFloatingButtonSizeDp = valVal.toInt()
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "floatingButtonDoubleTap",
+                nameResId = R.string.pref_floating_button_double_tap_title,
+                descriptionResId = R.string.pref_floating_button_double_tap_summary,
+                isChecked = pendingFloatingButtonDoubleTap ?: settings.floatingButtonDoubleTap,
+                onCheckedChanged = { isChecked ->
+                    pendingFloatingButtonDoubleTap = isChecked
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+        }
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "enableRedirectPlugin",
+            nameResId = R.string.pref_redirect_plugin_title,
+            descriptionResId = R.string.pref_redirect_plugin_summary,
+            isChecked = pendingEnableRedirectPlugin ?: settings.enableRedirectPlugin,
+            onCheckedChanged = { isChecked ->
+                pendingEnableRedirectPlugin = isChecked
+                settings.enableRedirectPlugin = isChecked
+                context?.let { SesAM17Plugin.setRedirectEnabled(it, isChecked) }
+                checkChanges()
+                updateSettingsList()
+                if (isChecked && context != null && !SesAM17Plugin.isAccessibilityServiceEnabled(requireContext())) {
+                    SesAM17Plugin.openAccessibilitySettings(requireContext())
+                }
+            }
+        ))
+
+        if (pendingEnableRedirectPlugin ?: settings.enableRedirectPlugin) {
+            val selectedAppsCount = (pendingRedirectAppsSet ?: settings.redirectAppsSet).size
+            val appsSummary = if (selectedAppsCount == 0) {
+                getString(com.sesam17.openheadunit.R.string.select_apps_summary_none)
+            } else {
+                getString(com.sesam17.openheadunit.R.string.select_apps_summary_count, selectedAppsCount)
+            }
+
+            items.add(SettingItem.SettingEntry(
+                stableId = "redirectSelectApps",
+                nameResId = R.string.pref_redirect_select_apps_title,
+                value = appsSummary,
+                onClick = {
+                    SesAM17Plugin.showAppMultiSelectDialog(requireContext()) { newApps ->
+                        pendingRedirectAppsSet = newApps
+                        settings.redirectAppsSet = newApps
+                        context?.let { SesAM17Plugin.setSelectedRedirectApps(it, newApps) }
+                        checkChanges()
+                        updateSettingsList()
+                    }
+                }
+            ))
+
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "redirectDoubleTapHome",
+                nameResId = R.string.pref_redirect_double_tap_home_title,
+                descriptionResId = R.string.pref_redirect_double_tap_home_summary,
+                isChecked = pendingRedirectDoubleTapHome ?: settings.redirectDoubleTapHome,
+                onCheckedChanged = { isChecked ->
+                    pendingRedirectDoubleTapHome = isChecked
+                    settings.redirectDoubleTapHome = isChecked
+                    context?.let { SesAM17Plugin.setDoubleTapHomeEnabled(it, isChecked) }
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            val serviceActive = context != null && SesAM17Plugin.isAccessibilityServiceEnabled(requireContext())
+            val statusText = if (serviceActive) {
+                getString(R.string.pref_redirect_service_active)
+            } else {
+                getString(R.string.pref_redirect_service_inactive)
+            }
+
+            items.add(SettingItem.SettingEntry(
+                stableId = "redirectAccessibilityPermission",
+                nameResId = R.string.pref_redirect_accessibility_permission_title,
+                value = statusText,
+                onClick = {
+                    SesAM17Plugin.openAccessibilitySettings(requireContext())
                 }
             ))
         }
@@ -1713,6 +1971,19 @@ class SettingsFragment : Fragment() {
             onCheckedChanged = { isChecked ->
                 pendingStretchToFill = isChecked
                 requiresRestart = true // Requires a reconnect to apply the new rendering bounds
+                checkChanges()
+                updateSettingsList()
+            }
+        ))
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "optimizeUltrawide",
+            nameResId = R.string.pref_optimize_ultrawide_title,
+            descriptionResId = R.string.pref_optimize_ultrawide_summary,
+            isChecked = pendingOptimizeUltrawide ?: settings.optimizeUltrawide,
+            onCheckedChanged = { isChecked ->
+                pendingOptimizeUltrawide = isChecked
+                requiresRestart = true
                 checkChanges()
                 updateSettingsList()
             }

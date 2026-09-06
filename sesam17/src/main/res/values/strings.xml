@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="redirect_accessibility_service_name">Open Headunit Redirect Service</string>
+    <string name="redirect_accessibility_service_description">Detects when selected apps are opened or home button is double-tapped to redirect to Open Headunit.</string>
+
+    <string name="redirect_plugin_title">App Redirection &amp; Double-Tap Home</string>
+    <string name="redirect_plugin_desc">Redirect selected apps or double-tap Home button to launch Open Headunit</string>
+
+    <string name="enable_app_redirect">Enable App Redirection</string>
+    <string name="enable_app_redirect_desc">Redirect selected apps when opened to Open Headunit</string>
+
+    <string name="select_apps_to_redirect">Select Apps to Redirect</string>
+    <string name="select_apps_summary_none">No apps selected</string>
+    <string name="select_apps_summary_count">%1$d apps selected</string>
+
+    <string name="enable_double_tap_home">Double-Tap Home Button</string>
+    <string name="enable_double_tap_home_desc">Double-tap the Home button to launch Open Headunit</string>
+
+    <string name="accessibility_service_required">Accessibility Service Required</string>
+    <string name="accessibility_service_required_desc">App redirection and Home button double-tap require enabling Open Headunit Accessibility Service in system settings.</string>
+    <string name="open_accessibility_settings">Enable Service</string>
+
+    <string name="search_apps_hint">Search apps…</string>
+    <string name="select_all">Select All</string>
+    <string name="deselect_all">Deselect All</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
+</resources>

@@ -95,6 +95,7 @@ import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherHelper
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherManual
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherNative
 import com.andrerinas.openheadunit.connection.wifi.server.WirelessServer
+import com.sesam17.openheadunit.SesAM17Plugin
 import com.andrerinas.openheadunit.main.BackgroundNotification
 import com.andrerinas.openheadunit.utils.Settings
 import com.andrerinas.openheadunit.utils.VpnControl
@@ -2277,6 +2278,7 @@ class AapService : Service() {
 
     @SuppressLint("WrongConstant")
     override fun onDestroy() {
+        SesAM17Plugin.onProjectionStateChanged(this, false)
         AppLog.i("AapService destroying... (wakeLock held=${bootWakeLock?.isHeld == true})")
         isDestroying = true
         // Nothing else clears it here, and the manager outlives the service instance.

@@ -3,6 +3,7 @@ package com.andrerinas.openheadunit.aap
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.aap.protocol.AudioConfigs
 import com.andrerinas.openheadunit.aap.protocol.Channel
 import com.andrerinas.openheadunit.aap.protocol.messages.DrivingStatusEvent
@@ -29,7 +30,8 @@ interface AapControl {
 internal class AapControlMedia(
     private val aapTransport: AapTransport,
     private val micRecorder: MicRecorder,
-    private val aapAudio: AapAudio): AapControl {
+    private val aapAudio: AapAudio,
+    private val context: Context): AapControl {
 
     private var lastNativeFocusRequestTime = 0L
     private var nativeFocusRequestCount = 0
@@ -51,9 +53,23 @@ internal class AapControlMedia(
                 AppLog.i("RX: Video Focus Request - mode: %s, reason: %s", focusRequest.mode, focusRequest.reason)
 
                 if (focusRequest.mode == Media.VideoFocusMode.VIDEO_FOCUS_NATIVE) {
-                    AppLog.i("Video Focus NATIVE received. User likely clicked Exit. Stopping transport.")
-                    aapTransport.wasUserExit = true
-                    aapTransport.stop()
+                    AppLog.i("Video Focus NATIVE received. User clicked Exit in Android Auto.")
+                    val settings = App.provide(context).settings
+                    when (settings.aaExitAction) {
+                        Settings.ExitAction.OEM_LAUNCHER -> {
+                            AppLog.i("ExitAction: Minimizing projection to OEM Launcher")
+                            AapProjectionActivity.minimizeToHome(context)
+                        }
+                        Settings.ExitAction.APP_HOME -> {
+                            AppLog.i("ExitAction: Returning to Emzoom AA Home")
+                            AapProjectionActivity.returnToAppHome(context)
+                        }
+                        Settings.ExitAction.DISCONNECT -> {
+                            AppLog.i("ExitAction: Disconnecting projection session")
+                            aapTransport.wasUserExit = true
+                            aapTransport.stop()
+                        }
+                    }
                 }
                 return 0
             }
@@ -118,27 +134,25 @@ internal class AapControlMedia(
     }
 
     private fun maxUnackedFor(channel: Int): Int {
-        if (channel == Channel.ID_VID) {
+        val base = if (channel == Channel.ID_VID) {
             val softwareHevc =
                 aapTransport.settings.videoCodec == VideoDecoder.CodecType.H265.settingsValue &&
                         aapTransport.settings.forceSoftwareDecoding &&
                         aapTransport.settings.softwareVideoDecoder == Settings.SoftwareVideoDecoder.BUNDLED_FFMPEG
             if (softwareHevc) {
-                // Keep the phone closer to decoder pace. A large wireless window lets video
-                // backlog turn into visible input lag when 2K HEVC is decoded in software.
-                return if (aapTransport.isWireless) 6 else 8
+                if (aapTransport.isWireless) 6 else 8
+            } else {
+                if (aapTransport.isWireless) 12 else 16
             }
-            // Left wide for hardware decode, deliberately. The window is counted in messages, not
-            // frames, and a keyframe fragments into a dozen or more of them, so narrowing it makes
-            // the phone stall mid-keyframe and caps throughput at window/RTT, worst on exactly the
-            // congested links where the backlog it would be trying to bound shows up. The backlog
-            // is bounded where it costs nothing instead: the decoder discards decoded frames it is
-            // behind on rather than having the phone send fewer.
-            return if (aapTransport.isWireless) 12 else 16
+        } else {
+            if (aapTransport.isWireless) 30 else 16
         }
 
-        // Audio still benefits from a wider jitter window, especially on wireless.
-        return if (aapTransport.isWireless) 30 else 16
+        val appCtx = App.instance
+        val isUltrawide = if (appCtx != null) com.sesam17.openheadunit.SesAM17Plugin.isUltrawideEnabled(appCtx) else false
+        val multiplier = if (isUltrawide) com.sesam17.openheadunit.SesAM17Plugin.getBufferWindowMultiplier() else 1
+
+        return base * multiplier
     }
 
     private fun mediaSinkStopRequest(channel: Int): Int {
@@ -479,7 +493,7 @@ internal class AapControlGateway(
                 context: Context) : this(
             aapTransport,
             AapControlService(aapTransport, aapAudio, settings, context),
-            AapControlMedia(aapTransport, micRecorder, aapAudio),
+            AapControlMedia(aapTransport, micRecorder, aapAudio, context),
             AapControlTouch(aapTransport),
             AapControlSensor(aapTransport, context, settings))
 

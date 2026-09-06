@@ -8,6 +8,32 @@
     <string name="settings_tab_advanced">Advanced</string>
     <string name="settings_search_hint">Search settings</string>
 
+    <string name="category_more_features" translatable="false">More Features</string>
+
+    <string name="pref_optimize_ultrawide_title" translatable="false">Optimize for Ultrawide Displays</string>
+    <string name="pref_optimize_ultrawide_summary" translatable="false">Adapts 720p negotiation, pixel aspect ratio, and 1:1 touch alignment for 1920x720 / 1780x720 ultrawide screens.</string>
+
+    <string name="pref_floating_button_title" translatable="false">Floating Launcher Button</string>
+    <string name="pref_floating_button_summary" translatable="false">Shows a floating button on the OEM home screen when the app is in the background to quickly return to Android Auto.</string>
+    <string name="pref_floating_button_x_title" translatable="false">Button Horizontal Position (X)</string>
+    <string name="pref_floating_button_y_title" translatable="false">Button Vertical Position (Y)</string>
+    <string name="pref_floating_button_opacity_title" translatable="false">Button Opacity</string>
+    <string name="pref_floating_button_size_title" translatable="false">Button Size</string>
+    <string name="pref_floating_button_permission_action" translatable="false">Grant Overlay Permission</string>
+    <string name="pref_floating_button_double_tap_title" translatable="false">Double Tap to Open</string>
+    <string name="pref_floating_button_double_tap_summary" translatable="false">Require a double tap on the floating button to open the app.</string>
+
+    <string name="pref_redirect_plugin_title" translatable="false">App Redirection &amp; Double-Tap Home</string>
+    <string name="pref_redirect_plugin_summary" translatable="false">Redirect chosen apps or double-tap Home button to launch Open Headunit.</string>
+    <string name="pref_redirect_select_apps_title" translatable="false">Redirected Apps</string>
+    <string name="pref_redirect_select_apps_summary" translatable="false">Choose which apps redirect to Open Headunit when pressed</string>
+    <string name="pref_redirect_double_tap_home_title" translatable="false">Double-Tap Home Button</string>
+    <string name="pref_redirect_double_tap_home_summary" translatable="false">Double-tap the Home button anywhere to launch Open Headunit</string>
+    <string name="pref_redirect_accessibility_permission_title" translatable="false">Enable Accessibility Service</string>
+    <string name="pref_redirect_accessibility_permission_summary" translatable="false">Required for detecting app launches and Home button double-tap</string>
+    <string name="pref_redirect_service_active" translatable="false">✓ Service Active</string>
+    <string name="pref_redirect_service_inactive" translatable="false">⚠️ Service Disabled (Tap to Enable in System Settings)</string>
+
     <!-- Connection mode selector -->
     <string name="connection_mode">Connection mode</string>
     <string name="connection_kind_usb_cable">USB cable (direct)</string>
@@ -498,6 +524,12 @@
     <string name="hud_mirroring_description">Flips the display horizontally for windshield reflection (Head-Up Display). Requires TextureView or GLES20 view mode (does not work with SurfaceView).</string>
     <string name="use_measured_touch_surface">Experimental touch alignment fix</string>
     <string name="use_measured_touch_surface_description">Normalize touch input against the measured projection overlay. May help when small Android Auto controls feel shifted.</string>
+
+    <string name="pref_aa_exit_action_title" translatable="false">Android Auto Exit Action</string>
+    <string name="pref_aa_exit_action_summary" translatable="false">What happens when tapping Exit inside Android Auto drawer</string>
+    <string name="aa_exit_action_oem_launcher" translatable="false">Return to OEM Launcher (Minimize)</string>
+    <string name="aa_exit_action_app_home" translatable="false">Return to Emzoom AA Home</string>
+    <string name="aa_exit_action_disconnect" translatable="false">Disconnect Session</string>
 
 
     <!-- Audio Settings -->
