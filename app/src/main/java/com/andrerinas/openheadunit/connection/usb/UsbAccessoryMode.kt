@@ -107,7 +107,12 @@ class UsbAccessoryMode(private val usbMgr: UsbManager) {
     }
 
     companion object {
-        private const val USB_TIMEOUT_IN_MS = 100
+        /**
+         * 100 ms was under USB 2.0's own 500 ms allowance for the first data packet, so a slow
+         * phone read as "not an AOA device". 1000 is what the native path (`usbhelper.c`) and the
+         * other AOAP implementations use, and the timeout only bounds a device that is not replying.
+         */
+        private const val USB_TIMEOUT_IN_MS = 1000
         private const val MANUFACTURER = "Android"
         private const val MODEL = "Android Auto"
         private const val DESCRIPTION = "Android Auto"//"Android Open Automotive Protocol"

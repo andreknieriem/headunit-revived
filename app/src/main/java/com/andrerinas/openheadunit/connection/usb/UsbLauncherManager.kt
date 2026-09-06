@@ -38,6 +38,14 @@ class UsbLauncherManager(val service: AapService) {
 
     fun isSwitchingToProjection() = this.isSwitchingToProjection.get()
 
+    /**
+     * True while `UsbAttachedActivity` is running its own AOA switch, so the attach fallback does
+     * not start a second one. Deliberately not folded into [isSwitchingToProjection]: that would
+     * also silence the accessory-attach connect and the detach re-sync, which are this path's
+     * recovery rather than its competition.
+     */
+    fun isActivitySwitchInFlight() = UsbSwitchClaim.isLive()
+
     fun setSwitchingToProjection(value: Boolean) = this.isSwitchingToProjection.set(value)
 
     fun register() {
@@ -148,15 +156,12 @@ class UsbLauncherManager(val service: AapService) {
             if (UsbDeviceCompat.isInAccessoryMode(device)) {
                 val deviceName = UsbDeviceCompat(device).uniqueName
                 AppLog.i("Found device already in accessory mode: $deviceName")
-                if (!usbManager.hasPermission(device)) {
-                    AppLog.i("Accessory-mode device has no permission (re-enumerated); requesting permission: $deviceName")
-                    requestPermission(device)
-                    return
-                }
                 isSwitchingToProjection.set(true)
                 service.serviceScope.launch {
                     try {
-                        connectWithRetry(device)
+                        if (awaitAccessoryPermission(usbManager, device, deviceName)) {
+                            connectWithRetry(device)
+                        }
                     } finally {
                         isSwitchingToProjection.set(false)
                     }
@@ -226,14 +231,28 @@ class UsbLauncherManager(val service: AapService) {
             }
         }
 
-        // Fallback: if force=true and we have a single Google VID device in normal mode,
+        // Fallback: if force=true and exactly one Android phone is attached in normal mode,
         // switch it to accessory mode. This handles cases where UsbAttachedActivity didn't fire.
+        //
+        // [BUG_FIX] This used to require vendor id 0x18D1, so it fired for a Pixel and for nothing
+        // else; every other make reached the end of this function having done nothing and could
+        // only be connected by hand. deviceList is already isAndroidDevice()-filtered.
         if (force) {
             val nonAccessoryDevices = deviceList.filter { !UsbDeviceCompat.isInAccessoryMode(it) }
-            val googleDevices = nonAccessoryDevices.filter { it.vendorId == 0x18D1 }
-            if (googleDevices.size == 1) {
-                AppLog.i("Fallback: force=true and found single Google normal-mode device ${UsbDeviceCompat(googleDevices[0]).uniqueName}. Switching to accessory mode.")
-                performSingleConnect(googleDevices[0])
+            val allowList = settings.allowedDevices
+            val candidates = nonAccessoryDevices.filter {
+                UsbAttachPolicy.shouldAttemptAoaSwitch(
+                    isGoogleVendor = it.vendorId == 0x18D1,
+                    autoStartOnUsb = usbAutoStart,
+                    allowListConfigured = allowList.isNotEmpty(),
+                    deviceAllowed = settings.isConnectingDevice(UsbDeviceCompat(it)),
+                )
+            }
+            if (candidates.size == 1) {
+                AppLog.i("Fallback: force=true and found single normal-mode Android device ${UsbDeviceCompat(candidates[0]).uniqueName}. Switching to accessory mode.")
+                performSingleConnect(candidates[0])
+            } else if (candidates.isNotEmpty()) {
+                AppLog.i("Fallback: force=true but ${candidates.size} candidate USB devices are attached; not guessing which is the phone")
             }
         }
     }
@@ -262,6 +281,33 @@ class UsbLauncherManager(val service: AapService) {
             AppLog.i("Single USB auto-connect: device found but no permission, requesting...")
             requestPermission(device)
         }
+    }
+
+    /**
+     * Wait briefly for the manifest auto-grant on a freshly re-enumerated 0x2D00 before falling
+     * back to a dialog. The grant arrives with the activity the system launches for the attach, so
+     * the service's own receiver reaches this a few hundred ms early and used to raise a prompt the
+     * dongle did not stay in accessory mode long enough to answer.
+     */
+    private suspend fun awaitAccessoryPermission(
+        usbManager: UsbManager,
+        device: UsbDevice,
+        deviceName: String,
+    ): Boolean {
+        if (usbManager.hasPermission(device)) return true
+
+        val startedAt = System.currentTimeMillis()
+        while (UsbAccessoryHandoffPolicy.shouldKeepPollingForPermission(System.currentTimeMillis() - startedAt)) {
+            delay(UsbAccessoryHandoffPolicy.PERMISSION_POLL_INTERVAL_MS)
+            if (usbManager.hasPermission(device)) {
+                AppLog.i("Accessory-mode permission arrived after ${System.currentTimeMillis() - startedAt}ms: $deviceName")
+                return true
+            }
+        }
+
+        AppLog.i("Accessory-mode device has no permission (re-enumerated); requesting permission: $deviceName")
+        requestPermission(device)
+        return false
     }
 
     /**

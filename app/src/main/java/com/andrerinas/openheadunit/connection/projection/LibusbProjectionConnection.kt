@@ -1,6 +1,5 @@
 package com.andrerinas.openheadunit.connection.projection
 
-import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
@@ -121,17 +120,8 @@ class LibusbProjectionConnection(usbMgr: UsbManager,
                 return@withContext false
             }
 
-            // Find endpoints
-            var epIn: UsbEndpoint? = null
-            var epOut: UsbEndpoint? = null
-            for (i in 0 until iface.endpointCount) {
-                val ep = iface.getEndpoint(i)
-                if (ep.direction == UsbConstants.USB_DIR_IN) {
-                    if (epIn == null) epIn = ep
-                } else {
-                    if (epOut == null) epOut = ep
-                }
-            }
+            // Find endpoints, bulk preferred; the standard transport asks the same helper.
+            val (epIn, epOut) = UsbDeviceCompat.selectEndpoints(iface)
             if (epIn == null || epOut == null) {
                 AppLog.e("LibusbAccessoryConnection: Unable to find endpoints")
                 synchronized(stateLock) {

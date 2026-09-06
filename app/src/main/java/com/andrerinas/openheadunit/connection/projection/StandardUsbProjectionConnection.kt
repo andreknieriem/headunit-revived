@@ -1,6 +1,5 @@
 package com.andrerinas.openheadunit.connection.projection
 
-import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
@@ -115,19 +114,11 @@ class StandardUsbProjectionConnection(usbMgr: UsbManager, device: UsbDevice) :
 
     private fun initEndpoint(): Int {
         AppLog.i("Check accessory endpoints")
-        endpointIn = null
-        endpointOut = null
-
-        for (i in 0 until usbInterface!!.endpointCount) {
-            val ep = usbInterface!!.getEndpoint(i)
-            if (ep.direction == UsbConstants.USB_DIR_IN) {
-                if (endpointIn == null) endpointIn = ep
-            } else {
-                if (endpointOut == null) endpointOut = ep
-            }
-        }
+        val (selectedIn, selectedOut) = UsbDeviceCompat.selectEndpoints(usbInterface!!)
+        endpointIn = selectedIn
+        endpointOut = selectedOut
         if (endpointIn == null || endpointOut == null) {
-            AppLog.e("Unable to find bulk endpoints")
+            AppLog.e("Unable to find an endpoint pair on the accessory interface")
             return -1
         }
 
