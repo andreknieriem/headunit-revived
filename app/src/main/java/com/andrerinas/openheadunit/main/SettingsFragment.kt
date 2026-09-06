@@ -200,6 +200,7 @@ class SettingsFragment : Fragment() {
     private var pendingUseMeasuredTouchSurface: Boolean? = null
 
     private var pendingKillOnDisconnect: Boolean? = null
+    private var pendingAaExitAction: Settings.ExitAction? = null
     private var pendingRaiseProjectionDuringCall: Boolean? = null
 
     // Custom Insets
@@ -331,6 +332,7 @@ class SettingsFragment : Fragment() {
         pendingUseMeasuredTouchSurface = settings.useMeasuredTouchSurface
 
         pendingKillOnDisconnect = settings.killOnDisconnect
+        pendingAaExitAction = settings.aaExitAction
         pendingRaiseProjectionDuringCall = settings.raiseProjectionDuringCall
         pendingAutoEnableHotspot = settings.autoEnableHotspot
         pendingFakeSpeed = settings.fakeSpeed
@@ -460,6 +462,7 @@ class SettingsFragment : Fragment() {
         pendingHudMirroring = settings.hudMirroring
         pendingUseMeasuredTouchSurface = settings.useMeasuredTouchSurface
         pendingKillOnDisconnect = settings.killOnDisconnect
+        pendingAaExitAction = settings.aaExitAction
         pendingRaiseProjectionDuringCall = settings.raiseProjectionDuringCall
         pendingAutoEnableHotspot = settings.autoEnableHotspot
         pendingFakeSpeed = settings.fakeSpeed
@@ -619,6 +622,7 @@ class SettingsFragment : Fragment() {
         pendingUseMeasuredTouchSurface?.let { settings.useMeasuredTouchSurface = it }
 
         pendingKillOnDisconnect?.let { settings.killOnDisconnect = it }
+        pendingAaExitAction?.let { settings.aaExitAction = it }
         pendingRaiseProjectionDuringCall?.let { settings.raiseProjectionDuringCall = it }
 
         pendingEnableFloatingButton?.let { settings.enableFloatingButton = it }
@@ -750,6 +754,7 @@ class SettingsFragment : Fragment() {
                         pendingGuidanceVolumeOffset != settings.guidanceVolumeOffset ||
                         pendingSystemVolumeOffset != settings.systemVolumeOffset ||
                         pendingKillOnDisconnect != settings.killOnDisconnect ||
+                        pendingAaExitAction != settings.aaExitAction ||
                         pendingRaiseProjectionDuringCall != settings.raiseProjectionDuringCall ||
                         pendingEnableFloatingButton != settings.enableFloatingButton ||
                         pendingFloatingButtonXPercent != settings.floatingButtonXPercent ||
@@ -1533,6 +1538,30 @@ class SettingsFragment : Fragment() {
                     checkChanges()
                     updateSettingsList()
                 }
+            }
+        ))
+
+        val exitActions = arrayOf(
+            getString(R.string.aa_exit_action_oem_launcher),
+            getString(R.string.aa_exit_action_app_home),
+            getString(R.string.aa_exit_action_disconnect)
+        )
+        val currentExitActionIdx = (pendingAaExitAction ?: settings.aaExitAction).value
+        items.add(SettingItem.SettingEntry(
+            stableId = "aaExitAction",
+            nameResId = R.string.pref_aa_exit_action_title,
+            value = exitActions.getOrElse(currentExitActionIdx) { exitActions[0] },
+            searchKeywords = getString(R.string.pref_aa_exit_action_summary),
+            onClick = { _ ->
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.pref_aa_exit_action_title)
+                    .setSingleChoiceItems(exitActions, currentExitActionIdx) { dialog, which ->
+                        pendingAaExitAction = Settings.ExitAction.fromInt(which)
+                        checkChanges()
+                        dialog.dismiss()
+                        updateSettingsList()
+                    }
+                    .show()
             }
         ))
 

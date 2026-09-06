@@ -2110,4 +2110,24 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("native-aa-ignore-external-bt", false)
         set(value) = prefs.edit().putBoolean("native-aa-ignore-external-bt", value).apply()
 
+    enum class ExitAction(val value: Int) {
+        OEM_LAUNCHER(0),
+        APP_HOME(1),
+        DISCONNECT(2);
+
+        companion object {
+            private val map = values().associateBy(ExitAction::value)
+            fun fromInt(value: Int) = map[value] ?: OEM_LAUNCHER
+        }
+    }
+
+    var aaExitAction: ExitAction
+        get() {
+            val value = prefs.getInt("aa-exit-action", ExitAction.OEM_LAUNCHER.value)
+            return ExitAction.fromInt(value)
+        }
+        set(action) {
+            prefs.edit().putInt("aa-exit-action", action.value).apply()
+        }
+
 }

@@ -30,7 +30,8 @@ interface AapControl {
 internal class AapControlMedia(
     private val aapTransport: AapTransport,
     private val micRecorder: MicRecorder,
-    private val aapAudio: AapAudio): AapControl {
+    private val aapAudio: AapAudio,
+    private val context: Context): AapControl {
 
     private var lastNativeFocusRequestTime = 0L
     private var nativeFocusRequestCount = 0
@@ -52,9 +53,23 @@ internal class AapControlMedia(
                 AppLog.i("RX: Video Focus Request - mode: %s, reason: %s", focusRequest.mode, focusRequest.reason)
 
                 if (focusRequest.mode == Media.VideoFocusMode.VIDEO_FOCUS_NATIVE) {
-                    AppLog.i("Video Focus NATIVE received. User likely clicked Exit. Stopping transport.")
-                    aapTransport.wasUserExit = true
-                    aapTransport.stop()
+                    AppLog.i("Video Focus NATIVE received. User clicked Exit in Android Auto.")
+                    val settings = App.provide(context).settings
+                    when (settings.aaExitAction) {
+                        Settings.ExitAction.OEM_LAUNCHER -> {
+                            AppLog.i("ExitAction: Minimizing projection to OEM Launcher")
+                            AapProjectionActivity.minimizeToHome(context)
+                        }
+                        Settings.ExitAction.APP_HOME -> {
+                            AppLog.i("ExitAction: Returning to Emzoom AA Home")
+                            AapProjectionActivity.returnToAppHome(context)
+                        }
+                        Settings.ExitAction.DISCONNECT -> {
+                            AppLog.i("ExitAction: Disconnecting projection session")
+                            aapTransport.wasUserExit = true
+                            aapTransport.stop()
+                        }
+                    }
                 }
                 return 0
             }
@@ -478,7 +493,7 @@ internal class AapControlGateway(
                 context: Context) : this(
             aapTransport,
             AapControlService(aapTransport, aapAudio, settings, context),
-            AapControlMedia(aapTransport, micRecorder, aapAudio),
+            AapControlMedia(aapTransport, micRecorder, aapAudio, context),
             AapControlTouch(aapTransport),
             AapControlSensor(aapTransport, context, settings))
 
