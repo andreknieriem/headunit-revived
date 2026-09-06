@@ -66,6 +66,7 @@ import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.WirelessRearmPolicy
+import com.sesam17.openheadunit.SesAM17Plugin
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -141,6 +142,9 @@ class SettingsFragment : Fragment() {
     private var pendingDpi: Int? = null
     private var pendingPixelAspectRatioE4: Int? = null
     private var pendingOptimizeUltrawide: Boolean? = null
+    private var pendingEnableRedirectPlugin: Boolean? = null
+    private var pendingRedirectAppsSet: Set<String>? = null
+    private var pendingRedirectDoubleTapHome: Boolean? = null
     private var pendingStaticBSSID: String? = null
     private var pendingFullscreenMode: Settings.FullscreenMode? = null
     private var pendingViewMode: Settings.ViewMode? = null
@@ -302,6 +306,9 @@ class SettingsFragment : Fragment() {
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
         pendingOptimizeUltrawide = settings.optimizeUltrawide
+        pendingEnableRedirectPlugin = settings.enableRedirectPlugin
+        pendingRedirectAppsSet = settings.redirectAppsSet
+        pendingRedirectDoubleTapHome = settings.redirectDoubleTapHome
         pendingStaticBSSID = settings.staticBSSID
         pendingFullscreenMode = settings.fullscreenMode
         pendingViewMode = settings.viewMode
@@ -437,6 +444,9 @@ class SettingsFragment : Fragment() {
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
         pendingOptimizeUltrawide = settings.optimizeUltrawide
+        pendingEnableRedirectPlugin = settings.enableRedirectPlugin
+        pendingRedirectAppsSet = settings.redirectAppsSet
+        pendingRedirectDoubleTapHome = settings.redirectDoubleTapHome
         pendingFullscreenMode = settings.fullscreenMode
         pendingViewMode = settings.viewMode
         pendingForceSoftware = settings.forceSoftwareDecoding
@@ -578,6 +588,9 @@ class SettingsFragment : Fragment() {
         pendingDpi?.let { settings.dpiPixelDensity = it }
         pendingPixelAspectRatioE4?.let { settings.pixelAspectRatioE4 = it }
         pendingOptimizeUltrawide?.let { settings.optimizeUltrawide = it }
+        pendingEnableRedirectPlugin?.let { settings.enableRedirectPlugin = it }
+        pendingRedirectAppsSet?.let { settings.redirectAppsSet = it }
+        pendingRedirectDoubleTapHome?.let { settings.redirectDoubleTapHome = it }
         pendingStaticBSSID?.let { settings.staticBSSID = it }
         pendingFullscreenMode?.let { settings.fullscreenMode = it }
         val oldViewMode = settings.viewMode
@@ -720,6 +733,9 @@ class SettingsFragment : Fragment() {
                         pendingDpi != settings.dpiPixelDensity ||
                         pendingPixelAspectRatioE4 != settings.pixelAspectRatioE4 ||
                         pendingOptimizeUltrawide != settings.optimizeUltrawide ||
+                        pendingEnableRedirectPlugin != settings.enableRedirectPlugin ||
+                        pendingRedirectAppsSet != settings.redirectAppsSet ||
+                        pendingRedirectDoubleTapHome != settings.redirectDoubleTapHome ||
                         pendingStaticBSSID != settings.staticBSSID ||
                         pendingFullscreenMode != settings.fullscreenMode ||
                         pendingViewMode != settings.viewMode ||
@@ -1679,6 +1695,77 @@ class SettingsFragment : Fragment() {
                     pendingFloatingButtonDoubleTap = isChecked
                     checkChanges()
                     updateSettingsList()
+                }
+            ))
+        }
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "enableRedirectPlugin",
+            nameResId = R.string.pref_redirect_plugin_title,
+            descriptionResId = R.string.pref_redirect_plugin_summary,
+            isChecked = pendingEnableRedirectPlugin ?: settings.enableRedirectPlugin,
+            onCheckedChanged = { isChecked ->
+                pendingEnableRedirectPlugin = isChecked
+                settings.enableRedirectPlugin = isChecked
+                context?.let { SesAM17Plugin.setRedirectEnabled(it, isChecked) }
+                checkChanges()
+                updateSettingsList()
+                if (isChecked && context != null && !SesAM17Plugin.isAccessibilityServiceEnabled(requireContext())) {
+                    SesAM17Plugin.openAccessibilitySettings(requireContext())
+                }
+            }
+        ))
+
+        if (pendingEnableRedirectPlugin ?: settings.enableRedirectPlugin) {
+            val selectedAppsCount = (pendingRedirectAppsSet ?: settings.redirectAppsSet).size
+            val appsSummary = if (selectedAppsCount == 0) {
+                getString(com.sesam17.openheadunit.R.string.select_apps_summary_none)
+            } else {
+                getString(com.sesam17.openheadunit.R.string.select_apps_summary_count, selectedAppsCount)
+            }
+
+            items.add(SettingItem.SettingEntry(
+                stableId = "redirectSelectApps",
+                nameResId = R.string.pref_redirect_select_apps_title,
+                value = appsSummary,
+                onClick = {
+                    SesAM17Plugin.showAppMultiSelectDialog(requireContext()) { newApps ->
+                        pendingRedirectAppsSet = newApps
+                        settings.redirectAppsSet = newApps
+                        context?.let { SesAM17Plugin.setSelectedRedirectApps(it, newApps) }
+                        checkChanges()
+                        updateSettingsList()
+                    }
+                }
+            ))
+
+            items.add(SettingItem.ToggleSettingEntry(
+                stableId = "redirectDoubleTapHome",
+                nameResId = R.string.pref_redirect_double_tap_home_title,
+                descriptionResId = R.string.pref_redirect_double_tap_home_summary,
+                isChecked = pendingRedirectDoubleTapHome ?: settings.redirectDoubleTapHome,
+                onCheckedChanged = { isChecked ->
+                    pendingRedirectDoubleTapHome = isChecked
+                    settings.redirectDoubleTapHome = isChecked
+                    context?.let { SesAM17Plugin.setDoubleTapHomeEnabled(it, isChecked) }
+                    checkChanges()
+                    updateSettingsList()
+                }
+            ))
+
+            val serviceActive = context != null && SesAM17Plugin.isAccessibilityServiceEnabled(requireContext())
+            val statusText = if (serviceActive) {
+                getString(R.string.pref_redirect_service_active)
+            } else {
+                getString(R.string.pref_redirect_service_inactive)
+            }
+
+            items.add(SettingItem.SettingEntry(
+                stableId = "redirectAccessibilityPermission",
+                nameResId = R.string.pref_redirect_accessibility_permission_title,
+                value = statusText,
+                onClick = {
+                    SesAM17Plugin.openAccessibilitySettings(requireContext())
                 }
             ))
         }

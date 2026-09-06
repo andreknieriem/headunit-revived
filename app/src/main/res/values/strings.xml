@@ -23,6 +23,17 @@
     <string name="pref_floating_button_double_tap_title" translatable="false">Double Tap to Open</string>
     <string name="pref_floating_button_double_tap_summary" translatable="false">Require a double tap on the floating button to open the app.</string>
 
+    <string name="pref_redirect_plugin_title" translatable="false">App Redirection &amp; Double-Tap Home</string>
+    <string name="pref_redirect_plugin_summary" translatable="false">Redirect chosen apps or double-tap Home button to launch Open Headunit.</string>
+    <string name="pref_redirect_select_apps_title" translatable="false">Redirected Apps</string>
+    <string name="pref_redirect_select_apps_summary" translatable="false">Choose which apps redirect to Open Headunit when pressed</string>
+    <string name="pref_redirect_double_tap_home_title" translatable="false">Double-Tap Home Button</string>
+    <string name="pref_redirect_double_tap_home_summary" translatable="false">Double-tap the Home button anywhere to launch Open Headunit</string>
+    <string name="pref_redirect_accessibility_permission_title" translatable="false">Enable Accessibility Service</string>
+    <string name="pref_redirect_accessibility_permission_summary" translatable="false">Required for detecting app launches and Home button double-tap</string>
+    <string name="pref_redirect_service_active" translatable="false">✓ Service Active</string>
+    <string name="pref_redirect_service_inactive" translatable="false">⚠️ Service Disabled (Tap to Enable in System Settings)</string>
+
     <!-- Connection mode selector -->
     <string name="connection_mode">Connection mode</string>
     <string name="connection_kind_usb_cable">USB cable (direct)</string>

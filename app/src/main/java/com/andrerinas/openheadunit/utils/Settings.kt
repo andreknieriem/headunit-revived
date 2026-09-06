@@ -131,6 +131,18 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("floating-button-double-tap", false)
         set(value) { prefs.edit().putBoolean("floating-button-double-tap", value).apply() }
 
+    var enableRedirectPlugin: Boolean
+        get() = prefs.getBoolean("redirect-enabled", false)
+        set(value) { prefs.edit().putBoolean("redirect-enabled", value).apply() }
+
+    var redirectAppsSet: Set<String>
+        get() = prefs.getStringSet("redirect-apps-set", emptySet()) ?: emptySet()
+        set(value) { prefs.edit().putStringSet("redirect-apps-set", value).apply() }
+
+    var redirectDoubleTapHome: Boolean
+        get() = prefs.getBoolean("redirect-double-tap-home", false)
+        set(value) { prefs.edit().putBoolean("redirect-double-tap-home", value).apply() }
+
     // UI Scale percentage for Home
     var uiScaleHomePercent: Int
         get() = prefs.getInt("ui-scale-home-percent", 100)
