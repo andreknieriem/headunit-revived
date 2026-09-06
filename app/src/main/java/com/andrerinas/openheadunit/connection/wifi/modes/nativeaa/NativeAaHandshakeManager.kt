@@ -215,6 +215,9 @@ class NativeAaHandshakeManager(
     // can fire an OS-level ACL_CONNECTED broadcast before any real handshake starts) - see
     // isAttemptInFlight().
     @Volatile private var pokeAttemptInFlight = false
+    // The address a poke is inside socket.connect() for, or null when none is. Narrower than
+    // pokeAttemptInFlight, which stays true for the whole hold as well - see PokeOverlapPolicy.
+    @Volatile private var pokeConnectingTo: String? = null
     // elapsedRealtime() when the last WifiInfoResponse (Type 3) went out, or 0 when no handoff is
     // settling. The phone spends the next several seconds associating, doing WPS and getting a
     // DHCP lease; see isHandoffSettling() and NativeHandoffPolicy.
@@ -1091,12 +1094,20 @@ class NativeAaHandshakeManager(
         pokeAttemptInFlight = true
         try {
             for (uuid in BluetoothWakePolicy.POKE_TARGETS) {
+                // cancel() cannot interrupt a blocking connect(), so a cancelled poke arrives here
+                // with its first record already spent. Stop rather than spend the second one too.
+                currentCoroutineContext().ensureActive()
                 val profile = BluetoothWakePolicy.profileName(uuid)
                 var socket: BluetoothSocket? = null
                 try {
                     socket = device.createRfcommSocketToServiceRecord(uuid)
                     AppLog.i("NativeAA: Calling socket.connect() for ${device.name} via $profile ($uuid)...")
+                    pokeConnectingTo = device.address
                     socket.connect()
+                    // Cleared before the hold, not in the finally below: the marker means "inside
+                    // connect()", and a hold that keeps it set would stall the next poke for
+                    // nothing - the phone is already awake by then.
+                    pokeConnectingTo = null
                     // Named, not just the UUID: which record we ended up on is the first thing to
                     // check when a reporter's calls come out of the phone instead of the car.
                     AppLog.i("NativeAA: Successfully poked ${device.name} via $profile. Holding ${holdMs}ms...")
@@ -1112,15 +1123,18 @@ class NativeAaHandshakeManager(
                     // physical radio right as the critical WifiStartRequest send is about to happen.
                     throw e
                 } catch (e: Exception) {
-                    // Address as well as name: getName() is null for an unbonded device, and a log line
-                    // reading "to null" names nothing at all for the reader of a bug report.
-                    AppLog.d("NativeAA: Poke via $profile to ${device.name ?: "unnamed"} (${device.address}) failed: ${e.message}")
+                    // Info, not debug: the success above is info, so a reporter at the default level
+                    // saw the attempt and never its outcome. Address as well as name, because
+                    // getName() is null for an unbonded device.
+                    AppLog.i("NativeAA: Poke via $profile to ${device.name ?: "unnamed"} (${device.address}) failed: ${e.message}")
                 } finally {
+                    pokeConnectingTo = null
                     try { socket?.close() } catch (e: Exception) {}
                 }
             }
             return false
         } finally {
+            pokeConnectingTo = null
             pokeAttemptInFlight = false
         }
     }
@@ -1438,6 +1452,24 @@ class NativeAaHandshakeManager(
                             waitedMs += 200
                         }
                         AppLog.i("NativeAA: Pre-poke credential wait completed. SSID=${credentials?.ssid}, IP=${credentials?.ip} (waited ${waitedMs}ms)")
+                    }
+
+                    // pokeJob.cancel() above cannot interrupt a blocking connect(), so the
+                    // automatic poke it replaced may still be inside one aimed at this same phone.
+                    // Two at once left all four records failing; wait for the radio.
+                    var overlapWaitedMs = 0L
+                    while (isRunning && isActive && PokeOverlapPolicy.step(
+                            connectingTo = pokeConnectingTo,
+                            target = address,
+                            waitedMs = overlapWaitedMs
+                        ) == PokeOverlapPolicy.Step.WAIT
+                    ) {
+                        if (overlapWaitedMs == 0L) {
+                            AppLog.i("NativeAA: another poke is already connecting to ${device.name} — " +
+                                "waiting for it rather than opening a second socket.")
+                        }
+                        delay(PokeOverlapPolicy.POLL_MS)
+                        overlapWaitedMs += PokeOverlapPolicy.POLL_MS
                     }
 
                     // One hold used to be the whole wake, and it ended before the accept gate
@@ -2285,6 +2317,7 @@ class NativeAaHandshakeManager(
         // this manager, and isAttemptInFlight() answers both arms of the Bluetooth arrival path, so
         // leaving it set makes the phone coming back do nothing at all.
         pokeAttemptInFlight = false
+        pokeConnectingTo = null
         // Cancel before dropping the reference, for the same reason a supersede does: the socket
         // this manager just closed does not necessarily end the coroutine reading from it.
         activeHandshakeJob?.cancel()
