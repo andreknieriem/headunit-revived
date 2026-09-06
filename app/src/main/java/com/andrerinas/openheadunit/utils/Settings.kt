@@ -1409,12 +1409,6 @@ class Settings(private val context: Context) {
             prefs.edit().putBoolean("double-tap-home-to-open", value).apply()
         }
 
-    var performanceEnhancementMode: Boolean
-        get() = prefs.getBoolean("performance-enhancement-mode", true)
-        set(value) {
-            prefs.edit().putBoolean("performance-enhancement-mode", value).apply()
-        }
-
     var floatingButtonDoubleTap: Boolean
         get() = prefs.getBoolean("floating-button-double-tap", false)
         set(value) {

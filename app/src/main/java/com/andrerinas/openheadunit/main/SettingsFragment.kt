@@ -202,7 +202,6 @@ class SettingsFragment : Fragment() {
     private var pendingRaiseProjectionDuringCall: Boolean? = null
     private var pendingRedirectCarbitLink: Boolean? = null
     private var pendingDoubleTapHomeToOpen: Boolean? = null
-    private var pendingPerformanceEnhancementMode: Boolean? = null
     private var pendingFloatingButtonDoubleTap: Boolean? = null
 
     // Custom Insets
@@ -343,7 +342,6 @@ class SettingsFragment : Fragment() {
         pendingRaiseProjectionDuringCall = settings.raiseProjectionDuringCall
         pendingRedirectCarbitLink = settings.redirectCarbitLink
         pendingDoubleTapHomeToOpen = settings.doubleTapHomeToOpen
-        pendingPerformanceEnhancementMode = settings.performanceEnhancementMode
         pendingFloatingButtonDoubleTap = settings.floatingButtonDoubleTap
         pendingAutoEnableHotspot = settings.autoEnableHotspot
         pendingFakeSpeed = settings.fakeSpeed
@@ -621,7 +619,6 @@ class SettingsFragment : Fragment() {
         pendingRaiseProjectionDuringCall?.let { settings.raiseProjectionDuringCall = it }
         pendingRedirectCarbitLink?.let { settings.redirectCarbitLink = it }
         pendingDoubleTapHomeToOpen?.let { settings.doubleTapHomeToOpen = it }
-        pendingPerformanceEnhancementMode?.let { settings.performanceEnhancementMode = it }
         pendingFloatingButtonDoubleTap?.let { settings.floatingButtonDoubleTap = it }
         pendingAutoEnableHotspot?.let { settings.autoEnableHotspot = it }
         pendingFakeSpeed?.let { settings.fakeSpeed = it }
@@ -1514,18 +1511,6 @@ class SettingsFragment : Fragment() {
                 if (isChecked && !AppRedirectService.isEnabled(requireContext())) {
                     showAccessibilityPromptDialog()
                 }
-            }
-        ))
-
-        items.add(SettingItem.ToggleSettingEntry(
-            stableId = "performanceEnhancementMode",
-            nameResId = R.string.pref_performance_enhancement_title,
-            descriptionResId = R.string.pref_performance_enhancement_summary,
-            isChecked = pendingPerformanceEnhancementMode ?: settings.performanceEnhancementMode,
-            onCheckedChanged = { isChecked ->
-                pendingPerformanceEnhancementMode = isChecked
-                checkChanges()
-                updateSettingsList()
             }
         ))
 

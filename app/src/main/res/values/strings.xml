@@ -1149,8 +1149,6 @@
     <string name="redirect_carbitlink_accessibility_prompt">To use this feature, please enable Emzoom AA in Accessibility Settings.</string>
     <string name="double_tap_home_label">Double Tap Home to Open</string>
     <string name="double_tap_home_description">Double tap the Home button anywhere on the head unit to quickly open Emzoom AA</string>
-    <string name="pref_performance_enhancement_title">Performance Enhancement Mode</string>
-    <string name="pref_performance_enhancement_summary">Enables 60 FPS projection, real-time low-latency video decoding, and high-speed socket buffers for smooth animations</string>
     <string name="pref_floating_button_double_tap_title">Double Tap to Open</string>
     <string name="pref_floating_button_double_tap_summary">Require a double tap on the floating button to open Emzoom AA.</string>
     <string name="open_accessibility_settings">Open Accessibility Settings</string>

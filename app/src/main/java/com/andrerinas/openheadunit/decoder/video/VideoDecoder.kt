@@ -1760,8 +1760,7 @@ class VideoDecoder(
             running = true
             clearFrameQueue()
             outputThread = Thread {
-                val priority = if (settings.performanceEnhancementMode) -8 else Process.THREAD_PRIORITY_DISPLAY
-                Process.setThreadPriority(priority)
+                Process.setThreadPriority(Process.THREAD_PRIORITY_DISPLAY)
                 LegacyOptimizer.setHighPriority()
                 outputThreadLoop()
             }.apply { name = "VideoDecoder-Output"; start() }
@@ -1770,8 +1769,7 @@ class VideoDecoder(
             // prior stop() left and exit at birth - after which every frame queues into a feed
             // queue nobody drains.
             val newFeedThread = Thread {
-                val priority = if (settings.performanceEnhancementMode) -8 else Process.THREAD_PRIORITY_DISPLAY
-                Process.setThreadPriority(priority)
+                Process.setThreadPriority(Process.THREAD_PRIORITY_DISPLAY)
                 feedThreadLoop()
             }.apply { name = "VideoDecoder-Feed" }
             feedThread = newFeedThread
