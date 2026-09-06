@@ -473,10 +473,7 @@ class Settings(private val context: Context) {
      * the getter below. Applies to the next group, so it needs a reconnect rather than only a write.
      */
     var wifiDirectBand: Int
-        get() {
-            if (prefs.contains("wifi-direct-band")) return prefs.getInt("wifi-direct-band", 0)
-            return 2 // Default to 2.4GHz (Emzoom Defaults)
-        }
+        get() = prefs.getInt("wifi-direct-band", 2) // Default to 2.4GHz (FORCE_2_4GHZ)
         set(value) = prefs.edit().putInt("wifi-direct-band", value).apply()
 
     /**
@@ -2058,7 +2055,7 @@ class Settings(private val context: Context) {
     // Applies at the next hotspot bring-up, so it needs a reconnect rather than only a write. See
     // SoftApBandPolicy, which is where the ordering lives.
     var hotspotBand: Int
-        get() = prefs.getInt("hotspot-band", 0)
+        get() = prefs.getInt("hotspot-band", 2) // Default to 2.4GHz (FORCE_2_4GHZ)
         set(value) = prefs.edit().putInt("hotspot-band", value).apply()
 
     // Set once this device has failed to bring its own access point back up after the app took it
