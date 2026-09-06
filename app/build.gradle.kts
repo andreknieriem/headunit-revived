@@ -95,7 +95,7 @@ android {
         minSdk = 16
         targetSdk = 28
         versionCode = 107
-        versionName = "1.7.0(3.3.1)"
+        versionName = "1.7.1(3.3.1)"
         setProperty("archivesBaseName", "Emzoom AA_v${versionName}")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
