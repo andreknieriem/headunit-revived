@@ -112,42 +112,25 @@ android {
             // keyPassword = property("HEADUNIT_KEYSTORE_PASSWORD") as String
         }
         create("release") {
-            val defaultStoreFile = when {
-                rootProject.file("Sesam.jks").exists() -> rootProject.file("Sesam.jks")
-                file("../Sesam.jks").exists() -> file("../Sesam.jks")
-                else -> null
-            }
-            if (defaultStoreFile != null) {
-                storeFile = defaultStoreFile
-            }
-            keyAlias = "headunit-revived"
+            storeFile = rootProject.file("Sesam.jks")
+            storePassword = "737266"
+            keyAlias = "key0"
+            keyPassword = "737266"
+            isV1SigningEnabled = true
+            isV2SigningEnabled = true
 
             val keyfile = rootProject.file("key.properties")
-            val signingPropsFile = rootProject.file("secrets.properties")
-
             if (keyfile.exists()) {
                 val keyprops = Properties()
                 keyprops.load(FileInputStream(keyfile))
 
                 if (keyprops.containsKey("storeFile")) {
                     val storePath = keyprops.getProperty("storeFile")
-                    val sf = file(storePath)
-                    storeFile = if (sf.isAbsolute) sf else rootProject.file(storePath)
+                    storeFile = rootProject.file(storePath)
                 }
                 if (keyprops.containsKey("storePassword")) storePassword = keyprops.getProperty("storePassword")
                 if (keyprops.containsKey("keyAlias")) keyAlias = keyprops.getProperty("keyAlias")
                 if (keyprops.containsKey("keyPassword")) keyPassword = keyprops.getProperty("keyPassword")
-            } else if (signingPropsFile.exists()) {
-                val props = Properties()
-                props.load(FileInputStream(signingPropsFile))
-
-                storePassword = props.getProperty("HEADUNIT_KEYSTORE_PASSWORD")
-                keyPassword = props.getProperty("HEADUNIT_KEY_PASSWORD")
-            } else {
-                val envStorePass = System.getenv("HEADUNIT_KEYSTORE_PASSWORD") ?: (project.findProperty("HEADUNIT_KEYSTORE_PASSWORD") as? String)
-                val envKeyPass = System.getenv("HEADUNIT_KEY_PASSWORD") ?: (project.findProperty("HEADUNIT_KEY_PASSWORD") as? String)
-                if (envStorePass != null) storePassword = envStorePass
-                if (envKeyPass != null) keyPassword = envKeyPass
             }
         }
     }
@@ -160,18 +143,11 @@ android {
                 getDefaultProguardFile("proguard-android.txt"),
                 "proguard-project.txt"
             )
-
-            val relConfig = signingConfigs.getByName("release")
-            if (relConfig.storeFile != null && relConfig.storeFile!!.exists()) {
-                signingConfig = relConfig
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
 
         getByName("debug") {
-            val relConfig = signingConfigs.getByName("release")
-            if (relConfig.storeFile != null && relConfig.storeFile!!.exists()) {
-                signingConfig = relConfig
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
