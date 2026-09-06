@@ -1891,6 +1891,9 @@ class AapService : Service() {
     /** When the current USB deferral started, so the budget is measured across its retries. */
     private var usbDeferralStartedMs = 0L
     private var usbDeferralJob: Job? = null
+    // Whether a hold is actually running. The recheck coroutine has to null usbDeferralJob before it
+    // re-enters, or the re-entrant guard below would never let go, so the job cannot answer this.
+    private var usbDeferralHolding = false
 
     /**
      * Hold the wireless bring-up while a USB projection attempt is in flight, so a plugged-in
@@ -1918,9 +1921,16 @@ class AapService : Service() {
                 msSinceFirstDeferral = waitedMs,
             )
         ) {
-            if (waitedMs > 0 && usbDeferralJob != null) {
-                AppLog.i("AapService: USB handoff settled after ${waitedMs}ms — arming wireless now")
+            if (waitedMs > 0 && usbDeferralHolding) {
+                // The budget running out is not the USB attempt settling, and a hold that reached it
+                // used to be indistinguishable from one that did not.
+                if (waitedMs >= WirelessBringUpDeferralPolicy.DEFER_BUDGET_MS) {
+                    AppLog.i("AapService: the USB attempt did not settle within ${waitedMs}ms — arming wireless anyway")
+                } else {
+                    AppLog.i("AapService: USB handoff settled after ${waitedMs}ms — arming wireless now")
+                }
             }
+            usbDeferralHolding = false
             usbDeferralStartedMs = 0L
             usbDeferralJob?.cancel()
             usbDeferralJob = null
@@ -1931,6 +1941,7 @@ class AapService : Service() {
 
         AppLog.i("AapService: a USB projection attempt is in flight — holding the wireless bring-up " +
             "for up to ${WirelessBringUpDeferralPolicy.DEFER_BUDGET_MS}ms")
+        usbDeferralHolding = true
         usbDeferralJob = serviceScope.launch {
             delay(USB_DEFERRAL_RECHECK_MS)
             usbDeferralJob = null
