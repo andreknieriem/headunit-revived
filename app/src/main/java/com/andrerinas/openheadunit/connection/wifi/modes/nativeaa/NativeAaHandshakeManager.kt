@@ -1054,6 +1054,34 @@ class NativeAaHandshakeManager(
     }
 
     /**
+     * Waits out a poke already inside `socket.connect()` for [device], and says whether this one
+     * may now open its own. False means another poke has been connecting to this phone for the
+     * whole bound: a second socket to a stuck one only made every record fail.
+     */
+    private suspend fun awaitPokeSlot(device: BluetoothDevice): Boolean {
+        var waitedMs = 0L
+        while (isRunning) {
+            when (PokeOverlapPolicy.step(pokeConnectingTo, device.address, waitedMs)) {
+                PokeOverlapPolicy.Step.PROCEED -> return true
+                PokeOverlapPolicy.Step.ABANDON -> {
+                    AppLog.i("NativeAA: another poke has been connecting to ${device.name} for " +
+                        "${waitedMs}ms — not opening a second socket to it.")
+                    return false
+                }
+                PokeOverlapPolicy.Step.WAIT -> {
+                    if (waitedMs == 0L) {
+                        AppLog.i("NativeAA: another poke is already connecting to ${device.name} — " +
+                            "waiting for it rather than opening a second socket.")
+                    }
+                    delay(PokeOverlapPolicy.POLL_MS)
+                    waitedMs += PokeOverlapPolicy.POLL_MS
+                }
+            }
+        }
+        return false
+    }
+
+    /**
      * Tries each of [BluetoothWakePolicy.POKE_TARGETS] in turn, holding whichever connects for
      * [holdMs]. Returns true if any of them did, false without opening anything if either guard
      * below stands the poke down. Both poke entry points come through here, so one check covers
@@ -1379,6 +1407,11 @@ class NativeAaHandshakeManager(
                         }
                     }
 
+                    // A credential redelivery cancels this loop and starts a fresh one, and cancel
+                    // cannot interrupt a blocking connect() — so the poke we replaced may still be
+                    // inside one aimed at this same phone.
+                    if (!awaitPokeSlot(device)) continue
+
                     AppLog.i("NativeAA: Attempting active poke to device: ${device.name} (${device.address})...")
                     pokeDevice(device, holdMs = 15000)
                 }
@@ -1456,21 +1489,7 @@ class NativeAaHandshakeManager(
 
                     // pokeJob.cancel() above cannot interrupt a blocking connect(), so the
                     // automatic poke it replaced may still be inside one aimed at this same phone.
-                    // Two at once left all four records failing; wait for the radio.
-                    var overlapWaitedMs = 0L
-                    while (isRunning && isActive && PokeOverlapPolicy.step(
-                            connectingTo = pokeConnectingTo,
-                            target = address,
-                            waitedMs = overlapWaitedMs
-                        ) == PokeOverlapPolicy.Step.WAIT
-                    ) {
-                        if (overlapWaitedMs == 0L) {
-                            AppLog.i("NativeAA: another poke is already connecting to ${device.name} — " +
-                                "waiting for it rather than opening a second socket.")
-                        }
-                        delay(PokeOverlapPolicy.POLL_MS)
-                        overlapWaitedMs += PokeOverlapPolicy.POLL_MS
-                    }
+                    if (!awaitPokeSlot(device)) return@launch
 
                     // One hold used to be the whole wake, and it ended before the accept gate
                     // reopened, so the phone the driver had just left won the race back in.
