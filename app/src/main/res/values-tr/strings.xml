@@ -954,6 +954,7 @@
     <string name="narrow_band_profile_cap">Yalnızca 2,4 GHz radyoda videoyu düşür</string>
     <string name="narrow_band_profile_cap_description">Bu cihazın Wi-Fi\'ında 5 GHz bandı yoksa, yukarıdaki ayarlar yerine telefondan en fazla 720p ve 30 fps iste. Böyle bir bağlantıda tam hızlı akışın hiç görüntü taşımadığı, daha düşüğünün ise tutunduğu ölçüldü. İstediğiniz ayarların aynen uygulanması için bunu kapatın.</string>
     <string name="connection_issue_banner_video_link_too_slow">Telefonunuz üst üste birkaç kez, tek bir kare bile gelmeden videodan vazgeçti. Wi-Fi bağlantısı görüntüyü taşıyamayacak kadar yavaş. FPS sınırını 30\'a düşürmek için dokunun; daha düşük çözünürlük ve AAC ses de yardımcı olur.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Bu ünite WiFi Direct ağını seçtiğin hiçbir 5 GHz kanalına koymayı reddetti ve kendi WiFi sürücüsünün seçtiği kanalda başlattı. Bu kanal çoğu zaman daha katı ülkelerdeki telefonların göremediği bir kanaldır. WiFi Direct bandını her ülkede izin verilen 2,4 GHz olarak ayarlamak için dokun; burada 1080p yerine 720p bekle.</string>
     <string name="connection_issue_banner_dismiss">Kapat</string>
     <string name="connection_issue_remedy_hotspot_query">Erişim noktası adı ve şifresi</string>
     <string name="preflight_title">Bağlanmadan önce</string>
@@ -1074,9 +1075,7 @@
     <string name="five_ghz_channel">5 GHz kanalı</string>
     <string name="five_ghz_channel_auto">Otomatik</string>
     <string name="five_ghz_channel_option">Kanal %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Bağlanırken ünitenin kendi Wi-Fi ağından ayrıl</string>
-    <string name="stand_down_station_description">Wi-Fi Direct grubu oluşturulmadan hemen önce bu ana ünitenin kendi Wi-Fi ağından bağlantısını keser ve oturum bittiğinde yeniden bağlar.</string>
-    <string name="stand_down_station_needs_overlay">Bu Android sürümünde «diğer uygulamaların üzerinde görüntüleme» izni gerektirir.</string>
+    <string name="five_ghz_channel_hint">Kanal bir istektir, garanti değildir. Birçok ünite ağı yalnızca kendi WiFi sürücüsünün seçtiği kanalda oluşturur ve uygulama bunu ancak denedikten sonra söyleyebilir. Hiçbir 5 GHz kanalı işe yaramıyorsa ve telefonun ağı hâlâ göremiyorsa, çözecek olan ayar yukarıdaki banttır.</string>
     <string name="wifi_direct_stable_identity">Aynı Wi-Fi Direct ağını koru</string>
     <string name="wifi_direct_stable_identity_description">Her sürüşte yeni bir kurulum yerine, telefonunuzun bildiği bir ağa yeniden bağlanması için grubu her seferinde aynı ad ve şifreyle ister.</string>
     <string name="wifi_direct_new_identity">Yeni Wi-Fi Direct ağ kimliği</string>

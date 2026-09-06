@@ -513,25 +513,7 @@ class Settings(private val context: Context) {
         set(value) { prefs.edit().putBoolean("keep-dummy-vpn-during-session", value).apply() }
 
     /**
-     * Drops this unit's own WiFi association while the Native AA WiFi Direct group is brought up.
-     *
-     * On a single-radio unit an associated station leaves the group owner no free channel, so
-     * wpa_supplicant forces the group onto the station's channel or refuses to make one at all. That
-     * is the shape of a unit whose group never forms, and of one whose picture stutters because the
-     * group is sharing the home network's channel.
-     *
-     * Off by default, and deliberately not a general remedy: the same association is measured to be
-     * the *better* state once a session is running, on this same class of hardware. It is bounded to
-     * the bring-up and the network is put back on teardown. See
-     * [com.andrerinas.openheadunit.connection.wifi.direct.StationStandDownPolicy], which also holds
-     * the rule for whether the platform will honour it at all.
-     */
-    var standDownStationForWifiDirect: Boolean
-        get() = prefs.getBoolean("stand-down-station-for-wifi-direct", false)
-        set(value) { prefs.edit().putBoolean("stand-down-station-for-wifi-direct", value).apply() }
-
-    /**
-     * The network id disabled by the stand-down above, or -1 for none standing.
+     * The network id disabled by the WiFi Direct station stand-down, or -1 for none standing.
      *
      * Written before the network is disabled rather than after, so a crash in between still leaves a
      * record to restore from. Not a user setting; it exists so a force-stop cannot leave the unit
@@ -1985,6 +1967,11 @@ class Settings(private val context: Context) {
     var connectionIssueVideoLinkTooSlowAtEpochMs: Long
         get() = prefs.getLong("connection-issue-video-starved", 0L)
         set(value) = prefs.edit().putLong("connection-issue-video-starved", value).apply()
+
+    /** Every 5 GHz channel the pinned one was walked across was refused a group owner. */
+    var connectionIssueFiveGhzChannelRefusedAtEpochMs: Long
+        get() = prefs.getLong("connection-issue-5ghz-channel-refused", 0L)
+        set(value) = prefs.edit().putLong("connection-issue-5ghz-channel-refused", value).apply()
 
     /**
      * When the user last dismissed the failure banner.

@@ -28,7 +28,6 @@ import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialField
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.connection.wifi.direct.P2pGroupIdentityPolicy
-import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDownPolicy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeCredentialsPreflightPolicy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeDriverSelectionPolicy
 import com.andrerinas.openheadunit.aap.NativeTransport
@@ -1092,29 +1091,6 @@ class SettingsFragment : Fragment() {
                 }
 
                 addWifiDirectIdentitySettings(items)
-
-                // Only where the platform would honour it. Below Android 10 anything may ask; from
-                // 10 to 14 the overlay permission is what gets past the framework's check, so the
-                // row stays and says so rather than vanishing into an unanswerable question; from
-                // 15 there is no route at all and offering the switch would be a lie.
-                val overlayGranted = AppPermissions.isOverlayGranted(requireContext())
-                if (StationStandDownPolicy.isAvailable(Build.VERSION.SDK_INT, true)) {
-                    items.add(SettingItem.ToggleSettingEntry(
-                        stableId = "standDownStationForWifiDirect",
-                        nameResId = R.string.stand_down_station,
-                        descriptionResId = R.string.stand_down_station_description,
-                        isChecked = settings.standDownStationForWifiDirect,
-                        isEnabled = overlayGranted,
-                        descriptionOverride = if (overlayGranted) null else
-                            getString(R.string.stand_down_station_needs_overlay) + " " +
-                                getString(R.string.stand_down_station_description),
-                        searchKeywords = "wifi disconnect station home network channel single radio",
-                        onCheckedChanged = { isChecked ->
-                            settings.standDownStationForWifiDirect = isChecked
-                            updateSettingsList()
-                        }
-                    ))
-                }
             }
 
             // Multi-Driver Selection settings for Native AA
@@ -3876,14 +3852,18 @@ class SettingsFragment : Fragment() {
                     .show()
             }
         ))
+        items.add(SettingItem.InfoBanner(
+            stableId = "fiveGhzChannelHint",
+            textResId = R.string.five_ghz_channel_hint
+        ))
     }
 
     /**
      * Whether the group keeps its name and passphrase between bring-ups, and a way to draw new ones.
      *
      * Only where the group is ours to name: the hotspot's identity is the access point's own. The
-     * switch writes straight through, like the stand-down beside it, because it is read at the next
-     * create and nothing needs re-arming for it. The "new identity" action replaces both halves
+     * switch writes straight through rather than through the pending/apply pattern, because it is
+     * read at the next create and nothing needs re-arming for it. The "new identity" action replaces both halves
      * together, which is the one rotation a phone's saved profile survives.
      */
     private fun addWifiDirectIdentitySettings(items: MutableList<SettingItem>) {

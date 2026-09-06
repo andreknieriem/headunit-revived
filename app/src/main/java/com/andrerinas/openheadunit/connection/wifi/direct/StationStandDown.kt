@@ -42,10 +42,11 @@ object StationStandDown {
         val settings = try {
             App.provide(context).settings
         } catch (e: Exception) {
-            AppLog.d("StationStandDown: settings unavailable, not standing down: ${e.message}")
+            // Without somewhere to record the network id there is no way back to it, and a
+            // stand-down we cannot undo is worse than one that never happened.
+            AppLog.d("StationStandDown: no store for the restore record, not standing down: ${e.message}")
             return false
         }
-        if (!settings.standDownStationForWifiDirect) return false
 
         try {
             val wm = context.applicationContext
@@ -59,7 +60,6 @@ object StationStandDown {
             val overlay = AppPermissions.isOverlayGranted(context)
 
             if (!StationStandDownPolicy.shouldStandDown(
-                    enabled = settings.standDownStationForWifiDirect,
                     sdkInt = Build.VERSION.SDK_INT,
                     canDrawOverlays = overlay,
                     associated = associated,
@@ -68,7 +68,7 @@ object StationStandDown {
             ) {
                 val why = StationStandDownPolicy.describeUnavailable(Build.VERSION.SDK_INT, overlay)
                 when {
-                    why != null -> AppLog.w("StationStandDown: $why")
+                    why != null -> AppLog.i("StationStandDown: $why")
                     !associated -> AppLog.i(
                         "StationStandDown: this unit is not joined to another WiFi network, so " +
                             "there is nothing to stand down before creating the group."

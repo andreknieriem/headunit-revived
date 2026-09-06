@@ -958,6 +958,7 @@
     <string name="narrow_band_profile_cap">Niższy obraz przy radiu tylko 2,4 GHz</string>
     <string name="narrow_band_profile_cap_description">Gdy Wi-Fi tego urządzenia nie ma pasma 5 GHz, żądaj od telefonu najwyżej 720p i 30 kl./s zamiast ustawień powyżej. Na takim łączu zmierzono, że strumień o pełnej przepływności nie przenosił obrazu w ogóle, a niższy działał. Wyłącz to, aby dostać dokładnie to, co ustawiono.</string>
     <string name="connection_issue_banner_video_link_too_slow">Telefon kilka razy z rzędu porzucił obraz, zanim dotarła choć jedna klatka. Łącze Wi-Fi jest za wolne, aby przenieść obraz. Dotknij, aby obniżyć limit FPS do 30; pomoże też niższa rozdzielczość i dźwięk AAC.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">To urządzenie odmówiło umieszczenia sieci WiFi Direct na jakimkolwiek wybranym przez ciebie kanale 5 GHz i uruchomiło ją na kanale wybranym przez własny sterownik Wi-Fi. Tego kanału telefony w krajach o surowszych przepisach często w ogóle nie widzą. Dotknij, aby ustawić pasmo WiFi Direct na 2,4 GHz, dozwolone we wszystkich krajach; spodziewaj się na nim 720p zamiast 1080p.</string>
     <string name="connection_issue_banner_dismiss">Zamknij</string>
     <string name="connection_issue_remedy_hotspot_query">Nazwa i hasło hotspotu</string>
     <string name="preflight_title">Przed połączeniem</string>
@@ -1078,9 +1079,7 @@
     <string name="five_ghz_channel">Kanał 5 GHz</string>
     <string name="five_ghz_channel_auto">Automatyczny</string>
     <string name="five_ghz_channel_option">Kanał %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Odłącz od własnego Wi-Fi podczas łączenia</string>
-    <string name="stand_down_station_description">Odłącza tę stację od własnej sieci Wi-Fi tuż przed utworzeniem grupy Wi-Fi Direct i łączy ponownie po zakończeniu sesji. Przydatne w urządzeniach z jednym układem Wi-Fi.</string>
-    <string name="stand_down_station_needs_overlay">Wymaga uprawnienia «wyświetlanie nad innymi aplikacjami» w tej wersji Androida.</string>
+    <string name="five_ghz_channel_hint">Kanał to prośba, a nie gwarancja. Wiele urządzeń tworzy sieć tylko na kanale wybranym przez własny sterownik Wi-Fi, a aplikacja może ci to powiedzieć dopiero po próbie. Jeśli żaden kanał 5 GHz nie działa, a telefon nadal nie widzi sieci, to pasmo powyżej jest ustawieniem, które pomoże.</string>
     <string name="wifi_direct_stable_identity">Zachowaj tę samą sieć Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Używa tej samej nazwy i hasła grupy za każdym razem, dzięki czemu telefon łączy się ze znaną siecią bez ponownej konfiguracji przy każdej jeździe.</string>
     <string name="wifi_direct_new_identity">Nowa tożsamość sieci Wi-Fi Direct</string>

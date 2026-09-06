@@ -955,6 +955,7 @@
     <string name="narrow_band_profile_cap">Gyengébb kép csak 2,4 GHz-es rádiónál</string>
     <string name="narrow_band_profile_cap_description">Ha az egység Wi-Fi-je nem tud 5 GHz-et, a fenti beállítások helyett legfeljebb 720p és 30 fps kérése a telefontól. Ilyen kapcsolaton a mérések szerint a teljes sebességű adatfolyam egyáltalán nem vitt képet, az alacsonyabb viszont igen. Kapcsolja ki, ha pontosan a beállított értékeket szeretné.</string>
     <string name="connection_issue_banner_video_link_too_slow">A telefon egymás után többször feladta a videót, mielőtt egyetlen képkocka megérkezett volna. A Wi-Fi kapcsolat túl lassú a képhez. Érintse meg az FPS-korlát 30-ra csökkentéséhez; az alacsonyabb felbontás és az AAC hang is segít.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Ez az egység nem volt hajlandó a WiFi Direct hálózatát egyetlen általad választott 5 GHz-es csatornára sem tenni, ezért azon indult el, amelyet a saját WiFi-illesztőprogramja választott. Ezt a csatornát a szigorúbb országokban lévő telefonok gyakran nem is látják. Koppints ide, hogy a WiFi Direct sávját 2,4 GHz-re állítsd, amelyet minden ország engedélyez; ezen 1080p helyett 720p várható.</string>
     <string name="connection_issue_banner_dismiss">Elvetés</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot neve és jelszava</string>
     <string name="preflight_title">Csatlakozás előtt</string>
@@ -1075,9 +1076,7 @@
     <string name="five_ghz_channel">5 GHz-es csatorna</string>
     <string name="five_ghz_channel_auto">Automatikus</string>
     <string name="five_ghz_channel_option">%1$d. csatorna (%2$d MHz)</string>
-    <string name="stand_down_station">Saját Wi-Fi lekapcsolása csatlakozáskor</string>
-    <string name="stand_down_station_description">Lecsatlakoztatja a fejegységet a saját Wi-Fi hálózatáról a Wi-Fi Direct csoport létrehozása előtt, majd a munkamenet végén visszacsatlakoztatja.</string>
-    <string name="stand_down_station_needs_overlay">Ehhez az Android-verzióhoz a «megjelenítés más alkalmazások felett» engedély szükséges.</string>
+    <string name="five_ghz_channel_hint">A csatorna kérés, nem garancia. Sok egység csak azon a csatornán hozza létre a hálózatot, amelyet a saját WiFi-illesztőprogramja választ, és az alkalmazás ezt csak a próbálkozás után tudja megmondani. Ha egyetlen 5 GHz-es csatorna sem működik, és a telefonod továbbra sem látja a hálózatot, a fenti sáv az a beállítás, amely segíteni fog.</string>
     <string name="wifi_direct_stable_identity">Ugyanazon Wi-Fi Direct hálózat megtartása</string>
     <string name="wifi_direct_stable_identity_description">Minden alkalommal azonos névvel és jelszóval hozza létre a csoportot, így a telefon egy már ismert hálózathoz csatlakozik újra.</string>
     <string name="wifi_direct_new_identity">Új Wi-Fi Direct hálózati identitás</string>

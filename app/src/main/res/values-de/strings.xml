@@ -965,6 +965,7 @@
     <string name="narrow_band_profile_cap">Video bei reinem 2,4-GHz-Funk verringern</string>
     <string name="narrow_band_profile_cap_description">Wenn das WLAN dieses Geräts kein 5-GHz-Band hat, statt der Einstellungen oben höchstens 720p und 30 fps vom Telefon anfordern. Auf einer solchen Verbindung wurde gemessen, dass ein Stream mit voller Rate gar kein Bild überträgt, ein niedrigerer dagegen schon. Schalte dies aus, um genau das zu bekommen, was du eingestellt hast.</string>
     <string name="connection_issue_banner_video_link_too_slow">Dein Telefon hat das Video mehrmals hintereinander abgebrochen, bevor auch nur ein Bild ankam. Die WLAN-Verbindung ist zu langsam für das Bild. Tippe hier, um die FPS-Grenze auf 30 zu senken; eine niedrigere Auflösung und AAC-Audio helfen ebenfalls.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Dieses Gerät hat sich geweigert, sein WiFi-Direct-Netzwerk auf einen von dir gewählten 5-GHz-Kanal zu legen, und hat es auf dem Kanal seines eigenen WLAN-Treibers gestartet. Diesen Kanal können Telefone in Ländern mit strengeren Regeln oft gar nicht sehen. Tippe hier, um das WiFi-Direct-Band auf 2,4 GHz zu setzen, das überall erlaubt ist; erwarte dort 720p statt 1080p.</string>
     <string name="connection_issue_banner_dismiss">Schließen</string>
     <string name="connection_issue_remedy_hotspot_query">Hotspot-Name und Passwort</string>
     <string name="preflight_title">Vor dem Verbinden</string>
@@ -1080,9 +1081,7 @@
     <string name="five_ghz_channel">5-GHz-Kanal</string>
     <string name="five_ghz_channel_auto">Automatisch</string>
     <string name="five_ghz_channel_option">Kanal %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">WLAN-Verbindung dieses Geräts beim Verbinden trennen</string>
-    <string name="stand_down_station_description">Trennt dieses Headunit kurz vor dem Erstellen der Wi-Fi Direct-Gruppe vom eigenen WLAN-Netzwerk und verbindet es wieder, wenn die Sitzung endet. Bei Geräten mit nur einem WLAN-Chip bleibt für die Gruppe kein freier Kanal, sodass sie auf den Kanal dieses Netzwerks gezwungen oder ganz verweigert wird. Probiere dies aus, falls dein Smartphone nie beitritt. Die meisten bisher gemessenen Geräte laufen jedoch besser, wenn das Netzwerk verbunden bleibt. Schalte es also wieder aus, falls sich das Bild verschlechtert.</string>
-    <string name="stand_down_station_needs_overlay">Erfordert auf dieser Android-Version die Berechtigung „Über anderen Apps anzeigen“.</string>
+    <string name="five_ghz_channel_hint">Ein Kanal ist eine Anfrage, keine Garantie. Viele Geräte erstellen das Netzwerk nur auf dem Kanal, den ihr eigener WLAN-Treiber wählt, und die App kann dir das erst nach dem Versuch sagen. Wenn kein 5-GHz-Kanal funktioniert und dein Telefon das Netzwerk weiterhin nicht sieht, ist das Band oben die Einstellung, die hilft.</string>
     <string name="wifi_direct_stable_identity">Dasselbe Wi-Fi Direct-Netzwerk beibehalten</string>
     <string name="wifi_direct_stable_identity_description">Erstellt die Gruppe jedes Mal mit demselben Namen und Passwort, sodass sich dein Smartphone wieder mit einem bekannten Netzwerk verbindet, anstatt bei jeder Fahrt neu eingerichtet zu werden. Deaktiviere dies, um bei jeder Verbindung ein neues Netzwerk zu erstellen (wie in Version 3.2 und 3.3), falls ein Smartphone das gespeicherte Netzwerk verweigert. Eine neue Identität unten auszuwählen ist die einfachere Lösung.</string>
     <string name="wifi_direct_new_identity">Neue Wi-Fi Direct-Netzwerkidentität</string>

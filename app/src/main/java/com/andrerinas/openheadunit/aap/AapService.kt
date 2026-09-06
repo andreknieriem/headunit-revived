@@ -36,6 +36,7 @@ import com.andrerinas.openheadunit.app.ForegroundServiceTypePolicy
 import com.andrerinas.openheadunit.app.WifiAutoStartReceiver
 import com.andrerinas.openheadunit.connection.wifi.HotspotExitAction
 import com.andrerinas.openheadunit.connection.wifi.UsbSessionQuiescePolicy
+import com.andrerinas.openheadunit.connection.wifi.WirelessBringUpDeferralPolicy
 import com.andrerinas.openheadunit.connection.wifi.UserExitHotspotPolicy
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.main.MainActivity
@@ -55,6 +56,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.media.session.MediaButtonReceiver
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import com.andrerinas.openheadunit.connection.usb.UsbReceiver
 import com.andrerinas.openheadunit.location.GpsLocationService
 import com.andrerinas.openheadunit.utils.LocaleHelper
@@ -64,6 +66,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.hardware.usb.UsbManager
 import android.os.SystemClock
 import android.app.NotificationManager
 import android.graphics.PixelFormat
@@ -943,13 +946,17 @@ class AapService : Service() {
 
         // Decided here as well as inside initWifiMode() so a paused start skips the wait-for-WiFi
         // machinery entirely rather than setting it up and being turned away at the end of it.
+        // Before wireless, not after. A device the USB rules accept starts a switch here, and
+        // initWifiModeWithOptionalWait() then stands back for it; one they reject stakes nothing
+        // and wireless arms as it always did.
+        usbLauncherManager.checkAlreadyConnected()
+
         if (applyBootLoopGuard()) {
             AppLog.w("AapService: Wireless bring-up paused by the boot-loop guard. USB and the rest of the app are unaffected.")
         } else {
             initWifiModeWithOptionalWait()
         }
         scheduleBootLoopStrikeClear()
-        usbLauncherManager.checkAlreadyConnected()
         registerNetworkMonitor()
     }
 
@@ -1881,6 +1888,69 @@ class AapService : Service() {
         }
     }
 
+    /** When the current USB deferral started, so the budget is measured across its retries. */
+    private var usbDeferralStartedMs = 0L
+    private var usbDeferralJob: Job? = null
+    // Whether a hold is actually running. The recheck coroutine has to null usbDeferralJob before it
+    // re-enters, or the re-entrant guard below would never let go, so the job cannot answer this.
+    private var usbDeferralHolding = false
+
+    /**
+     * Hold the wireless bring-up while a USB projection attempt is in flight, so a plugged-in
+     * dongle does not get a WiFi Direct group, a 5288 server and a Bluetooth poke raised around it
+     * and torn straight back down. Re-checks on a timer rather than refusing outright: nothing else
+     * would re-arm wireless if the USB attempt comes to nothing.
+     */
+    private fun deferWirelessForUsbHandoff(): Boolean {
+        if (isDestroying) return false
+
+        val accessoryOnBus = try {
+            val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+            usbManager.deviceList.values.any { UsbDeviceCompat.isInAccessoryMode(it) }
+        } catch (e: Exception) {
+            AppLog.w("AapService: Could not read the USB bus before wireless bring-up: ${e.message}")
+            false
+        }
+
+        if (usbDeferralStartedMs == 0L) usbDeferralStartedMs = SystemClock.elapsedRealtime()
+        val waitedMs = SystemClock.elapsedRealtime() - usbDeferralStartedMs
+
+        if (!WirelessBringUpDeferralPolicy.shouldDefer(
+                accessoryDeviceOnBus = accessoryOnBus,
+                switchInFlight = usbLauncherManager.isSwitchingToProjection(),
+                msSinceFirstDeferral = waitedMs,
+            )
+        ) {
+            if (waitedMs > 0 && usbDeferralHolding) {
+                // The budget running out is not the USB attempt settling, and a hold that reached it
+                // used to be indistinguishable from one that did not.
+                if (waitedMs >= WirelessBringUpDeferralPolicy.DEFER_BUDGET_MS) {
+                    AppLog.i("AapService: the USB attempt did not settle within ${waitedMs}ms — arming wireless anyway")
+                } else {
+                    AppLog.i("AapService: USB handoff settled after ${waitedMs}ms — arming wireless now")
+                }
+            }
+            usbDeferralHolding = false
+            usbDeferralStartedMs = 0L
+            usbDeferralJob?.cancel()
+            usbDeferralJob = null
+            return false
+        }
+
+        if (usbDeferralJob?.isActive == true) return true
+
+        AppLog.i("AapService: a USB projection attempt is in flight — holding the wireless bring-up " +
+            "for up to ${WirelessBringUpDeferralPolicy.DEFER_BUDGET_MS}ms")
+        usbDeferralHolding = true
+        usbDeferralJob = serviceScope.launch {
+            delay(USB_DEFERRAL_RECHECK_MS)
+            usbDeferralJob = null
+            if (commManager.isConnected) usbDeferralStartedMs = 0L
+            else initWifiModeWithOptionalWait()
+        }
+        return true
+    }
+
     /**
      * Decides whether to call [initWifiMode] immediately or wait for WiFi connectivity.
      *
@@ -1892,6 +1962,8 @@ class AapService : Service() {
      * When the setting is disabled, or the mode is not 2, [initWifiMode] runs immediately.
      */
     private fun initWifiModeWithOptionalWait() {
+        if (deferWirelessForUsbHandoff()) return
+
         val settings = App.provide(this).settings
 
         if (settings.wifiConnectionMode != WifiLauncherMode.HELPER || settings.helperConnectionStrategy != HelperStrategy.WIFI_DIRECT || !settings.waitForWifiBeforeWifiDirect) {
@@ -2826,6 +2898,9 @@ class AapService : Service() {
 
         /** Delay before retrying USB connection after an unexpected disconnect. */
         private const val USB_RECONNECT_DELAY_MS = 3000L
+
+        /** How often the USB deferral re-asks; well inside its own budget. */
+        private const val USB_DEFERRAL_RECHECK_MS = 1_000L
 
         /**
          * `NetworkCallback.onAvailable` fires per network and again on re-validation, so a

@@ -956,6 +956,7 @@
     <string name="narrow_band_profile_cap">2.4GHz 전용 무선에서 영상 낮추기</string>
     <string name="narrow_band_profile_cap_description">이 기기의 WiFi에 5GHz 대역이 없으면 위 설정 대신 최대 720p, 30fps를 휴대전화에 요청합니다. 이런 연결에서는 최대 속도 스트림이 화면을 전혀 전달하지 못하고 낮춘 스트림은 유지되는 것으로 측정되었습니다. 설정한 값 그대로 받으려면 끄세요.</string>
     <string name="connection_issue_banner_video_link_too_slow">휴대전화가 프레임이 하나도 도착하기 전에 영상을 포기하는 일이 연달아 여러 번 있었습니다. WiFi 연결이 화면을 전달하기에 너무 느립니다. 탭하면 FPS 제한을 30으로 낮춥니다. 해상도를 낮추거나 AAC 오디오를 쓰는 것도 도움이 됩니다.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">이 기기는 선택한 어떤 5GHz 채널에도 WiFi Direct 네트워크를 올리지 않고, 자체 Wi-Fi 드라이버가 고른 채널에서 시작했습니다. 그 채널은 규제가 엄격한 국가의 휴대폰에서는 아예 보이지 않는 경우가 많습니다. 탭하여 WiFi Direct 대역을 모든 국가에서 허용되는 2.4GHz로 설정하세요. 이 대역에서는 1080p가 아닌 720p로 예상됩니다.</string>
     <string name="connection_issue_banner_dismiss">닫기</string>
     <string name="connection_issue_remedy_hotspot_query">핫스팟 이름 및 비밀번호</string>
     <string name="preflight_title">연결 전 확인</string>
@@ -1076,9 +1077,7 @@
     <string name="five_ghz_channel">5GHz 채널</string>
     <string name="five_ghz_channel_auto">자동</string>
     <string name="five_ghz_channel_option">채널 %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">연결 시 자체 Wi-Fi 연결 해제</string>
-    <string name="stand_down_station_description">Wi-Fi Direct 그룹 생성 직전에 본 기기의 Wi-Fi 네트워크를 해제하고 세션 종료 시 다시 연결합니다.</string>
-    <string name="stand_down_station_needs_overlay">이 Android 버전에서는 «다른 앱 위에 표시» 권한이 필요합니다.</string>
+    <string name="five_ghz_channel_hint">채널은 요청일 뿐 보장이 아닙니다. 많은 기기는 자체 Wi-Fi 드라이버가 선택한 채널에서만 네트워크를 만들며, 앱은 시도한 뒤에야 이를 알려줄 수 있습니다. 어떤 5GHz 채널도 작동하지 않고 휴대폰이 여전히 네트워크를 찾지 못한다면, 위의 대역 설정이 해결해 줍니다.</string>
     <string name="wifi_direct_stable_identity">동일한 Wi-Fi Direct 네트워크 유지</string>
     <string name="wifi_direct_stable_identity_description">매번 동일한 이름과 비밀번호로 그룹을 생성하여 주행마다 새로 설정할 필요 없이 기존 네트워크에 다시 연결합니다.</string>
     <string name="wifi_direct_new_identity">새 Wi-Fi Direct 네트워크 식별자</string>

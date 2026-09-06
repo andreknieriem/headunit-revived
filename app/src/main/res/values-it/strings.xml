@@ -962,6 +962,7 @@
     <string name="narrow_band_profile_cap">Ridurre il video con radio solo a 2,4 GHz</string>
     <string name="narrow_band_profile_cap_description">Quando il WiFi di questa unità non ha la banda 5 GHz, chiedi al telefono al massimo 720p e 30 fps invece delle impostazioni qui sopra. Su un collegamento simile è stato misurato che un flusso a piena velocità non portava alcuna immagine, mentre uno più basso reggeva. Disattiva questa opzione per ottenere esattamente ciò che hai impostato.</string>
     <string name="connection_issue_banner_video_link_too_slow">Il telefono ha abbandonato il video prima che arrivasse un solo fotogramma, più volte di seguito. Il collegamento WiFi è troppo lento per trasportare l\'immagine. Tocca per abbassare il limite di FPS a 30; aiutano anche una risoluzione più bassa e l\'audio AAC.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Questa unità ha rifiutato di mettere la sua rete WiFi Direct su qualsiasi canale a 5 GHz tu abbia scelto, quindi è partita su quello scelto dal suo driver WiFi. Spesso è un canale che i telefoni nei paesi più restrittivi non riescono nemmeno a vedere. Tocca per impostare la banda WiFi Direct su 2,4 GHz, consentita ovunque; aspettati 720p invece di 1080p.</string>
     <string name="connection_issue_banner_dismiss">Ignora</string>
     <string name="connection_issue_remedy_hotspot_query">Nome e password dell\'hotspot</string>
     <string name="preflight_title">Prima di connetterti</string>
@@ -1082,9 +1083,7 @@
     <string name="five_ghz_channel">Canale a 5 GHz</string>
     <string name="five_ghz_channel_auto">Automatico</string>
     <string name="five_ghz_channel_option">Canale %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Disconnetti il Wi-Fi dell\'unità durante la connessione</string>
-    <string name="stand_down_station_description">Disconnette questa unità dalla propria rete Wi-Fi prima di creare il gruppo Wi-Fi Direct e la riconnette al termine della sessione. Utile su dispositivi con un solo chip Wi-Fi se il telefono non si connette.</string>
-    <string name="stand_down_station_needs_overlay">Richiede l\'autorizzazione «visualizzazione sopra altre app» su questa versione di Android.</string>
+    <string name="five_ghz_channel_hint">Un canale è una richiesta, non una garanzia. Molte unità creano la rete solo sul canale scelto dal proprio driver WiFi, e l\'app può dirtelo solo dopo aver provato. Se nessun canale a 5 GHz funziona e il telefono continua a non vedere la rete, la banda qui sopra è l\'impostazione che risolverà.</string>
     <string name="wifi_direct_stable_identity">Mantieni la stessa rete Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Richiede il gruppo con lo stesso nome e password ogni volta, in modo che il telefono si riconnetta a una rete nota anziché configurarsi a ogni viaggio. Disattivalo per ottenere una nuova rete a ogni connessione se il telefono rifiuta quella salvata.</string>
     <string name="wifi_direct_new_identity">Nuova identità di rete Wi-Fi Direct</string>

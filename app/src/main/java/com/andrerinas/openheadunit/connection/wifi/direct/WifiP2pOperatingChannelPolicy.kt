@@ -91,9 +91,11 @@ object WifiP2pOperatingChannelPolicy {
      *   a guarantee for a reflection.
      * @param preference the user's band choice.
      * @param chosenChannel the channel the user pinned, or [CHANNEL_UNRESTRICTED] for automatic,
-     *   which asks for [CHANNEL_LOWER]. A pinned channel replaces that first rung and nothing else:
-     *   the 2.4 GHz rung below it stays, because a disallowed-frequency list a unit cannot satisfy
-     *   costs it the group rather than the band.
+     *   which asks for [CHANNEL_LOWER] alone. A pinned channel is walked across its own UNII window
+     *   instead - see [fiveGhzWalk] - because somebody who named a channel has said the driver's own
+     *   pick does not work for them, and one refusal is not the window's answer. The 2.4 GHz rung
+     *   below it stays either way, because a disallowed-frequency list a unit cannot satisfy costs
+     *   it the group rather than the band.
      * @param supports5Ghz [WifiBandCapability.supports5Ghz], where null means the platform would not
      *   say. Only `false` drops a rung, and only under [P2pBandPreference.AUTO]: a `true` describes
      *   the station side and does not promise a group owner can be hosted there, so the ladder keeps
@@ -109,16 +111,51 @@ object WifiP2pOperatingChannelPolicy {
         if (!appliesTo(sdkInt)) return emptyList()
         // Total rather than trusting the caller: anything a group owner cannot be hosted on falls
         // back to the rung that shipped before the choice existed.
-        val fiveGhz = if (isGroupOwnerCapable(chosenChannel)) chosenChannel else CHANNEL_LOWER
+        val fiveGhz =
+            if (isGroupOwnerCapable(chosenChannel)) fiveGhzWalk(chosenChannel) else listOf(CHANNEL_LOWER)
         return when (preference) {
             // Spending the 5 GHz rung on a radio with no 5 GHz band costs a whole bring-up: the
             // request is a disallowed-frequency list, so the group is not formed on the other band,
             // it is not formed at all, and the ladder only advances on that failure.
             P2pBandPreference.AUTO ->
-                if (supports5Ghz == false) listOf(CHANNEL_24_GHZ) else listOf(fiveGhz, CHANNEL_24_GHZ)
-            P2pBandPreference.FORCE_5GHZ -> listOf(fiveGhz)
+                if (supports5Ghz == false) listOf(CHANNEL_24_GHZ) else fiveGhz + CHANNEL_24_GHZ
+            P2pBandPreference.FORCE_5GHZ -> fiveGhz
             P2pBandPreference.FORCE_2_4GHZ -> listOf(CHANNEL_24_GHZ)
         }
+    }
+
+    /**
+     * The pinned channel, then the rest of its own UNII window.
+     *
+     * A refusal is the driver saying it will not host a group owner on that frequency, and it says
+     * nothing about the three beside it, so one channel must not condemn the window the user chose.
+     * Only that window: somebody who pinned UNII-1 is escaping UNII-3, and walking into it would
+     * land them where they started.
+     */
+    private fun fiveGhzWalk(chosenChannel: Int): List<Int> {
+        val window = if (chosenChannel in UNII_1_CHANNELS) UNII_1_CHANNELS else UNII_3_CHANNELS
+        return listOf(chosenChannel) + window.filter { it != chosenChannel }
+    }
+
+    /**
+     * Whether a spent ladder means this unit will not host a group owner on 5 GHz at all.
+     *
+     * True only once every 5 GHz rung the user's pin produced has been refused, which is the one
+     * finding worth telling them about: the channel setting cannot be honoured here and the band is
+     * the lever left. An automatic pin never asks, because the driver's own choice is not a refusal.
+     *
+     * @param ladder [attemptChannels]' answer for this bring-up.
+     * @param rungsSpent how many rungs have already been tried, so equal to the ladder's 5 GHz count
+     *   means all of them were.
+     * @param pinnedChannel the *sanitized* pin
+     *   ([FiveGhzChannelPolicy.pinnedChannel][com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy.pinnedChannel]),
+     *   because an unrecognised stored value runs the default ladder and must not be blamed on a
+     *   channel the user could never have chosen.
+     */
+    fun refusedEveryFiveGhzRung(ladder: List<Int>, rungsSpent: Int, pinnedChannel: Int): Boolean {
+        if (pinnedChannel == CHANNEL_UNRESTRICTED) return false
+        val fiveGhzRungs = ladder.count { frequencyMhzFor(it) > 5000 }
+        return fiveGhzRungs > 0 && rungsSpent >= fiveGhzRungs
     }
 
     /**
@@ -156,5 +193,8 @@ object WifiP2pOperatingChannelPolicy {
         channel in UNII_1_CHANNELS || channel in UNII_3_CHANNELS
 
     private val UNII_1_CHANNELS = listOf(36, 40, 44, 48)
-    private val UNII_3_CHANNELS = listOf(149, 153, 157, 161, 165)
+    // 165 is absent on purpose. createGroup asks wpa_supplicant to pick with freq=0, and
+    // wpas_p2p_select_go_freq_no_pref proposes 5180/5200/5220/5240 then 5745/5765/5785/5805 and
+    // nothing else, so 5825 cannot be reached through this API however the radio is configured.
+    private val UNII_3_CHANNELS = listOf(149, 153, 157, 161)
 }

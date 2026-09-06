@@ -959,6 +959,7 @@
     <string name="narrow_band_profile_cap">Snížit video na rádiu jen s 2,4 GHz</string>
     <string name="narrow_band_profile_cap_description">Když Wi-Fi této jednotky nemá pásmo 5 GHz, žádat telefon nejvýše o 720p a 30 fps místo nastavení výše. Na takovém spoji bylo naměřeno, že plný datový tok nepřenesl vůbec žádný obraz, zatímco nižší vydržel. Vypněte to, pokud chcete dostat přesně to, co jste nastavili.</string>
     <string name="connection_issue_banner_video_link_too_slow">Telefon několikrát po sobě vzdal video dřív, než dorazil jediný snímek. Spoj Wi-Fi je pro přenos obrazu příliš pomalý. Klepnutím snížíte limit FPS na 30; pomůže i nižší rozlišení a zvuk AAC.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Tato jednotka odmítla umístit síť WiFi Direct na jakýkoli kanál 5 GHz, který jsi zvolil, a spustila ji na kanálu vybraném jejím vlastním ovladačem Wi-Fi. Tento kanál telefony v zemích s přísnějšími pravidly často vůbec nevidí. Klepnutím nastavíš pásmo WiFi Direct na 2,4 GHz, které je povoleno všude; počítej na něm s 720p místo 1080p.</string>
     <string name="connection_issue_banner_dismiss">Zavřít</string>
     <string name="connection_issue_remedy_hotspot_query">Název a heslo hotspotu</string>
     <string name="preflight_title">Před připojením</string>
@@ -1079,9 +1080,7 @@
     <string name="five_ghz_channel">Kanál 5 GHz</string>
     <string name="five_ghz_channel_auto">Automaticky</string>
     <string name="five_ghz_channel_option">Kanál %1$d (%2$d MHz)</string>
-    <string name="stand_down_station">Odpojit vlastní Wi-Fi během připojování</string>
-    <string name="stand_down_station_description">Odpojí tuto jednotku od vlastní sítě Wi-Fi těsně před vytvořením skupiny Wi-Fi Direct a po skončení relace ji znovu připojí.</string>
-    <string name="stand_down_station_needs_overlay">Vyžaduje oprávnění «zobrazit přes ostatní aplikace» na této verzi Androidu.</string>
+    <string name="five_ghz_channel_hint">Kanál je požadavek, nikoli záruka. Mnoho jednotek vytvoří síť jen na kanálu, který si zvolí jejich vlastní ovladač Wi-Fi, a aplikace ti to může říct až po pokusu. Pokud nefunguje žádný kanál v pásmu 5 GHz a telefon síť stále nevidí, pomůže nastavení pásma výše.</string>
     <string name="wifi_direct_stable_identity">Ponechat stejnou síť Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Vytváří skupinu pokaždé se stejným názvem a heslem, aby se telefon připojil ke známé síti bez nového nastavování při každé jízdě.</string>
     <string name="wifi_direct_new_identity">Nová identita sítě Wi-Fi Direct</string>

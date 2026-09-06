@@ -960,6 +960,7 @@
     <string name="narrow_band_profile_cap">Знижувати відео на радіо лише 2,4 ГГц</string>
     <string name="narrow_band_profile_cap_description">Коли Wi-Fi цього пристрою не має діапазону 5 ГГц, запитувати в телефона щонайбільше 720p і 30 кадр/с замість налаштувань вище. На такому з\'єднанні виміряно, що потік на повній швидкості не передавав зображення взагалі, а нижчий працював. Вимкніть, щоб отримувати саме те, що ви задали.</string>
     <string name="connection_issue_banner_video_link_too_slow">Ваш телефон кілька разів поспіль припиняв відео ще до першого кадру. З\'єднання Wi-Fi надто повільне для зображення. Натисніть, щоб знизити обмеження FPS до 30; також допоможуть менша роздільність і звук AAC.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Цей пристрій відмовився розмістити мережу WiFi Direct на будь-якому обраному тобою каналі 5 ГГц і запустив її на каналі, який обрав його власний драйвер Wi-Fi. Цей канал часто не видно телефонам у країнах зі суворішими правилами. Торкніться, щоб встановити діапазон WiFi Direct на 2,4 ГГц, дозволений у всіх країнах; очікуйте 720p замість 1080p.</string>
     <string name="connection_issue_banner_dismiss">Закрити</string>
     <string name="connection_issue_remedy_hotspot_query">Назва та пароль точки доступу</string>
     <string name="preflight_title">Перед підключенням</string>
@@ -1080,9 +1081,7 @@
     <string name="five_ghz_channel">Канал 5 ГГц</string>
     <string name="five_ghz_channel_auto">Автоматично</string>
     <string name="five_ghz_channel_option">Канал %1$d (%2$d МГц)</string>
-    <string name="stand_down_station">Відключати власний Wi-Fi під час з\'єднання</string>
-    <string name="stand_down_station_description">Відключає цей пристрій від власної мережі Wi-Fi перед створенням групи Wi-Fi Direct та відновлює з\'єднання після сеансу.</string>
-    <string name="stand_down_station_needs_overlay">Потрібен дозвіл «відображення поверх інших додатків» на цій версії Android.</string>
+    <string name="five_ghz_channel_hint">Канал є запитом, а не гарантією. Багато пристроїв створюють мережу лише на тому каналі, який обирає їхній власний драйвер Wi-Fi, і застосунок може повідомити про це тільки після спроби. Якщо жоден канал 5 ГГц не працює, а телефон досі не бачить мережу, допоможе налаштування діапазону вище.</string>
     <string name="wifi_direct_stable_identity">Зберігати ту саму мережу Wi-Fi Direct</string>
     <string name="wifi_direct_stable_identity_description">Запитує групу з тим самим ім\'ям та паролем щоразу, щоб телефон підключався до знайомої мережі без повторного налаштування.</string>
     <string name="wifi_direct_new_identity">Нова ідентичність мережі Wi-Fi Direct</string>
