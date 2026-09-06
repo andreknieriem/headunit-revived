@@ -10,7 +10,6 @@
     <string name="ignored">Ignorowane</string>
     <string name="exit">Wyjdź</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Tryb samodzielny</string>
     <string name="to_android_auto">Do Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Usuń</string>
@@ -157,8 +156,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Ogólne</string>
-    <string name="auto_start_self_mode">Autostart trybu samodzielnego</string>
-    <string name="auto_start_self_mode_description">Automatycznie uruchom tryb samodzielny po otwarciu aplikacji.</string>
     <string name="usb_auto_connect">Automatyczne połączenie USB</string>
     <string name="usb_auto_connect_description">Automatycznie łączy się ze znanym urządzeniem USB po otwarciu aplikacji.</string>
     <string name="auto_start_bt_label">Autostart przy Bluetooth</string>
@@ -320,7 +317,6 @@
     <string name="success">Sukces</string>
     <string name="failed">Niepowodzenie</string>
     <string name="failed_start_android_auto">Uruchomienie Android Auto nie powiodło się</string>
-    <string name="failed_self_mode_android10">Tryb Self-mode jest prawdopodobnie blokowany przez Google na Android 10 (AA 16.4+). Zobacz README.</string>
     <string name="android_auto_starting">Android Auto uruchamia się…</string>
     <string name="connection_interrupted">Utracono połączenie</string>
     <string name="connection_interrupted_detail">Ponawianie próby…</string>
@@ -471,8 +467,6 @@
 
     <string name="not_supported_nativeaa">Natywna łączność bezprzewodowa wydaje się nieobsługiwana</string>
     <string name="not_supported_nativeaa_desc">Twoje urządzenie może nie obsługiwać wymaganych funkcji Bluetooth lub Wi-Fi dla natywnej łączności bezprzewodowej. Możesz spróbować mimo to, ale jeśli się nie uda, użyj trybu „Wireless Helper” lub „Auto (Headunit Server)”.</string>
-    <string name="shortcut_selfmode_title">Tryb własny (Self Mode)</string>
-    <string name="shortcut_selfmode_desc">Uruchom Android Auto na tym urządzeniu</string>
     <string name="wait_for_wifi">Czekaj na WiFi przed WiFi Direct</string>
     <string name="wait_for_wifi_description">Przy uruchomieniu czeka na połączenie WiFi przed uruchomieniem WiFi Direct. Przydatne, jeśli Twoje headunit potrzebuje kilku sekund na połączenie z WiFi po włączeniu.</string>
     <string name="wait_for_wifi_timeout">Limit czasu oczekiwania na WiFi</string>
@@ -624,8 +618,6 @@
     <string name="renderer_confirm_yes">Tak</string>
     <string name="renderer_confirm_switch">Zmień renderowanie</string>
     <string name="renderer_switched_to">Renderowanie: %1$s</string>
-
-    <string name="self_mode_overlay_permission_description">Aby umożliwić niezawodne uruchamianie trybu własnego w tle, włącz uprawnienie \"Wyświetlaj nad innymi aplikacjami\" na następnym ekranie.</string>
 
     <string name="delete">Usuń</string>
     <string name="night_mode_coordinates">Współrzędne</string>
@@ -913,7 +905,6 @@
     <string name="usb_device_action_title">Akcja urządzenia USB</string>
     <string name="home_button_colors">Kolory przycisków i gradienty</string>
     <string name="home_button_colors_description">Dostosuj kolory i gradienty 4 głównych przycisków</string>
-    <string name="btn_color_self_mode">Przycisk Tryb Samodzielny</string>
     <string name="btn_color_usb">Przycisk USB</string>
     <string name="btn_color_wifi">Przycisk WiFi</string>
     <string name="btn_color_settings">Przycisk Ustawienia</string>

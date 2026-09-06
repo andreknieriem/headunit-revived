@@ -1,6 +1,23 @@
-<resources>
-    <string name="app_name">Open Headunit</string>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="app_name">Emzoom AA</string>
+
+    <string name="pref_optimize_ultrawide_title" translatable="false">Optimize for Ultrawide Displays</string>
+    <string name="pref_optimize_ultrawide_summary" translatable="false">Adapts 720p negotiation, pixel aspect ratio, and 1:1 touch alignment for 1920x720 / 1780x720 ultrawide screens.</string>
+
+    <string name="pref_floating_button_title" translatable="false">Floating Launcher Button</string>
+    <string name="pref_floating_button_summary" translatable="false">Shows a floating button on the OEM home screen when the app is in the background to quickly return to Android Auto.</string>
+    <string name="pref_floating_button_x_title" translatable="false">Button Horizontal Position (X)</string>
+    <string name="pref_floating_button_y_title" translatable="false">Button Vertical Position (Y)</string>
+    <string name="pref_floating_button_opacity_title" translatable="false">Button Opacity</string>
+    <string name="pref_floating_button_size_title" translatable="false">Button Size</string>
+    <string name="pref_floating_button_permission_action" translatable="false">Grant Overlay Permission</string>
     <string name="menu">Menu</string>
+    <string name="pref_aa_exit_action_title" translatable="false">Android Auto Exit Action</string>
+    <string name="pref_aa_exit_action_summary" translatable="false">Action when tapping "Exit" inside the Android Auto app drawer.</string>
+    <string name="aa_exit_action_oem_launcher" translatable="false">Return to OEM Launcher (Minimize)</string>
+    <string name="aa_exit_action_app_home" translatable="false">Return to Emzoom AA Home</string>
+    <string name="aa_exit_action_disconnect" translatable="false">Disconnect Session</string>
+
     <string name="settings">Settings</string>
 
     <!-- Settings tabs and search (redesign) -->
@@ -19,7 +36,7 @@
     <string name="onb_next">Next</string>
     <string name="onb_skip">Skip</string>
     <string name="onb_ready_finish">Finish</string>
-    <string name="onb_welcome_title">Welcome to Open Headunit</string>
+    <string name="onb_welcome_title">Welcome to Emzoom AA</string>
     <string name="onb_welcome_body">This quick setup scans your device and picks the best video, display and night mode settings for you. You can change everything later in Settings.</string>
     <string name="onb_safety_title">Safety first</string>
     <string name="onb_safety_accept">I have read and accept the terms</string>
@@ -91,6 +108,7 @@
     <string name="onb_vehicle_help_sideload">Picking a real car brand also shows that brand\'s logo on the Android Auto exit button, but Android Auto then stops listing apps you installed from outside the Play Store. Keep \"Google\" or \"Open Headunit\" if you use those apps.</string>
     <string name="onb_vehicle_help_advanced">You can fine-tune your vehicle details in the Advanced tab. We do not use this data; it is only sent to Android Auto because it requires it.</string>
     <string-array name="vehicle_brands">
+        <item>GAC</item>
         <item>Google</item>
         <item>Android</item>
         <item>Audi</item>
@@ -187,9 +205,8 @@
     <string name="usb_device_action_title">USB Device Action</string>
     <string name="exit">Exit</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Self Mode</string>
     <string name="to_android_auto">To Android Auto</string>
-    <string name="title">Open Headunit</string>
+    <string name="title">Emzoom AA</string>
     <string name="remove">Remove</string>
     <string name="usb">USB</string>
     <string name="wifi">WiFi</string>
@@ -236,7 +253,6 @@
     <string name="btn_reset_default">Reset to Default</string>
     <string name="home_button_colors">Button Colors &amp; Gradients</string>
     <string name="home_button_colors_description">Customize the colors and gradients of the 4 home screen buttons</string>
-    <string name="btn_color_self_mode">Self Mode Button</string>
     <string name="btn_color_usb">USB Button</string>
     <string name="btn_color_wifi">WiFi Button</string>
     <string name="btn_color_settings">Settings Button</string>
@@ -263,6 +279,7 @@
     <string name="home_button_scale_preview">Live Home Screen Preview</string>
     <string name="btn_reset_scale">Reset Button Size</string>
     <string name="category_automation">Automation</string>
+    <string name="category_more_features">More Features</string>
     <string name="dark_mode_settings">Dark Mode Settings</string>
     <string name="app_theme_short">App</string>
     <string name="night_mode_short">Android Auto</string>
@@ -392,12 +409,10 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">General</string>
-    <string name="auto_start_self_mode">Auto start Self-Mode</string>
-    <string name="auto_start_self_mode_description">Automatically start Self-Mode when the application is opened.</string>
     <string name="usb_auto_connect">Auto-connect USB</string>
     <string name="usb_auto_connect_description">Automatically connect to a known USB device when the application is opened.</string>
     <string name="auto_start_bt_label">Auto-start on Bluetooth</string>
-    <string name="auto_start_bt_description">Automatically open Open Headunit when a specific Bluetooth device connects.</string>
+    <string name="auto_start_bt_description">Automatically open Emzoom AA when a specific Bluetooth device connects.</string>
     <string name="listen_for_usb_devices_label">Listen for USB Devices</string>
     <string name="listen_for_usb_devices_description">Show the Android system prompt when a USB device is plugged in.</string>
     <string name="show_toast_messages">Show Toast Messages</string>
@@ -427,7 +442,7 @@
     <string name="auto_disconnect_bt_delay_hint">A Bluetooth link can drop for a moment while profiles reconnect. The session only ends if the device is still gone after this long.</string>
     <string name="auto_disconnect_bt_kill_hint">Ends the session the way the Exit button does when a chosen device\'s Bluetooth goes away, for example the car being switched off. Pick the car\'s Bluetooth if this unit is paired with it. To also close the app and show the home screen, turn on \"Close app on disconnect\" under Automation.</string>
     <string name="auto_start_wifi_label">Auto-start on WiFi</string>
-    <string name="auto_start_wifi_description">Automatically open Open Headunit when connected to a specific WiFi SSID.</string>
+    <string name="auto_start_wifi_description">Automatically open Emzoom AA when connected to a specific WiFi SSID.</string>
     <string name="auto_start_wifi_ssid_label">WiFi SSID</string>
     <string name="auto_start_wifi_ssid_description">Connect only when connected to this WiFi SSID</string>
     <string name="auto_start_wifi_warning">Legacy Feature: This may not work reliably on Android 8+ due to background restrictions. Ensure the app is excluded from battery optimization.</string>
@@ -436,7 +451,7 @@
     <string name="bt_permission_denied_title">Bluetooth Permission Required</string>
     <string name="bt_permission_denied_message">Bluetooth permission is required to select paired devices. Please grant it in app settings.</string>
     <string name="overlay_permission_title">Background Start Permission</string>
-    <string name="overlay_permission_description">To allow Open Headunit to open automatically when Bluetooth connects, please enable the \"Display over other apps\" permission in the next screen.</string>
+    <string name="overlay_permission_description">To allow Emzoom AA to open automatically when Bluetooth connects, please enable the \"Display over other apps\" permission in the next screen.</string>
     <string name="open_settings">Settings</string>
     <string name="cannot_open_settings">Could not open system settings</string>
     <string name="right_hand_drive">Right-hand drive</string>
@@ -604,7 +619,7 @@
     <!-- Info Settings -->
     <string name="category_info">Info</string>
     <string name="about">About &amp; Support</string>
-    <string name="about_description">Get more information about Open Headunit</string>
+    <string name="about_description">Get more information about Emzoom AA</string>
 
     <!-- Support / report a problem screen -->
     <string name="support">Report a problem</string>
@@ -629,7 +644,7 @@
     <string name="support_rules_connection_title">Say how you connect</string>
     <string name="support_rules_connection_desc">USB cable, USB wireless adapter, WiFi Direct, WiFi (headunit server) or Self Mode. If it is wireless, add the adapter or dongle model.</string>
     <string name="support_rules_appversion_title">Include the app version</string>
-    <string name="support_rules_appversion_desc">The Open Headunit version, shown on the About screen.</string>
+    <string name="support_rules_appversion_desc">The Emzoom AA version, shown on the About screen.</string>
     <string name="support_rules_logs_title">Attach logs, right after it happens</string>
     <string name="support_rules_logs_desc">Switch Settings to the Advanced tab, turn on Debug Mode in the Debug section, reproduce the problem, then tap Export Logs right after so the log covers the moment it broke and not just the start. Attach that file to your issue.</string>
     <string name="support_rules_search_title">No duplicates</string>
@@ -641,7 +656,7 @@
     <string name="support_rules_oneissue_title">One problem per issue</string>
     <string name="support_rules_oneissue_desc">Keep each issue to a single problem so it can be tracked and fixed. Open separate issues for unrelated problems.</string>
     <string name="version">Version</string>
-    <string name="about_title">About Open Headunit</string>
+    <string name="about_title">About Emzoom AA</string>
     <string name="copyright">© 2025-%d André Rinas</string>
 
     <!-- Safety Disclaimer -->
@@ -652,7 +667,7 @@
         <b>1. Focus on the Road</b><br/>
         Operating this software while driving can be distracting and dangerous. Always prioritize safe driving and adhere to all local traffic regulations. Use this application only when it is safe to do so.<br/><br/>
         <b>2. Limitation of Liability</b><br/>
-        Open Headunit is provided "as is" without warranty of any kind. The developers assume no liability for any accidents, damage to your vehicle/device, or legal consequences arising from the use of this software.<br/><br/>
+        Emzoom AA is provided "as is" without warranty of any kind. The developers assume no liability for any accidents, damage to your vehicle/device, or legal consequences arising from the use of this software.<br/><br/>
         <b>3. No Affiliation</b><br/>
         This project is an independent open-source initiative and is not affiliated with, endorsed by, or connected to Google LLC or the Android Auto brand.
     ]]></string>
@@ -686,7 +701,7 @@
     <string name="export_settings_downloads">Save to Downloads</string>
     <string name="export_settings_app_folder">Save to app backup folder</string>
     <string name="import_settings">Import settings</string>
-    <string name="import_settings_description">Restore settings from a Open Headunit backup</string>
+    <string name="import_settings_description">Restore settings from a Emzoom AA backup</string>
     <string name="import_settings_choose_file">Choose backup file</string>
     <string name="import_settings_downloads">Import from Downloads</string>
     <string name="import_settings_app_folder">Import from app backup folder</string>
@@ -704,8 +719,8 @@
     <string name="no_file_picker_title">No file picker available</string>
     <string name="no_file_picker_message">This device does not have a compatible file picker. You can use Downloads or the app backup folder instead.</string>
     <string name="no_settings_backups_title">No backups found</string>
-    <string name="no_settings_backups_message">No Open Headunit backups were found in the app backup folder. Export a backup to the app backup folder first, then import it from here.</string>
-    <string name="no_settings_backups_downloads_message">No Open Headunit backups were found in Downloads. Export a backup to Downloads first, then import it from here.</string>
+    <string name="no_settings_backups_message">No Emzoom AA backups were found in the app backup folder. Export a backup to the app backup folder first, then import it from here.</string>
+    <string name="no_settings_backups_downloads_message">No Emzoom AA backups were found in Downloads. Export a backup to Downloads first, then import it from here.</string>
     <string name="share_settings_backup">Share settings backup</string>
     <string name="logs_exported">Logs Exported</string>
     <string name="log_saved_to">Log saved to:\n%s</string>
@@ -721,7 +736,6 @@
     <string name="success">Success</string>
     <string name="failed">Failed</string>
     <string name="failed_start_android_auto">Failed to start Android Auto</string>
-    <string name="failed_self_mode_android10">Self-mode is likely blocked by Google on Android 10 (AA 16.4+).</string>
     <string name="android_auto_starting">Android Auto is starting…</string>
     <string name="connection_interrupted">Connection lost</string>
     <string name="connection_interrupted_detail">Retrying…</string>
@@ -729,15 +743,13 @@
     <string name="wifi_disconnect_toast">Android Auto disconnected: If using wireless AA, disable \"Switch between networks\" or \"Network acceleration\" in phone WiFi settings</string>
     <string name="reset_usb_option">Reset USB Connection</string>
     <string name="reset_usb_timeout">USB device not found. Please check connection.</string>
-    <string name="notification_service_running">Open Headunit is running</string>
+    <string name="notification_service_running">Emzoom AA is running</string>
     <string name="boot_loop_paused_title">Wireless start-up paused</string>
-    <string name="boot_loop_paused_generic">This device restarted three times in a row shortly after Open Headunit started wireless, so wireless was left off this time. USB still works. Open the app to turn it back on.</string>
-    <string name="boot_loop_paused_native_wifi_direct">This device restarted three times in a row shortly after Open Headunit started wireless, so wireless was left off this time. On some head units the WiFi chipset takes the whole system down when a phone joins a WiFi Direct network. Try switching Android Auto mode to the head unit hotspot. USB still works.</string>
+    <string name="boot_loop_paused_generic">This device restarted three times in a row shortly after Emzoom AA started wireless, so wireless was left off this time. USB still works. Open the app to turn it back on.</string>
+    <string name="boot_loop_paused_native_wifi_direct">This device restarted three times in a row shortly after Emzoom AA started wireless, so wireless was left off this time. On some head units the WiFi chipset takes the whole system down when a phone joins a WiFi Direct network. Try switching Android Auto mode to the head unit hotspot. USB still works.</string>
     <string name="notification_projection_active">Android Auto is projected</string>
     <string name="shortcut_connect_title">Connect</string>
     <string name="shortcut_connect_desc">Auto-connect to last phone</string>
-    <string name="shortcut_selfmode_title">Self Mode</string>
-    <string name="shortcut_selfmode_desc">Start Android Auto on this device</string>
     <string name="shortcut_disconnect_title">Disconnect</string>
     <string name="shortcut_disconnect_desc">End current session</string>
     <string name="shortcut_exit_title">Exit App</string>
@@ -833,7 +845,7 @@
     <string name="kill_on_disconnect">Close app on disconnect</string>
     <string name="kill_on_disconnect_description">Automatically close the app when Android Auto disconnects</string>
     <string name="raise_projection_during_call">Stay in Android Auto during calls</string>
-    <string name="raise_projection_during_call_description">Self Mode only. Brings the projection back over the phone\'s call screen so calls are answered and ended in the Android Auto interface</string>
+    <string name="raise_projection_during_call_description">Brings Android Auto back over the call screen and suppresses floating call windows so calls stay inside the Android Auto interface</string>
     <string name="kill_on_disconnect_warning_title">Warning</string>
     <string name="kill_on_disconnect_warning">The following reconnection settings will conflict with closing the app on disconnect:\n\n%1$s\n\nYour initial connection settings (auto-connect, auto-start) will still work when the headunit turns on. However, after the first disconnection the app will close immediately instead of trying to reconnect.\n\nNote: Some aftermarket head units never fully shut down — they hibernate instead, similar to a phone that locks its screen but never actually powers off. With this option enabled, the app will close after the first disconnection and may not reopen automatically on the next ignition cycle.\n\nWould you like to disable the reconnection settings listed above?</string>
     <string name="kill_on_disconnect_disable_and_enable">Disable and enable</string>
@@ -1047,8 +1059,6 @@
     <string name="btn_show_qr">Show QR Code</string>
     <string name="su_needed_keymaps_warning">Warning: Your headunit must be either rooted, or have Shizuku installed. If that\'s the case, you must allow SU rights, once prompted. Steering keys likely are not functional until this is fixed.</string>
 
-    <string name="self_mode_overlay_permission_description">To allow Self Mode to start reliably from the background, please enable the \"Display over other apps\" permission in the next screen.</string>
-
     <!-- Manual coordinates (night mode) and geofenced locations -->
     <string name="delete">Delete</string>
     <string name="night_mode_coordinates">Coordinates</string>
@@ -1133,6 +1143,16 @@
     <string name="auto_connect_delay_summary_format">%1$s (%2$ds delay)</string>
     <string name="failed_aa_not_system">Failed: Android Auto isn\'t installed as a system app!</string>
     <string name="failed_aa_not_installed">Failed: Android Auto is not installed!</string>
+    <!-- CarbitLink Redirector -->
+    <string name="redirect_carbitlink_label">Redirect CarbitLink Icon</string>
+    <string name="redirect_carbitlink_description">Automatically open Emzoom AA when the CarbitLink icon is pressed on your headunit</string>
+    <string name="redirect_carbitlink_accessibility_prompt">To use this feature, please enable Emzoom AA in Accessibility Settings.</string>
+    <string name="double_tap_home_label">Double Tap Home to Open</string>
+    <string name="double_tap_home_description">Double tap the Home button anywhere on the head unit to quickly open Emzoom AA</string>
+    <string name="pref_floating_button_double_tap_title">Double Tap to Open</string>
+    <string name="pref_floating_button_double_tap_summary">Require a double tap on the floating button to open Emzoom AA.</string>
+    <string name="open_accessibility_settings">Open Accessibility Settings</string>
+
     <string name="native_driver_selection_title">Driver Selection</string>
     <string name="native_driver_selection_summary">Choose which phone to connect with when multiple paired drivers are in the vehicle</string>
     <string name="native_driver_selection_mode_off">Disabled</string>

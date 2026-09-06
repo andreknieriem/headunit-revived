@@ -21,7 +21,9 @@ import com.andrerinas.openheadunit.utils.Settings
 import android.os.SystemClock
 import java.io.File
 
-class App : Application() {
+class App : Application(), Application.ActivityLifecycleCallbacks {
+
+    private var startedActivityCount = 0
 
     private val component: AppComponent by lazy {
         AppComponent(this)
@@ -36,6 +38,7 @@ class App : Application() {
         super.onCreate()
         instance = this
 
+        registerActivityLifecycleCallbacks(this)
 
 
         // Enable vector drawable support on older Android versions
@@ -148,6 +151,25 @@ class App : Application() {
             true
         }
     }
+
+    override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {}
+    override fun onActivityStarted(activity: android.app.Activity) {
+        startedActivityCount++
+        if (startedActivityCount == 1) {
+            com.andrerinas.openheadunit.main.FloatingButtonManager.onAppForegroundChanged(this, isForeground = true)
+        }
+    }
+    override fun onActivityResumed(activity: android.app.Activity) {}
+    override fun onActivityPaused(activity: android.app.Activity) {}
+    override fun onActivityStopped(activity: android.app.Activity) {
+        startedActivityCount--
+        if (startedActivityCount <= 0) {
+            startedActivityCount = 0
+            com.andrerinas.openheadunit.main.FloatingButtonManager.onAppForegroundChanged(this, isForeground = false)
+        }
+    }
+    override fun onActivitySaveInstanceState(activity: android.app.Activity, outState: android.os.Bundle) {}
+    override fun onActivityDestroyed(activity: android.app.Activity) {}
 
     companion object {
         init {

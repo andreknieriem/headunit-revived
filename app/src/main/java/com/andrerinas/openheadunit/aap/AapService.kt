@@ -29,8 +29,6 @@ import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.app.ActivityLaunchPolicy
 import com.andrerinas.openheadunit.app.BootCompleteReceiver
 import com.andrerinas.openheadunit.app.BootLoopPolicy
-import com.andrerinas.openheadunit.app.BtAutoDisconnectArm
-import com.andrerinas.openheadunit.app.BtAutoDisconnectPolicy
 import com.andrerinas.openheadunit.app.BtAutoStartRearmPolicy
 import com.andrerinas.openheadunit.app.ForegroundServiceTypePolicy
 import com.andrerinas.openheadunit.app.WifiAutoStartReceiver
@@ -76,21 +74,16 @@ import android.media.AudioFocusRequest
 import android.view.View
 import android.view.WindowManager
 import android.media.AudioManager
-import com.andrerinas.openheadunit.connection.self.SelfLauncherManager
-import com.andrerinas.openheadunit.connection.self.SelfModeDisconnectPolicy
 import com.andrerinas.openheadunit.connection.usb.UsbLauncherManager
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.ProjectionQrSnapshot
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTeardownPolicy
 import com.andrerinas.openheadunit.connection.wifi.LinkLossTrigger
 import com.andrerinas.openheadunit.connection.wifi.modes.helper.HelperStrategy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeStrategy
-import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.ProjectionQrSnapshot
-import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.SessionEndGroupPolicy
 import com.andrerinas.openheadunit.utils.HotspotManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherManager
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherMode
 import com.andrerinas.openheadunit.connection.wifi.WifiLauncherStopSequence
-import com.andrerinas.openheadunit.connection.wifi.direct.StationScanMonitor
-import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDown
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherHelper
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherManual
 import com.andrerinas.openheadunit.connection.wifi.modes.WifiLauncherNative
@@ -126,14 +119,7 @@ class AapService : Service() {
     private var wifiAutoStartReceiver: WifiAutoStartReceiver? = null
     private var mediaSession: MediaSessionCompat? = null
     private val wifiLauncherManager = WifiLauncherManager(this)
-
-    /**
-     * Counts this unit's own WiFi scans into the log. Nothing acts on it; it exists so a reporter's
-     * capture can carry the one piece of evidence the periodic-outage theory has always lacked.
-     */
-    private val stationScanMonitor = StationScanMonitor()
     private val usbLauncherManager = UsbLauncherManager(this)
-    private val selfLauncherManager = SelfLauncherManager(this, wifiLauncherManager)
 
     /**
      * Set when a link-loss teardown closed the session because station WiFi was going away.
@@ -166,11 +152,8 @@ class AapService : Service() {
     private var lastAaMediaMetadata: MediaPlayback.MediaMetaData? = null
     private var lastAaPlaybackPositionMs: Long = 0L
     private var lastAaPlaybackIsPlaying: Boolean? = null
-    private var wasPlayingBeforeDisconnect = false
-    private var lastDisconnectTimestampMs = 0L
     private var mediaSessionIsPlaying = false
     private var mediaMetadataDecodeJob: Job? = null
-    private var autoResumePlaybackJob: Job? = null
     /** Decoded on a background thread in [scheduleApplyAaMediaMetadata]; reused for notification updates on position ticks. */
     private var cachedAaAlbumArtBitmap: Bitmap? = null
     private var settingsPrefs: SharedPreferences? = null
@@ -255,6 +238,7 @@ class AapService : Service() {
 
     /** When the live session started projecting, for [SessionStateIntent.EXTRA_UPTIME_MS]. */
     @Volatile private var projectingSinceMs = 0L
+    @Volatile private var sessionConnectedAt = 0L
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -307,33 +291,13 @@ class AapService : Service() {
     @Volatile
     var userExitCooldownUntil = 0L
 
-    /** elapsedRealtime when the current session reached Connected, or 0 when nothing is up. */
-    @Volatile
-    private var sessionConnectedAt = 0L
-
-    /**
-     * Pending "a watched Bluetooth device went away" timers, one per address. Touched only from
-     * the main thread, where the receiver and the timer bodies both run, so it needs no locking.
-     */
-    private val btAutoDisconnectJobs = mutableMapOf<String, kotlinx.coroutines.Job>()
-
-    /**
-     * Set just before a Bluetooth auto-disconnect ends the session: the stack must stay down
-     * afterwards, which for Helper and Auto means undoing their user-exit discovery restart.
-     */
-    @Volatile
-    private var btAutoDisconnectStandDown = false
-
     private val commManager get() = App.provide(this).commManager
 
-    fun isSelfModeActive() = selfLauncherManager.isActive
-
-    /**
-     * Whether a Native AA poke or handshake is in flight, for callers outside the service that
-     * cannot reach the launcher. Null when Native is not the armed mode.
-     */
     fun nativeAttemptInFlight(): Boolean? =
         (wifiLauncherManager.active as? WifiLauncherNative)?.handshakeManager?.isAttemptInFlight()
+
+    fun projectionQrSnapshot(): ProjectionQrSnapshot? =
+        (wifiLauncherManager.active as? WifiLauncherNative)?.handshakeManager?.projectionQrSnapshot()
 
     fun updateMediaSessionState(isPlaying: Boolean) {
         mediaSessionIsPlaying = isPlaying
@@ -918,10 +882,6 @@ class AapService : Service() {
             return
         }
         fillBluetoothAddressIfUnset()
-        // A force-stop or a crash runs no teardown, so a station stand-down can outlive the process
-        // that made it. Putting the network back here is what keeps that from stranding the unit off
-        // its own WiFi. No-op unless one is standing.
-        StationStandDown.restore(this)
         setupCarMode()
         setupNightMode()
         commManager.onSessionFailure = { reason ->
@@ -1053,7 +1013,6 @@ class AapService : Service() {
                         sendBroadcast(Intent(ACTION_REQUEST_NIGHT_MODE_UPDATE).apply {
                             setPackage(packageName)
                         })
-                        maybeAutoResumePlaybackOnReconnect()
                     }
                     is CommManager.ConnectionState.Error -> {
                         // Nothing may be counted here, and nothing new may be hung off this branch.
@@ -1085,47 +1044,6 @@ class AapService : Service() {
                     else -> {}
                 }
             }
-        }
-    }
-
-    private fun maybeAutoResumePlaybackOnReconnect() {
-        val settings = App.provide(this).settings
-        val now = SystemClock.elapsedRealtime()
-        val elapsedSinceDisconnect = now - lastDisconnectTimestampMs
-        val wasPlaying = wasPlayingBeforeDisconnect
-        wasPlayingBeforeDisconnect = false // Consume once so it doesn't fire again on subsequent events
-
-        val shouldResume = AutoResumePlaybackPolicy.shouldResume(
-            enabled = settings.autoResumePlaybackOnReconnect,
-            wasPlayingBeforeDisconnect = wasPlaying,
-            elapsedSinceDisconnectMs = elapsedSinceDisconnect
-        )
-
-        if (shouldResume) {
-            AppLog.i("AapService: Auto-resuming playback on reconnect (${elapsedSinceDisconnect}ms since disconnect)")
-            autoResumePlaybackJob?.cancel()
-            autoResumePlaybackJob = serviceScope.launch {
-                try {
-                    // Allow Android Auto on the phone time to settle and attach its media player session
-                    delay(1500L)
-                    if (!isActive || isDestroying) return@launch
-
-                    // Confirm that the connection is still alive and in TransportStarted before sending keys
-                    if (commManager.connectionState.value is CommManager.ConnectionState.TransportStarted) {
-                        AppLog.i("AapService: Dispatching auto-resume play key")
-                        commManager.sendKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY, true, null, "auto-resume")
-                        commManager.sendKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY, false, null, "auto-resume")
-                    } else {
-                        AppLog.w("AapService: Connection state changed before auto-resume could dispatch")
-                    }
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    AppLog.e("AapService: Error while auto-resuming playback: ${e.message}", e)
-                }
-            }
-        } else {
-            AppLog.d("AapService: Skipping auto-resume playback (wasPlaying=$wasPlaying, elapsed=${elapsedSinceDisconnect}ms)")
         }
     }
 
@@ -1249,23 +1167,12 @@ class AapService : Service() {
      * ready (via [CommManager.ConnectionState.HandshakeComplete] observer), guaranteeing
      * that [VideoDecoder.setSurface] is always called before the first video frame arrives.
      */
-    /**
-     * What a Native AA setup QR would carry, or null while that mode is not running.
-     *
-     * The settings screen asks through [instance], because the network, the port and the Bluetooth
-     * identity only exist once the launcher has resolved them, and a QR built from anything else
-     * would write a record the phone keeps and cannot use.
-     */
-    fun projectionQrSnapshot(): ProjectionQrSnapshot? =
-        (wifiLauncherManager.active as? WifiLauncherNative)?.handshakeManager?.projectionQrSnapshot()
-
     private fun onConnected() {
         usbLauncherManager.setSwitchingToProjection(false)
         updateNotification()
         // Whatever the transport, the wake-up loop has nothing left to do. Event driven rather
-        // than left to the loop's own 15 s poll. A wireless session also marks the P2P group as
-        // one that works, which is what keeps it up when the phone leaves later.
-        (wifiLauncherManager.active as? WifiLauncherNative)?.onSessionEstablished()
+        // than left to the loop's own 15 s poll.
+        (wifiLauncherManager.active as? WifiLauncherNative)?.handshakeManager?.onSessionEstablished()
         quiesceWirelessForWiredSession()
         if (UsbSessionQuiescePolicy.shouldAcquireWifiLock(commManager.isWirelessSession)) {
             acquireWifiLock()
@@ -1444,8 +1351,6 @@ class AapService : Service() {
      * 4. Scheduling a reconnect attempt if applicable (see [scheduleReconnectIfNeeded])
      */
     private fun onDisconnected(state: CommManager.ConnectionState.Disconnected) {
-        sessionConnectedAt = 0L
-        cancelAllBtAutoDisconnects()
         usbLauncherManager.setSwitchingToProjection(false)
         releaseWifiLock()
         stopDummyVpn(DummyVpnPolicy.Reason.SESSION_ENDED)
@@ -1460,15 +1365,10 @@ class AapService : Service() {
         App.provide(this).carKeysManager.unregisterReceivers()
 
         if (!isDestroying) updateNotification()
-        autoResumePlaybackJob?.cancel()
-        autoResumePlaybackJob = null
         mediaMetadataDecodeJob?.cancel()
         mediaMetadataDecodeJob = null
         lastAaMediaMetadata = null
         lastAaPlaybackPositionMs = 0L
-        wasPlayingBeforeDisconnect = (lastAaPlaybackIsPlaying == true)
-        lastDisconnectTimestampMs = SystemClock.elapsedRealtime()
-        AppLog.i("AapService: Disconnected. wasPlayingBeforeDisconnect=$wasPlayingBeforeDisconnect")
         lastAaPlaybackIsPlaying = null
         cachedAaAlbumArtBitmap = null
         mediaNotification.cancel()
@@ -1488,13 +1388,8 @@ class AapService : Service() {
             val ranWifiDirect = wifiLauncherManager.active?.hasWifiDirect() ?: false
             var wirelessTornDown = false
 
-            val sessionEnd = SessionEndGroupPolicy.decide(
-                activeModeIsNative = wifiLauncherManager.activeMode == WifiLauncherMode.NATIVE,
-                isUserExit = state.isUserExit,
-                rearmedAfterWiredSession = rearmedAfterWiredSession,
-            )
-            when (sessionEnd) {
-                SessionEndGroupPolicy.Action.STOP -> {
+            if (wifiLauncherManager.activeMode == WifiLauncherMode.NATIVE && !rearmedAfterWiredSession) {
+                if (state.isUserExit) {
                     // Awaited before the stop, not after it. stop() takes the P2P group down along
                     // with the rest of the launcher, and removing the interface while the
                     // ByeByeRequest and the socket close are still in flight is the race the
@@ -1504,29 +1399,26 @@ class AapService : Service() {
                     AppLog.i("AapService: Native AA user exit. Stopping active launcher.")
                     wifiLauncherManager.stop()
                     wirelessTornDown = true
+                } else {
+                    // Unexpected disconnect — reset and re-initialize for auto-reconnect.
+                    AppLog.i("AapService: Native AA Mode disconnected. Resetting manager and group in 1.5s...")
+                    wifiLauncherManager.stop()
+                    wirelessTornDown = true
+                    serviceScope.launch {
+                        delay(1500) // Give hardware time to settle before re-initializing P2P
+                        wifiLauncherManager.setActiveFromSettings(force = true)
+                    }
                 }
-                SessionEndGroupPolicy.Action.KEEP_AND_REARM -> {
-                    // Nothing here removes the network, so the profile the phone saved still names
-                    // one that exists and its scan and association is all a reconnect costs. A
-                    // recreate gives the group a new address on units that re-address, and the
-                    // phone then spends seconds on the one it stored. Awaited all the same: the
-                    // listeners are about to reopen, and a connection accepted while CommManager
-                    // is still tearing down is one that gets refused.
-                    commManager.awaitDisconnectComplete()
-                    val launcher = wifiLauncherManager.active as? WifiLauncherNative
-                    AppLog.i("AapService: Native AA session ended; keeping the ${launcher?.strategy ?: "wireless"} network up for the phone's return.")
-                    launcher?.rearmAfterSessionEnd()
-                }
-                SessionEndGroupPolicy.Action.NONE -> {}
             }
 
             // [FIX] User-initiated disconnect while a WiFi-Direct-hosting mode was active: tear
             // down the P2P group so the phone's OS-level connection actually drops (previously
             // only the AA session ended — the WiFi Direct network stayed up, with nothing to
-            // tell Wireless Helper the session had ended). Skipped on unexpected disconnects,
-            // where the network is kept up on purpose so the phone's saved profile still matches;
-            // see SessionEndGroupPolicy. Must await CommManager's async teardown first so we never
-            // remove the P2P interface while the ByeByeRequest/socket-close is still in flight.
+            // tell Wireless Helper the session had ended). Skipped on unexpected disconnects:
+            // mode==3's re-init above and scheduleReconnectIfNeeded() both want to keep/reuse
+            // the existing group for fast reconnection there. Must await CommManager's async
+            // teardown first so we never remove the P2P interface while the
+            // ByeByeRequest/socket-close is still in flight.
             if (rearmedAfterWiredSession) {
                 // Nothing further to tear down; the re-arm owns the wireless stack from here.
             } else if (state.isUserExit && ranWifiDirect && !wirelessTornDown) {
@@ -1598,18 +1490,6 @@ class AapService : Service() {
                 }
             }
 
-            if (btAutoDisconnectStandDown) {
-                btAutoDisconnectStandDown = false
-                // Every mode, not only Native: Helper's user-exit branch above restarts discovery
-                // and Auto's loop keeps running, which would re-advertise to the phone right after
-                // its Bluetooth ended the session. Something has to ask for the stack back: the
-                // Bluetooth auto-start, the Home screen, or a service restart.
-                commManager.awaitDisconnectComplete()
-                AppLog.i("AapService: Bluetooth auto-disconnect: keeping the wireless bring-up down until something re-arms it.")
-                wifiLauncherManager.stop(WifiLauncherStopSequence.LAST)
-                userExitedAA = true
-            }
-
             App.provide(this@AapService).audioDecoder.stop()
             App.provide(this@AapService).videoDecoder.stop("AapService::onDisconnect")
         }
@@ -1635,25 +1515,6 @@ class AapService : Service() {
      * disconnect) produce `isClean = false`.
      */
     private fun scheduleReconnectIfNeeded(state: CommManager.ConnectionState.Disconnected) {
-        if (selfLauncherManager.isActive) {
-            // A launcher's own failed dial is not a session ending, and stopping the wireless
-            // launcher there tore down a P2P group that was still coming up.
-            val stopsWireless = SelfModeDisconnectPolicy.stopsWirelessLauncher(
-                selfModeActive = true,
-                launchInFlight = selfLauncherManager.isLaunchInFlight()
-            )
-            AppLog.i(
-                "AapService: Self Mode disconnected. Not restarting" +
-                    (if (stopsWireless) "" else "; the launch is still in flight, so the wireless launcher stays") + "."
-            )
-            selfLauncherManager.isActive = false
-            // Beside isActive, so a disconnect that lands mid-launch cannot leave Self Mode
-            // refusing every later request.
-            selfLauncherManager.clearLaunchInFlight()
-            if (stopsWireless) wifiLauncherManager.stop()
-            return
-        }
-
         val settings = App.provide(this).settings
 
         if (wifiLauncherManager.isActive) {
@@ -1662,15 +1523,11 @@ class AapService : Service() {
                 AppLog.i("AapService: User exit with wirelessServer active. Not restarting discovery.")
                 return
             }
-            // Only where a discovery loop exists: Native stays armed across a session end now, and
-            // the line would otherwise announce a restart that is a no-op there.
-            if (wifiLauncherManager.active?.hasLocalDiscovery() == true) {
-                AppLog.i("AapService: Disconnected. Restarting discovery loop in 2s...")
-                serviceScope.launch {
-                    delay(2000)
-                    if (!commManager.isConnected)
-                        wifiLauncherManager.restartDiscovery()
-                }
+            AppLog.i("AapService: Disconnected. Restarting discovery loop in 2s...")
+            serviceScope.launch {
+                delay(2000)
+                if (!commManager.isConnected)
+                    wifiLauncherManager.restartDiscovery()
             }
             return
         }
@@ -1717,7 +1574,6 @@ class AapService : Service() {
 
     private fun registerReceivers() {
         usbLauncherManager.register()
-        stationScanMonitor.start(this)
         ContextCompat.registerReceiver(
             this, nightModeUpdateReceiver,
             IntentFilter(ACTION_REQUEST_NIGHT_MODE_UPDATE),
@@ -1792,92 +1648,6 @@ class AapService : Service() {
             ContextCompat.RECEIVER_EXPORTED
         )
         AppLog.i("Registered wake detection receiver (${wakeFilter.countActions()} actions)")
-
-        // Registered whether or not a device is chosen: the list can change while the service
-        // runs, and the handler returns on its first line when it is empty.
-        ContextCompat.registerReceiver(
-            this, btAutoDisconnectReceiver,
-            IntentFilter().apply {
-                addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED)
-                addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED)
-            },
-            ContextCompat.RECEIVER_EXPORTED
-        )
-        AppLog.i("Registered Bluetooth auto-disconnect receiver")
-    }
-
-    /**
-     * Watches the links chosen under "Auto-disconnect on Bluetooth". Runtime-registered so it
-     * cannot outlive the session, and on ACL because the selection is addresses, not profiles.
-     */
-    private val btAutoDisconnectReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val connected = when (intent.action) {
-                android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED -> true
-                android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED -> false
-                else -> return
-            }
-            val watched = App.provide(this@AapService).settings.autoDisconnectBluetoothDeviceMacs
-            if (watched.isEmpty()) return
-
-            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableExtra(android.bluetooth.BluetoothDevice.EXTRA_DEVICE, android.bluetooth.BluetoothDevice::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra(android.bluetooth.BluetoothDevice.EXTRA_DEVICE)
-            }
-            val mac = device?.address
-
-            when (BtAutoDisconnectPolicy.onAclEvent(watched, mac, connected)) {
-                BtAutoDisconnectArm.IGNORE -> {}
-                BtAutoDisconnectArm.CANCEL -> {
-                    if (btAutoDisconnectJobs.remove(mac)?.also { it.cancel() } != null) {
-                        AppLog.i("AapService: Bluetooth auto-disconnect: $mac is back; the pending disconnect is cancelled.")
-                    }
-                }
-                BtAutoDisconnectArm.ARM -> armBtAutoDisconnect(mac!!)
-            }
-        }
-    }
-
-    private fun isSessionUp(): Boolean =
-        commManager.isConnected || commManager.connectionState.value is CommManager.ConnectionState.Connecting
-
-    private fun armBtAutoDisconnect(mac: String) {
-        if (!isSessionUp()) {
-            // Deliberately not a stand-down of the wireless stack. Native AA's wake poke holds a
-            // socket to the phone and closes it every cycle while it waits, which raises exactly
-            // this event; standing down here would silence the poke while the phone is answering.
-            AppLog.i("AapService: Bluetooth auto-disconnect: $mac went away, but nothing is projecting; leaving the connection stack alone.")
-            return
-        }
-        val delayMs = BtAutoDisconnectPolicy.graceDelayMs(App.provide(this).settings.autoDisconnectBtDelaySeconds)
-        btAutoDisconnectJobs.remove(mac)?.cancel()
-        AppLog.i("AapService: Bluetooth auto-disconnect: $mac went away; ending the session in ${delayMs}ms unless it comes back.")
-        btAutoDisconnectJobs[mac] = serviceScope.launch {
-            delay(delayMs)
-            btAutoDisconnectJobs.remove(mac)
-            fireBtAutoDisconnect(mac)
-        }
-    }
-
-    private fun fireBtAutoDisconnect(mac: String) {
-        val sessionUp = isSessionUp()
-        val ageMs = if (sessionConnectedAt == 0L) 0L else SystemClock.elapsedRealtime() - sessionConnectedAt
-        // The device coming back cancels the job on this same thread, so a job that runs never
-        // saw it return; the parameter exists so the rule is complete where it is tested.
-        if (!BtAutoDisconnectPolicy.shouldEndSession(sessionUp, ageMs, deviceCameBack = false)) {
-            AppLog.i("AapService: Bluetooth auto-disconnect: not ending the session for $mac (up=$sessionUp, age=${ageMs}ms).")
-            return
-        }
-        AppLog.i("AapService: Bluetooth auto-disconnect: $mac stayed away; ending the session the way the Exit button does.")
-        btAutoDisconnectStandDown = true
-        commManager.disconnect(sendByeBye = true, isUserExit = true)
-    }
-
-    private fun cancelAllBtAutoDisconnects() {
-        btAutoDisconnectJobs.values.forEach { it.cancel() }
-        btAutoDisconnectJobs.clear()
     }
 
     private fun registerNetworkMonitor() {
@@ -2201,7 +1971,6 @@ class AapService : Service() {
         AppLog.i("AapService: releasing the dummy VPN (owner=$owner, reason=$reason)")
         VpnControl.stopVpn(this)
         dummyVpnOwner = null
-        selfLauncherManager.stopDummyVpnWatchdog()
     }
 
     /**
@@ -2213,21 +1982,13 @@ class AapService : Service() {
      * session.
      */
     private fun maybeStartSessionDummyVpn() {
-        selfLauncherManager.stopDummyVpnWatchdog()
-
         val available = VpnControl.isVpnAvailable()
         val wanted = DummyVpnPolicy.shouldStartForSession(
             keepDuringSession = App.provide(this).settings.keepDummyVpnDuringSession,
-            // The same value the settings list gates the toggle on, so what a user can see and
-            // what runs cannot drift. activeWifiMode is deliberately not used: stopWirelessServer()
-            // resets it to -1, and a session that outlives one of those would go unprotected.
             nativeWirelessSession = commManager.isWirelessSession &&
                 App.provide(this).settings.wifiConnectionMode == WifiLauncherMode.NATIVE,
             currentOwner = dummyVpnOwner,
-            selfMode = selfLauncherManager.isActive,
             vpnAvailable = available,
-            // Short-circuited on purpose: the Play Store flavor must not reach a prepare() call
-            // at all, and the stub would answer false anyway.
             alreadyPrepared = available && VpnControl.isPrepared(this),
         )
         if (wanted) startDummyVpn(DummyVpnPolicy.Owner.SESSION)
@@ -2279,10 +2040,6 @@ class AapService : Service() {
     override fun onDestroy() {
         AppLog.i("AapService destroying... (wakeLock held=${bootWakeLock?.isHeld == true})")
         isDestroying = true
-        // Nothing else clears it here, and the manager outlives the service instance.
-        selfLauncherManager.isActive = false
-        autoResumePlaybackJob?.cancel()
-        autoResumePlaybackJob = null
         mediaMetadataDecodeJob?.cancel()
         cachedAaAlbumArtBitmap = null
         mediaNotification.cancel()
@@ -2293,12 +2050,10 @@ class AapService : Service() {
         releaseBootWakeLock()
 
         wifiLauncherManager.stop(WifiLauncherStopSequence.BEFORE_HOTSPOT_DISABLE)
-        // The access point is left up here. Taking it down serves one purpose, putting the phone
-        // off the network, and onDisconnected already decides that through UserExitHotspotPolicy:
-        // it restarts the access point rather than leaving it down, and remembers a device that
-        // cannot bring one back. Switching it off again here undid that restart and stranded an
-        // access point most unrooted units cannot switch on again, measured on a UNISOC unit where
-        // every start path then failed.
+        if (App.provide(this).settings.autoEnableHotspot) {
+            AppLog.i("AapService: Auto-disabling hotspot...")
+            HotspotManager.setHotspotEnabled(this, false)
+        }
 
         wifiReadyTimeoutJob?.cancel()
         wifiReadyTimeoutJob = null
@@ -2337,11 +2092,6 @@ class AapService : Service() {
         usbLauncherManager.unregister()
         try { unregisterReceiver(mediaButtonReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(wakeDetectReceiver) } catch (_: Exception) {}
-        try { unregisterReceiver(btAutoDisconnectReceiver) } catch (_: Exception) {}
-        cancelAllBtAutoDisconnects()
-        btAutoDisconnectStandDown = false
-        sessionConnectedAt = 0L
-        stationScanMonitor.stop(this)
         try { App.provide(this).carKeysManager.unregisterReceivers() } catch (e: Exception) { AppLog.w("AapService: Error unregistering carKeysManager: ${e.message}") }
         try { wifiAutoStartReceiver?.let { unregisterReceiver(it) } } catch (_: Exception) {}
         try {
@@ -2417,7 +2167,6 @@ class AapService : Service() {
         }
 
         when (intent?.action) {
-            ACTION_START_SELF_MODE       -> selfLauncherManager.start()
             ACTION_START_WIRELESS        -> {
                 // Asked for from the UI, so the user is present: release the boot-loop pause
                 // rather than silently ignoring them.
@@ -2451,39 +2200,29 @@ class AapService : Service() {
                     val settings = App.provide(this).settings
                     val activeLauncher = wifiLauncherManager.active
 
-                    if (settings.wifiConnectionMode != WifiLauncherMode.NATIVE) {
-                        // Asked before the re-init, not after it: setActiveFromSettings reads the
-                        // stored mode, so on a Helper or Auto unit this button used to tear that
-                        // mode down and build it again before finding there was nothing to poke.
-                        AppLog.i("AapService: manual Native-AA poke ignored: the wireless mode is not Native AA.")
-                        ToastUtils.showToast(this, "Native AA mode not active.")
+                    if (wifiLauncherManager.activeMode != WifiLauncherMode.NATIVE || settings.wifiConnectionMode != WifiLauncherMode.NATIVE) {
+                        AppLog.i("AapService: Initializing Native AA mode before poke...")
+                        wifiLauncherManager.setActiveFromSettings(force = true)
+                    } else if (activeLauncher is WifiLauncherNative && activeLauncher.handshakeManager?.isActive() != true) {
+                        // A completed handoff closes the AA listeners while leaving the manager
+                        // running, and start() returns immediately on isRunning - so calling it here
+                        // reopened nothing. The poke then woke the phone, the phone opened RFCOMM,
+                        // and nothing was listening: the button appeared to do nothing however many
+                        // times it was pressed. A full re-init is what reopens them, which is what
+                        // the Bluetooth auto-start path below already does for the same reason.
+                        AppLog.i("AapService: Native AA listeners are closed — re-arming before the poke.")
+                        wifiLauncherManager.stop()
+                        wifiLauncherManager.setActiveFromSettings(force = true)
                     } else {
-                        if (wifiLauncherManager.activeMode != WifiLauncherMode.NATIVE) {
-                            AppLog.i("AapService: Initializing Native AA mode before poke...")
-                            wifiLauncherManager.setActiveFromSettings(force = true)
-                        } else if (activeLauncher is WifiLauncherNative && activeLauncher.handshakeManager?.isActive() != true) {
-                            // A completed handoff closes the AA listeners while leaving the manager
-                            // running, and start() returns immediately on isRunning, so calling it here
-                            // reopened nothing: the poke woke the phone, the phone opened RFCOMM, and
-                            // nothing was listening. The listeners are reopened directly rather than by
-                            // rebuilding the mode and its network under the phone.
-                            AppLog.i("AapService: Native AA listeners are closed, reopening them before the poke.")
-                            activeLauncher.rearmAfterSessionEnd()
-                        } else {
-                            AppLog.d("AapService: Already in Native AA mode, skipping re-init.")
-                        }
+                        AppLog.d("AapService: Already in Native AA mode, skipping re-init.")
+                    }
 
-                        // Kept on the re-init branch as well as the armed one: it is the only thing
-                        // that clears the handshake backoff, and the button has to mean one thing.
-                        // Its pre-flight refresh now waits on the create claimed above rather than
-                        // starting a second one.
-                        val launcher = wifiLauncherManager.active
+                    val launcher = wifiLauncherManager.active
 
-                        if (launcher is WifiLauncherNative) {
-                            launcher.handshakeManager?.selectDriver(mac)
-                        } else {
-                            ToastUtils.showToast(this, "Native AA mode not active.")
-                        }
+                    if (launcher is WifiLauncherNative) {
+                        launcher.handshakeManager?.selectDriver(mac)
+                    } else {
+                        ToastUtils.showToast(this, "Native AA mode not active.")
                     }
                 }
             }
@@ -2548,10 +2287,17 @@ class AapService : Service() {
                 }
             }
             ACTION_BT_AUTO_START          -> {
-                // A Native mode stopped by a user exit stays dead unless something re-arms it, but
-                // a re-arm recreates the network and costs the phone its saved profile. So Native is
-                // forced only when it cannot accept at all. The rule is on BtAutoStartRearmPolicy;
-                // Self Mode's half runs in MainActivity, which the receiver brings forward too.
+                // AutoStartReceiver fires this on ACL_CONNECTED from a trusted device. If the
+                // service process was already alive (e.g. survived a prior disconnect/exit in
+                // this same session), onCreate()'s initWifiMode() never re-runs, so a Native AA
+                // mode that was stopped after a user exit (nativeAaHandshakeManager.stop() at
+                // disconnect) would otherwise stay dead forever despite the phone reconnecting.
+                // Only force a re-init when it's actually stopped — on a genuine cold start,
+                // onCreate() already armed everything moments ago and re-running would tear
+                // down and recreate the P2P group (new random SSID/passphrase) right as it's
+                // being delivered to the phone.
+                // The rest of the rule, including why the mode is asked of the setting and never
+                // of the launcher, lives on BtAutoStartRearmPolicy.
                 val sessionUp = commManager.isConnected ||
                     commManager.connectionState.value is CommManager.ConnectionState.Connecting
                 val launcher = wifiLauncherManager.active as? WifiLauncherNative
@@ -2561,39 +2307,26 @@ class AapService : Service() {
                 val attemptInFlight = launcher?.handshakeManager?.isAttemptInFlight()
 
                 val networkComingUp = launcher?.networkComingUp()
-
                 val actions = BtAutoStartRearmPolicy.actionsFor(
-                    mode = settings.wifiConnectionMode,
-                    wirelessSelected = settings.showsWifi(),
-                    sessionUp = sessionUp,
-                    wirelessArmed = wifiLauncherManager.isActive,
-                    handshakeActive = launcher?.handshakeManager?.isActive(),
-                    attemptInFlight = attemptInFlight,
-                    groupUp = launcher?.hasLiveNetwork(),
-                    networkComingUp = networkComingUp
+                    settings.wifiConnectionMode,
+                    settings.showsWifi(),
+                    sessionUp,
+                    wifiLauncherManager.isActive,
+                    launcher?.handshakeManager?.isActive(),
+                    launcher?.handshakeManager?.isAttemptInFlight(),
+                    null,
+                    null
                 )
-                if (!actions.doesNothing) {
-                    AppLog.i("AapService: Bluetooth auto-start: $actions")
-                }
                 if (actions.clearUserExit) {
                     userExitedAA = false
                     userExitCooldownUntil = 0L
                 }
                 if (actions.forceRearmWireless) {
+                    AppLog.i("AapService: Bluetooth auto-start — re-arming Native AA.")
                     wifiLauncherManager.setActiveFromSettings(force = true)
-                } else if (networkComingUp == true) {
-                    // Nothing to do and nothing safe to do: the network this arrival would rebuild
-                    // is the one already being asked for, and tearing it down starts a second
-                    // create underneath the first.
-                    AppLog.i("AapService: Bluetooth auto-start: the Native AA group is still being created, so it is left to answer.")
                 } else if (actions.armWirelessIfIdle) {
-                    wifiLauncherManager.setActiveFromSettings()
-                } else if (settings.wifiConnectionMode == WifiLauncherMode.NATIVE && !sessionUp && attemptInFlight != true) {
-                    // Armed with a live group, so the phone dials RFCOMM itself. Re-read the
-                    // credentials rather than remake the group; that also catches a group that died.
-                    // Skipped while an attempt is in flight, because that ACL is our own poke's.
-                    AppLog.i("AapService: Bluetooth auto-start: Native AA is armed with a live group, leaving it alone.")
-                    launcher?.triggerWifiDirectRefresh()
+                    AppLog.i("AapService: Bluetooth auto-start — arming wireless launcher.")
+                    wifiLauncherManager.setActiveFromSettings(force = false)
                 }
             }
             ACTION_NEARBY_CONNECT         -> {

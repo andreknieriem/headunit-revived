@@ -10,7 +10,7 @@ import com.andrerinas.openheadunit.utils.HeadUnitScreenConfig
 
 object ProjectionViewScaler {
 
-    fun updateScale(view: View, videoWidth: Int, videoHeight: Int) {
+    fun updateScale(view: View, videoWidth: Int, videoHeight: Int, touchView: View? = null) {
         if (videoWidth == 0 || videoHeight == 0 || view.width == 0 || view.height == 0) {
             return
         }
@@ -26,7 +26,7 @@ object ProjectionViewScaler {
         if (HeadUnitScreenConfig.forcedScale && view is ProjectionView) {
             val lp = view.layoutParams
             var paramsChanged = false
-            
+
             // NOTE: For legacy forcedScale (SurfaceView), the 'stretchToFill' setting logic
             // is historically inverted compared to its name.
             if (settings.stretchToFill) {
@@ -47,7 +47,7 @@ object ProjectionViewScaler {
                         paramsChanged = true
                     }
                 }
-                
+
                 if (paramsChanged) {
                     view.layoutParams = lp
                 }
@@ -56,6 +56,21 @@ object ProjectionViewScaler {
                 view.scaleY = 1.0f
                 view.translationX = 0f
                 view.translationY = 0f
+
+                touchView?.let { tv ->
+                    val tlp = tv.layoutParams
+                    if (tlp.width != targetW || tlp.height != targetH) {
+                        tlp.width = targetW
+                        tlp.height = targetH
+                        tv.layoutParams = tlp
+                    }
+                    if (tlp is FrameLayout.LayoutParams && tlp.gravity != Gravity.CENTER) {
+                        tlp.gravity = Gravity.CENTER
+                        tv.layoutParams = tlp
+                    }
+                    tv.scaleX = 1.0f
+                    tv.scaleY = 1.0f
+                }
 
                 AppLog.i("[UI_DEBUG] FORCED & STRETCH On: Resized view to ${targetW}x${targetH} (centered)")
             } else {
@@ -65,7 +80,7 @@ object ProjectionViewScaler {
                     lp.height = usableH
                     paramsChanged = true
                 }
-                
+
                 if (lp is FrameLayout.LayoutParams) {
                     val targetGravity = Gravity.TOP or Gravity.START
                     if (lp.gravity != targetGravity) {
@@ -73,7 +88,7 @@ object ProjectionViewScaler {
                         paramsChanged = true
                     }
                 }
-                
+
                 if (paramsChanged) {
                     view.layoutParams = lp
                 }
@@ -82,6 +97,17 @@ object ProjectionViewScaler {
                 view.scaleY = 1.0f
                 view.translationX = 0f
                 view.translationY = 0f
+
+                touchView?.let { tv ->
+                    val tlp = tv.layoutParams
+                    if (tlp.width != usableW || tlp.height != usableH) {
+                        tlp.width = usableW
+                        tlp.height = usableH
+                        tv.layoutParams = tlp
+                    }
+                    tv.scaleX = 1.0f
+                    tv.scaleY = 1.0f
+                }
 
                 AppLog.i("[UI_DEBUG] FORCED & STRETCH Off: Resized view to match screen exactly: ${usableW}x${usableH}")
             }
@@ -92,21 +118,21 @@ object ProjectionViewScaler {
 
             val lp = view.layoutParams
             var paramsChanged = false
-            
-            if (lp.width != ViewGroup.LayoutParams.MATCH_PARENT || 
+
+            if (lp.width != ViewGroup.LayoutParams.MATCH_PARENT ||
                 lp.height != ViewGroup.LayoutParams.MATCH_PARENT) {
                 lp.width = ViewGroup.LayoutParams.MATCH_PARENT
                 lp.height = ViewGroup.LayoutParams.MATCH_PARENT
                 paramsChanged = true
             }
-            
+
             if (lp is FrameLayout.LayoutParams) {
                 if (lp.gravity != Gravity.NO_GRAVITY) {
                     lp.gravity = Gravity.NO_GRAVITY
                     paramsChanged = true
                 }
             }
-            
+
             if (paramsChanged) {
                 view.layoutParams = lp
             }
@@ -120,6 +146,29 @@ object ProjectionViewScaler {
             } else {
                 view.scaleX = finalScaleX
                 view.scaleY = finalScaleY
+            }
+
+            // Ultrawide Sidebar Fix: Ensure touch overlay matches the physical projection area
+            touchView?.let { tv ->
+                if (HeadUnitScreenConfig.isUltrawideEnabled() && HeadUnitScreenConfig.getUsableWidth() >= 1700) {
+                    val tlp = tv.layoutParams
+                    val targetW = HeadUnitScreenConfig.getUsableWidth()
+                    val targetH = HeadUnitScreenConfig.getUsableHeight()
+                    if (tlp.width != targetW || tlp.height != targetH) {
+                        tlp.width = targetW
+                        tlp.height = targetH
+                        tv.layoutParams = tlp
+                    }
+                    if (tlp is FrameLayout.LayoutParams && tlp.gravity != Gravity.CENTER) {
+                        tlp.gravity = Gravity.CENTER
+                        tv.layoutParams = tlp
+                    }
+                    tv.scaleX = 1.0f
+                    tv.scaleY = 1.0f
+                } else {
+                    tv.scaleX = Math.abs(finalScaleX)
+                    tv.scaleY = finalScaleY
+                }
             }
             AppLog.i("[UI_DEBUG] Normal Scale. scaleX: $finalScaleX, scaleY: $finalScaleY")
         }

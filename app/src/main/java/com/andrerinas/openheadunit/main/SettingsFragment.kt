@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
+import com.andrerinas.openheadunit.service.AppRedirectService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialField
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.connection.wifi.direct.P2pGroupIdentityPolicy
@@ -114,6 +115,9 @@ class SettingsFragment : Fragment() {
         "darkModeSettings",
         // Automation
         "autoStartSettings", "autoConnectSettings",
+        // More Features
+        "aaExitAction", "enableFloatingButton", "requestOverlayPermission",
+        "floatingButtonXPercent", "floatingButtonYPercent", "floatingButtonOpacityPercent", "floatingButtonSizeDp",
         // Navigation
         "gpsNavigation",
         // Graphic
@@ -186,12 +190,22 @@ class SettingsFragment : Fragment() {
 
     // Flag to determine if the projection should stretch to fill the screen
     private var pendingStretchToFill: Boolean? = null
+    private var pendingOptimizeUltrawide: Boolean? = null
+    private var pendingAaExitAction: Settings.ExitAction? = null
+    private var pendingEnableFloatingButton: Boolean? = null
+    private var pendingFloatingButtonXPercent: Int? = null
+    private var pendingFloatingButtonYPercent: Int? = null
+    private var pendingFloatingButtonOpacityPercent: Int? = null
+    private var pendingFloatingButtonSizeDp: Int? = null
     private var pendingForcedScale: Boolean? = null
     private var pendingHudMirroring: Boolean? = null
     private var pendingUseMeasuredTouchSurface: Boolean? = null
 
     private var pendingKillOnDisconnect: Boolean? = null
     private var pendingRaiseProjectionDuringCall: Boolean? = null
+    private var pendingRedirectCarbitLink: Boolean? = null
+    private var pendingDoubleTapHomeToOpen: Boolean? = null
+    private var pendingFloatingButtonDoubleTap: Boolean? = null
 
     // Custom Insets
     private var pendingInsetLeft: Int? = null
@@ -316,12 +330,22 @@ class SettingsFragment : Fragment() {
 
         // Initialize local state for stretch to fill
         pendingStretchToFill = settings.stretchToFill
+        pendingOptimizeUltrawide = settings.optimizeUltrawide
+        pendingAaExitAction = settings.aaExitAction
+        pendingEnableFloatingButton = settings.enableFloatingButton
+        pendingFloatingButtonXPercent = settings.floatingButtonXPercent
+        pendingFloatingButtonYPercent = settings.floatingButtonYPercent
+        pendingFloatingButtonOpacityPercent = settings.floatingButtonOpacityPercent
+        pendingFloatingButtonSizeDp = settings.floatingButtonSizeDp
         pendingForcedScale = settings.forcedScale
         pendingHudMirroring = settings.hudMirroring
         pendingUseMeasuredTouchSurface = settings.useMeasuredTouchSurface
 
         pendingKillOnDisconnect = settings.killOnDisconnect
         pendingRaiseProjectionDuringCall = settings.raiseProjectionDuringCall
+        pendingRedirectCarbitLink = settings.redirectCarbitLink
+        pendingDoubleTapHomeToOpen = settings.doubleTapHomeToOpen
+        pendingFloatingButtonDoubleTap = settings.floatingButtonDoubleTap
         pendingAutoEnableHotspot = settings.autoEnableHotspot
         pendingFakeSpeed = settings.fakeSpeed
         pendingUseLibusb = settings.useLibusb
@@ -588,12 +612,23 @@ class SettingsFragment : Fragment() {
 
         // Save the stretch to fill preference
         pendingStretchToFill?.let { settings.stretchToFill = it }
+        pendingOptimizeUltrawide?.let { settings.optimizeUltrawide = it }
+        pendingAaExitAction?.let { settings.aaExitAction = it }
+        pendingEnableFloatingButton?.let { settings.enableFloatingButton = it }
+        pendingFloatingButtonXPercent?.let { settings.floatingButtonXPercent = it }
+        pendingFloatingButtonYPercent?.let { settings.floatingButtonYPercent = it }
+        pendingFloatingButtonOpacityPercent?.let { settings.floatingButtonOpacityPercent = it }
+        pendingFloatingButtonSizeDp?.let { settings.floatingButtonSizeDp = it }
         pendingForcedScale?.let { settings.forcedScale = it }
+        context?.let { FloatingButtonManager.update(it) }
         pendingHudMirroring?.let { settings.hudMirroring = it }
         pendingUseMeasuredTouchSurface?.let { settings.useMeasuredTouchSurface = it }
 
         pendingKillOnDisconnect?.let { settings.killOnDisconnect = it }
         pendingRaiseProjectionDuringCall?.let { settings.raiseProjectionDuringCall = it }
+        pendingRedirectCarbitLink?.let { settings.redirectCarbitLink = it }
+        pendingDoubleTapHomeToOpen?.let { settings.doubleTapHomeToOpen = it }
+        pendingFloatingButtonDoubleTap?.let { settings.floatingButtonDoubleTap = it }
         pendingAutoEnableHotspot?.let { settings.autoEnableHotspot = it }
         pendingFakeSpeed?.let { settings.fakeSpeed = it }
         pendingUseLibusb?.let { settings.useLibusb = it }
@@ -705,6 +740,13 @@ class SettingsFragment : Fragment() {
                         pendingScreenOrientation != settings.screenOrientation ||
                         pendingAppLanguage != settings.appLanguage ||
                         pendingStretchToFill != settings.stretchToFill ||
+                        pendingOptimizeUltrawide != settings.optimizeUltrawide ||
+                        pendingAaExitAction != settings.aaExitAction ||
+                        pendingEnableFloatingButton != settings.enableFloatingButton ||
+                        pendingFloatingButtonXPercent != settings.floatingButtonXPercent ||
+                        pendingFloatingButtonYPercent != settings.floatingButtonYPercent ||
+                        pendingFloatingButtonOpacityPercent != settings.floatingButtonOpacityPercent ||
+                        pendingFloatingButtonSizeDp != settings.floatingButtonSizeDp ||
                         pendingForcedScale != settings.forcedScale ||
                         pendingHudMirroring != settings.hudMirroring ||
                         pendingUseMeasuredTouchSurface != settings.useMeasuredTouchSurface ||
@@ -1459,8 +1501,7 @@ class SettingsFragment : Fragment() {
             nameResId = R.string.auto_connect_settings,
             value = getAutoConnectSummary(),
             searchKeywords = kw(
-                R.string.auto_connect_last_session, R.string.auto_connect_single_usb,
-                R.string.auto_start_self_mode
+                R.string.auto_connect_last_session, R.string.auto_connect_single_usb
             ),
             onClick = {
                 try {
@@ -1496,18 +1537,179 @@ class SettingsFragment : Fragment() {
             }
         ))
 
-        // Self Mode is the only mode where the phone's call screen and the projection share a
-        // screen, so it is the only mode this can do anything in.
-        if (settings.showsSelf()) {
+        // Bring Android Auto back to front during phone calls and suppress floating call overlays.
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "raiseProjectionDuringCall",
+            nameResId = R.string.raise_projection_during_call,
+            descriptionResId = R.string.raise_projection_during_call_description,
+            isChecked = pendingRaiseProjectionDuringCall!!,
+            onCheckedChanged = { isChecked ->
+                pendingRaiseProjectionDuringCall = isChecked
+                checkChanges()
+                updateSettingsList()
+            }
+        ))
+
+        // --- More Features ---
+        items.add(SettingItem.CategoryHeader("moreFeatures", R.string.category_more_features))
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "redirectCarbitLink",
+            nameResId = R.string.redirect_carbitlink_label,
+            descriptionResId = R.string.redirect_carbitlink_description,
+            isChecked = pendingRedirectCarbitLink ?: settings.redirectCarbitLink,
+            onCheckedChanged = { isChecked ->
+                pendingRedirectCarbitLink = isChecked
+                checkChanges()
+                updateSettingsList()
+                if (isChecked && !AppRedirectService.isEnabled(requireContext())) {
+                    showAccessibilityPromptDialog()
+                }
+            }
+        ))
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "doubleTapHomeToOpen",
+            nameResId = R.string.double_tap_home_label,
+            descriptionResId = R.string.double_tap_home_description,
+            isChecked = pendingDoubleTapHomeToOpen ?: settings.doubleTapHomeToOpen,
+            onCheckedChanged = { isChecked ->
+                pendingDoubleTapHomeToOpen = isChecked
+                checkChanges()
+                updateSettingsList()
+                if (isChecked && !AppRedirectService.isEnabled(requireContext())) {
+                    showAccessibilityPromptDialog()
+                }
+            }
+        ))
+
+        val exitActions = arrayOf(
+            getString(R.string.aa_exit_action_oem_launcher),
+            getString(R.string.aa_exit_action_app_home),
+            getString(R.string.aa_exit_action_disconnect)
+        )
+        val currentExitActionIdx = (pendingAaExitAction ?: Settings.ExitAction.OEM_LAUNCHER).value
+        items.add(SettingItem.SettingEntry(
+            stableId = "aaExitAction",
+            nameResId = R.string.pref_aa_exit_action_title,
+            value = exitActions.getOrElse(currentExitActionIdx) { exitActions[0] },
+            searchKeywords = getString(R.string.pref_aa_exit_action_summary),
+            onClick = { _ ->
+                MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                    .setTitle(R.string.pref_aa_exit_action_title)
+                    .setSingleChoiceItems(exitActions, currentExitActionIdx) { dialog, which ->
+                        pendingAaExitAction = Settings.ExitAction.fromInt(which)
+                        checkChanges()
+                        dialog.dismiss()
+                        updateSettingsList()
+                    }
+                    .show()
+            }
+        ))
+
+        val hasOverlayPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            SystemSettings.canDrawOverlays(requireContext())
+        } else {
+            true
+        }
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "enableFloatingButton",
+            nameResId = R.string.pref_floating_button_title,
+            descriptionResId = R.string.pref_floating_button_summary,
+            isChecked = pendingEnableFloatingButton ?: false,
+            onCheckedChanged = { isChecked ->
+                pendingEnableFloatingButton = isChecked
+                checkChanges()
+                updateSettingsList()
+                context?.let { FloatingButtonManager.update(it) }
+            }
+        ))
+
+        if (pendingEnableFloatingButton == true) {
+            if (!hasOverlayPermission) {
+                items.add(SettingItem.ActionButton(
+                    stableId = "requestOverlayPermission",
+                    textResId = R.string.pref_floating_button_permission_action,
+                    onClick = {
+                        FloatingButtonManager.requestOverlayPermission(requireContext())
+                    }
+                ))
+            }
+
             items.add(SettingItem.ToggleSettingEntry(
-                stableId = "raiseProjectionDuringCall",
-                nameResId = R.string.raise_projection_during_call,
-                descriptionResId = R.string.raise_projection_during_call_description,
-                isChecked = pendingRaiseProjectionDuringCall ?: settings.raiseProjectionDuringCall,
+                stableId = "floatingButtonDoubleTap",
+                nameResId = R.string.pref_floating_button_double_tap_title,
+                descriptionResId = R.string.pref_floating_button_double_tap_summary,
+                isChecked = pendingFloatingButtonDoubleTap ?: settings.floatingButtonDoubleTap,
                 onCheckedChanged = { isChecked ->
-                    pendingRaiseProjectionDuringCall = isChecked
+                    pendingFloatingButtonDoubleTap = isChecked
                     checkChanges()
                     updateSettingsList()
+                }
+            ))
+
+            items.add(SettingItem.SliderSettingEntry(
+                stableId = "floatingButtonXPercent",
+                nameResId = R.string.pref_floating_button_x_title,
+                value = "${pendingFloatingButtonXPercent ?: 0}%",
+                sliderValue = (pendingFloatingButtonXPercent ?: 0).toFloat(),
+                valueFrom = 0f,
+                valueTo = 100f,
+                stepSize = 1f,
+                onValueChanged = { newValue ->
+                    pendingFloatingButtonXPercent = newValue.toInt()
+                    checkChanges()
+                    updateSettingsList()
+                    context?.let { FloatingButtonManager.update(it) }
+                }
+            ))
+
+            items.add(SettingItem.SliderSettingEntry(
+                stableId = "floatingButtonYPercent",
+                nameResId = R.string.pref_floating_button_y_title,
+                value = "${pendingFloatingButtonYPercent ?: 54}%",
+                sliderValue = (pendingFloatingButtonYPercent ?: 54).toFloat(),
+                valueFrom = 0f,
+                valueTo = 100f,
+                stepSize = 1f,
+                onValueChanged = { newValue ->
+                    pendingFloatingButtonYPercent = newValue.toInt()
+                    checkChanges()
+                    updateSettingsList()
+                    context?.let { FloatingButtonManager.update(it) }
+                }
+            ))
+
+            items.add(SettingItem.SliderSettingEntry(
+                stableId = "floatingButtonOpacityPercent",
+                nameResId = R.string.pref_floating_button_opacity_title,
+                value = "${pendingFloatingButtonOpacityPercent ?: 80}%",
+                sliderValue = (pendingFloatingButtonOpacityPercent ?: 80).toFloat(),
+                valueFrom = 0f,
+                valueTo = 100f,
+                stepSize = 1f,
+                onValueChanged = { newValue ->
+                    pendingFloatingButtonOpacityPercent = newValue.toInt()
+                    checkChanges()
+                    updateSettingsList()
+                    context?.let { FloatingButtonManager.update(it) }
+                }
+            ))
+
+            items.add(SettingItem.SliderSettingEntry(
+                stableId = "floatingButtonSizeDp",
+                nameResId = R.string.pref_floating_button_size_title,
+                value = "${pendingFloatingButtonSizeDp ?: 60} dp",
+                sliderValue = (pendingFloatingButtonSizeDp ?: 60).toFloat(),
+                valueFrom = 32f,
+                valueTo = 120f,
+                stepSize = 1f,
+                onValueChanged = { newValue ->
+                    pendingFloatingButtonSizeDp = newValue.toInt()
+                    checkChanges()
+                    updateSettingsList()
+                    context?.let { FloatingButtonManager.update(it) }
                 }
             ))
         }
@@ -1717,6 +1919,21 @@ class SettingsFragment : Fragment() {
                 updateSettingsList()
             }
         ))
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "optimizeUltrawide",
+            nameResId = R.string.pref_optimize_ultrawide_title,
+            descriptionResId = R.string.pref_optimize_ultrawide_summary,
+            isChecked = pendingOptimizeUltrawide ?: false,
+            onCheckedChanged = { isChecked ->
+                pendingOptimizeUltrawide = isChecked
+                requiresRestart = true
+                checkChanges()
+                updateSettingsList()
+            }
+        ))
+
+
 
         items.add(SettingItem.ToggleSettingEntry(
             stableId = "hudMirroring",
@@ -2797,7 +3014,6 @@ class SettingsFragment : Fragment() {
         val parts = mutableListOf<String>()
         if (Settings.ConnectionMode.USB in modes) parts.add(getString(R.string.connection_kind_usb))
         if (Settings.ConnectionMode.WIFI in modes) parts.add(getString(R.string.connection_kind_wifi))
-        if (Settings.ConnectionMode.SELF in modes) parts.add(getString(R.string.self_mode))
         return parts.joinToString(", ")
     }
 
@@ -2874,13 +3090,11 @@ class SettingsFragment : Fragment() {
     private fun showConnectionModeDialog() {
         val order = listOf(
             Settings.ConnectionMode.USB,
-            Settings.ConnectionMode.WIFI,
-            Settings.ConnectionMode.SELF
+            Settings.ConnectionMode.WIFI
         )
         val labels = arrayOf(
             getString(R.string.connection_kind_usb),
-            getString(R.string.connection_kind_wifi),
-            getString(R.string.self_mode)
+            getString(R.string.connection_kind_wifi)
         )
         val current = settings.connectionModes
         val checked = BooleanArray(order.size) { order[it] in current }
@@ -3605,9 +3819,9 @@ class SettingsFragment : Fragment() {
                 setPadding(0, (8 * density).toInt(), 0, (4 * density).toInt())
             }
             val seek = android.widget.SeekBar(context).apply {
-                // Map 100..150 step 10 -> progress 0..5
-                max = 5
-                progress = ((initialPercent - 100) / 10).coerceIn(0, 5)
+                // Map 100..150 step 5 -> progress 0..10
+                max = 10
+                progress = ((initialPercent - 100) / 5).coerceIn(0, 10)
             }
             val value = android.widget.TextView(context).apply {
                 text = "$initialPercent%"
@@ -3616,7 +3830,7 @@ class SettingsFragment : Fragment() {
             // Update value when seek changes
             seek.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(sb: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-                    val pct = 100 + progress * 10
+                    val pct = 100 + progress * 5
                     value.text = "$pct%"
                 }
                 override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
@@ -3649,8 +3863,8 @@ class SettingsFragment : Fragment() {
             .setTitle(R.string.ui_scale)
             .setView(scroll)
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                val newHome = 100 + (homeSeek.progress * 10)
-                val newSettings = 100 + (settingsSeek.progress * 10)
+                val newHome = 100 + (homeSeek.progress * 5)
+                val newSettings = 100 + (settingsSeek.progress * 5)
                 val oldSettings = settings.uiScaleSettingsPercent
                 val oldHome = settings.uiScaleHomePercent
 
@@ -3700,6 +3914,21 @@ class SettingsFragment : Fragment() {
             conflicts.add(getString(R.string.reopen_on_reconnection_label))
         }
         return conflicts
+    }
+
+    private fun showAccessibilityPromptDialog() {
+        MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+            .setTitle(R.string.redirect_carbitlink_label)
+            .setMessage(R.string.redirect_carbitlink_accessibility_prompt)
+            .setPositiveButton(R.string.open_accessibility_settings) { _, _ ->
+                try {
+                    startActivity(Intent("android.settings.ACCESSIBILITY_SETTINGS"))
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), R.string.redirect_carbitlink_accessibility_prompt, Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun showKillOnDisconnectWarning(conflicts: List<String>, hasAutoStartOnBoot: Boolean, hasAutoStartOnScreenOn: Boolean = false) {
@@ -4009,14 +4238,12 @@ class SettingsFragment : Fragment() {
         val enabledNames = order.mapNotNull { id ->
             val isEnabled = when (id) {
                 Settings.AUTO_CONNECT_LAST_SESSION -> settings.autoConnectLastSession
-                Settings.AUTO_CONNECT_SELF_MODE -> settings.autoStartSelfMode
                 Settings.AUTO_CONNECT_SINGLE_USB -> settings.autoConnectSingleUsbDevice
                 else -> false
             }
             if (isEnabled) {
                 when (id) {
                     Settings.AUTO_CONNECT_LAST_SESSION -> getString(R.string.auto_connect_last_session)
-                    Settings.AUTO_CONNECT_SELF_MODE -> getString(R.string.auto_start_self_mode)
                     Settings.AUTO_CONNECT_SINGLE_USB -> getString(R.string.auto_connect_single_usb)
                     else -> null
                 }

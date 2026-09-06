@@ -10,7 +10,6 @@
     <string name="ignored">Ignorado</string>
     <string name="exit">Sair</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Self Mode</string>
     <string name="to_android_auto">Ir para o Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Remover</string>
@@ -157,8 +156,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Geral</string>
-    <string name="auto_start_self_mode">Iniciar Self Mode automaticamente</string>
-    <string name="auto_start_self_mode_description">Inicia o Self Mode automaticamente ao abrir o aplicativo.</string>
     <string name="usb_auto_connect">Conexão automática USB</string>
     <string name="usb_auto_connect_description">Conecta-se automaticamente a um dispositivo USB conhecido assim que o aplicativo é aberto.</string>
     <string name="auto_start_bt_label">Início automático por Bluetooth</string>
@@ -320,7 +317,6 @@
     <string name="success">Sucesso</string>
     <string name="failed">Falha</string>
     <string name="failed_start_android_auto">Falha ao iniciar Android Auto</string>
-    <string name="failed_self_mode_android10">O modo Self-mode provavelmente está bloqueado pelo Google no Android 10 (AA 16.4+). Veja o README.</string>
     <string name="android_auto_starting">Android Auto está iniciando…</string>
     <string name="connection_interrupted">Conexão perdida</string>
     <string name="connection_interrupted_detail">Tentando novamente…</string>
@@ -471,8 +467,6 @@
 
     <string name="not_supported_nativeaa">O modo Sem Fio Nativo pode não ser compatível</string>
     <string name="not_supported_nativeaa_desc">Seu dispositivo pode não ser compatível com os recursos de Bluetooth ou Wi-Fi necessários para o modo Sem Fio Nativo. Você pode tentar de qualquer maneira, mas se falhar, use o modo \"Wireless Helper\" ou \"Auto (Headunit Server)\".</string>
-    <string name="shortcut_selfmode_title">Modo Próprio (Self Mode)</string>
-    <string name="shortcut_selfmode_desc">Iniciar Android Auto neste dispositivo</string>
     <string name="wait_for_wifi">Aguardar WiFi antes do WiFi Direct</string>
     <string name="wait_for_wifi_description">Ao iniciar, aguarda a conexão WiFi antes de iniciar o WiFi Direct. Útil se sua central multimídia demora alguns segundos para conectar ao WiFi após ligar.</string>
     <string name="wait_for_wifi_timeout">Tempo limite de espera WiFi</string>
@@ -624,8 +618,6 @@
     <string name="renderer_confirm_yes">Sim</string>
     <string name="renderer_confirm_switch">Trocar renderizador</string>
     <string name="renderer_switched_to">Renderizador: %1$s</string>
-
-    <string name="self_mode_overlay_permission_description">Para permitir que o Modo Próprio inicie de forma confiável em segundo plano, ative a permissão \"Sobrepor a outros aplicativos\" na próxima tela.</string>
 
     <!-- Geofence / coordinates -->
     <string name="delete">Excluir</string>
@@ -915,7 +907,6 @@
     <string name="usb_device_action_title">Ação do dispositivo USB</string>
     <string name="home_button_colors">Cores dos botões e gradientes</string>
     <string name="home_button_colors_description">Personalize as cores e gradientes dos 4 botões da tela inicial</string>
-    <string name="btn_color_self_mode">Botão Modo Autônomo</string>
     <string name="btn_color_usb">Botão USB</string>
     <string name="btn_color_wifi">Botão WiFi</string>
     <string name="btn_color_settings">Botão Configurações</string>

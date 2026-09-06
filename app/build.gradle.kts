@@ -10,7 +10,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 34
     ndkVersion = "29.0.14206865"
     namespace = "com.andrerinas.openheadunit"
 
@@ -91,16 +91,12 @@ android {
     }
 
     defaultConfig {
-        // Keep the original Play Store application id so the app stays the same listing (reviews,
-        // installs, testers) and existing users just get a normal update. Only the display name
-        // changed to Open Headunit. The code package and namespace stay openheadunit, so the
-        // applicationId deliberately differs from the namespace, like com.google.talk for Hangouts.
-        applicationId = "com.andrerinas.headunitrevived"
+        applicationId = "com.sesam.emzoomaa"
         minSdk = 16
-        targetSdk = 36
-        versionCode = 105
-        versionName = "3.3.1"
-        setProperty("archivesBaseName", "${applicationId}_${versionName}")
+        targetSdk = 28
+        versionCode = 107
+        versionName = "1.7.1(3.3.1)"
+        setProperty("archivesBaseName", "Emzoom AA_v${versionName}")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
         vectorDrawables.useSupportLibrary = true
@@ -122,10 +118,14 @@ android {
         create("playstore") {
             dimension = "distribution"
             minSdk = 21
+            manifestPlaceholders["appLabel"] = "@string/title"
+            buildConfigField("Boolean", "OPTIMIZE_ULTRAWIDE", "false")
         }
-        create("github") {
+        create("emzoom") {
             dimension = "distribution"
-            // Default minSdk 16 from defaultConfig is used
+            applicationId = "com.sesam.emzoomaa"
+            manifestPlaceholders["appLabel"] = "Emzoom AA"
+            buildConfigField("Boolean", "OPTIMIZE_ULTRAWIDE", "true")
         }
     }
 
@@ -137,38 +137,25 @@ android {
             // keyPassword = property("HEADUNIT_KEYSTORE_PASSWORD") as String
         }
         create("release") {
-            val defaultStoreFile = when {
-                rootProject.file("headunit-release-key.jks").exists() -> rootProject.file("headunit-release-key.jks")
-                file("../headunit-release-key.jks").exists() -> file("../headunit-release-key.jks")
-                else -> null
-            }
-            if (defaultStoreFile != null) {
-                storeFile = defaultStoreFile
-            }
-            keyAlias = "headunit-revived"
+            storeFile = rootProject.file("Sesam.jks")
+            storePassword = "737266"
+            keyAlias = "key0"
+            keyPassword = "737266"
+            isV1SigningEnabled = true
+            isV2SigningEnabled = true
 
             val keyfile = rootProject.file("key.properties")
-            val signingPropsFile = rootProject.file("secrets.properties")
-
             if (keyfile.exists()) {
                 val keyprops = Properties()
                 keyprops.load(FileInputStream(keyfile))
 
-                if (keyprops.containsKey("storeFile")) storeFile = file(keyprops.getProperty("storeFile"))
+                if (keyprops.containsKey("storeFile")) {
+                    val storePath = keyprops.getProperty("storeFile")
+                    storeFile = rootProject.file(storePath)
+                }
                 if (keyprops.containsKey("storePassword")) storePassword = keyprops.getProperty("storePassword")
                 if (keyprops.containsKey("keyAlias")) keyAlias = keyprops.getProperty("keyAlias")
                 if (keyprops.containsKey("keyPassword")) keyPassword = keyprops.getProperty("keyPassword")
-            } else if (signingPropsFile.exists()) {
-                val props = Properties()
-                props.load(FileInputStream(signingPropsFile))
-
-                storePassword = props.getProperty("HEADUNIT_KEYSTORE_PASSWORD")
-                keyPassword = props.getProperty("HEADUNIT_KEY_PASSWORD")
-            } else {
-                val envStorePass = System.getenv("HEADUNIT_KEYSTORE_PASSWORD") ?: (project.findProperty("HEADUNIT_KEYSTORE_PASSWORD") as? String)
-                val envKeyPass = System.getenv("HEADUNIT_KEY_PASSWORD") ?: (project.findProperty("HEADUNIT_KEY_PASSWORD") as? String)
-                if (envStorePass != null) storePassword = envStorePass
-                if (envKeyPass != null) keyPassword = envKeyPass
             }
         }
     }
@@ -181,19 +168,18 @@ android {
                 getDefaultProguardFile("proguard-android.txt"),
                 "proguard-project.txt"
             )
-
-            val relConfig = signingConfigs.getByName("release")
-            if (relConfig.storeFile != null && relConfig.storeFile!!.exists()) {
-                signingConfig = relConfig
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
 
         getByName("debug") {
-            // debugging setup
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
     packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
         resources {
             excludes += "META-INF/DEPENDENCIES"
             excludes += "META-INF/LICENSE"
@@ -228,20 +214,38 @@ android {
         variant.outputs
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
-                var outputFileName = "${variant.applicationId}_${variant.versionName}_debug.apk"
-                if(variant.buildType.name == "release") {
-                    outputFileName = "${variant.applicationId}_${variant.versionName}.apk"
-                    output.outputFileName = outputFileName
+                var outputFileName = "Emzoom AA_v${variant.versionName}_debug.apk"
+                if (variant.buildType.name == "release") {
+                    outputFileName = "Emzoom AA_v${variant.versionName}.apk"
                 }
                 output.outputFileName = outputFileName
             }
+    }
+
+    // Auto-save Emzoom Debug APK to Desktop as "Emzoom AA.apk"
+    tasks.register<Copy>("saveEmzoomToDesktop") {
+        group = "distribution"
+        from(layout.buildDirectory.dir("outputs/apk/emzoom/debug"))
+        include("*.apk")
+        into(File("/Users/hussamselmy/Desktop"))
+        rename { "Emzoom AA.apk" }
+        dependsOn("assembleEmzoomDebug")
+    }
+
+    // Save Emzoom Release APK to Desktop
+    tasks.register<Copy>("saveEmzoomReleaseToDesktop") {
+        group = "distribution"
+        from(layout.buildDirectory.dir("outputs/apk/emzoom/release"))
+        include("*.apk")
+        into(File("/Users/hussamselmy/Desktop"))
+        dependsOn("assembleEmzoomRelease")
     }
 }
 
 dependencies {
     // Conscrypt (Flavor specific: 2.6.1 for Playstore 16KB alignment; 2.5.3 for Github minSdk 16)
     "playstoreImplementation"("org.conscrypt:conscrypt-android:2.6.1")
-    "githubImplementation"("org.conscrypt:conscrypt-android:2.5.3")
+    "emzoomImplementation"("org.conscrypt:conscrypt-android:2.5.3")
 
     implementation("com.google.protobuf:protobuf-java:3.25.1")
     implementation("androidx.activity:activity-ktx:1.8.2")

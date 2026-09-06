@@ -10,7 +10,6 @@
     <string name="ignored">იგნორირებული</string>
     <string name="exit">გასვლა</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">ავტონომიური რეჟიმი</string>
     <string name="to_android_auto">Android Auto-ზე გადასვლა</string>
     <string name="title">Open Headunit</string>
     <string name="remove">წაშლა</string>
@@ -184,8 +183,6 @@
     <string name="change_language">ენის შეცვლა</string>
 
     <string name="category_general">ზოგადი</string>
-    <string name="auto_start_self_mode">Self-Mode ავტო-გაშვება</string>
-    <string name="auto_start_self_mode_description">Self-Mode-ის ავტომატური გაშვება აპლიკაციის გახსნისას.</string>
     <string name="usb_auto_connect">USB ავტო-კავშირი</string>
     <string name="usb_auto_connect_description">ცნობილ USB მოწყობილობასთან ავტომატური დაკავშირება აპლიკაციის გახსნისას.</string>
     <string name="auto_start_bt_label">ავტო-გაშვება Bluetooth-ით</string>
@@ -386,7 +383,6 @@
     <string name="success">წარმატება</string>
     <string name="failed">ჩაიშალა</string>
     <string name="failed_start_android_auto">Android Auto-ს გაშვება ჩაიშალა</string>
-    <string name="failed_self_mode_android10">ავტონომიური რეჟიმი (Self-mode) სავარაუდოდ დაბლოკილია Google-ის მიერ Android 10-ზე (AA 16.4+).</string>
     <string name="android_auto_starting">Android Auto იწყება…</string>
     <string name="connection_interrupted">კავშირი გაწყდა</string>
     <string name="connection_interrupted_detail">მიმდინარეობს ხელახალი მცდელობა…</string>
@@ -397,8 +393,6 @@
     <string name="notification_projection_active">Android Auto პროეცირებულია</string>
     <string name="shortcut_connect_title">დაკავშირება</string>
     <string name="shortcut_connect_desc">ავტო-კავშირი ბოლო ტელეფონთან</string>
-    <string name="shortcut_selfmode_title">Self Mode</string>
-    <string name="shortcut_selfmode_desc">Android Auto-ს გაშვება ამ მოწყობილობაზე</string>
     <string name="shortcut_disconnect_title">გათიშვა</string>
     <string name="shortcut_disconnect_desc">მიმდინარე სესიის დასრულება</string>
     <string name="shortcut_exit_title">აპიდან გასვლა</string>
@@ -610,8 +604,6 @@
     <string name="renderer_confirm_yes">დიახ</string>
     <string name="renderer_confirm_switch">რენდერერის შეცვლა</string>
     <string name="renderer_switched_to">რენდერერი: %1$s</string>
-
-    <string name="self_mode_overlay_permission_description">ავტონომიური რეჟიმის ფონურ რეჟიმში საიმედოდ გასაშვებად, გთხოვთ, შემდეგ ეკრანზე ჩართოთ ნებართვა „სხვა აპებზე ჩვენება“.</string>
 
     <string name="settings_tab_basic">ძირითადი</string>
     <string name="settings_tab_advanced">დამატებითი</string>
@@ -895,7 +887,6 @@
     <string name="usb_device_action_title">USB მოწყობილობის მოქმედება</string>
     <string name="home_button_colors">ღილაკების ფერები და გრადიენტები</string>
     <string name="home_button_colors_description">მთავარი ეკრანის 4 ღილაკის ფერების მორგება</string>
-    <string name="btn_color_self_mode">ავტონომიური რეჟიმის ღილაკი</string>
     <string name="btn_color_usb">USB ღილაკი</string>
     <string name="btn_color_wifi">WiFi ღილაკი</string>
     <string name="btn_color_settings">პარამეტრების ღილაკი</string>

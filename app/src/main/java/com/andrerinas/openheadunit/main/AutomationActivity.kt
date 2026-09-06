@@ -1,5 +1,6 @@
 package com.andrerinas.openheadunit.main
 
+import android.R
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -23,7 +24,7 @@ class AutomationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // Invisible activity
-        window.setBackgroundDrawableResource(android.R.color.transparent)
+        window.setBackgroundDrawableResource(R.color.transparent)
 
         val data = intent.data
         AppLog.i("AutomationActivity: Received intent. Action: ${intent.action}, Data: $data")

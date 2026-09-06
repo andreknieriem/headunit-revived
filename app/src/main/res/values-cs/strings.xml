@@ -10,7 +10,6 @@
     <string name="ignored">Ignorováno</string>
     <string name="exit">Ukončit</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Self Mode</string>
     <string name="to_android_auto">Do Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Odstranit</string>
@@ -157,8 +156,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Obecné</string>
-    <string name="auto_start_self_mode">Automaticky spustit Self-Mode</string>
-    <string name="auto_start_self_mode_description">Automaticky spustit Self-Mode při otevření aplikace.</string>
     <string name="usb_auto_connect">Auto-connect USB</string>
     <string name="usb_auto_connect_description">Automatically connect to a known USB device when the application is opened.</string>
     <string name="auto_start_bt_label">Automaticky spustit při Bluetooth</string>
@@ -320,7 +317,6 @@
     <string name="success">Úspěch</string>
     <string name="failed">Selhalo</string>
     <string name="failed_start_android_auto">Spuštění Android Auto selhalo</string>
-    <string name="failed_self_mode_android10">Režim Self-mode je pravděpodobně blokován společností Google v systému Android 10 (AA 16.4+). Viz README.</string>
     <string name="android_auto_starting">Android Auto se spouští…</string>
     <string name="connection_interrupted">Spojení ztraceno</string>
     <string name="connection_interrupted_detail">Opětovné připojování…</string>
@@ -329,8 +325,6 @@
     <string name="notification_projection_active">Android Auto je promítáno</string>
     <string name="shortcut_connect_title">Připojit</string>
     <string name="shortcut_connect_desc">Připojit k poslednímu známému zařízení</string>
-    <string name="shortcut_selfmode_title">Vlastní režim</string>
-    <string name="shortcut_selfmode_desc">Spustit Android Auto na tomto zařízení</string>
     <string name="shortcut_disconnect_title">Odpojit</string>
     <string name="shortcut_disconnect_desc">Ukončit aktuální relaci</string>
     <string name="shortcut_exit_title">Ukončit aplikaci</string>
@@ -624,8 +618,6 @@
     <string name="renderer_confirm_switch">Přepnout vykreslování</string>
     <string name="renderer_switched_to">Vykreslování: %1$s</string>
 
-    <string name="self_mode_overlay_permission_description">Chcete-li umožnit spolehlivé spuštění vlastního režimu na pozadí, povolte v další obrazovce oprávnění „Zobrazit nad ostatními aplikacemi“.</string>
-
     <string name="delete">Smazat</string>
     <string name="night_mode_coordinates">Souřadnice</string>
     <string name="geofence_locations_title">Místa</string>
@@ -914,7 +906,6 @@
     <string name="usb_device_action_title">Akce USB zařízení</string>
     <string name="home_button_colors">Barvy tlačítek a přechody</string>
     <string name="home_button_colors_description">Přizpůsobte si barvy a přechody 4 tlačítek na domovské obrazovce</string>
-    <string name="btn_color_self_mode">Tlačítko Samostatný režim</string>
     <string name="btn_color_usb">Tlačítko USB</string>
     <string name="btn_color_wifi">Tlačítko WiFi</string>
     <string name="btn_color_settings">Tlačítko Nastavení</string>

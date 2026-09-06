@@ -265,24 +265,6 @@
                 android:gravity="center">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/preview_btn_self_mode"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginHorizontal="8dp"
-                    app:backgroundTint="@null"
-                    android:background="@drawable/gradient_blue"
-                    app:icon="@drawable/ic_launch_white"
-                    app:iconTint="#FFFFFF"
-                    app:iconGravity="textStart"
-                    app:iconSize="28dp"
-                    app:iconPadding="0dp"
-                    android:padding="0dp"
-                    android:insetLeft="0dp"
-                    android:insetTop="0dp"
-                    android:insetRight="0dp"
-                    android:insetBottom="0dp" />
-
-                <com.google.android.material.button.MaterialButton
                     android:id="@+id/preview_btn_usb"
                     android:layout_width="56dp"
                     android:layout_height="56dp"
@@ -345,46 +327,6 @@
                 android:orientation="vertical"
                 android:layout_marginTop="16dp"
                 android:background="@drawable/bg_setting_single">
-
-                <!-- Self Mode Button Color Row -->
-                <LinearLayout
-                    android:id="@+id/row_color_self_mode"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:gravity="center_vertical">
-
-                    <View
-                        android:id="@+id/indicator_self_mode"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:background="@drawable/gradient_blue"
-                        android:layout_marginEnd="16dp" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/btn_color_self_mode"
-                        android:textColor="?android:attr/textColorPrimary"
-                        android:textSize="16sp" />
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        app:srcCompat="@drawable/ic_chevron_right"
-                        app:tint="?android:attr/textColorSecondary" />
-
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="?android:attr/listDivider" />
 
                 <!-- USB Button Color Row -->
                 <LinearLayout

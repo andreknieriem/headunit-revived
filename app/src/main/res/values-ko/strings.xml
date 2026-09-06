@@ -10,7 +10,6 @@
     <string name="ignored">무시됨</string>
     <string name="exit">종료</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">단독 모드</string>
     <string name="to_android_auto">Android Auto로 전환</string>
     <string name="title">Open Headunit</string>
     <string name="remove">제거</string>
@@ -185,8 +184,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">일반</string>
-    <string name="auto_start_self_mode">단독 모드 자동 시작</string>
-    <string name="auto_start_self_mode_description">앱 실행 시 단독 모드를 자동으로 시작합니다.</string>
     <string name="usb_auto_connect">USB 자동 연결</string>
     <string name="usb_auto_connect_description">앱 실행 시 알려진 USB 기기에 자동으로 연결합니다.</string>
     <string name="auto_start_bt_label">블루투스 연결 시 자동 시작</string>
@@ -398,7 +395,6 @@
     <string name="success">성공</string>
     <string name="failed">실패</string>
     <string name="failed_start_android_auto">Android Auto 시작 실패</string>
-    <string name="failed_self_mode_android10">Android 10(Android Auto 16.4 이상)에서는 Google 정책으로 단독 모드가 차단될 수 있습니다.</string>
     <string name="android_auto_starting">Android Auto 시작 중…</string>
     <string name="connection_interrupted">연결 끊김</string>
     <string name="connection_interrupted_detail">다시 시도 중…</string>
@@ -409,8 +405,6 @@
     <string name="notification_projection_active">Android Auto 화면 출력 중</string>
     <string name="shortcut_connect_title">연결</string>
     <string name="shortcut_connect_desc">최근 사용한 휴대폰에 자동 연결</string>
-    <string name="shortcut_selfmode_title">단독 모드</string>
-    <string name="shortcut_selfmode_desc">이 기기에서 Android Auto 시작</string>
     <string name="shortcut_disconnect_title">연결 해제</string>
     <string name="shortcut_disconnect_desc">현재 세션 종료</string>
     <string name="shortcut_exit_title">앱 종료</string>
@@ -629,7 +623,6 @@
     <string name="renderer_confirm_yes">예</string>
     <string name="renderer_confirm_switch">렌더러 전환</string>
     <string name="renderer_switched_to">렌더러: %1$s</string>
-    <string name="self_mode_overlay_permission_description">단독 모드가 백그라운드에서 안정적으로 시작되도록 하려면 다음 화면에서 \"다른 앱 위에 표시\" 권한을 허용해 주세요.</string>
     <string name="delete">삭제</string>
     <string name="night_mode_coordinates">좌표</string>
     <string name="geofence_locations_title">위치</string>
@@ -912,7 +905,6 @@
     <string name="usb_device_action_title">USB 장치 작업</string>
     <string name="home_button_colors">버튼 색상 및 그라데이션</string>
     <string name="home_button_colors_description">홈 화면의 4개 버튼 색상 및 그라데이션 맞춤 설정</string>
-    <string name="btn_color_self_mode">셀프 모드 버튼</string>
     <string name="btn_color_usb">USB 버튼</string>
     <string name="btn_color_wifi">WiFi 버튼</string>
     <string name="btn_color_settings">설정 버튼</string>

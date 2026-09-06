@@ -4,7 +4,7 @@ import org.gradle.kotlin.dsl.repositories
 include(":app", ":contract")
 
 
-rootProject.name = "open-headunit"
+rootProject.name = "Emzoom AA"
 
 pluginManagement {
     repositories {

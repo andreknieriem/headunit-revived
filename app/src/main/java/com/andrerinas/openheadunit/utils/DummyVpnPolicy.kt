@@ -15,9 +15,6 @@ object DummyVpnPolicy {
 
     /** Why the VPN is up. `null` means we did not start it, so we must not stop it. */
     enum class Owner {
-        /** Offline Self Mode, which needs a non-null `activeNetwork` for our own process. */
-        SELF_MODE,
-
         /** [com.andrerinas.openheadunit.utils.Settings.keepDummyVpnDuringSession]: up for one session. */
         SESSION,
     }
@@ -31,9 +28,6 @@ object DummyVpnPolicy {
         /** A projection session ended, whatever it was for. */
         SESSION_ENDED,
 
-        /** Self Mode brought the VPN up and no phone ever arrived. */
-        SELF_MODE_NEVER_CONNECTED,
-
         SERVICE_DESTROYED,
     }
 
@@ -42,12 +36,11 @@ object DummyVpnPolicy {
         if (owner == null) return false
         return when (reason) {
             Reason.SESSION_ENDED, Reason.SERVICE_DESTROYED -> true
-            Reason.SELF_MODE_NEVER_CONNECTED -> owner == Owner.SELF_MODE
         }
     }
 
     /**
-     * Whether a connection that is not Self Mode should bring the VPN up.
+     * Whether a connection should bring the VPN up.
      *
      * [nativeWirelessSession] is not redundant with [keepDuringSession]. The toggle is only
      * rendered inside the Native AA block of the settings list, so a user who turns it on and then
@@ -58,7 +51,6 @@ object DummyVpnPolicy {
         keepDuringSession: Boolean,
         nativeWirelessSession: Boolean,
         currentOwner: Owner?,
-        selfMode: Boolean,
         vpnAvailable: Boolean,
         alreadyPrepared: Boolean,
     ): Boolean =
@@ -66,6 +58,5 @@ object DummyVpnPolicy {
             nativeWirelessSession &&
             vpnAvailable &&
             alreadyPrepared &&
-            !selfMode &&
             currentOwner == null
 }

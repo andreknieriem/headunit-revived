@@ -1,12 +1,11 @@
 package com.andrerinas.openheadunit.connection.self
 
 /**
- * Whether the projection should be put back on top of the phone's call screen, in Self Mode.
+ * Whether the projection should be put back on top of the call screen.
  *
- * Android Auto never enables its car-mode in-call service on Android 13+, so Telecom's swap - the
- * only thing that suppresses the Dialer during projection - cannot fire, and the Dialer covers the
- * projection. Android Auto's own call UI is live underneath it the whole time, so raising our
- * activity gives the user the call screen they wanted.
+ * Applies across all projection modes (Self Mode, USB, and Wireless). On headunits, local phone
+ * apps or dialers can cover projection during Bluetooth calls. Raising our activity keeps
+ * the user inside the Android Auto call interface.
  *
  * Bounded on purpose: a few attempts and then silence, so a user who deliberately wants the Dialer
  * gets it, and one last attempt after the call in case Android's own back-stack restore does not
@@ -14,44 +13,29 @@ package com.andrerinas.openheadunit.connection.self
  */
 object SelfModeCallRaisePolicy {
 
-    /** How long to let the call screen settle before the first attempt. */
-    const val FIRST_ATTEMPT_DELAY_MS = 600L
+    /** Immediate initial attempt so the call screen is immediately re-covered. */
+    const val FIRST_ATTEMPT_DELAY_MS = 0L
 
     /** Spacing between attempts while the call is up. */
     const val RETRY_INTERVAL_MS = 1_200L
 
     /**
      * Attempts allowed per call.
-     *
-     * The limit is what keeps this from becoming a fight. Once it is spent we stop pushing for the
-     * rest of the call, so switching to the Dialer by hand sticks.
      */
     const val MAX_ATTEMPTS_PER_CALL = 3
 
     /**
      * How long after the call ends to wait before the final attempt.
-     *
-     * Android normally reveals the still-paused projection the instant the call screen finishes
-     * itself, measured at 17 ms. This window lets that happen on its own; the attempt is only for
-     * the devices where it does not.
      */
     const val POST_CALL_SETTLE_MS = 1_000L
 
     /**
      * How long an episode may wait for the audio mode to report a call.
-     *
-     * The cover and the call race, and the cover usually wins: the call screen is up as soon as the
-     * call is added, while the audio mode only reports one once the call is dialling, which on an
-     * outgoing call is seconds later. If no call shows up in this window, something else covered us
-     * and we leave it alone.
      */
     const val CALL_CONFIRM_WINDOW_MS = 5_000L
 
     /**
      * How long an attempt keeps counting after the projection came back.
-     *
-     * A call screen that relaunches itself over us would otherwise get a fresh budget each time it
-     * did, which is the one way this could turn into a loop.
      */
     const val ATTEMPT_CARRY_WINDOW_MS = 5_000L
 
@@ -115,13 +99,6 @@ object SelfModeCallRaisePolicy {
 
     /**
      * What the caller carries between ticks.
-     *
-     * @param startedAtMs when the projection was covered.
-     * @param sawCallActive whether a call has been observed at all during this episode.
-     * @param attempts attempts made while the call was up.
-     * @param lastAttemptAtMs when the last attempt was made, or 0 if none.
-     * @param callEndedAtMs when the call was first observed to have ended, or 0 while it is up.
-     * @param postCallAttemptUsed whether the one attempt after the call has been made.
      */
     data class Episode(
         val startedAtMs: Long,
@@ -142,8 +119,7 @@ object SelfModeCallRaisePolicy {
     /**
      * @param nowMs monotonic clock, `SystemClock.elapsedRealtime()` at the call site.
      * @param isForeground whether the projection activity is resumed again.
-     * @param pipActive whether picture-in-picture owns the screen, in which case being covered is
-     *   the point.
+     * @param pipActive whether picture-in-picture owns the screen.
      */
     fun decide(
         nowMs: Long,
@@ -182,8 +158,6 @@ object SelfModeCallRaisePolicy {
 
     /**
      * Attempts to start a new episode with, given what the last one spent.
-     *
-     * Zero once the window has passed, so a call an hour later is never talked out of trying.
      */
     fun carriedAttempts(previousAttempts: Int, lastAttemptAtMs: Long, nowMs: Long): Int =
         if (lastAttemptAtMs > 0L && nowMs - lastAttemptAtMs <= ATTEMPT_CARRY_WINDOW_MS) previousAttempts else 0

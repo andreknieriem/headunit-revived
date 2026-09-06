@@ -11,7 +11,6 @@
     <string name="ignored">Yoksayıldı</string>
     <string name="exit">Çıkış</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Dahili Mod</string>
     <string name="to_android_auto">Android Auto\'ya Geç</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Kaldır</string>
@@ -179,8 +178,6 @@
     <string name="change_language">Dili Değiştir</string>
 
     <string name="category_general">Genel</string>
-    <string name="auto_start_self_mode">Dahili Modu otomatik başlat</string>
-    <string name="auto_start_self_mode_description">Uygulama açıldığında Dahili Modu otomatik olarak başlat.</string>
     <string name="usb_auto_connect">USB Otomatik Bağlan</string>
     <string name="usb_auto_connect_description">Uygulama açıldığında bilinen bir USB cihazına otomatik olarak bağlan.</string>
     <string name="auto_start_bt_label">Bluetooth ile otomatik başlat</string>
@@ -337,7 +334,6 @@
     <string name="success">Başarılı</string>
     <string name="failed">Başarısız</string>
     <string name="failed_start_android_auto">Android Auto başlatılamadı</string>
-    <string name="failed_self_mode_android10">Dahili mod (Self-mode) muhtemelen Google tarafından Android 10\'da (AA 16.4+) engelleniyor. README\'ye bakın.</string>
     <string name="android_auto_starting">Android Auto başlatılıyor…</string>
     <string name="connection_interrupted">Bağlantı kesildi</string>
     <string name="connection_interrupted_detail">Yeniden deneniyor…</string>
@@ -348,8 +344,6 @@
     <string name="notification_projection_active">Android Auto yansıtılıyor</string>
     <string name="shortcut_connect_title">Bağlan</string>
     <string name="shortcut_connect_desc">Son telefona otomatik bağlan</string>
-    <string name="shortcut_selfmode_title">Dahili Mod</string>
-    <string name="shortcut_selfmode_desc">Android Auto\'yu bu cihazda başlat</string>
     <string name="shortcut_disconnect_title">Bağlantıyı Kes</string>
     <string name="shortcut_disconnect_desc">Mevcut oturumu sonlandır</string>
     <string name="shortcut_exit_title">Uygulamadan Çık</string>
@@ -619,8 +613,6 @@
     <string name="renderer_confirm_yes">Evet</string>
     <string name="renderer_confirm_switch">Oluşturucuyu değiştir</string>
     <string name="renderer_switched_to">Oluşturucu: %1$s</string>
-
-    <string name="self_mode_overlay_permission_description">Kendi Modunun arka planda güvenilir bir şekilde başlatılabilmesi için lütfen bir sonraki ekranda \"Diğer uygulamaların üzerinde göster\" iznini etkinleştirin.</string>
 
     <!-- Geofence / Coordinates -->
     <string name="delete">Sil</string>
@@ -909,7 +901,6 @@
     <string name="usb_device_action_title">USB Cihazı Eylemi</string>
     <string name="home_button_colors">Düğme Renkleri ve Gradyanlar</string>
     <string name="home_button_colors_description">Ana ekrandaki 4 düğmenin renklerini ve gradyanlarını özelleştirin</string>
-    <string name="btn_color_self_mode">Bağımsız Mod Düğmesi</string>
     <string name="btn_color_usb">USB Düğmesi</string>
     <string name="btn_color_wifi">WiFi Düğmesi</string>
     <string name="btn_color_settings">Ayarlar Düğmesi</string>

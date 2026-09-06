@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Open Headunit</string>
+    <string name="app_name">Emzoom AA</string>
     <string name="menu">Menu</string>
     <string name="settings">Cài đặt</string>
 
@@ -12,7 +12,7 @@
     <string name="video">Android Auto</string>
     <string name="self_mode">Chế độ độc lập</string>
     <string name="to_android_auto">Sang Android Auto</string>
-    <string name="title">Open Headunit</string>
+    <string name="title">Emzoom AA</string>
     <string name="remove">Xoá</string>
     <string name="usb">USB</string>
     <string name="wifi">WiFi</string>

@@ -1,6 +1,7 @@
 package com.andrerinas.openheadunit.connection.usb
 
 import android.content.Context
+import android.content.Intent
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.widget.Toast
@@ -9,6 +10,7 @@ import com.andrerinas.openheadunit.App
 import com.andrerinas.openheadunit.R
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.connection.CommManager
+import com.andrerinas.openheadunit.main.MainActivity
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.ToastUtils
 import java.util.concurrent.atomic.AtomicBoolean
@@ -58,7 +60,7 @@ class UsbLauncherManager(val service: AapService) {
         ContextCompat.registerReceiver(
             service, receiver,
             UsbReceiver.createFilter(),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
     }
 
@@ -78,6 +80,12 @@ class UsbLauncherManager(val service: AapService) {
         AppLog.i("Requesting USB permission for ${UsbDeviceCompat(device).uniqueName}")
 
         try {
+            // Bring app UI to the foreground so Android OS doesn't suppress the USB permission dialog
+            val launchIntent = Intent(service, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+            service.startActivity(launchIntent)
+
             ToastUtils.showToast(service, service.getString(R.string.requesting_usb_permission), Toast.LENGTH_SHORT)
             usbManager.requestPermission(device, permissionIntent)
         } catch (e: Exception) {

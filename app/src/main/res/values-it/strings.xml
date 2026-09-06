@@ -10,7 +10,6 @@
     <string name="ignored">Ignorato</string>
     <string name="exit">Esci</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Modalità Self</string>
     <string name="to_android_auto">A Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Rimuovi</string>
@@ -182,8 +181,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Generale</string>
-    <string name="auto_start_self_mode">Avvio automatico Self-Mode</string>
-    <string name="auto_start_self_mode_description">Avvia automaticamente la Self-Mode all\'apertura dell\'applicazione.</string>
     <string name="usb_auto_connect">Connessione automatica USB</string>
     <string name="usb_auto_connect_description">Connettiti automaticamente a un dispositivo USB noto all\'apertura dell\'applicazione.</string>
     <string name="auto_start_bt_label">Avvio automatico su Bluetooth</string>
@@ -345,7 +342,6 @@
     <string name="success">Successo</string>
     <string name="failed">Fallito</string>
     <string name="failed_start_android_auto">Avvio di Android Auto fallito</string>
-    <string name="failed_self_mode_android10">La modalità Self è probabilmente bloccata da Google su Android 10 (AA 16.4+). Vedere il README.</string>
     <string name="android_auto_starting">Android Auto si sta avviando…</string>
     <string name="connection_interrupted">Connessione persa</string>
     <string name="connection_interrupted_detail">Riprovo…</string>
@@ -356,8 +352,6 @@
     <string name="notification_projection_active">Android Auto è proiettato</string>
     <string name="shortcut_connect_title">Connetti</string>
     <string name="shortcut_connect_desc">Connetti automaticamente all\'ultimo telefono</string>
-    <string name="shortcut_selfmode_title">Self Mode</string>
-    <string name="shortcut_selfmode_desc">Avvia Android Auto su questo dispositivo</string>
     <string name="shortcut_disconnect_title">Disconnetti</string>
     <string name="shortcut_disconnect_desc">Termina sessione corrente</string>
     <string name="shortcut_exit_title">Chiudi App</string>
@@ -630,8 +624,6 @@
     <string name="renderer_confirm_yes">Sì</string>
     <string name="renderer_confirm_switch">Cambia renderer</string>
     <string name="renderer_switched_to">Renderer: %1$s</string>
-
-    <string name="self_mode_overlay_permission_description">Per consentire l\'avvio affidabile della Modalità Personale in background, abilita l\'autorizzazione \"Mostra sopra altre app\" nella schermata successiva.</string>
 
     <string name="delete">Elimina</string>
     <string name="night_mode_coordinates">Coordinate</string>
@@ -917,7 +909,6 @@
     <string name="usb_device_action_title">Azione dispositivo USB</string>
     <string name="home_button_colors">Colori dei pulsanti e sfumature</string>
     <string name="home_button_colors_description">Personalizza colori e gradienti dei 4 pulsanti della schermata iniziale</string>
-    <string name="btn_color_self_mode">Pulsante Modalità Autonoma</string>
     <string name="btn_color_usb">Pulsante USB</string>
     <string name="btn_color_wifi">Pulsante WiFi</string>
     <string name="btn_color_settings">Pulsante Impostazioni</string>

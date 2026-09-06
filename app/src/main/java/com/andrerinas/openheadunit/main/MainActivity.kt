@@ -34,7 +34,6 @@ import com.andrerinas.openheadunit.aap.AapProjectionActivity
 import com.andrerinas.openheadunit.aap.AapService
 import com.andrerinas.openheadunit.aap.NativeTransport
 import com.andrerinas.openheadunit.app.BaseActivity
-import com.andrerinas.openheadunit.app.BtAutoStartRearmPolicy
 import com.andrerinas.openheadunit.connection.CommManager
 import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.AppPermissions
@@ -200,15 +199,12 @@ class MainActivity : BaseActivity() {
             }
         })
 
-        val launchSource = if (savedInstanceState == null) intent?.getStringExtra(EXTRA_LAUNCH_SOURCE) else null
+        val isUsbAutoStart = savedInstanceState == null &&
+            intent?.getStringExtra(EXTRA_LAUNCH_SOURCE) == "USB auto-start"
 
-        if (launchSource == "USB auto-start") {
+        if (isUsbAutoStart) {
             findViewById<View>(R.id.splash_overlay)?.visibility = View.GONE
             beginAutoConnect("USB auto-start", ConnectionUiMode.OVERLAY)
-        } else if (launchSource == LAUNCH_SOURCE_BLUETOOTH) {
-            // The connect pill and the Self Mode launch are raised from handleLaunchIntent, so a
-            // warm activity handed the same intent behaves the same way.
-            findViewById<View>(R.id.splash_overlay)?.visibility = View.GONE
         } else if (savedInstanceState == null) {
             val elapsedSinceStart = SystemClock.elapsedRealtime() - App.appStartTime
             val targetTotalDuration = 1200L
@@ -792,14 +788,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun forceSelfModeLaunch() {
-        HomeFragment.forceSelfModeLaunch = true
-        val selfModeIntent = Intent(this, AapService::class.java).apply {
-            this.action = AapService.ACTION_START_SELF_MODE
-        }
-        ContextCompat.startForegroundService(this, selfModeIntent)
-    }
-
     private fun handleLaunchIntent(intent: Intent?) {
         if (intent == null) return
 
@@ -822,35 +810,7 @@ class MainActivity : BaseActivity() {
             return
         }
 
-        if (intentAction == AapService.ACTION_START_SELF_MODE ||
-           (intentData?.scheme == "headunit" && intentData.host == "selfmode")) {
-            AppLog.i("MainActivity: Forced self-mode start requested")
-            forceSelfModeLaunch()
-        }
 
-        if (intent.getStringExtra(EXTRA_LAUNCH_SOURCE) == LAUNCH_SOURCE_BLUETOOTH) {
-            // The service has already been told to arm wireless; this is the non-blocking pill
-            // while it does, and the Self Mode launch, which only an activity can start because
-            // HomeFragment owns the VPN consent and the projection needs a foreground window.
-            val commManager = App.provide(this).commManager
-            val settings = App.provide(this).settings
-            if (!commManager.isConnected) {
-                beginAutoConnect(LAUNCH_SOURCE_BLUETOOTH, ConnectionUiMode.PILL)
-            }
-            val launchesSelfMode = BtAutoStartRearmPolicy.launchesSelfMode(
-                selfSelected = settings.showsSelf(),
-                wirelessSelected = settings.showsWifi(),
-                mode = settings.wifiConnectionMode,
-                sessionUp = commManager.isConnected,
-                nativeAttemptInFlight = AapService.instance?.nativeAttemptInFlight()
-            )
-            if (launchesSelfMode) {
-                AppLog.i("MainActivity: Bluetooth auto-start: forcing a Self Mode launch")
-                forceSelfModeLaunch()
-            } else {
-                AppLog.i("MainActivity: Bluetooth auto-start: leaving Self Mode alone")
-            }
-        }
 
         if (intent.action == Intent.ACTION_VIEW) {
             if (intentData?.scheme == "headunit" && intentData.host == "connect") {
@@ -1139,7 +1099,7 @@ class MainActivity : BaseActivity() {
 
         /** Launch sources that mean the app opened itself, with nobody necessarily watching. */
         private val AUTOMATIC_LAUNCH_SOURCES = setOf(
-            "Boot auto-start", "USB auto-start", "WiFi auto-start", LAUNCH_SOURCE_BLUETOOTH
+            "Boot auto-start", "USB auto-start", "WiFi auto-start", "Bluetooth auto-start"
         )
 
         /**

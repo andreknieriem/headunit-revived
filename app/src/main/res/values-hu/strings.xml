@@ -10,7 +10,6 @@
     <string name="ignored">Ignorált</string>
     <string name="exit">Kilépés</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Önálló mód</string>
     <string name="to_android_auto">Android Auto-ba</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Eltávolít</string>
@@ -156,8 +155,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Általános</string>
-    <string name="auto_start_self_mode">Önálló mód automatikus indítása</string>
-    <string name="auto_start_self_mode_description">Az alkalmazás megnyitásakor az önálló mód automatikus indítása.</string>
     <string name="usb_auto_connect">Automatikus USB-csatlakozás</string>
     <string name="usb_auto_connect_description">Az alkalmazás megnyitásakor automatikus csatlakozás egy ismert USB-eszközhöz.</string>
     <string name="auto_start_bt_label">Bluetooth automatikus indítás</string>
@@ -319,7 +316,6 @@
     <string name="success">Sikeres</string>
     <string name="failed">Sikertelen</string>
     <string name="failed_start_android_auto">Az Android Auto indítása sikertelen</string>
-    <string name="failed_self_mode_android10">Az Önálló módot (Self-mode) valószínűleg blokkolja a Google az Android 10-en (AA 16.4+). Lásd a README-t.</string>
     <string name="android_auto_starting">Az Android Auto indul…</string>
     <string name="connection_interrupted">Kapcsolat elveszett</string>
     <string name="connection_interrupted_detail">Újrapróbálkozás…</string>
@@ -328,8 +324,6 @@
     <string name="notification_projection_active">Android Auto kivetítve</string>
     <string name="shortcut_connect_title">Kapcsolódás</string>
     <string name="shortcut_connect_desc">Kapcsolódás az utolsó ismert eszközhöz</string>
-    <string name="shortcut_selfmode_title">Saját mód</string>
-    <string name="shortcut_selfmode_desc">Android Auto indítása ezen az eszközön</string>
     <string name="shortcut_disconnect_title">Leválasztás</string>
     <string name="shortcut_disconnect_desc">Az aktuális munkamenet befejezése</string>
     <string name="shortcut_exit_title">Kilépés az alkalmazásból</string>
@@ -623,8 +617,6 @@
     <string name="renderer_confirm_switch">Megjelenítő váltása</string>
     <string name="renderer_switched_to">Megjelenítő: %1$s</string>
 
-    <string name="self_mode_overlay_permission_description">A Saját mód háttérben történő megbízható indításához engedélyezze a „Megjelenítés más alkalmazások felett” jogosultságot a következő képernyőn.</string>
-
     <string name="delete">Törlés</string>
     <string name="night_mode_coordinates">Koordináták</string>
     <string name="geofence_locations_title">Helyek</string>
@@ -910,7 +902,6 @@
     <string name="usb_device_action_title">USB eszköz művelet</string>
     <string name="home_button_colors">Gombszínek és színátmenetek</string>
     <string name="home_button_colors_description">A 4 kezdőképernyő gomb színeinek és átmeneteinek testreszabása</string>
-    <string name="btn_color_self_mode">Önálló mód gomb</string>
     <string name="btn_color_usb">USB gomb</string>
     <string name="btn_color_wifi">WiFi gomb</string>
     <string name="btn_color_settings">Beállítások gomb</string>

@@ -10,7 +10,6 @@
     <string name="ignored">تجاهل</string>
     <string name="exit">خروج</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">الوضع الذاتي</string>
     <string name="to_android_auto">إلى Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">إزالة</string>
@@ -52,6 +51,7 @@
     <string name="btn_choose_image">اختيار صورة</string>
     <string name="btn_reset_default">إعادة الضبط للافتراضي</string>
     <string name="category_automation">الأتمتة</string>
+    <string name="category_more_features">المزيد من الميزات</string>
     <string name="dark_mode_settings">إعدادات الوضع الداكن</string>
     <string name="app_theme_short">التطبيق</string>
     <string name="night_mode_short">Android Auto</string>
@@ -157,8 +157,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">عام</string>
-    <string name="auto_start_self_mode">تشغيل الوضع الذاتي تلقائيا</string>
-    <string name="auto_start_self_mode_description">تشغيل الوضع الذاتي تلقائيا عند فتح التطبيق.</string>
     <string name="usb_auto_connect">الاتصال التلقائي بـ USB</string>
     <string name="usb_auto_connect_description">الاتصال تلقائيا بجهاز USB معروف عند فتح التطبيق.</string>
     <string name="auto_start_bt_label">التشغيل التلقائي عبر البلوتوث</string>
@@ -320,7 +318,6 @@
     <string name="success">نجاح</string>
     <string name="failed">فشل</string>
     <string name="failed_start_android_auto">فشل تشغيل Android Auto</string>
-    <string name="failed_self_mode_android10">من المحتمل أن يكون \"Self-mode\" محظورًا من قبل Google على Android 10 (AA 16.4+). راجع README.</string>
     <string name="android_auto_starting">جار تشغيل Android Auto…</string>
     <string name="connection_interrupted">فُقد الاتصال</string>
     <string name="connection_interrupted_detail">جارٍ إعادة المحاولة…</string>
@@ -329,8 +326,6 @@
     <string name="notification_projection_active">Android Auto قيد الإسقاط</string>
     <string name="shortcut_connect_title">اتصال</string>
     <string name="shortcut_connect_desc">الاتصال بآخر جهاز معروف</string>
-    <string name="shortcut_selfmode_title">الوضع الذاتي</string>
-    <string name="shortcut_selfmode_desc">ابدأ Android Auto على هذا الجهاز</string>
     <string name="shortcut_disconnect_title">قطع الاتصال</string>
     <string name="shortcut_disconnect_desc">إنهاء الجلسة الحالية</string>
     <string name="shortcut_exit_title">إغلاق التطبيق</string>
@@ -624,8 +619,6 @@
     <string name="renderer_confirm_switch">تبديل العارض</string>
     <string name="renderer_switched_to">العارض: %1$s</string>
 
-    <string name="self_mode_overlay_permission_description">للسماح للوضع الذاتي بالبدء بشكل موثوق في الخلفية، يرجى تفعيل إذن \"الظهور فوق التطبيقات الأخرى\" في الشاشة التالية.</string>
-
     <string name="delete">حذف</string>
     <string name="night_mode_coordinates">الإحداثيات</string>
     <string name="geofence_locations_title">المواقع</string>
@@ -912,7 +905,6 @@
     <string name="usb_device_action_title">إجراء جهاز USB</string>
     <string name="home_button_colors">ألوان الأزرار والتدرجات</string>
     <string name="home_button_colors_description">تخصيص ألوان وتدرجات أزرار الشاشة الرئيسية الأربعة</string>
-    <string name="btn_color_self_mode">زر الوضع الذاتي</string>
     <string name="btn_color_usb">زر USB</string>
     <string name="btn_color_wifi">زر WiFi</string>
     <string name="btn_color_settings">زر الإعدادات</string>

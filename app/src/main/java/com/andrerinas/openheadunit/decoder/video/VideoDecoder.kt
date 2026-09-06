@@ -5,6 +5,7 @@ import android.media.MediaCodecInfo
 import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.os.Build
+import android.os.Process
 import android.view.Surface
 import com.andrerinas.openheadunit.utils.AuditReportPolicy
 import com.andrerinas.openheadunit.utils.AppLog
@@ -1759,7 +1760,7 @@ class VideoDecoder(
             running = true
             clearFrameQueue()
             outputThread = Thread {
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY)
+                Process.setThreadPriority(Process.THREAD_PRIORITY_DISPLAY)
                 LegacyOptimizer.setHighPriority()
                 outputThreadLoop()
             }.apply { name = "VideoDecoder-Output"; start() }
@@ -1768,7 +1769,7 @@ class VideoDecoder(
             // prior stop() left and exit at birth - after which every frame queues into a feed
             // queue nobody drains.
             val newFeedThread = Thread {
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY)
+                Process.setThreadPriority(Process.THREAD_PRIORITY_DISPLAY)
                 feedThreadLoop()
             }.apply { name = "VideoDecoder-Feed" }
             feedThread = newFeedThread

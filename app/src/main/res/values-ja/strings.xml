@@ -10,7 +10,6 @@
     <string name="ignored">無視</string>
     <string name="exit">終了</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">セルフモード</string>
     <string name="to_android_auto">To Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">取り除く</string>
@@ -182,8 +181,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">一般</string>
-    <string name="auto_start_self_mode">自動開始セルフモード</string>
-    <string name="auto_start_self_mode_description">アプリケーションが開かれた時に自動でセルフモードが開始します。</string>
     <string name="usb_auto_connect">USB自動接続</string>
     <string name="usb_auto_connect_description">アプリケーションが開始された時に既知のUSBデバイスに接続されると自動的に接続します。</string>
     <string name="auto_start_bt_label">Bluetooth自動開始</string>
@@ -345,7 +342,6 @@
     <string name="success">成功</string>
     <string name="failed">失敗</string>
     <string name="failed_start_android_auto">Android Autoの起動に失敗しました</string>
-    <string name="failed_self_mode_android10">セルフモードはAndroid 10 (AA 16.4+) でGoogleによってブロックされている可能性があります。READMEを同封します。</string>
     <string name="android_auto_starting">Android Autoは起動中です…</string>
     <string name="connection_interrupted">切断されました</string>
     <string name="connection_interrupted_detail">再試行中…</string>
@@ -356,8 +352,6 @@
     <string name="notification_projection_active">Android Autoを起動中</string>
     <string name="shortcut_connect_title">接続</string>
     <string name="shortcut_connect_desc">最後に認識されたデバイスに接続する</string>
-    <string name="shortcut_selfmode_title">セルフモード</string>
-    <string name="shortcut_selfmode_desc">このデバイスでAndroid Autoを開始</string>
     <string name="shortcut_disconnect_title">切断</string>
     <string name="shortcut_disconnect_desc">現在のセッションを終了する</string>
     <string name="shortcut_exit_title">アプリを閉じる</string>
@@ -632,7 +626,6 @@
     <string name="renderer_confirm_switch">レンダラーを切り替える</string>
     <string name="renderer_switched_to">レンダラー: %1$s</string>
 
-    <string name="self_mode_overlay_permission_description">単独モードをバックグラウンドから安定して起動できるようにするため、次の画面で「他のアプリの上に重ねて表示」の権限を有効にしてください。</string>
     <string name="delete">削除</string>
     <string name="night_mode_coordinates">座標</string>
     <string name="geofence_locations_title">場所</string>
@@ -918,7 +911,6 @@
     <string name="usb_device_action_title">USBデバイスのアクション</string>
     <string name="home_button_colors">ボタンの色とグラデーション</string>
     <string name="home_button_colors_description">ホーム画面の4つのボタンの色とグラデーションをカスタマイズ</string>
-    <string name="btn_color_self_mode">セルフモードボタン</string>
     <string name="btn_color_usb">USBボタン</string>
     <string name="btn_color_wifi">WiFiボタン</string>
     <string name="btn_color_settings">設定ボタン</string>

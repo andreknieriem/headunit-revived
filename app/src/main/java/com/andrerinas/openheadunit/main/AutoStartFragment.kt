@@ -462,7 +462,7 @@ class AutoStartFragment : Fragment() {
         val filtered = items.filterNot { item ->
             (item.stableId in usbIds && !settings.showsUsb()) ||
                 (item.stableId in wifiIds && !settings.showsWifi()) ||
-                (item.stableId in btIds && !settings.showsWifi() && !settings.showsSelf())
+                (item.stableId in btIds && !settings.showsWifi())
         }
 
         settingsAdapter.submitList(filtered) {

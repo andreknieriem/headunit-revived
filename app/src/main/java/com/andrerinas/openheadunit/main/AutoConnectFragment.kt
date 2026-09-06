@@ -59,7 +59,6 @@ class AutoConnectFragment : Fragment() {
         initialOrder = settings.autoConnectPriorityOrder.toList()
         initialEnabled = mapOf(
             Settings.AUTO_CONNECT_LAST_SESSION to settings.autoConnectLastSession,
-            Settings.AUTO_CONNECT_SELF_MODE to settings.autoStartSelfMode,
             Settings.AUTO_CONNECT_SINGLE_USB to settings.autoConnectSingleUsbDevice
         )
         initialDelaySeconds = settings.autoConnectDelaySeconds
@@ -183,7 +182,6 @@ class AutoConnectFragment : Fragment() {
     private fun methodDefinition(id: String): Pair<Int, Int>? {
         return when (id) {
             Settings.AUTO_CONNECT_LAST_SESSION -> R.string.auto_connect_last_session to R.string.auto_connect_last_session_description
-            Settings.AUTO_CONNECT_SELF_MODE -> R.string.auto_start_self_mode to R.string.auto_start_self_mode_description
             Settings.AUTO_CONNECT_SINGLE_USB -> R.string.auto_connect_single_usb to R.string.auto_connect_single_usb_description
             else -> null
         }
@@ -257,7 +255,6 @@ class AutoConnectFragment : Fragment() {
 
         // Persist individual toggles
         enabledStates[Settings.AUTO_CONNECT_LAST_SESSION]?.let { settings.autoConnectLastSession = it }
-        enabledStates[Settings.AUTO_CONNECT_SELF_MODE]?.let { settings.autoStartSelfMode = it }
         enabledStates[Settings.AUTO_CONNECT_SINGLE_USB]?.let { settings.autoConnectSingleUsbDevice = it }
         settings.autoConnectDelaySeconds = pendingDelaySeconds
 

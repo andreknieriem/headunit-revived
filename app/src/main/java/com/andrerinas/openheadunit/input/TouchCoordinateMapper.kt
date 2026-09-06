@@ -31,6 +31,10 @@ object TouchCoordinateMapper {
         val videoY: Float
 
         if (stretchToFill) {
+            // Fix for Wide Pixel Aspect Ratio (Ultrawide 1920x720 using 1280 buffer)
+            // If the surface is 1920 and the buffer is 1280, the stretch factor is 1.5.
+            // A touch at 1920 should map to 1280.
+            // (1920 / 1920) * 1280 = 1280.
             videoX = (px / surfaceW) * uiW
             videoY = (rawY / surfaceH) * uiH
         } else {

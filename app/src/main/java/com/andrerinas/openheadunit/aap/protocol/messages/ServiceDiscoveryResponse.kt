@@ -165,11 +165,7 @@ class ServiceDiscoveryResponse(private val context: Context)
             }.build()
             services.add(audio2)
 
-            // Asked of the session, not of SelfLauncherManager.isActive: that flag is set before
-            // the launchers run and a failed launch left it set, so a Native AA session announced
-            // system sounds only and had no audio at all. See AudioSinkAnnouncementPolicy.
-            val isSelfModeSession = App.provide(context).commManager.isLoopbackSession
-            if (AudioSinkAnnouncementPolicy.announcesMediaAndSpeech(settings.enableAudioSink, isSelfModeSession)) {
+            if (settings.enableAudioSink) {
                 val audio1 = Control.Service.newBuilder().also { service ->
                     service.id = Channel.ID_AU1
                     service.mediaSinkService = Control.Service.MediaSinkService.newBuilder().also {
@@ -189,17 +185,9 @@ class ServiceDiscoveryResponse(private val context: Context)
                     }.build()
                 }.build()
                 services.add(audio0)
-            } else if (!settings.enableAudioSink) {
-                // Without this line a muted head unit is indistinguishable from a broken one. The
-                // channels are never declared, so the phone never opens them, so nothing about the
-                // silence appears anywhere in the log and every audio instrument reads zero. It
-                // has already cost one test round. Named in the user's terms so a reporter can act
-                // on it, the same way the Bluetooth service does below.
+            } else {
                 AppLog.i("Audio sink is off in Settings. Skipping the media and speech audio " +
                         "channels - the phone will not send audio and this is not a fault")
-            } else {
-                AppLog.i("Self Mode is projecting this device to itself, so the media and speech " +
-                        "audio channels are skipped - this is not a fault")
             }
 
             // Microphone Service (Channel 7), announced only when this head unit will record.

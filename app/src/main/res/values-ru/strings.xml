@@ -10,7 +10,6 @@
     <string name="ignored">Игнорировать</string>
     <string name="exit">Выход</string>
     <string name="video">Android Auto</string>
-    <string name="self_mode">Автономный режим</string>
     <string name="to_android_auto">В Android Auto</string>
     <string name="title">Open Headunit</string>
     <string name="remove">Удалить</string>
@@ -157,8 +156,6 @@
 
     <!-- Categories for SettingsFragment -->
     <string name="category_general">Общие</string>
-    <string name="auto_start_self_mode">Автоматический автономный режим</string>
-    <string name="auto_start_self_mode_description">Автоматически включать автономный режим при запуске приложения.</string>
     <string name="usb_auto_connect">Автоподключение USB</string>
     <string name="usb_auto_connect_description">Автоматически подключаться к известному USB-устройству при запуске приложения.</string>
     <string name="auto_start_bt_label">Автозапуск при Bluetooth</string>
@@ -323,7 +320,6 @@
     <string name="success">Успешно</string>
     <string name="failed">Ошибка</string>
     <string name="failed_start_android_auto">Не удалось запустить Android Auto</string>
-    <string name="failed_self_mode_android10">Автономный режим (Self-mode), вероятно, заблокирован Google на Android 10 (AA 16.4+). См. README.</string>
     <string name="android_auto_starting">Запуск Android Auto…</string>
     <string name="connection_interrupted">Соединение потеряно</string>
     <string name="connection_interrupted_detail">Повторное подключение…</string>
@@ -479,8 +475,6 @@
 
     <string name="not_supported_nativeaa">Нативный беспроводной режим, похоже, не поддерживается</string>
     <string name="not_supported_nativeaa_desc">Ваше устройство может не поддерживать необходимые функции Bluetooth или Wi-Fi для нативного беспроводного режима. Вы можете попробовать в любом случае, но если не получится, используйте режим «Wireless Helper» или «Auto (Headunit Server)».</string>
-    <string name="shortcut_selfmode_title">Автономный режим</string>
-    <string name="shortcut_selfmode_desc">Запустить Android Auto на этом устройстве</string>
     <string name="wait_for_wifi">Ждать Wi‑Fi перед Wi‑Fi Direct</string>
     <string name="wait_for_wifi_description">При запуске ждать подключения Wi‑Fi перед запуском Wi‑Fi Direct. Полезно, если вашему головному устройству требуется несколько секунд для подключения к Wi‑Fi после включения.</string>
     <string name="wait_for_wifi_timeout">Тайм-аут ожидания Wi‑Fi</string>
@@ -622,8 +616,6 @@
     <string name="renderer_confirm_yes">Да</string>
     <string name="renderer_confirm_switch">Сменить рендерер</string>
     <string name="renderer_switched_to">Рендерер: %1$s</string>
-
-    <string name="self_mode_overlay_permission_description">Чтобы автономный режим надежно запускался в фоновом режиме, включите разрешение «Отображение поверх других приложений» на следующем экране.</string>
 
     <!-- Geofence / Coordinates -->
     <string name="delete">Удалить</string>
@@ -913,7 +905,6 @@
     <string name="usb_device_action_title">Действие для USB-устройства</string>
     <string name="home_button_colors">Цвета кнопок и градиенты</string>
     <string name="home_button_colors_description">Настройка цветов и градиентов 4 кнопок главного экрана</string>
-    <string name="btn_color_self_mode">Кнопка Автономного режима</string>
     <string name="btn_color_usb">Кнопка USB</string>
     <string name="btn_color_wifi">Кнопка WiFi</string>
     <string name="btn_color_settings">Кнопка Настроек</string>
