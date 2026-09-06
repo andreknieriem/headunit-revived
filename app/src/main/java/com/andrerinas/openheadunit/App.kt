@@ -1,5 +1,6 @@
 package com.andrerinas.openheadunit
 
+import android.app.Activity
 import androidx.appcompat.app.AppCompatDelegate
 import android.app.Application
 import android.app.NotificationChannel
@@ -10,8 +11,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.UserManager
 import android.os.Build
+import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.multidex.MultiDex
+import com.sesam17.openheadunit.SesAM17Plugin
 import com.andrerinas.openheadunit.main.BackgroundNotification
 import com.andrerinas.openheadunit.aap.AapNavigation
 import com.andrerinas.openheadunit.ssl.ConscryptInitializer
@@ -21,7 +24,9 @@ import com.andrerinas.openheadunit.utils.Settings
 import android.os.SystemClock
 import java.io.File
 
-class App : Application() {
+class App : Application(), Application.ActivityLifecycleCallbacks {
+
+    private var startedActivityCount = 0
 
     private val component: AppComponent by lazy {
         AppComponent(this)
@@ -36,7 +41,7 @@ class App : Application() {
         super.onCreate()
         instance = this
 
-
+        registerActivityLifecycleCallbacks(this)
 
         // Enable vector drawable support on older Android versions
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
@@ -50,9 +55,6 @@ class App : Application() {
         } else {
             AppLog.init(null, this) // Initialize with default logging if locked
             AppLog.w("App started in Direct Boot mode (locked). Settings access deferred.")
-            // The process outlives the lock screen, so without this it would spend the rest of
-            // its life on defaults: the user's log level, their theme and the auto-start mirrors
-            // would all stay unread until the process happened to die.
             ContextCompat.registerReceiver(
                 this, userUnlockedReceiver, IntentFilter(Intent.ACTION_USER_UNLOCKED),
                 ContextCompat.RECEIVER_NOT_EXPORTED
@@ -65,14 +67,14 @@ class App : Application() {
             AppLog.w("Conscrypt not available - TLS 1.2 may not work on this device")
         }
 
-        AppLog.d( "native library dir ${applicationInfo.nativeLibraryDir}")
+        AppLog.d("native library dir ${applicationInfo.nativeLibraryDir}")
 
         File(applicationInfo.nativeLibraryDir).listFiles()?.forEach { file ->
-            AppLog.d( "   ${file.name}")
+            AppLog.d("   ${file.name}")
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             val serviceChannel = NotificationChannel(defaultChannel, "Headunit Service", NotificationManager.IMPORTANCE_LOW)
             serviceChannel.description = "Persistent service notification"
             serviceChannel.setShowBadge(false)
@@ -95,11 +97,6 @@ class App : Application() {
         ContextCompat.registerReceiver(this, AapBroadcastReceiver(), AapBroadcastReceiver.filter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
-    /**
-     * Everything that needs credential-encrypted storage, including the object graph itself:
-     * AppComponent builds a VideoDecoder whose fields read Settings, so touching it before the
-     * first unlock throws and takes the whole process down. Runs once, at start or at unlock.
-     */
     private fun initUnlockedOnce() {
         if (unlockedInitDone) return
         unlockedInitDone = true
@@ -110,20 +107,13 @@ class App : Application() {
         val settings = Settings(this) // Create a Settings instance
         AppLog.init(settings, this) // Initialize AppLog with settings for conditional logging
 
-        // Sync auto-start settings to device-protected storage so that
-        // BootCompleteReceiver, UsbAttachedActivity, and AutoStartReceiver
-        // can read them during locked boot (before user unlock)
         Settings.syncAutoStartOnBootToDeviceStorage(this, settings.autoStartOnBoot)
         Settings.syncAutoStartOnUsbToDeviceStorage(this, settings.autoStartOnUsb)
         Settings.syncAutoStartOnWifiToDeviceStorage(this, settings.autoStartOnWifi)
         Settings.syncAutoStartWifiSsidToDeviceStorage(this, settings.autoStartWifiSsid)
         Settings.syncAutoStartBtMacsToDeviceStorage(this, settings.autoStartBluetoothDeviceMacs)
-        // The blacklist joins them: an install that predates the mirror has its list only in
-        // credential storage, so without this it is invisible until the user edits it.
         Settings.syncUsbBlacklistToDeviceStorage(this, settings.usbBlacklist)
 
-        // Apply app theme (runs the live manager when dynamic, or when a saved place
-        // can force the app theme even over a static base).
         AppThemeManager.reapply(this, settings)
     }
 
@@ -142,10 +132,33 @@ class App : Application() {
 
     private fun isUserUnlocked(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val userManager = getSystemService(Context.USER_SERVICE) as UserManager
+            val userManager = getSystemService(USER_SERVICE) as UserManager
             userManager.isUserUnlocked
         } else {
             true
+        }
+    }
+
+    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+    override fun onActivityStarted(activity: Activity) {
+        startedActivityCount++
+        if (startedActivityCount == 1) {
+            SesAM17Plugin.onAppForegroundChanged(this, isForeground = true)
+        }
+    }
+    override fun onActivityResumed(activity: Activity) {}
+    override fun onActivityPaused(activity: Activity) {}
+    override fun onActivityStopped(activity: Activity) {
+        startedActivityCount--
+        if (startedActivityCount <= 0) {
+            startedActivityCount = 0
+            SesAM17Plugin.onAppForegroundChanged(this, isForeground = false)
+        }
+    }
+    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+    override fun onActivityDestroyed(activity: Activity) {
+        if (startedActivityCount == 0) {
+            SesAM17Plugin.onDestroy(this)
         }
     }
 
@@ -163,7 +176,6 @@ class App : Application() {
         @Volatile
         var instance: App? = null
             private set
-
 
         fun get(context: Context): App {
             return context.applicationContext as App

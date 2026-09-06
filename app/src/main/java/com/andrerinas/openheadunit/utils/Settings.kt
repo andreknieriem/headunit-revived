@@ -103,6 +103,10 @@ class Settings(private val context: Context) {
         get() = prefs.getBoolean("use_measured_touch_surface", false)
         set(value) { prefs.edit().putBoolean("use_measured_touch_surface", value).apply() }
 
+    var optimizeUltrawide: Boolean
+        get() = prefs.getBoolean("optimize-ultrawide", true)
+        set(value) { prefs.edit().putBoolean("optimize-ultrawide", value).apply() }
+
     // UI Scale percentage for Home
     var uiScaleHomePercent: Int
         get() = prefs.getInt("ui-scale-home-percent", 100)

@@ -139,6 +139,7 @@ class SettingsFragment : Fragment() {
     private var pendingResolution: Int? = null
     private var pendingDpi: Int? = null
     private var pendingPixelAspectRatioE4: Int? = null
+    private var pendingOptimizeUltrawide: Boolean? = null
     private var pendingStaticBSSID: String? = null
     private var pendingFullscreenMode: Settings.FullscreenMode? = null
     private var pendingViewMode: Settings.ViewMode? = null
@@ -291,6 +292,7 @@ class SettingsFragment : Fragment() {
         pendingResolution = settings.resolutionId
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
+        pendingOptimizeUltrawide = settings.optimizeUltrawide
         pendingStaticBSSID = settings.staticBSSID
         pendingFullscreenMode = settings.fullscreenMode
         pendingViewMode = settings.viewMode
@@ -417,6 +419,7 @@ class SettingsFragment : Fragment() {
         pendingResolution = settings.resolutionId
         pendingDpi = settings.dpiPixelDensity
         pendingPixelAspectRatioE4 = settings.pixelAspectRatioE4
+        pendingOptimizeUltrawide = settings.optimizeUltrawide
         pendingFullscreenMode = settings.fullscreenMode
         pendingViewMode = settings.viewMode
         pendingForceSoftware = settings.forceSoftwareDecoding
@@ -549,6 +552,7 @@ class SettingsFragment : Fragment() {
         pendingResolution?.let { settings.resolutionId = it }
         pendingDpi?.let { settings.dpiPixelDensity = it }
         pendingPixelAspectRatioE4?.let { settings.pixelAspectRatioE4 = it }
+        pendingOptimizeUltrawide?.let { settings.optimizeUltrawide = it }
         pendingStaticBSSID?.let { settings.staticBSSID = it }
         pendingFullscreenMode?.let { settings.fullscreenMode = it }
         val oldViewMode = settings.viewMode
@@ -682,6 +686,7 @@ class SettingsFragment : Fragment() {
                         pendingResolution != settings.resolutionId ||
                         pendingDpi != settings.dpiPixelDensity ||
                         pendingPixelAspectRatioE4 != settings.pixelAspectRatioE4 ||
+                        pendingOptimizeUltrawide != settings.optimizeUltrawide ||
                         pendingStaticBSSID != settings.staticBSSID ||
                         pendingFullscreenMode != settings.fullscreenMode ||
                         pendingViewMode != settings.viewMode ||
@@ -1596,6 +1601,18 @@ class SettingsFragment : Fragment() {
                         updateSettingsList()
                     }
                 )
+            }
+        ))
+
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "optimizeUltrawide",
+            nameResId = R.string.pref_optimize_ultrawide_title,
+            descriptionResId = R.string.pref_optimize_ultrawide_summary,
+            isChecked = pendingOptimizeUltrawide ?: settings.optimizeUltrawide,
+            onCheckedChanged = { isChecked ->
+                pendingOptimizeUltrawide = isChecked
+                checkChanges()
+                updateSettingsList()
             }
         ))
 

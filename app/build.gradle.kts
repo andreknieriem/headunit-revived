@@ -264,6 +264,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0")
     implementation(project(":contract"))
+    implementation(project(":sesam17"))
 
     // Multidex
     implementation("androidx.multidex:multidex:2.0.1")
