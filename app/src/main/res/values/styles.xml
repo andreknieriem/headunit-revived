@@ -24,8 +24,8 @@
 
     <style name="SplashTheme" parent="AppTheme">
         <item name="android:windowBackground">@drawable/splash_background</item>
-        <item name="android:statusBarColor">@color/color_projection_blue</item>
-        <item name="android:navigationBarColor">@color/color_projection_blue</item>
+        <item name="android:statusBarColor">@color/splash_background</item>
+        <item name="android:navigationBarColor">@color/splash_background</item>
     </style>
 
     <style name="SplashTheme.Fullscreen" parent="SplashTheme">

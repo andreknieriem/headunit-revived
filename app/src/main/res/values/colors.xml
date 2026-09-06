@@ -22,6 +22,7 @@
 
     <color name="text_shadow">@android:color/transparent</color>
     <color name="extreme_dark_background">#000000</color>
+    <color name="splash_background">@color/color_projection_blue</color>
     <color name="splash_text_white">#FFFFFF</color>
     <color name="splash_text_revived">#214876</color>
 
