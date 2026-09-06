@@ -294,6 +294,8 @@
     <string name="back">Retour</string>
     <string name="debug_mode">Mode débogage</string>
     <string name="debug_mode_description">Activer plus de journaux (Logging)</string>
+    <string name="allow_external_configuration">Autoriser la configuration externe</string>
+    <string name="allow_external_configuration_description">Permet aux applications d\'automatisation comme Tasker ou MacroDroid de modifier les réglages, de définir le niveau de journalisation et d\'exporter les journaux. La connexion et la déconnexion fonctionnent toujours ; cela ne concerne que les commandes qui modifient la configuration de l\'autoradio.</string>
     <string name="log_level">Niveau de journalisation</string>
     <string name="log_level_description">Filtrer le niveau de journalisation lors de l\'exportation</string>
     <string name="log_source">Source du journal</string>
@@ -686,12 +688,12 @@
     <!-- Debug-only: deliberately corrupts the projected video stream so the reassembler's
          failure paths can be exercised on a unit that is working correctly. Not translated on
          purpose - it is a developer tool and the terms are protocol terms. -->
-    <string name="debug_video_fault_injection" translatable="false">Video fault injection</string>
-    <string name="debug_video_fault_rate" translatable="false">Fault rate (one in N)</string>
-    <string name="debug_video_fault_budget" translatable="false">Fault budget</string>
-    <string name="debug_force_memory_profile" translatable="false">Force memory profile</string>
-    <string name="debug_video_low_latency" translatable="false">Request decoder low-latency mode</string>
-    <string name="debug_video_low_latency_description" translatable="false">Sets the vendor low-latency MediaFormat key when configuring the video decoder. Falls back automatically if the decoder rejects it.</string>
+        <string name="debug_video_fault_injection">Injection de pannes vidéo</string>
+        <string name="debug_video_fault_rate">Taux de panne (1 sur N)</string>
+        <string name="debug_video_fault_budget">Budget de pannes</string>
+        <string name="debug_force_memory_profile">Forcer le profil mémoire</string>
+        <string name="debug_video_low_latency">Demander le mode faible latence du décodeur</string>
+        <string name="debug_video_low_latency_description">Définit la clé MediaFormat propriétaire de faible latence lors de la configuration du décodeur vidéo. Revient automatiquement en arrière si le décodeur la refuse.</string>
     <string name="show_fps_counter_description">Afficher un compteur FPS en temps réel dans le coin supérieur gauche pendant la projection.</string>
 
     <!-- Auto-start permission strings -->
@@ -997,6 +999,7 @@
     <string name="narrow_band_profile_cap">Réduire la vidéo sur une radio 2,4 GHz uniquement</string>
     <string name="narrow_band_profile_cap_description">Quand le WiFi de cet appareil n\'a pas de bande 5 GHz, demander au téléphone au maximum 720p et 30 fps au lieu des réglages ci-dessus. Sur une telle liaison, un flux à pleine cadence ne transportait aucune image lors des mesures, alors qu\'un flux réduit tenait. Désactivez ceci pour obtenir exactement ce que vous avez demandé.</string>
     <string name="connection_issue_banner_video_link_too_slow">Votre téléphone a abandonné la vidéo avant la moindre image, plusieurs fois de suite. La liaison WiFi est trop lente pour transporter l\'image. Touchez pour abaisser la limite de FPS à 30 ; une résolution plus basse et l\'audio AAC aident aussi.</string>
+    <string name="connection_issue_banner_five_ghz_channel_refused">Cette unité a refusé de placer son réseau WiFi Direct sur l\'un des canaux 5 GHz que tu as choisis, elle l\'a donc créé sur celui choisi par son propre pilote WiFi. Ce canal est souvent invisible pour les téléphones des pays les plus stricts. Appuie ici pour régler la bande WiFi Direct sur 2,4 GHz, autorisée partout ; attends-toi à du 720p plutôt que du 1080p.</string>
     <string name="connection_issue_banner_dismiss">Ignorer</string>
     <string name="connection_issue_remedy_hotspot_query">Nom et mot de passe du point d\'accès</string>
     <string name="preflight_title">Avant de vous connecter</string>
@@ -1078,4 +1081,47 @@
     <string name="onb_audio_title">Audio</string>
     <string name="onb_audio_help">Choisissez le flux système sur lequel joue chaque canal Android Auto, puis appuyez sur le haut-parleur pour l\'entendre. Si un canal reste muet dans la voiture, le basculer sur un autre flux règle généralement le problème.</string>
     <string name="onb_audio_more_hint">Vous pourrez modifier ces réglages plus tard dans Paramètres → Flux audio.</string>
+    <string name="native_driver_selection_title">Sélection du conducteur</string>
+    <string name="native_driver_selection_summary">Choisir le téléphone à connecter lorsque plusieurs conducteurs appairés sont dans le véhicule</string>
+    <string name="native_driver_selection_mode_off">Désactivé</string>
+    <string name="native_driver_selection_mode_auto">Auto</string>
+    <string name="native_driver_selection_mode_always">Toujours demander</string>
+    <string name="native_driver_selection_timeout">Compte à rebours de connexion auto</string>
+    <string name="native_driver_preferred_device">Téléphone préféré</string>
+    <string name="switch_driver">Changer de téléphone</string>
+    <string name="driver_device_connected">Dans le véhicule / Connecté</string>
+    <string name="driver_device_paired">Appairé</string>
+    <string name="driver_device_preferred">Préféré</string>
+    <string name="driver_device_last_used">Dernier connecté</string>
+    <string name="driver_selection_auto_in">Connexion automatique à %2$s dans %1$ds...</string>
+    <string name="driver_selection_dialog_title">Sélectionner le téléphone du conducteur</string>
+    <string name="connecting_to_device">Connexion à %s...</string>
+    <string name="driver_none">Aucun</string>
+    <string name="show_all_devices">Afficher tous les appareils Bluetooth</string>
+    <string name="show_only_phones">Afficher uniquement les téléphones</string>
+    <string name="no_paired_bt_devices">Aucun appareil Bluetooth appairé trouvé</string>
+    <string name="auto_disconnect_bt_label">Déconnexion automatique Bluetooth</string>
+    <string name="select_bt_disconnect_device">Sélectionner l\'appareil Bluetooth à surveiller</string>
+    <string name="native_poke_bt_label">Appareil à réveiller pour Android Auto sans fil</string>
+    <string name="select_bt_poke_device">Sélectionner l\'appareil Bluetooth à réveiller</string>
+    <string name="native_poke_all_paired_label">Réveiller tous les appareils appairés</string>
+    <string name="native_poke_all_paired_description">Sans appareil sélectionné ci-dessus, se connecte brièvement à chaque appareil appairé pour lancer Android Auto. Désactivez cette option pour ne rien réveiller avant d\'en choisir un.</string>
+    <string name="auto_disconnect_bt_delay_label">Délai avant déconnexion</string>
+    <string name="auto_disconnect_bt_delay_value">%1$d s</string>
+    <string name="auto_disconnect_bt_delay_immediate">Immédiatement</string>
+    <string name="enter_auto_disconnect_bt_delay">Secondes à attendre avant de mettre fin à la session</string>
+    <string name="auto_disconnect_bt_delay_hint">Une connexion Bluetooth peut être brièvement interrompue pendant la reconnexion des profils. La session ne se termine que si l\'appareil est toujours absent après ce délai.</string>
+    <string name="auto_disconnect_bt_kill_hint">Met fin à la session lorsque le Bluetooth d\'un appareil sélectionné se déconnecte, par exemple lorsque le contact du véhicule est coupé. Sélectionnez le Bluetooth de la voiture si l\'appareil y est appairé. Pour fermer aussi l\'application et afficher l\'écran d\'accueil, activez « Fermer l\'application lors de la déconnexion » sous Automatisation.</string>
+    <string name="audio_stream_vendor_format">%1$s (%2$d)</string>
+    <string name="five_ghz_channel">Canal 5 GHz</string>
+    <string name="five_ghz_channel_auto">Automatique</string>
+    <string name="five_ghz_channel_option">Canal %1$d (%2$d MHz)</string>
+    <string name="five_ghz_channel_hint">Un canal est une demande, pas une garantie. Beaucoup d\'unités ne créent le réseau que sur le canal choisi par leur propre pilote WiFi, et l\'application ne peut te le dire qu\'après avoir essayé. Si aucun canal 5 GHz ne fonctionne et que ton téléphone ne voit toujours pas le réseau, c\'est la bande ci-dessus qui réglera le problème.</string>
+    <string name="wifi_direct_stable_identity">Conserver le même réseau Wi-Fi Direct</string>
+    <string name="wifi_direct_stable_identity_description">Demande le groupe avec le même nom et mot de passe à chaque fois, afin que votre téléphone rejoigne un réseau connu au lieu d\'en configurer un nouveau à chaque trajet. Désactivez cette option pour obtenir un nouveau réseau à chaque connexion (comme dans les versions 3.2 et 3.3) si le téléphone refuse le réseau enregistré. Essayer une nouvelle identité ci-dessous est la solution la plus simple.</string>
+    <string name="wifi_direct_new_identity">Nouvelle identité réseau Wi-Fi Direct</string>
+    <string name="wifi_direct_new_identity_none">Choisie lors de la prochaine connexion</string>
+    <string name="wifi_direct_new_identity_confirm">Choisit un nouveau nom et mot de passe pour le groupe, appliqués dès la prochaine connexion. Votre téléphone sera configuré via Bluetooth comme s\'il s\'agissait d\'un nouvel autoradio. Utilisez cette option si le téléphone persiste à essayer un réseau inaccessible.</string>
+    <string name="wifi_direct_new_identity_done">Une nouvelle identité réseau sera utilisée dès la prochaine connexion.</string>
+    <string name="debug_video_feed_hold">Simuler un décodeur lent</string>
 </resources>

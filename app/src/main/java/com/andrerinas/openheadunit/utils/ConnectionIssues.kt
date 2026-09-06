@@ -61,7 +61,18 @@ enum class ConnectionIssue {
      * indefinitely. The user's levers are the frame rate, the resolution, AAC audio, and 5 GHz on a
      * radio that has it.
      */
-    VIDEO_LINK_TOO_SLOW
+    VIDEO_LINK_TOO_SLOW,
+
+    /**
+     * The unit refused a group owner on every 5 GHz channel the pinned one was walked across.
+     *
+     * Not the same as [WIFI_DIRECT_GROUP_REFUSED]: a group does form, on whatever channel the
+     * driver picks for itself. That is the failure - the setting exists because the driver's pick
+     * is one the user's phone cannot see, and a phone whose country forbids that channel does not
+     * merely refuse it, it never scans it and so never lists the network at all. The user's lever
+     * is the band, not the channel.
+     */
+    FIVE_GHZ_CHANNEL_REFUSED
 }
 
 /** An issue that is currently true, and when it was last raised. */
@@ -160,6 +171,7 @@ object ConnectionIssues {
                 ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> settings.connectionIssueWifiDirectRefusedAtEpochMs
                 ConnectionIssue.WIFI_DIRECT_STACK_CYCLED -> settings.connectionIssueWifiDirectCycledAtEpochMs
                 ConnectionIssue.VIDEO_LINK_TOO_SLOW -> settings.connectionIssueVideoLinkTooSlowAtEpochMs
+                ConnectionIssue.FIVE_GHZ_CHANNEL_REFUSED -> settings.connectionIssueFiveGhzChannelRefusedAtEpochMs
             }
         } catch (e: Exception) {
             0L
@@ -175,6 +187,7 @@ object ConnectionIssues {
                     ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED -> settings.connectionIssueWifiDirectRefusedAtEpochMs = atEpochMs
                     ConnectionIssue.WIFI_DIRECT_STACK_CYCLED -> settings.connectionIssueWifiDirectCycledAtEpochMs = atEpochMs
                     ConnectionIssue.VIDEO_LINK_TOO_SLOW -> settings.connectionIssueVideoLinkTooSlowAtEpochMs = atEpochMs
+                    ConnectionIssue.FIVE_GHZ_CHANNEL_REFUSED -> settings.connectionIssueFiveGhzChannelRefusedAtEpochMs = atEpochMs
                 }
             } catch (e: Exception) {
                 AppLog.d("ConnectionIssues: could not record $issue: ${e.message}")

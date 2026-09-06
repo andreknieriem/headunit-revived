@@ -48,7 +48,8 @@ class UsbLauncherListener(private val manager: UsbLauncherManager) : UsbReceiver
             service.launchMainActivityIfNeeded("USB normal attach ($deviceName)")
             service.serviceScope.launch {
                 delay(ATTACH_FALLBACK_DELAY_MS)
-                if (!commManager.isConnected && !manager.isSwitchingToProjection()) {
+                if (!commManager.isConnected && !manager.isSwitchingToProjection() &&
+                    !manager.isActivitySwitchInFlight()) {
                     AppLog.i("UsbAttachedActivity didn't handle $deviceName. Trying from service...")
                     manager.checkAlreadyConnected(force = true)
                 }

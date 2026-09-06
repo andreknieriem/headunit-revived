@@ -78,8 +78,8 @@ class WifiLauncherNative : WifiLauncher {
                 softApCredentialsProvider?.start()
             } else if (wifiDirect != null) {
                 // Before the group, not after: wpa_supplicant only honours a channel while no group
-                // exists, and an associated station is what leaves it none to give. Opt-in, and a
-                // no-op on a unit that is not joined to anything.
+                // exists, and an associated station is what leaves it none to give. A no-op on a
+                // unit that is not joined to anything.
                 val stoodDown = StationStandDown.standDown(service)
 
                 // Start WiFi Direct as a "quiet host" (P2P Group for phone to join)

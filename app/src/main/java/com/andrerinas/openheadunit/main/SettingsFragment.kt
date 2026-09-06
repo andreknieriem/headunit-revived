@@ -29,8 +29,8 @@ import com.andrerinas.openheadunit.service.AppRedirectService
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.CredentialField
 import com.andrerinas.openheadunit.input.MediaKeyRoutingPolicy
 import com.andrerinas.openheadunit.connection.wifi.direct.P2pGroupIdentityPolicy
-import com.andrerinas.openheadunit.connection.wifi.direct.StationStandDownPolicy
 import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeCredentialsPreflightPolicy
+import com.andrerinas.openheadunit.connection.wifi.modes.nativeaa.NativeDriverSelectionPolicy
 import com.andrerinas.openheadunit.aap.NativeTransport
 import com.andrerinas.openheadunit.connection.wifi.FiveGhzChannelPolicy
 import com.andrerinas.openheadunit.connection.wifi.direct.P2pBandPreference
@@ -178,6 +178,9 @@ class SettingsFragment : Fragment() {
     private var pendingNativeWifiVersionExchange: Boolean? = null
     private var pendingNativeAaCompleteHfpSlc: Boolean? = null
     private var pendingNativeApTransport: NativeStrategy? = null
+    private var pendingNativeDriverSelectionMode: NativeDriverSelectionPolicy.Mode? = null
+    private var pendingNativeDriverSelectionTimeout: Int? = null
+    private var pendingNativePreferredDeviceMac: String? = null
     private var pendingWifiDirectBand: Int? = null
     private var pendingHotspotBand: Int? = null
     private var pendingFiveGhzChannel: Int? = null
@@ -356,6 +359,9 @@ class SettingsFragment : Fragment() {
         pendingNativeWifiVersionExchange = settings.nativeWifiVersionExchange
         pendingNativeAaCompleteHfpSlc = settings.nativeAaCompleteHfpSlc
         pendingNativeApTransport = settings.nativeApStrategy
+        pendingNativeDriverSelectionMode = settings.nativeDriverSelectionMode
+        pendingNativeDriverSelectionTimeout = settings.nativeDriverSelectionTimeoutSec
+        pendingNativePreferredDeviceMac = settings.nativePreferredDeviceMac
         pendingWifiDirectBand = settings.wifiDirectBand
         pendingHotspotBand = settings.hotspotBand
         pendingFiveGhzChannel = settings.fiveGhzChannel
@@ -473,6 +479,9 @@ class SettingsFragment : Fragment() {
         pendingNativeWifiVersionExchange = settings.nativeWifiVersionExchange
         pendingNativeAaCompleteHfpSlc = settings.nativeAaCompleteHfpSlc
         pendingNativeApTransport = settings.nativeApStrategy
+        pendingNativeDriverSelectionMode = NativeDriverSelectionPolicy.Mode.AUTO
+        pendingNativeDriverSelectionTimeout = NativeDriverSelectionPolicy.DEFAULT_TIMEOUT_SEC
+        pendingNativePreferredDeviceMac = ""
         pendingWifiDirectBand = settings.wifiDirectBand
         pendingHotspotBand = settings.hotspotBand
         pendingFiveGhzChannel = settings.fiveGhzChannel
@@ -634,6 +643,9 @@ class SettingsFragment : Fragment() {
         pendingNativeWifiVersionExchange?.let { settings.nativeWifiVersionExchange = it }
         pendingNativeAaCompleteHfpSlc?.let { settings.nativeAaCompleteHfpSlc = it }
         pendingNativeApTransport?.let { settings.nativeApStrategy = it }
+        pendingNativeDriverSelectionMode?.let { settings.nativeDriverSelectionMode = it }
+        pendingNativeDriverSelectionTimeout?.let { settings.nativeDriverSelectionTimeoutSec = it }
+        pendingNativePreferredDeviceMac?.let { settings.nativePreferredDeviceMac = it }
         pendingWifiDirectBand?.let { settings.wifiDirectBand = it }
         pendingHotspotBand?.let { settings.hotspotBand = it }
         pendingFiveGhzChannel?.let { settings.fiveGhzChannel = it }
@@ -758,6 +770,9 @@ class SettingsFragment : Fragment() {
                         pendingNativeWifiVersionExchange != settings.nativeWifiVersionExchange ||
                         pendingNativeAaCompleteHfpSlc != settings.nativeAaCompleteHfpSlc ||
                         pendingNativeApTransport != settings.nativeApStrategy ||
+                        pendingNativeDriverSelectionMode != settings.nativeDriverSelectionMode ||
+                        pendingNativeDriverSelectionTimeout != settings.nativeDriverSelectionTimeoutSec ||
+                        pendingNativePreferredDeviceMac != settings.nativePreferredDeviceMac ||
                         pendingWifiDirectBand != settings.wifiDirectBand ||
                         pendingHotspotBand != settings.hotspotBand ||
                         pendingFiveGhzChannel != settings.fiveGhzChannel ||
@@ -1118,29 +1133,83 @@ class SettingsFragment : Fragment() {
                 }
 
                 addWifiDirectIdentitySettings(items)
+            }
 
-                // Only where the platform would honour it. Below Android 10 anything may ask; from
-                // 10 to 14 the overlay permission is what gets past the framework's check, so the
-                // row stays and says so rather than vanishing into an unanswerable question; from
-                // 15 there is no route at all and offering the switch would be a lie.
-                val overlayGranted = AppPermissions.isOverlayGranted(requireContext())
-                if (StationStandDownPolicy.isAvailable(Build.VERSION.SDK_INT, true)) {
-                    items.add(SettingItem.ToggleSettingEntry(
-                        stableId = "standDownStationForWifiDirect",
-                        nameResId = R.string.stand_down_station,
-                        descriptionResId = R.string.stand_down_station_description,
-                        isChecked = settings.standDownStationForWifiDirect,
-                        isEnabled = overlayGranted,
-                        descriptionOverride = if (overlayGranted) null else
-                            getString(R.string.stand_down_station_needs_overlay) + " " +
-                                getString(R.string.stand_down_station_description),
-                        searchKeywords = "wifi disconnect station home network channel single radio",
-                        onCheckedChanged = { isChecked ->
-                            settings.standDownStationForWifiDirect = isChecked
-                            updateSettingsList()
-                        }
-                    ))
+            // Multi-Driver Selection settings for Native AA
+            val currentDriverMode = pendingNativeDriverSelectionMode ?: NativeDriverSelectionPolicy.Mode.AUTO
+            items.add(SettingItem.SegmentedButtonSettingEntry(
+                stableId = "nativeDriverSelectionMode",
+                nameResId = R.string.native_driver_selection_title,
+                options = listOf(
+                    getString(R.string.native_driver_selection_mode_off),
+                    getString(R.string.native_driver_selection_mode_auto),
+                    getString(R.string.native_driver_selection_mode_always)
+                ),
+                selectedIndex = currentDriverMode.id,
+                onOptionSelected = { index ->
+                    pendingNativeDriverSelectionMode = NativeDriverSelectionPolicy.Mode.fromId(index)
+                    checkChanges()
+                    updateSettingsList()
                 }
+            ))
+
+            if (currentDriverMode != NativeDriverSelectionPolicy.Mode.DISABLED) {
+                val currentTimeout = pendingNativeDriverSelectionTimeout ?: NativeDriverSelectionPolicy.DEFAULT_TIMEOUT_SEC
+                items.add(SettingItem.SliderSettingEntry(
+                    stableId = "nativeDriverSelectionTimeout",
+                    nameResId = R.string.native_driver_selection_timeout,
+                    value = "${currentTimeout}s",
+                    sliderValue = currentTimeout.toFloat(),
+                    valueFrom = NativeDriverSelectionPolicy.MIN_TIMEOUT_SEC.toFloat(),
+                    valueTo = NativeDriverSelectionPolicy.MAX_TIMEOUT_SEC.toFloat(),
+                    stepSize = 1f,
+                    onValueChanged = { newVal ->
+                        pendingNativeDriverSelectionTimeout = newVal.toInt()
+                        checkChanges()
+                    }
+                ))
+
+                val currentPrefMac = pendingNativePreferredDeviceMac.orEmpty()
+                val adapter = BluetoothHelper.getBluetoothAdapter(requireContext())
+                val bonded = adapter?.bondedDevices?.toList() ?: emptyList()
+                val prefDeviceName = bonded.firstOrNull { it.address.equals(currentPrefMac, ignoreCase = true) }?.name
+                    ?: if (currentPrefMac.isNotEmpty()) currentPrefMac else getString(R.string.driver_none)
+
+                items.add(SettingItem.SettingEntry(
+                    stableId = "nativePreferredDevice",
+                    nameResId = R.string.native_driver_preferred_device,
+                    value = prefDeviceName,
+                    onClick = { _ ->
+                        val likelyPhones = bonded.filter {
+                            BluetoothHelper.isLikelyPhone(it, preferredMac = currentPrefMac)
+                        }
+                        val otherDevices = bonded.filter { it !in likelyPhones }
+
+                        val options = mutableListOf<Pair<String, String>>()
+                        options.add("" to getString(R.string.driver_none))
+                        likelyPhones.forEach { dev ->
+                            val name = dev.name ?: "Unknown"
+                            options.add(dev.address to "$name (${dev.address})")
+                        }
+                        otherDevices.forEach { dev ->
+                            val name = dev.name ?: "Unknown"
+                            options.add(dev.address to "🎧 $name (${dev.address})")
+                        }
+                        val labels = options.map { it.second }.toTypedArray()
+                        val selectedIdx = options.indexOfFirst { it.first.equals(currentPrefMac, ignoreCase = true) }.coerceAtLeast(0)
+
+                        MaterialAlertDialogBuilder(requireContext(), R.style.DarkAlertDialog)
+                            .setTitle(R.string.native_driver_preferred_device)
+                            .setSingleChoiceItems(labels, selectedIdx) { dialog, which ->
+                                dialog.dismiss()
+                                pendingNativePreferredDeviceMac = options[which].first
+                                checkChanges()
+                                updateSettingsList()
+                            }
+                            .setNegativeButton(R.string.cancel, null)
+                            .show()
+                    }
+                ))
             }
 
             val currentServiceName = pendingBluetoothManagerServiceName ?: "bluetooth_manager"
@@ -2542,6 +2611,20 @@ class SettingsFragment : Fragment() {
                 }
             ))
         }
+
+        // Sits beside the log settings because those are half of what it unlocks: with this off,
+        // another app can still connect and disconnect, but cannot rewrite this unit's setup or
+        // drive the capture.
+        items.add(SettingItem.ToggleSettingEntry(
+            stableId = "allowExternalConfiguration",
+            nameResId = R.string.allow_external_configuration,
+            descriptionResId = R.string.allow_external_configuration_description,
+            isChecked = settings.allowExternalConfiguration,
+            onCheckedChanged = { isChecked ->
+                settings.allowExternalConfiguration = isChecked
+                updateSettingsList()
+            }
+        ))
 
         val logLevels = LogExporter.LogLevel.entries
         val logLevelNames = logLevels.map { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } }.toTypedArray()
@@ -4012,14 +4095,18 @@ class SettingsFragment : Fragment() {
                     .show()
             }
         ))
+        items.add(SettingItem.InfoBanner(
+            stableId = "fiveGhzChannelHint",
+            textResId = R.string.five_ghz_channel_hint
+        ))
     }
 
     /**
      * Whether the group keeps its name and passphrase between bring-ups, and a way to draw new ones.
      *
      * Only where the group is ours to name: the hotspot's identity is the access point's own. The
-     * switch writes straight through, like the stand-down beside it, because it is read at the next
-     * create and nothing needs re-arming for it. The "new identity" action replaces both halves
+     * switch writes straight through rather than through the pending/apply pattern, because it is
+     * read at the next create and nothing needs re-arming for it. The "new identity" action replaces both halves
      * together, which is the one rotation a phone's saved profile survives.
      */
     private fun addWifiDirectIdentitySettings(items: MutableList<SettingItem>) {

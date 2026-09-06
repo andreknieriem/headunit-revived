@@ -70,6 +70,21 @@ object SettingsBackupManager {
         "night-mode-threshold-brightness" to ValueType.INT,
         "key-codes" to ValueType.STRING_SET,
         Settings.KEY_LOG_LEVEL to ValueType.INT,
+        // Where the log comes from and where it lands. A round that asks for a particular capture
+        // has to be able to seed these the same way it seeds the level.
+        Settings.KEY_LOG_SOURCE to ValueType.INT,
+        Settings.KEY_LOG_LOCATION to ValueType.INT,
+        // Lets an automation tool configure this unit at all, so it has to survive a reinstall or
+        // the tool goes silent with no indication why.
+        Settings.KEY_ALLOW_EXTERNAL_CONFIGURATION to ValueType.BOOLEAN,
+        // The video fault injector and its dosage. Not user settings, but a test round sets them
+        // per arm, and carrying them is what lets a whole arm be written in one call.
+        "debug-video-fault-injection" to ValueType.INT,
+        "debug-video-fault-rate" to ValueType.INT,
+        "debug-video-fault-budget" to ValueType.INT,
+        "debug-video-low-latency" to ValueType.BOOLEAN,
+        "debug-video-feed-hold-ms" to ValueType.INT,
+        "debug-force-memory-profile" to ValueType.STRING,
         "view-mode" to ValueType.INT,
         Settings.KEY_SCREEN_ORIENTATION to ValueType.INT,
         "dpi-pixel-density" to ValueType.INT,

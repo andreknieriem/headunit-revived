@@ -38,6 +38,7 @@ import com.andrerinas.openheadunit.utils.AppLog
 import com.andrerinas.openheadunit.utils.ConnectionIssue
 import com.andrerinas.openheadunit.utils.ConnectionIssues
 import com.andrerinas.openheadunit.utils.InterfaceMacReader
+import com.andrerinas.openheadunit.utils.SystemProperties
 import java.io.File
 import java.net.Inet4Address
 import java.net.InetSocketAddress
@@ -49,6 +50,14 @@ import java.net.Socket
 class WifiDirectManager(private val context: Context) : WifiP2pManager.ConnectionInfoListener, WifiP2pManager.GroupInfoListener {
 
     private companion object {
+        /** Where a head unit's baked-in WiFi country tends to live when telephony has none. */
+        private val COUNTRY_PROPERTY_KEYS = listOf(
+            "ro.boot.wificountrycode",
+            "persist.vendor.wifi.country",
+            "ro.wifi.country",
+            "persist.sys.country",
+        )
+
         private const val MAX_NATIVE_5GHZ_CREATE_RETRIES = 4
         private const val MAX_NATIVE_5GHZ_BAND_MISMATCH_RETRIES = 2
         private const val MAX_NATIVE_STANDARD_CREATE_RETRIES = 3
@@ -176,6 +185,8 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      * Cleared by [stop] with the ladder, so a mode change asks once more.
      */
     private var legacyChannelRequestUnanswered = false
+    /** The regulatory domain dump is a fact about the hardware, so once per process is enough. */
+    private var countrySourceDumped = false
 
     /**
      * When the group refusal was last reported, so a unit refusing every attempt says so at a
@@ -1673,6 +1684,11 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                     override fun onSuccess() {
                         AppLog.i("WifiDirectManager: $bandLabel createGroup SUCCESS!")
                         noteGroupFormed()
+                        // Only a create that carried the frequency disproves the record. A group
+                        // formed on the driver's own pick is the failure it describes, not its cure.
+                        if (requestedFrequency > 0) {
+                            ConnectionIssues.clear(context, ConnectionIssue.FIVE_GHZ_CHANNEL_REFUSED)
+                        }
                         nativeGroupCreationMode =
                             if (band == NativeGroupBandPolicy.Band.GHZ_2_4) NATIVE_GROUP_MODE_24GHZ_REQUESTED
                             else NATIVE_GROUP_MODE_5GHZ_REQUESTED
@@ -1703,10 +1719,13 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         // all. The rungs matter because the request is a disallowed-frequency list, so a unit that
         // cannot host a group owner on the band it names does not land on the other one - it forms
         // no group. standardCreateGroup() is what advances the index when that happens.
+        // Before the first channel request, so a refusal below always has the domain above it.
+        logWifiCountrySourceDump()
+        val pinnedChannel = FiveGhzChannelPolicy.pinnedChannel(chosenChannel)
         val ladder = WifiP2pOperatingChannelPolicy.attemptChannels(
             sdkInt = Build.VERSION.SDK_INT,
             preference = preference,
-            chosenChannel = FiveGhzChannelPolicy.pinnedChannel(chosenChannel),
+            chosenChannel = pinnedChannel,
             supports5Ghz = supports5Ghz,
         )
         val ladderLabel = ladder.joinToString { channel ->
@@ -1723,6 +1742,23 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
                     "(${ladderLabel.ifEmpty { "none" }}) has been tried, so the band goes back to " +
                     "being the driver's choice."
             )
+            // Walked across the whole window and refused every time: the unit will not host a
+            // group owner there at all, and the driver's own pick is what the setting exists to
+            // escape.
+            if (WifiP2pOperatingChannelPolicy.refusedEveryFiveGhzRung(
+                    ladder, legacyChannelAttempt, pinnedChannel
+                )
+            ) {
+                val fiveGhzRungs = ladder.filter { WifiP2pOperatingChannelPolicy.frequencyMhzFor(it) > 5000 }
+                AppLog.w(
+                    "WifiDirectManager: this unit refused a group owner on every 5 GHz channel it " +
+                        "was offered (${fiveGhzRungs.joinToString()}), ${WifiCountryPolicy.describe(wifiCountrySources())}. " +
+                        "The channel setting is not one it can honour, so the group goes up wherever " +
+                        "its driver puts it, which a phone in a stricter country may not be able to " +
+                        "see - the band is the lever left."
+                )
+                ConnectionIssues.raise(context, ConnectionIssue.FIVE_GHZ_CHANNEL_REFUSED)
+            }
             standardCreateGroup(mgr, ch, 0, NATIVE_GROUP_MODE_STANDARD_LEGACY)
             return
         }
@@ -1802,6 +1838,7 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
 
             NativeGroupBandPolicy.NextStep.DROP_PINNED_CHANNEL -> {
                 pinnedChannelAbandoned = true
+                ConnectionIssues.raise(context, ConnectionIssue.FIVE_GHZ_CHANNEL_REFUSED)
                 AppLog.w(
                     "WifiDirectManager: $requestLabel createGroup retries exhausted ($reasonStr). This unit " +
                         "will not host a group on that channel, so the request goes back to the $bandLabel band " +
@@ -1993,6 +2030,12 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     private fun onStandardCreateSucceeded(mgr: WifiP2pManager, ch: WifiP2pManager.Channel, groupMode: String) {
         AppLog.i("WifiDirectManager: Standard createGroup SUCCESS!")
         noteGroupFormed()
+        // Read before releaseLegacyChannelRestriction() clears the flag. A group formed while the
+        // restriction stood is on the channel that was asked for, and only that disproves the
+        // record - the unrestricted create below it is the failure the record describes.
+        if (legacyChannelRestrictionApplied) {
+            ConnectionIssues.clear(context, ConnectionIssue.FIVE_GHZ_CHANNEL_REFUSED)
+        }
         nativeGroupCreationMode = groupMode
         // The platform chose the band here, so there is no mismatch to correct, and no
         // frequency was named either.
@@ -2017,8 +2060,15 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
      * 2.4 GHz social channels discovery runs on, and it is state in the supplicant that outlives
      * this app. A group that has already formed keeps its channel, so nothing is lost by clearing.
      */
-    private fun releaseLegacyChannelRestriction(mgr: WifiP2pManager, ch: WifiP2pManager.Channel) {
-        if (!legacyChannelRestrictionApplied) return
+    private fun releaseLegacyChannelRestriction(
+        mgr: WifiP2pManager,
+        ch: WifiP2pManager.Channel,
+        force: Boolean = false,
+    ) {
+        // A request that timed out may still have reached the supplicant, so a teardown clears that
+        // too. Not a bare force: clearing when nothing was ever asked for costs the compat object's
+        // whole answer timeout on the drivers that never call back, for nothing.
+        if (!legacyChannelRestrictionApplied && !(force && legacyChannelRequestUnanswered)) return
         legacyChannelRestrictionApplied = false
         WifiP2pChannelCompat.clearOperatingChannel(mgr, ch, handler) { applied, _, detail ->
             if (applied) {
@@ -2180,6 +2230,57 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
     }
 
     /**
+     * Every source that might name this unit's regulatory domain, one line each.
+     *
+     * Once per process, at the first group bring-up, because it is a fact about the hardware and a
+     * reader needs it in every log: which 5 GHz channels a group owner may use is the domain's answer,
+     * not ours, and a refusal reads identically to a bug without it.
+     */
+    private fun logWifiCountrySourceDump() {
+        if (countrySourceDumped) return
+        countrySourceDumped = true
+        val sources = wifiCountrySources()
+        AppLog.i("WifiDirectManager: == WiFi regulatory domain source dump ==")
+        for ((label, value) in sources) {
+            AppLog.i("WifiDirectManager:   ${label.padEnd(34)} = ${value ?: "null"}")
+        }
+        AppLog.i("WifiDirectManager: == end, ${WifiCountryPolicy.describe(sources)} ==")
+    }
+
+    /**
+     * Ordered as `WifiCountryCode.pickCountryCode()` orders them, telephony before the baked-in
+     * default, so the dump can be read against what the framework itself would have chosen.
+     */
+    private fun wifiCountrySources(): Map<String, String?> {
+        fun attempt(read: () -> String?) = try { read()?.trim()?.ifEmpty { null } } catch (e: Exception) { "err: ${e.message}" }
+        val telephony = try {
+            context.getSystemService(Context.TELEPHONY_SERVICE) as? android.telephony.TelephonyManager
+        } catch (e: Exception) { null }
+        val sources = linkedMapOf<String, String?>(
+            "TelephonyManager.networkCountry" to attempt { telephony?.networkCountryIso },
+            "TelephonyManager.simCountry" to attempt { telephony?.simCountryIso },
+            "Settings.Global wifi_country_code" to attempt {
+                Settings.Global.getString(context.contentResolver, "wifi_country_code")
+            },
+        )
+        for (key in COUNTRY_PROPERTY_KEYS) {
+            sources["property $key"] = SystemProperties.get(key, "").trim().ifEmpty { null }
+        }
+        // Authoritative where it answers, and refused on most units: it is @hide behind
+        // CONNECTIVITY_INTERNAL from API 28. Attempted anyway for head units that run this app as
+        // system, the same bet SoftApConfigCompat makes.
+        sources["WifiManager.getCountryCode()"] = attempt {
+            val wm = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            wm?.javaClass?.getMethod("getCountryCode")?.invoke(wm) as? String
+        }
+        // Last, and labelled: this is what the user set the screen to, not what the radio obeys.
+        sources["Locale.getDefault() (UI, not radio)"] = attempt {
+            java.util.Locale.getDefault().country
+        }
+        return sources
+    }
+
+    /**
      * Every BSSID source and what each answered, printed once per group.
      *
      * With nine of them in the chain, "all fallbacks failed" tells a reporter's log nothing about
@@ -2323,18 +2424,17 @@ class WifiDirectManager(private val context: Context) : WifiP2pManager.Connectio
         nativeRecreateCount = 0
         lastNativeGroupStatusMessage = null
         legacyChannelAttempt = 0
-        legacyChannelRequestUnanswered = false
         lastGroupRefusalReportAtMs = 0L
         churnWindowStartedAtMs = 0L
         churnEventsInWindow = 0
         churnForeignEventsInWindow = 0
         lastChurnReportAtMs = 0L
-        // Unconditional, and not gated on legacyChannelRestrictionApplied: a request that never
-        // answered may still have been applied, and the restriction is supplicant state that
-        // outlives this process.
         pinnedChannelAbandoned = false
         namedFallbackRefused = false
-        manager?.let { mgr -> channel?.let { ch -> releaseLegacyChannelRestriction(mgr, ch) } }
+        // Before legacyChannelRequestUnanswered is reset, because that flag is what tells the
+        // release a timed-out request may have left a restriction behind.
+        manager?.let { mgr -> channel?.let { ch -> releaseLegacyChannelRestriction(mgr, ch, force = true) } }
+        legacyChannelRequestUnanswered = false
         AapService.scanningState.value = false
         try { context.unregisterReceiver(receiver) } catch (e: Exception) {}
         // Follows the receiver rather than outliving it: registerReceiverIfNeeded() is a no-op while

@@ -34,6 +34,7 @@ import com.andrerinas.openheadunit.app.ForegroundServiceTypePolicy
 import com.andrerinas.openheadunit.app.WifiAutoStartReceiver
 import com.andrerinas.openheadunit.connection.wifi.HotspotExitAction
 import com.andrerinas.openheadunit.connection.wifi.UsbSessionQuiescePolicy
+import com.andrerinas.openheadunit.connection.wifi.WirelessBringUpDeferralPolicy
 import com.andrerinas.openheadunit.connection.wifi.UserExitHotspotPolicy
 import com.andrerinas.openheadunit.decoder.audio.PlaybackFocusPolicy
 import com.andrerinas.openheadunit.main.MainActivity
@@ -53,6 +54,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.media.session.MediaButtonReceiver
+import com.andrerinas.openheadunit.connection.usb.UsbDeviceCompat
 import com.andrerinas.openheadunit.connection.usb.UsbReceiver
 import com.andrerinas.openheadunit.location.GpsLocationService
 import com.andrerinas.openheadunit.utils.LocaleHelper
@@ -62,7 +64,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.hardware.usb.UsbManager
 import android.os.SystemClock
+import com.andrerinas.openheadunit.contract.SessionStateIntent
 import android.app.NotificationManager
 import android.graphics.PixelFormat
 import android.media.AudioAttributes
@@ -225,6 +229,16 @@ class AapService : Service() {
      */
     private var isDestroying = false
     private var hasEverConnected = false
+
+    /**
+     * Set by a `no_ui` automation command, which asks for the session without the screen.
+     * Consumed by the next raise only, so an ordinary reconnect still comes to the front.
+     */
+    @Volatile private var suppressNextProjectionRaise = false
+
+    /** When the live session started projecting, for [SessionStateIntent.EXTRA_UPTIME_MS]. */
+    @Volatile private var projectingSinceMs = 0L
+    @Volatile private var sessionConnectedAt = 0L
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -870,6 +884,10 @@ class AapService : Service() {
         fillBluetoothAddressIfUnset()
         setupCarMode()
         setupNightMode()
+        commManager.onSessionFailure = { reason ->
+            emitSessionState(SessionStateIntent.STATE_FAILED, reason)
+            projectingSinceMs = 0L
+        }
         observeConnectionState()
         registerReceivers()
 
@@ -902,13 +920,17 @@ class AapService : Service() {
 
         // Decided here as well as inside initWifiMode() so a paused start skips the wait-for-WiFi
         // machinery entirely rather than setting it up and being turned away at the end of it.
+        // Before wireless, not after. A device the USB rules accept starts a switch here, and
+        // initWifiModeWithOptionalWait() then stands back for it; one they reject stakes nothing
+        // and wireless arms as it always did.
+        usbLauncherManager.checkAlreadyConnected()
+
         if (applyBootLoopGuard()) {
             AppLog.w("AapService: Wireless bring-up paused by the boot-loop guard. USB and the rest of the app are unaffected.")
         } else {
             initWifiModeWithOptionalWait()
         }
         scheduleBootLoopStrikeClear()
-        usbLauncherManager.checkAlreadyConnected()
         registerNetworkMonitor()
     }
 
@@ -940,6 +962,30 @@ class AapService : Service() {
     }
 
     /**
+     * Tells automation tools what the session is doing. Implicit and unguarded, because automation
+     * apps cannot hold an app-declared permission; it carries no credentials and never names the phone.
+     */
+    private fun emitSessionState(state: String, reason: String = SessionStateIntent.REASON_NONE) {
+        // isLoopbackSession, not selfLauncherManager.isActive: the launcher flag is set before the
+        // launchers run and outlives a launch that never connected, which is exactly the state this
+        // reports on. A loopback session is a socket session too, so it has to be asked first.
+        val transport = when {
+            commManager.isLoopbackSession -> "self"
+            commManager.isWirelessSession -> "wifi"
+            commManager.isConnected -> "usb"
+            else -> "unknown"
+        }
+        val uptime =
+            if (projectingSinceMs == 0L) 0L else SystemClock.elapsedRealtime() - projectingSinceMs
+        AppLog.i("AapService: session state $state${if (reason.isEmpty()) "" else " ($reason)"}")
+        try {
+            sendBroadcast(SessionStateIntent(state, transport, reason, uptime))
+        } catch (e: Exception) {
+            AppLog.w("AapService: could not broadcast session state: ${e.message}")
+        }
+    }
+
+    /**
      * Single observer for all [CommManager.ConnectionState] transitions.
      *
      * Uses [hasEverConnected] to skip the initial [ConnectionState.Disconnected] emission
@@ -949,13 +995,21 @@ class AapService : Service() {
         serviceScope.launch {
             commManager.connectionState.collect { state ->
                 when (state) {
-                    is CommManager.ConnectionState.Connected -> onConnected()
+                    is CommManager.ConnectionState.Connecting ->
+                        emitSessionState(SessionStateIntent.STATE_CONNECTING)
+                    is CommManager.ConnectionState.Connected -> {
+                        sessionConnectedAt = SystemClock.elapsedRealtime()
+                        emitSessionState(SessionStateIntent.STATE_CONNECTED)
+                        onConnected()
+                    }
                     is CommManager.ConnectionState.HandshakeComplete -> {
                         launchAapProjectionActivity()
                     }
                     is CommManager.ConnectionState.TransportStarted -> {
                         hasEverConnected = true
+                        projectingSinceMs = SystemClock.elapsedRealtime()
                         usbLauncherManager.projectionHandshakeFailures = 0
+                        emitSessionState(SessionStateIntent.STATE_PROJECTING)
                         sendBroadcast(Intent(ACTION_REQUEST_NIGHT_MODE_UPDATE).apply {
                             setPackage(packageName)
                         })
@@ -974,7 +1028,18 @@ class AapService : Service() {
                         }
                     }
                     is CommManager.ConnectionState.Disconnected -> {
-                        if (hasEverConnected) onDisconnected(state)
+                        if (hasEverConnected) {
+                            emitSessionState(
+                                SessionStateIntent.STATE_DISCONNECTED,
+                                when {
+                                    state.isUserExit -> SessionStateIntent.REASON_USER_EXIT
+                                    !state.isClean -> SessionStateIntent.REASON_LINK_LOST
+                                    else -> SessionStateIntent.REASON_PHONE_LEFT
+                                }
+                            )
+                            projectingSinceMs = 0L
+                            onDisconnected(state)
+                        }
                     }
                     else -> {}
                 }
@@ -1152,6 +1217,12 @@ class AapService : Service() {
     private fun launchAapProjectionActivity(allowNotificationFallback: Boolean = true) {
         if (App.isPiPActive) {
             AppLog.i("AapService: Skipping projection launch because PiP is active")
+            return
+        }
+
+        if (suppressNextProjectionRaise) {
+            suppressNextProjectionRaise = false
+            AppLog.i("AapService: Not raising the projection, a no_ui command asked for the session only")
             return
         }
 
@@ -1647,6 +1718,69 @@ class AapService : Service() {
         }
     }
 
+    /** When the current USB deferral started, so the budget is measured across its retries. */
+    private var usbDeferralStartedMs = 0L
+    private var usbDeferralJob: Job? = null
+    // Whether a hold is actually running. The recheck coroutine has to null usbDeferralJob before it
+    // re-enters, or the re-entrant guard below would never let go, so the job cannot answer this.
+    private var usbDeferralHolding = false
+
+    /**
+     * Hold the wireless bring-up while a USB projection attempt is in flight, so a plugged-in
+     * dongle does not get a WiFi Direct group, a 5288 server and a Bluetooth poke raised around it
+     * and torn straight back down. Re-checks on a timer rather than refusing outright: nothing else
+     * would re-arm wireless if the USB attempt comes to nothing.
+     */
+    private fun deferWirelessForUsbHandoff(): Boolean {
+        if (isDestroying) return false
+
+        val accessoryOnBus = try {
+            val usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+            usbManager.deviceList.values.any { UsbDeviceCompat.isInAccessoryMode(it) }
+        } catch (e: Exception) {
+            AppLog.w("AapService: Could not read the USB bus before wireless bring-up: ${e.message}")
+            false
+        }
+
+        if (usbDeferralStartedMs == 0L) usbDeferralStartedMs = SystemClock.elapsedRealtime()
+        val waitedMs = SystemClock.elapsedRealtime() - usbDeferralStartedMs
+
+        if (!WirelessBringUpDeferralPolicy.shouldDefer(
+                accessoryDeviceOnBus = accessoryOnBus,
+                switchInFlight = usbLauncherManager.isSwitchingToProjection(),
+                msSinceFirstDeferral = waitedMs,
+            )
+        ) {
+            if (waitedMs > 0 && usbDeferralHolding) {
+                // The budget running out is not the USB attempt settling, and a hold that reached it
+                // used to be indistinguishable from one that did not.
+                if (waitedMs >= WirelessBringUpDeferralPolicy.DEFER_BUDGET_MS) {
+                    AppLog.i("AapService: the USB attempt did not settle within ${waitedMs}ms — arming wireless anyway")
+                } else {
+                    AppLog.i("AapService: USB handoff settled after ${waitedMs}ms — arming wireless now")
+                }
+            }
+            usbDeferralHolding = false
+            usbDeferralStartedMs = 0L
+            usbDeferralJob?.cancel()
+            usbDeferralJob = null
+            return false
+        }
+
+        if (usbDeferralJob?.isActive == true) return true
+
+        AppLog.i("AapService: a USB projection attempt is in flight — holding the wireless bring-up " +
+            "for up to ${WirelessBringUpDeferralPolicy.DEFER_BUDGET_MS}ms")
+        usbDeferralHolding = true
+        usbDeferralJob = serviceScope.launch {
+            delay(USB_DEFERRAL_RECHECK_MS)
+            usbDeferralJob = null
+            if (commManager.isConnected) usbDeferralStartedMs = 0L
+            else initWifiModeWithOptionalWait()
+        }
+        return true
+    }
+
     /**
      * Decides whether to call [initWifiMode] immediately or wait for WiFi connectivity.
      *
@@ -1658,6 +1792,8 @@ class AapService : Service() {
      * When the setting is disabled, or the mode is not 2, [initWifiMode] runs immediately.
      */
     private fun initWifiModeWithOptionalWait() {
+        if (deferWirelessForUsbHandoff()) return
+
         val settings = App.provide(this).settings
 
         if (settings.wifiConnectionMode != WifiLauncherMode.HELPER || settings.helperConnectionStrategy != HelperStrategy.WIFI_DIRECT || !settings.waitForWifiBeforeWifiDirect) {
@@ -1989,6 +2125,12 @@ class AapService : Service() {
             return START_NOT_STICKY
         }
 
+        // An automation command may ask for the session without the screen; latch it before any
+        // branch below can reach a raise.
+        if (intent?.getBooleanExtra(EXTRA_NO_UI, false) == true) {
+            suppressNextProjectionRaise = true
+        }
+
         // Handle stop before re-posting the notification to avoid a flash
         if (intent?.action == ACTION_STOP_SERVICE) {
             AppLog.i("Stop action received. Broadcasting finish request to activities.")
@@ -2078,10 +2220,70 @@ class AapService : Service() {
                     val launcher = wifiLauncherManager.active
 
                     if (launcher is WifiLauncherNative) {
-                        launcher.handshakeManager?.manualPoke(mac)
+                        launcher.handshakeManager?.selectDriver(mac)
                     } else {
                         ToastUtils.showToast(this, "Native AA mode not active.")
                     }
+                }
+            }
+            ACTION_NATIVE_AA_SWITCH_DEVICE -> {
+                val targetMac = intent?.getStringExtra(EXTRA_MAC)
+                AppLog.i("AapService: ACTION_NATIVE_AA_SWITCH_DEVICE received (targetMac=$targetMac)")
+                // The phone projecting now is the one the driver is moving away from, and ending
+                // the session reopens the Android Auto listeners it comes straight back through.
+                (wifiLauncherManager.active as? WifiLauncherNative)
+                    ?.handshakeManager?.beginDriverSwitch(settings.lastConnectedNativeMac)
+                serviceScope.launch {
+                    if (commManager.isConnected) {
+                        // Not a user exit: that answer makes SessionEndGroupPolicy STOP the
+                        // launcher, and the network the next driver's phone is about to be sent to
+                        // goes with it. And the switch outlives "close app on disconnect", or there
+                        // is nothing left to show a selector on.
+                        commManager.disconnect(
+                            sendByeBye = true,
+                            isUserExit = false,
+                            byeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.DEVICE_SWITCH,
+                            honorKillOnDisconnect = false
+                        )
+                        commManager.awaitDisconnectComplete()
+                    }
+                    if (!targetMac.isNullOrEmpty()) {
+                        val pokeIntent = Intent(this@AapService, AapService::class.java).apply {
+                            action = ACTION_NATIVE_AA_POKE
+                            putExtra(EXTRA_MAC, targetMac)
+                        }
+                        startService(pokeIntent)
+                    } else {
+                        val mainIntent = Intent(this@AapService, MainActivity::class.java).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                            putExtra(MainActivity.EXTRA_SHOW_DRIVER_SELECTOR, true)
+                        }
+                        startActivity(mainIntent)
+                    }
+                }
+            }
+            ACTION_NATIVE_AA_CANCEL_POKE -> {
+                AppLog.i("AapService: ACTION_NATIVE_AA_CANCEL_POKE received — user explicitly canceled driver selection")
+                userExitedAA = true
+                val launcher = wifiLauncherManager.active
+                if (launcher is WifiLauncherNative) {
+                    launcher.handshakeManager?.cancelPoke()
+                }
+            }
+            ACTION_NATIVE_AA_PROMPT_SHOWN -> {
+                AppLog.i("AapService: ACTION_NATIVE_AA_PROMPT_SHOWN received")
+                val launcher = wifiLauncherManager.active
+                if (launcher is WifiLauncherNative) {
+                    launcher.handshakeManager?.onSelectionPromptShown()
+                }
+            }
+            ACTION_NATIVE_AA_PROMPT_DISMISSED -> {
+                // The mirror of the line above, and the only signal that covers a dialog dismissed
+                // by leaving the app: that path reaches onDismiss, never onCancel.
+                AppLog.i("AapService: ACTION_NATIVE_AA_PROMPT_DISMISSED received")
+                val launcher = wifiLauncherManager.active
+                if (launcher is WifiLauncherNative) {
+                    launcher.handshakeManager?.onSelectionPromptDismissed()
                 }
             }
             ACTION_BT_AUTO_START          -> {
@@ -2099,6 +2301,12 @@ class AapService : Service() {
                 val sessionUp = commManager.isConnected ||
                     commManager.connectionState.value is CommManager.ConnectionState.Connecting
                 val launcher = wifiLauncherManager.active as? WifiLauncherNative
+                // Before the policy, and unconditionally: a cancelled prompt otherwise refuses the
+                // very phone whose arrival raised this.
+                launcher?.handshakeManager?.clearSelectionCancel()
+                val attemptInFlight = launcher?.handshakeManager?.isAttemptInFlight()
+
+                val networkComingUp = launcher?.networkComingUp()
                 val actions = BtAutoStartRearmPolicy.actionsFor(
                     settings.wifiConnectionMode,
                     settings.showsWifi(),
@@ -2466,6 +2674,10 @@ class AapService : Service() {
         const val ACTION_START_WIRELESS_SCAN       = "com.andrerinas.openheadunit.ACTION_START_WIRELESS_SCAN"
         const val ACTION_STOP_WIRELESS             = "com.andrerinas.openheadunit.ACTION_STOP_WIRELESS"
         const val ACTION_NATIVE_AA_POKE            = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_POKE"
+        const val ACTION_NATIVE_AA_SWITCH_DEVICE   = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_SWITCH_DEVICE"
+        const val ACTION_NATIVE_AA_CANCEL_POKE      = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_CANCEL_POKE"
+        const val ACTION_NATIVE_AA_PROMPT_SHOWN     = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_PROMPT_SHOWN"
+        const val ACTION_NATIVE_AA_PROMPT_DISMISSED = "com.andrerinas.openheadunit.ACTION_NATIVE_AA_PROMPT_DISMISSED"
         const val ACTION_NEARBY_CONNECT             = "com.andrerinas.openheadunit.ACTION_NEARBY_CONNECT"
         const val ACTION_CHECK_USB                 = "com.andrerinas.openheadunit.ACTION_CHECK_USB"
         const val ACTION_STOP_SERVICE              = "com.andrerinas.openheadunit.aap.action.STOP_SERVICE"
@@ -2485,6 +2697,9 @@ class AapService : Service() {
 
         /** Delay before retrying USB connection after an unexpected disconnect. */
         private const val USB_RECONNECT_DELAY_MS = 3000L
+
+        /** How often the USB deferral re-asks; well inside its own budget. */
+        private const val USB_DEFERRAL_RECHECK_MS = 1_000L
 
         /**
          * `NetworkCallback.onAvailable` fires per network and again on re-validation, so a
@@ -2509,6 +2724,8 @@ class AapService : Service() {
          *  60 seconds filters out normal screen timeouts while catching any hibernate/quick boot. */
         private const val HIBERNATE_WAKE_THRESHOLD_MS = 60_000L
 
+        /** Ask for the session without raising the projection. See [suppressNextProjectionRaise]. */
+        const val EXTRA_NO_UI = "no_ui"
         const val EXTRA_MAC = "extra_mac"
         const val EXTRA_ENDPOINT_ID = "extra_endpoint_id"
     }

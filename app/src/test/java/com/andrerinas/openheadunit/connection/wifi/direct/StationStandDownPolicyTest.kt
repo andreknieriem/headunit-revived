@@ -34,20 +34,10 @@ class StationStandDownPolicyTest {
     // --- shouldStandDown ---
 
     @Test
-    fun `stands down when enabled and joined on a platform that allows it`() {
+    fun `stands down when joined on a platform that allows it, with nothing to ask`() {
         assertTrue(
             StationStandDownPolicy.shouldStandDown(
-                enabled = true, sdkInt = 27, canDrawOverlays = false,
-                associated = true, networkId = 3
-            )
-        )
-    }
-
-    @Test
-    fun `never when the setting is off`() {
-        assertFalse(
-            StationStandDownPolicy.shouldStandDown(
-                enabled = false, sdkInt = 27, canDrawOverlays = true,
+                sdkInt = 27, canDrawOverlays = false,
                 associated = true, networkId = 3
             )
         )
@@ -57,7 +47,7 @@ class StationStandDownPolicyTest {
     fun `never when nothing is joined`() {
         assertFalse(
             StationStandDownPolicy.shouldStandDown(
-                enabled = true, sdkInt = 27, canDrawOverlays = true,
+                sdkInt = 27, canDrawOverlays = true,
                 associated = false, networkId = 3
             )
         )
@@ -67,7 +57,7 @@ class StationStandDownPolicyTest {
     fun `never on a hidden network id, which is what a redacted read looks like`() {
         assertFalse(
             StationStandDownPolicy.shouldStandDown(
-                enabled = true, sdkInt = 27, canDrawOverlays = true,
+                sdkInt = 27, canDrawOverlays = true,
                 associated = true, networkId = -1
             )
         )
@@ -77,10 +67,23 @@ class StationStandDownPolicyTest {
     fun `never where the platform would refuse the call`() {
         assertFalse(
             StationStandDownPolicy.shouldStandDown(
-                enabled = true, sdkInt = 35, canDrawOverlays = true,
+                sdkInt = 35, canDrawOverlays = true,
                 associated = true, networkId = 3
             )
         )
+    }
+
+    @Test
+    fun `the platform gate is the whole of it once a network is joined`() {
+        for (sdk in 21..36) {
+            for (overlay in listOf(false, true)) {
+                assertEquals(
+                    "api $sdk overlay=$overlay",
+                    StationStandDownPolicy.isAvailable(sdk, overlay),
+                    StationStandDownPolicy.shouldStandDown(sdk, overlay, associated = true, networkId = 3)
+                )
+            }
+        }
     }
 
     // --- describeUnavailable: exactly the complement of isAvailable ---

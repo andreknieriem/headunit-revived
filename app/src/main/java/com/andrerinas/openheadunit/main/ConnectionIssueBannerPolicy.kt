@@ -50,6 +50,7 @@ object ConnectionIssueBannerPolicy {
                 ConnectionIssue.BSSID_UNAVAILABLE,
                 ConnectionIssue.WIFI_DIRECT_GROUP_REFUSED,
                 ConnectionIssue.WIFI_DIRECT_STACK_CYCLED,
+                ConnectionIssue.FIVE_GHZ_CHANNEL_REFUSED,
                 ConnectionIssue.VIDEO_LINK_TOO_SLOW
             )
             NativeTransport.HOTSPOT -> setOf(
@@ -79,11 +80,13 @@ object ConnectionIssueBannerPolicy {
      *
      * `BLUETOOTH_SENT_NO_DATA` has no entry because its remedy is leaving Native AA, which
      * [relevantNow] already answers. `HOTSPOT_NOT_RUNNING`, `WIFI_DIRECT_GROUP_REFUSED`,
-     * `WIFI_DIRECT_STACK_CYCLED` and `VIDEO_LINK_TOO_SLOW` have none either: no setting fixes them,
-     * and an access point coming up, a group forming or a session rendering a frame disproves them
-     * outright, so those records retire themselves. Lowering the frame rate is deliberately not a
-     * remedy here: it is a guess at the ceiling, and only a session that renders proves it was
-     * enough.
+     * `WIFI_DIRECT_STACK_CYCLED`, `FIVE_GHZ_CHANNEL_REFUSED` and `VIDEO_LINK_TOO_SLOW` have none
+     * either: no setting fixes them, and an access point coming up, a group forming or a session
+     * rendering a frame disproves them outright, so those records retire themselves. The channel
+     * one is retired by a narrower event than the rest - a group formed *on the channel that was
+     * asked for*, since one on the driver's own pick is the failure it describes. Lowering the
+     * frame rate is deliberately not a remedy here: it is a guess at the ceiling, and only a
+     * session that renders proves it was enough.
      *
      * @param hotspotSsid [com.andrerinas.openheadunit.utils.Settings.hotspotSsid]
      * @param hotspotPassword [com.andrerinas.openheadunit.utils.Settings.hotspotPassword] — needed

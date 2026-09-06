@@ -545,7 +545,18 @@ class AutoStartFragment : Fragment() {
             BtPickerTarget.AUTO_DISCONNECT -> R.string.select_bt_disconnect_device
             BtPickerTarget.NATIVE_POKE -> R.string.select_bt_poke_device
         }
-        BluetoothDevicePicker.show(requireContext(), titleResId, pending) { chosen ->
+        // Only a phone can answer Native AA, so its wake list offers phones. The other two lists
+        // are not Native-AA-only: a headset is a fair auto-start or auto-disconnect trigger.
+        val deviceFilter: ((android.bluetooth.BluetoothDevice) -> Boolean)? =
+            if (target == BtPickerTarget.NATIVE_POKE) {
+                { device ->
+                    BluetoothHelper.isLikelyPhone(
+                        device, settings.nativePreferredDeviceMac, settings.lastConnectedNativeMac
+                    )
+                }
+            } else null
+
+        BluetoothDevicePicker.show(requireContext(), titleResId, pending, deviceFilter) { chosen ->
             pending.clear()
             pending.addAll(chosen)
             checkChanges()

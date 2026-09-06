@@ -174,6 +174,13 @@ class CommManager(
     /** The endpoint [silentPeerFailures] is counting; a different one starts its own streak. */
     @Volatile private var silentPeerEndpoint: String? = null
     var onUpdateUiConfigReplyReceived: (() -> Unit)? = null
+
+    /**
+     * Called where a failure is discovered, not from a [connectionState] collector.
+     * [ConnectionState.Error] never reaches one: the flow is conflated and a synchronous
+     * `disconnect()` follows the emit, so the value has moved on before any collector resumes.
+     */
+    var onSessionFailure: ((reason: String) -> Unit)? = null
     @Volatile private var _connection: ProjectionConnection? = null
 
     /**
@@ -275,6 +282,7 @@ class CommManager(
 
         val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
         if (!usbManager.hasPermission(device)) {
+            onSessionFailure?.invoke("connect_failed")
             _connectionState.emit(ConnectionState.Error("USB permission not granted for device"))
             return@withContext
         }
@@ -300,6 +308,7 @@ class CommManager(
                 _connectionState.emit(ConnectionState.Disconnected())
             }
         } catch (e: Exception) {
+            onSessionFailure?.invoke("connect_failed")
             _connectionState.emit(ConnectionState.Error("Connection failed: ${e.message}"))
             disconnect()
         }
@@ -350,6 +359,7 @@ class CommManager(
                 _connectionState.emit(ConnectionState.Disconnected())
             }
         } catch (e: Exception) {
+            onSessionFailure?.invoke("connect_failed")
             _connectionState.emit(ConnectionState.Error("Connection failed: ${e.message}"))
             disconnect()
         }
@@ -381,6 +391,7 @@ class CommManager(
                 _connectionState.emit(ConnectionState.Disconnected())
             }
         } catch (e: Exception) {
+            onSessionFailure?.invoke("connect_failed")
             _connectionState.emit(ConnectionState.Error("Connection failed: ${e.message}"))
             disconnect()
         }
@@ -451,18 +462,21 @@ class CommManager(
                 } else {
                     val silent = transport?.lastHandshakeFailure == AapTransport.HandshakeFailure.PEER_SILENT
                     noteHandshakeOutcome(silent)
+                    onSessionFailure?.invoke(if (silent) "peer_silent" else "handshake_failed")
                     _connectionState.emit(
                         ConnectionState.Error(if (silent) ERROR_HANDSHAKE_PEER_SILENT else "Handshake failed")
                     )
                     disconnect()
                 }
             } else {
+                onSessionFailure?.invoke("handshake_failed")
                 _connectionState.emit(ConnectionState.Error("Starting handshake without connection"))
             }
         } catch (e: Exception) {
             // An exception is never the silent-peer case; clear the streak rather than leaving it
             // to age into a backoff that no longer describes what is happening.
             noteHandshakeOutcome(silent = false)
+            onSessionFailure?.invoke("handshake_failed")
             _connectionState.emit(ConnectionState.Error("Handshake failed: ${e.message}"))
             disconnect()
         }
@@ -852,7 +866,14 @@ class CommManager(
      * immediately, then schedules async cleanup via [doDisconnect]. A ByeByeRequest is sent
      * to the phone before closing the connection.
      */
-    fun disconnect(sendByeBye: Boolean = true, isUserExit: Boolean = true) {
+    fun disconnect(
+        sendByeBye: Boolean = true,
+        isUserExit: Boolean = true,
+        byeByeReason: com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.USER_SELECTION,
+        // A disconnect the app itself takes in order to show something next cannot honour "close
+        // app on disconnect": there would be nothing left to show it on.
+        honorKillOnDisconnect: Boolean = true
+    ) {
         if (_connectionState.value is ConnectionState.Disconnected) return
 
         HeadUnitScreenConfig.unlockResolution()
@@ -861,8 +882,8 @@ class CommManager(
         if (isUserExit) {
             _transport?.wasUserExit = true
         }
-        _disconnectJob = _scope.launch { doDisconnect(sendByeBye) }
-        if (settings.killOnDisconnect) {
+        _disconnectJob = _scope.launch { doDisconnect(sendByeBye, byeByeReason) }
+        if (settings.killOnDisconnect && honorKillOnDisconnect) {
             context.sendBroadcast(android.content.Intent("com.andrerinas.openheadunit.ACTION_FINISH_ACTIVITIES").apply {
                 setPackage(context.packageName)
             })
@@ -907,7 +928,10 @@ class CommManager(
      *   the connection is already dead, so `AapTransport.quit()` is called directly to skip
      *   the send and the sleep.
      */
-    private fun doDisconnect(sendByeBye: Boolean = true) {
+    private fun doDisconnect(
+        sendByeBye: Boolean = true,
+        byeByeReason: com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason = com.andrerinas.openheadunit.aap.protocol.proto.Control.ByeByeReason.USER_SELECTION
+    ) {
         // Capture and null out immediately to prevent a second doDisconnect() call
         // (from transportedQuited firing onQuit during stop()) from double-stopping.
         val transport = _transport
@@ -928,7 +952,7 @@ class CommManager(
             // Only send ByeByeRequest when we are initiating the disconnect (e.g. user pressed
             // disconnect). When the transport self-quit (read error, soTimeout), the connection
             // is already dead — skip the send and the 150 ms sleep inside stop().
-            if (sendByeBye) transport?.stop() else transport?.quit()
+            if (sendByeBye) transport?.stop(byeByeReason) else transport?.quit()
 
             // Explicitly stop and release decoders to prevent MediaCodec finalize() timeouts
             videoDecoder.stop("CommManager: doDisconnect")

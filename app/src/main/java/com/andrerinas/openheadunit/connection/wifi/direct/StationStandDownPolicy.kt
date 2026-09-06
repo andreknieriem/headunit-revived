@@ -8,11 +8,9 @@ package com.andrerinas.openheadunit.connection.wifi.direct
  * for, refuses to create one at all. That is the shape of a unit whose group never forms and of one
  * whose picture stutters on a busy home channel.
  *
- * Bounded to the bring-up and reversed afterwards, because the same association is measured to be
- * the *good* state once a session is running: on this hardware class an unjoined unit lost the
- * picture for seconds at a time where a joined one ran clean. [StationCoexistencePolicy] is why this
- * is a setting the user turns on rather than something the app decides, and it keeps describing
- * rather than prescribing regardless of what happens here.
+ * Unconditional on every Native AA WiFi Direct bring-up: the platform gate below and whether this
+ * unit is joined to anything are the only questions. Bounded to the bring-up and reversed on
+ * teardown. [StationCoexistencePolicy] keeps describing rather than prescribing regardless.
  *
  * Pure, so every combination is a unit test rather than a device.
  */
@@ -46,31 +44,29 @@ object StationStandDownPolicy {
      *   guessing one would disable a network the user never joined.
      */
     fun shouldStandDown(
-        enabled: Boolean,
         sdkInt: Int,
         canDrawOverlays: Boolean,
         associated: Boolean,
         networkId: Int
-    ): Boolean = enabled &&
-        associated &&
+    ): Boolean = associated &&
         networkId >= 0 &&
         isAvailable(sdkInt, canDrawOverlays)
 
     /**
-     * Why a stand-down the user asked for is not going to happen, or null when it will.
+     * Why the stand-down is not going to happen on this unit, or null when it will.
      *
-     * A toggle that silently does nothing is how a setting stops being trusted, and on 29-34 the
-     * answer is a permission the user can actually grant.
+     * Logged rather than shown: on 29-34 the answer is a permission the user can actually grant,
+     * and above that it is a fact about the unit worth having in a bug report.
      */
     fun describeUnavailable(sdkInt: Int, canDrawOverlays: Boolean): String? = when {
         isAvailable(sdkInt, canDrawOverlays) -> null
         sdkInt <= LAST_API_WITH_OVERLAY_BYPASS ->
             "This unit's Android will only let the app drop its own WiFi connection while the app " +
-                "has the \"display over other apps\" permission. Granting it enables this."
+                "has the \"display over other apps\" permission. Granting it frees the group's radio."
         else ->
-            "Android $sdkInt does not let an app drop this unit's own WiFi connection, so this " +
-                "setting cannot do anything here. Disconnecting it by hand before connecting is " +
-                "the only way to get the same effect."
+            "Android $sdkInt does not let an app drop this unit's own WiFi connection, so the " +
+                "group has to share its channel. Disconnecting this unit's WiFi by hand before " +
+                "connecting is the only way to free it."
     }
 
     /**
